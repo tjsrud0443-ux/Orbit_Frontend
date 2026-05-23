@@ -1,7 +1,42 @@
 @import "tailwindcss";
+/* 역할: "SUIT라는 이름의 폰트 파일은 인터넷의 이 주소(url)에 있으니 준비해둬!"라고 브라우저에게 폰트를
+등록하는 과정 */
+@font-face {
+    font-family: 'SUIT';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2402_1@1.0/SUIT-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}
 
-html,
-body,
-#root {
-  font-family: 'SUIT', sans-serif;
+*, body, button, input, select, textarea {
+    font-family: 'SUIT', ui-sans-serif, system-ui, -apple-system, sans-serif !important;
+}
+
+/* FullCalendar Custom Overrides */
+.fc {
+  font-size: 0.75rem !important; /* Overall calendar font size reduced */
+}
+
+/* Day headers (Sun, Mon, etc.) */
+.fc .fc-col-header-cell-cushion {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 4px 0 !important;
+}
+
+/* Day numbers */
+.fc .fc-daygrid-day-number {
+  font-size: 11px !important;
+  padding: 2px 4px !important;
+}
+
+/* Event titles */
+.fc-event-title {
+  font-size: 10px !important;
+  font-weight: 500 !important;
+}
+
+/* Calendar title (if any inside fc) */
+.fc-toolbar-title {
+  font-size: 1rem !important;
 }

@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './domains/auth/Login';
 import Signup from './domains/auth/Signup';
+import Calendar from './domains/schedules/Calendar';
+import Departments from './domains/departments/Departments';
 import './App.css';
 
 function App() {
@@ -14,7 +16,11 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         
-        {/* 추후 다른 도메인 경로들을 여기에 추가할 수 있습니다. */}
+        {/*Calendar*/}
+        <Route path="/calendar" element={<Calendar/>}/>
+
+        {/*Departments*/}
+        <Route path="/departments" element={<Departments />} />
       </Routes>
     </Router>
   );
