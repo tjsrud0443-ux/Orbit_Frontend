@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# 환경 변수 (이 부분을 추가해 주세요!)
+.env
+.env.local

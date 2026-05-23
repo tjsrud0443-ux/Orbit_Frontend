@@ -3,10 +3,10 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { Link, useLocation } from 'react-router-dom';
+import { fetchHolidays } from '../../api/holidayApi';
 
 /* ───────────────────────────────────────────
    샘플 이벤트 데이터
-   
 ─────────────────────────────────────────── */
 const PERSONAL_EVENTS = [
   { id: 'p1', title: '팀 주간 회의',       start: '2026-05-04', category: 'meeting',  color: '#7C3AED' },
@@ -18,19 +18,6 @@ const PERSONAL_EVENTS = [
   { id: 'p7', title: '정기 1on1',          start: '2026-05-23', category: 'meeting',  color: '#7C3AED' },
   { id: 'p8', title: '프로젝트 마감',      start: '2026-05-27', category: 'project', color: '#6366F1' },
   { id: 'p9', title: '반차',               start: '2026-05-29', category: 'leave',   color: '#10B981' },
-];
-/*타운홀미팅-2월, 7월 점심시간대 2시간 소요
-전사 워크숍-4월,9월 1박2일
-임직원 만족도 조사, 건강 챌린지 - 5월,11월
-창립기념일(휴무) - 7월6일
-연간 시상식 - 12월*/
-const COMPANY_EVENTS = [
-  { id: 'c1', title: '어린이날',           start: '2026-05-05', category: 'holiday',     color: '#F59E0B' },
-  { id: 'c2', title: '전사 타운홀',        start: '2026-05-12', category: 'company',     color: '#EF4444' },
-  { id: 'c3', title: '개발팀 MT',          start: '2026-05-16', end: '2026-05-17', category: 'team', color: '#0EA5E9' },
-  { id: 'c4', title: '창립기념일',         start: '2026-05-20', category: 'anniversary', color: '#EC4899' },
-  { id: 'c5', title: '부처님오신날',       start: '2026-05-24', category: 'holiday',     color: '#F59E0B' },
-  { id: 'c6', title: '개발팀 스프린트',    start: '2026-05-26', category: 'team',        color: '#0EA5E9' },
 ];
 
 /* 카테고리 → label/color 매핑 */
@@ -47,6 +34,47 @@ const COMPANY_FILTERS = [
   { key: 'holiday',     label: '공휴일',         color: '#F59E0B' },
   { key: 'anniversary', label: '기념일',         color: '#EC4899' },
 ];
+
+// const HOLIDAY_API_KEY = import.meta.env.VITE_HOLIDAY_API_KEY || '';
+
+const fetchHolidaysByMonth = async (year, month) => {
+  const url =
+    `/holiday-api/B090041/openapi/service/SpcdeInfoService/getRestDeInfo` +
+    `?serviceKey=${HOLIDAY_API_KEY}` +
+    `&solYear=${year}` +
+    `&solMonth=${String(month).padStart(2, '0')}` +
+    `&numOfRows=50` +
+    `&_type=json`;
+
+  const res  = await fetch(url);
+  const json = await res.json();
+  const items = json?.response?.body?.items?.item;
+  const list = !items ? [] : Array.isArray(items) ? items : [items];
+
+  return list.map((item, idx) => {
+    const d = String(item.locdate);
+    const start = `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}`;
+    return {
+      id: `holiday-${year}-${month}-${idx}`,
+      title: item.dateName,
+      start,
+      category: 'holiday',
+      color: '#F59E0B',
+    };
+  });
+};
+
+const fetchHolidays = async (year) => {
+  try {
+    const results = await Promise.all(
+      Array.from({ length: 12 }, (_, i) => fetchHolidaysByMonth(year, i + 1))
+    );
+    return results.flat();
+  } catch (err) {
+    console.error(`공휴일 API 오류 (${year}):`, err);
+    return [];
+  }
+};
 
 /* ───────────────────────────────────────────
    메인 컴포넌트
