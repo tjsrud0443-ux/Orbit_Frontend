@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import Login_logo from '../../assets/Login_logo.png'
 
 const Login = () => {
   const [userId, setUserId] = useState('');
@@ -20,22 +21,7 @@ const Login = () => {
         <div className="w-full md:w-1/2 bg-blue-50 p-8 flex flex-col items-center justify-center space-y-6">
           {/* Logo Section */}
           <div className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-              {/* Simple Eye Icon SVG */}
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="white" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                className="w-6 h-6"
-              >
-                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            </div>
+           
             <span className="text-2xl font-extrabold text-blue-900 tracking-tight">Orbit</span>
           </div>
 
@@ -46,7 +32,7 @@ const Login = () => {
               <div className="w-full h-px bg-blue-600 rotate-45 absolute"></div>
               <div className="w-full h-px bg-blue-600 -rotate-45 absolute"></div>
             </div>
-            <div className="text-blue-300 font-medium">Illustration Placeholder</div>
+            <div className="text-blue-300 font-medium"><img src={Login_logo} /></div>
           </div>
         </div>
 
@@ -81,7 +67,7 @@ const Login = () => {
               />
               <div className="flex justify-end mt-1">
                 <Link 
-                  to="/find-account" 
+                  to="/findAccount" 
                   className="text-xs text-blue-500 hover:underline transition-all"
                 >
                   아이디 / 비밀번호 찾기
