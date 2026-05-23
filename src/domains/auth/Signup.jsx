@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Signup_pic from '../../assets/Signup_pic.png';
+import { duplCheck } from './authApi';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -36,7 +37,6 @@ const Signup = () => {
       setIsIdChecked(false);
     }
 
-    // 입력 시 해당 필드의 에러 메시지 제거
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -58,9 +58,19 @@ const Signup = () => {
   };
 
   const handleDuplCheck = () => {
-    setIsIdChecked(true);
-    setErrors((prev) => ({ ...prev, idCheck: '' }));
-    console.log('아이디 중복 확인 완료');
+    duplCheck(formData.id).then(resp => {
+      if (!formData.id) {
+        setErrors(prev => ({...prev, id: '아이디를 입력해주세요.'}));
+        return;
+      }
+      if(resp.data === true){
+        setErrors(prev => ({...prev, id: '이미 사용 중인 아이디입니다.'}));
+        setIsIdChecked(false);
+      }else{
+        setIsIdChecked(true);
+        setErrors((prev) => ({...prev, idCheck: ''}));
+      }
+    })
   };
 
   useEffect(() => {
@@ -174,8 +184,6 @@ const Signup = () => {
     if (Object.keys(newErrors).length > 0) {
       return;
     }
-
-    console.log('회원가입 데이터:', formData);
   };
 
   return (
