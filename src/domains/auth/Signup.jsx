@@ -22,6 +22,7 @@ const Signup = () => {
 
   const [profileImage, setProfileImage] = useState(null);
   const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
+  const [isIdChecked, setIsIdChecked] = useState(false);
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
@@ -30,6 +31,11 @@ const Signup = () => {
       ...prev,
       [name]: value,
     }));
+
+    if (name === 'id') {
+      setIsIdChecked(false);
+    }
+
     // 입력 시 해당 필드의 에러 메시지 제거
     if (errors[name]) {
       setErrors((prev) => ({
@@ -45,9 +51,16 @@ const Signup = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setProfileImage(reader.result);
+        setErrors((prev) => ({ ...prev, profileImage: '' }));
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleDuplCheck = () => {
+    setIsIdChecked(true);
+    setErrors((prev) => ({ ...prev, idCheck: '' }));
+    console.log('아이디 중복 확인 완료');
   };
 
   useEffect(() => {
@@ -114,6 +127,7 @@ const Signup = () => {
 
   const handleSubmit = () => {
     const newErrors = {};
+    if (!profileImage) newErrors.profileImage = '프로필 사진을 선택해주세요.';
     if (!formData.name) {
       newErrors.name = '이름을 입력해주세요.';
     }
@@ -126,6 +140,8 @@ const Signup = () => {
       newErrors.id = '아이디를 입력해주세요.';
     }else if(!idRegex.test(formData.id)){
       newErrors.id = '영문 대/소문자와 _로 5~20자 입력 가능합니다.';
+    }else if(!isIdChecked){
+      newErrors.idCheck = '아이디 중복확인을 해주세요.';
     }
     if (!formData.pw) {
       newErrors.pw = '비밀번호를 입력해주세요.';
@@ -156,7 +172,6 @@ const Signup = () => {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
-      // 가장 첫 번째 에러가 있는 위치로 스크롤하거나 알림을 줄 수 있음
       return;
     }
 
@@ -165,7 +180,6 @@ const Signup = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFF] flex items-center justify-center p-4 md:p-8">
-      {/* Container: 90% width, mostly white for a clean look */}
       <div className="w-[90%] max-w-[1400px] min-h-[85vh] bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col md:flex-row relative border border-[#F0F4FF]">
         
         {/* Mobile Top Navigation */}
@@ -197,14 +211,12 @@ const Signup = () => {
               </p>
             </div>
             
-            {/* Visual element: larger image without white background */}
             <div className="relative w-full flex items-center justify-center group transition-all duration-500">
               <img src={Signup_pic} className="w-full h-auto transform transition-transform" alt="Signup Visual" />
             </div>
           </div>
         </div>
 
-        {/* Right Side: Clean Form */}
         <div className="w-full md:w-[60%] flex flex-col h-full bg-white overflow-y-auto custom-scrollbar">
           <div className="p-5 pb-32 md:p-12 lg:p-16 max-w-xl mx-auto w-full">
             
@@ -212,7 +224,7 @@ const Signup = () => {
               {/* Profile Section */}
               <div className="flex flex-col items-center space-y-3 mb-6 md:mb-10">
                 <div className="relative">
-                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border border-gray-100 bg-[#F0F4FF] flex items-center justify-center overflow-hidden shadow-sm">
+                  <div className={`w-24 h-24 md:w-32 md:h-32 rounded-full border ${errors.profileImage ? 'border-red-500' : 'border-gray-100'} bg-[#F0F4FF] flex items-center justify-center overflow-hidden shadow-sm`}>
                     {profileImage ? (
                       <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
@@ -232,6 +244,7 @@ const Signup = () => {
                   </button>
                 </div>
                 <p className="text-xs md:text-sm font-medium text-gray-400">프로필 이미지 등록</p>
+                {errors.profileImage && <p className="text-red-500 text-xs font-medium">{errors.profileImage}</p>}
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -241,7 +254,6 @@ const Signup = () => {
                 />
               </div>
 
-              {/* Form Fields: White BG with subtle border for a cleaner look */}
               <div className="grid grid-cols-1 gap-4 md:gap-6">
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-1.5 md:mb-2 ml-1">이름</label>
@@ -282,12 +294,15 @@ const Signup = () => {
                     />
                     <button
                       type="button"
+                      onClick={handleDuplCheck}
                       className="px-4 md:px-6 py-3 md:py-4 bg-[#F0F4FF] text-[#3530B8] rounded-xl md:rounded-2xl text-sm font-bold hover:bg-[#DDE8FF] transition-all whitespace-nowrap"
                     >
                       중복확인
                     </button>
                   </div>
                   {errors.id && <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.id}</p>}
+                  {errors.idCheck && <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.idCheck}</p>}
+                  {isIdChecked && !errors.idCheck && <p className="text-green-500 text-xs mt-1 ml-1 font-medium">사용 가능한 아이디입니다.</p>}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
