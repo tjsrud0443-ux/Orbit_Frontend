@@ -8,6 +8,7 @@ const Login = () => {
   const navi = useNavigate();
   const [login, setLogin] = useState({ id: "", pw: "" });
   const [error, setError] = useState({ id: false, pw: false });
+  const [loginError, setLoginError] = useState("");
   const loginSuccess = useAuthStore(state => state.login);
 
   const handleChange = (e) => {
@@ -27,9 +28,12 @@ const Login = () => {
       return;
     }
 
+
     loginRequest(login).then(resp => {
       loginSuccess(resp.data)
       navi("/main");
+    }).catch(error => {
+      setLoginError("계정 정보가 일치하지 않습니다. 다시 시도해 주세요.");
     })
   };
 
@@ -43,7 +47,7 @@ const Login = () => {
           {/* Logo Section */}
           <div className="flex items-center space-x-2">
 
-            <span className="text-xl md:text-2xl font-extrabold text-[#3530B8] tracking-tight">Orbit</span>
+            <span className="text-2xl md:text-3xl font-extrabold text-[#3530B8] tracking-tight">Orbit</span>
           </div>
 
           {/* Illustration Placeholder */}
@@ -64,7 +68,7 @@ const Login = () => {
           <div className="space-y-3 md:space-y-6">
             {/* ID Input */}
             <div className="space-y-1 md:space-y-2">
-              <label className="text-xs md:text-sm font-semibold text-gray-600 ml-1">ID</label>
+              <label className="text-xs md:text-sm font-bold text-gray-600 ml-1">ID</label>
               <input
                 type="text"
                 name="id"
@@ -79,35 +83,45 @@ const Login = () => {
 
             {/* Password Input */}
             <div className="space-y-1 md:space-y-2 relative">
-              <label className="text-xs md:text-sm font-semibold text-gray-600 ml-1">Password</label>
+              <label className="text-xs md:text-sm font-bold text-gray-600 ml-1">Password</label>
               <input
                 type="password"
                 name="pw"
                 value={login.pw}
                 onChange={handleChange}
-                placeholder="••••••••"
+                placeholder="비밀번호를 입력하세요"
                 className={`w-full px-4 py-2 md:py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3530B8] focus:border-transparent transition-all placeholder:text-gray-300"
                 ${error.pw ? `border-red-400 bg-red-50` : `border-gray-200 focus:border-blue-400`}  `}
               />
               {error.pw && <p className="text-red-500 text-sm ml-1 mt-1">Password를 입력해 주세요.</p>}
-              <div className="flex justify-end mt-1">
+              
+              <div className="flex justify-end mt-1 gap-1">
                 <Link
-                  to="/findAccount"
+                  to="/findId"
                   className="text-[10px] md:text-xs text-[#3530B8] hover:underline transition-all"
                 >
-                  아이디 / 비밀번호 찾기
+                  아이디 찾기
+                </Link>
+                <div className="text-[10px] md:text-xs text-[#3530B8] hover:underline transition-all">/</div>
+                <Link
+                  to="/findPw"
+                  className="text-[10px] md:text-xs text-[#3530B8] hover:underline transition-all"
+                >
+                  비밀번호 찾기
                 </Link>
               </div>
+              {loginError && <p className="text-red-500 text-sm mt-2 text-center"> {loginError} </p>}
             </div>
 
             {/* Login Button */}
+            
             <button
               onClick={handleLogin}
               className="w-full bg-[#3530B8] hover:bg-[#28248a] text-white font-bold py-2.5 md:py-3.5 rounded-xl shadow-lg shadow-[#3530B8]/20 transition-all active:scale-[0.98] mt-2 md:mt-4"
             >
               Login
             </button>
-          </div>
+            </div>
 
           {/* Signup Link */}
           <div className="mt-4 md:mt-8 text-center text-xs md:text-sm text-gray-500">
