@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './domains/auth/Login';
 import Signup from './domains/auth/Signup';
 import Calendar from './domains/schedules/Calendar';
+import Departments from './domains/departments/Departments';
 import './App.css';
 
 function App() {
@@ -18,6 +19,8 @@ function App() {
         {/*Calendar*/}
         <Route path="/calendar" element={<Calendar/>}/>
 
+        {/*Departments*/}
+        <Route path="/departments" element={<Departments />} />
       </Routes>
     </Router>
   );
