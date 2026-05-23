@@ -22,6 +22,7 @@ const Signup = () => {
 
   const [profileImage, setProfileImage] = useState(null);
   const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,6 +30,13 @@ const Signup = () => {
       ...prev,
       [name]: value,
     }));
+    // 입력 시 해당 필드의 에러 메시지 제거
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: '',
+      }));
+    }
   };
 
   const handleImageChange = (e) => {
@@ -51,6 +59,12 @@ const Signup = () => {
             zonecode: data.zonecode,
             address1: data.roadAddress,
           }));
+          
+          setErrors((prev) => ({
+            ...prev,
+            zonecode: '',
+            address1: '',
+          }));
 
           setIsPostcodeOpen(false);
         },
@@ -63,11 +77,89 @@ const Signup = () => {
   };
 
   const handleBack = () => {
-    navigate(-1);
+    navigate("/");
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const validateSsn = (ssn) => {
+    const yy = ssn.substring(0, 2);
+    const mm = ssn.substring(2, 4);
+    const dd = ssn.substring(4, 6);
+
+    const genderCode = ssn[7];
+
+    let fullYear = '';
+
+    if (genderCode === '1' || genderCode === '2') {
+      fullYear = '19' + yy;
+    } else if (genderCode === '3' || genderCode === '4') {
+      fullYear = '20' + yy;
+    } else {
+      return false;
+    }
+
+    const birthDate = new Date(`${fullYear}-${mm}-${dd}`);
+
+    return (
+      birthDate.getFullYear() === Number(fullYear) &&
+      birthDate.getMonth() + 1 === Number(mm) &&
+      birthDate.getDate() === Number(dd)
+    );
+  };
+
+  const phoneRegex = /^010-\d{4}-\d{4}$/;
+  const idRegex = /^[A-Za-z\d_]{5,20}$/;
+  const pwRegex = /^[A-Za-z\d!@#$%^&*]{8,20}$/;
+  const ssnRegex = /^(\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01]))-[1-4]\d{6}$/;
+  const emailRegex = /^[A-Za-z0-9._%+-]+@[a-z]+\.[a-z]+\.*[a-z]*$/;
+
+  const handleSubmit = () => {
+    const newErrors = {};
+    if (!formData.name) {
+      newErrors.name = '이름을 입력해주세요.';
+    }
+    if (!formData.phone) {
+      newErrors.phone = '전화번호를 입력해주세요.';
+    }else if(!phoneRegex.test(formData.phone)){
+      newErrors.phone = '010-0000-0000 형식으로 입력해주세요.';
+    }
+    if (!formData.id) {
+      newErrors.id = '아이디를 입력해주세요.';
+    }else if(!idRegex.test(formData.id)){
+      newErrors.id = '영문 대/소문자와 _로 5~20자 입력 가능합니다.';
+    }
+    if (!formData.pw) {
+      newErrors.pw = '비밀번호를 입력해주세요.';
+    }else if(!pwRegex.test(formData.pw)){
+      newErrors.pw = '영문 대/소문자와 특수문자(!@#$%^&*)로 8~20자 입력 가능합니다.';
+    }
+    if (!formData.confirmPw) {
+      newErrors.confirmPw = '비밀번호를 한 번 더 입력해주세요.';
+    }else if(formData.pw !== formData.confirmPw){
+      newErrors.confirmPw = '비밀번호가 일치하지 않습니다.';
+    }
+    if (!formData.ssn) {
+      newErrors.ssn = '주민등록번호를 입력해주세요.';
+    }else if(!ssnRegex.test(formData.ssn)){
+      newErrors.ssn = '앞자리(6자)-뒷자리(7자) 모두 입력해주세요.';
+    }else if(!validateSsn(formData.ssn)){
+      newErrors.ssn = '존재하지 않는 날짜입니다.';
+    }
+    if (!formData.zonecode) newErrors.zonecode = '찾기 버튼을 눌러 주소를 입력해주세요.';
+    if (!formData.address1) newErrors.address1 = '찾기 버튼을 눌러 주소를 입력해주세요.';
+    if (!formData.address2) newErrors.address2 = '상세주소를 입력해주세요.';
+    if (!formData.email) {
+      newErrors.email = '이메일 주소를 입력해주세요.';
+    }else if(!emailRegex.test(formData.email)){
+      newErrors.email = 'example@email.com(또는 co.kr) 등 알맞은 형식으로 입력해주세요.';
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      // 가장 첫 번째 에러가 있는 위치로 스크롤하거나 알림을 줄 수 있음
+      return;
+    }
+
     console.log('회원가입 데이터:', formData);
   };
 
@@ -159,9 +251,9 @@ const Signup = () => {
                     value={formData.name}
                     onChange={handleChange}
                     placeholder="이름을 입력하세요"
-                    className="w-full px-4 md:px-5 py-3 md:py-4 bg-white border border-gray-200 rounded-xl md:rounded-2xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-gray-700 shadow-sm"
-                    required
+                    className={`w-full px-4 md:px-5 py-3 md:py-4 bg-white border ${errors.name ? 'border-red-500' : 'border-gray-200'} rounded-xl md:rounded-2xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-gray-700 shadow-sm`}
                   />
+                  {errors.name && <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.name}</p>}
                 </div>
 
                 <div>
@@ -172,9 +264,9 @@ const Signup = () => {
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder="010-0000-0000"
-                    className="w-full px-4 md:px-5 py-3 md:py-4 bg-white border border-gray-200 rounded-xl md:rounded-2xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-gray-700 shadow-sm"
-                    required
+                    className={`w-full px-4 md:px-5 py-3 md:py-4 bg-white border ${errors.phone ? 'border-red-500' : 'border-gray-200'} rounded-xl md:rounded-2xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-gray-700 shadow-sm`}
                   />
+                  {errors.phone && <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.phone}</p>}
                 </div>
 
                 <div>
@@ -186,8 +278,7 @@ const Signup = () => {
                       value={formData.id}
                       onChange={handleChange}
                       placeholder="아이디"
-                      className="flex-1 px-4 md:px-5 py-3 md:py-4 bg-white border border-gray-200 rounded-xl md:rounded-2xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-gray-700 shadow-sm"
-                      required
+                      className={`flex-1 px-4 md:px-5 py-3 md:py-4 bg-white border ${errors.id ? 'border-red-500' : 'border-gray-200'} rounded-xl md:rounded-2xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-gray-700 shadow-sm`}
                     />
                     <button
                       type="button"
@@ -196,6 +287,7 @@ const Signup = () => {
                       중복확인
                     </button>
                   </div>
+                  {errors.id && <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.id}</p>}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
@@ -207,9 +299,9 @@ const Signup = () => {
                       value={formData.pw}
                       onChange={handleChange}
                       placeholder="비밀번호"
-                      className="w-full px-4 md:px-5 py-3 md:py-4 bg-white border border-gray-200 rounded-xl md:rounded-2xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-gray-700 shadow-sm"
-                      required
+                      className={`w-full px-4 md:px-5 py-3 md:py-4 bg-white border ${errors.pw ? 'border-red-500' : 'border-gray-200'} rounded-xl md:rounded-2xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-gray-700 shadow-sm`}
                     />
+                    {errors.pw && <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.pw}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1.5 md:mb-2 ml-1">비밀번호 확인</label>
@@ -219,23 +311,23 @@ const Signup = () => {
                       value={formData.confirmPw}
                       onChange={handleChange}
                       placeholder="비밀번호 확인"
-                      className="w-full px-4 md:px-5 py-3 md:py-4 bg-white border border-gray-200 rounded-xl md:rounded-2xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-gray-700 shadow-sm"
-                      required
+                      className={`w-full px-4 md:px-5 py-3 md:py-4 bg-white border ${errors.confirmPw ? 'border-red-500' : 'border-gray-200'} rounded-xl md:rounded-2xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-gray-700 shadow-sm`}
                     />
+                    {errors.confirmPw && <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.confirmPw}</p>}
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-1.5 md:mb-2 ml-1">주민등록번호</label>
                   <input
-                    type="text"
+                    type="tel"
                     name="ssn"
                     value={formData.ssn}
                     onChange={handleChange}
                     placeholder="000000-0000000"
-                    className="w-full px-4 md:px-5 py-3 md:py-4 bg-white border border-gray-200 rounded-xl md:rounded-2xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-gray-700 shadow-sm"
-                    required
+                    className={`w-full px-4 md:px-5 py-3 md:py-4 bg-white border ${errors.ssn ? 'border-red-500' : 'border-gray-200'} rounded-xl md:rounded-2xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-gray-700 shadow-sm`}
                   />
+                  {errors.ssn && <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.ssn}</p>}
                 </div>
 
                 <div>
@@ -247,7 +339,7 @@ const Signup = () => {
                       value={formData.zonecode}
                       onChange={handleChange}
                       placeholder="우편번호"
-                      className="flex-1 px-4 md:px-5 py-3 md:py-4 bg-[#F5F8FF] border border-gray-200 rounded-xl md:rounded-2xl outline-none text-gray-500 shadow-inner"
+                      className={`flex-1 px-4 md:px-5 py-3 md:py-4 bg-[#F5F8FF] border ${errors.zonecode ? 'border-red-500' : 'border-gray-200'} rounded-xl md:rounded-2xl outline-none text-gray-500 shadow-inner`}
                       readOnly
                     />
                     <button
@@ -258,6 +350,7 @@ const Signup = () => {
                       찾기
                     </button>
                   </div>
+                  {errors.zonecode && <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.zonecode}</p>}
                 </div>
 
                 <div>
@@ -268,9 +361,10 @@ const Signup = () => {
                     value={formData.address1}
                     onChange={handleChange}
                     placeholder="주소찾기를 이용해주세요"
-                    className="w-full px-4 md:px-5 py-3 md:py-4 bg-[#F5F8FF] border border-gray-200 rounded-xl md:rounded-2xl outline-none text-gray-500 shadow-inner"
+                    className={`w-full px-4 md:px-5 py-3 md:py-4 bg-[#F5F8FF] border ${errors.address1 ? 'border-red-500' : 'border-gray-200'} rounded-xl md:rounded-2xl outline-none text-gray-500 shadow-inner`}
                     readOnly
                   />
+                  {errors.address1 && <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.address1}</p>}
                 </div>
 
                 <div>
@@ -281,8 +375,9 @@ const Signup = () => {
                     value={formData.address2}
                     onChange={handleChange}
                     placeholder="상세주소를 입력하세요"
-                    className="w-full px-4 md:px-5 py-3 md:py-4 bg-white border border-gray-200 rounded-xl md:rounded-2xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-gray-700 shadow-sm"
+                    className={`w-full px-4 md:px-5 py-3 md:py-4 bg-white border ${errors.address2 ? 'border-red-500' : 'border-gray-200'} rounded-xl md:rounded-2xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-gray-700 shadow-sm`}
                   />
+                  {errors.address2 && <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.address2}</p>}
                 </div>
 
                 <div>
@@ -293,9 +388,9 @@ const Signup = () => {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="example@email.com"
-                    className="w-full px-4 md:px-5 py-3 md:py-4 bg-white border border-gray-200 rounded-xl md:rounded-2xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-gray-700 shadow-sm"
-                    required
+                    className={`w-full px-4 md:px-5 py-3 md:py-4 bg-white border ${errors.email ? 'border-red-500' : 'border-gray-200'} rounded-xl md:rounded-2xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-gray-700 shadow-sm`}
                   />
+                  {errors.email && <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.email}</p>}
                 </div>
               </div>
 
@@ -335,13 +430,13 @@ const Signup = () => {
       {isPostcodeOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
           
-          <div className="relative bg-white w-full max-w-[500px] h-[500px] rounded-2xl overflow-hidden">
+          <div className="relative bg-white w-full max-w-[500px] h-[500px] rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
             
             {/* 닫기 버튼 */}
             <button
               type="button"
               onClick={() => setIsPostcodeOpen(false)}
-              className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white border border-gray-200 shadow"
+              className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white border border-gray-200 shadow flex items-center justify-center text-gray-500 hover:bg-gray-50"
             >
               ✕
             </button>
