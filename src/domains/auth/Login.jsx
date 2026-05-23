@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Login_logo from '../../assets/Login_logo.png'
 import useAuthStore from '../../store/authStore';
+import { loginRequest } from './authApi';
 
 const Login = () => {
+  const navi = useNavigate();
   const [login, setLogin] = useState({ id: "", pw: "" });
   const [error, setError] = useState({ id: false, pw: false });
   const loginSuccess = useAuthStore(state => state.login);
@@ -25,9 +27,9 @@ const Login = () => {
       return;
     }
 
-    login(login).then(resp => {
+    loginRequest(login).then(resp => {
       loginSuccess(resp.data)
-      alert("로그인 성공");
+      navi("/main");
     })
   };
 

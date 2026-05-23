@@ -1,3 +1,3 @@
 ﻿import { maxios } from "../../api/axiosConfig";
 
-export const login = (login) => maxios.post("/auth/login", login);
+export const loginRequest = (login) => maxios.post("/auth/login", login);
