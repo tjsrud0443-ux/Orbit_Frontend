@@ -1,10 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Signup_pic from '../../assets/Signup_pic.png';
 
 const Signup = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const postcodeRef = useRef(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -20,6 +21,7 @@ const Signup = () => {
   });
 
   const [profileImage, setProfileImage] = useState(null);
+  const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,6 +40,26 @@ const Signup = () => {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  useEffect(() => {
+    if (isPostcodeOpen) {
+      new window.kakao.Postcode({
+        oncomplete: function (data) {
+          setFormData((prev) => ({
+            ...prev,
+            zonecode: data.zonecode,
+            address1: data.roadAddress,
+          }));
+
+          setIsPostcodeOpen(false);
+        },
+      }).embed(postcodeRef.current);
+    }
+  }, [isPostcodeOpen]);
+
+  const handleSearch = () => {
+    setIsPostcodeOpen(true);
   };
 
   const handleBack = () => {
@@ -77,7 +99,7 @@ const Signup = () => {
                 Join <br /> 
                 <span className="text-gray-900">Orbit Workspace</span>
               </h1>
-              <p className="mt-6 text-gray-700 text-lg leading-relaxed">
+              <p className="mt-6 text-gray-700 text-lg font-bold leading-relaxed">
                 가장 효율적인 협업의 시작, <br />
                 Orbit 워크스페이스와 함께 하세요.
               </p>
@@ -85,7 +107,7 @@ const Signup = () => {
             
             {/* Visual element: larger image without white background */}
             <div className="relative w-full flex items-center justify-center group transition-all duration-500">
-              <img src={Signup_pic} className="w-full h-auto transform transition-transform group-hover:scale-105" alt="Signup Visual" />
+              <img src={Signup_pic} className="w-full h-auto transform transition-transform" alt="Signup Visual" />
             </div>
           </div>
         </div>
@@ -94,7 +116,7 @@ const Signup = () => {
         <div className="w-full md:w-[60%] flex flex-col h-full bg-white overflow-y-auto custom-scrollbar">
           <div className="p-5 pb-32 md:p-12 lg:p-16 max-w-xl mx-auto w-full">
             
-            <form onSubmit={handleSubmit} className="space-y-5 md:space-y-8">
+            <div className="space-y-5 md:space-y-8">
               {/* Profile Section */}
               <div className="flex flex-col items-center space-y-3 mb-6 md:mb-10">
                 <div className="relative">
@@ -231,6 +253,7 @@ const Signup = () => {
                     <button
                       type="button"
                       className="px-4 md:px-6 py-3 md:py-4 bg-[#F0F4FF] text-[#3530B8] rounded-xl md:rounded-2xl text-sm font-bold hover:bg-[#DDE8FF] transition-all"
+                      onClick={handleSearch}
                     >
                       찾기
                     </button>
@@ -286,13 +309,14 @@ const Signup = () => {
                   뒤로가기
                 </button>
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleSubmit}
                   className="flex-[2] px-6 py-5 bg-[#3530B8] text-white rounded-2xl font-bold hover:bg-[#363091] shadow-xl shadow-[#3530B8]/20 transition-all transform hover:-translate-y-1 active:scale-[0.98]"
                 >
                   회원가입
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
 
@@ -307,6 +331,31 @@ const Signup = () => {
         </div>
       </div>
       
+      {/* 우편번호 검색 모달 */}
+      {isPostcodeOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          
+          <div className="relative bg-white w-full max-w-[500px] h-[500px] rounded-2xl overflow-hidden">
+            
+            {/* 닫기 버튼 */}
+            <button
+              type="button"
+              onClick={() => setIsPostcodeOpen(false)}
+              className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white border border-gray-200 shadow"
+            >
+              ✕
+            </button>
+
+            {/* 카카오 주소검색 들어가는 div */}
+            <div
+              ref={postcodeRef}
+              className="w-full h-full"
+            ></div>
+
+          </div>
+        </div>
+      )}
+
       <style dangerouslySetInnerHTML={{ __html: `
         .custom-scrollbar::-webkit-scrollbar {
           width: 5px;
