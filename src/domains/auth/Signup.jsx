@@ -109,7 +109,7 @@ const Signup = () => {
   const phoneRegex = /^010-\d{4}-\d{4}$/;
   const idRegex = /^[A-Za-z\d_]{5,20}$/;
   const pwRegex = /^[A-Za-z\d!@#$%^&*]{8,20}$/;
-  const ssnRegex = /^(\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01]))-[1-4]\d{6}$/;
+  const ssnRegex = /^\d{6}-\d{7}$/;
   const emailRegex = /^[A-Za-z0-9._%+-]+@[a-z]+\.[a-z]+\.*[a-z]*$/;
 
   const handleSubmit = () => {
