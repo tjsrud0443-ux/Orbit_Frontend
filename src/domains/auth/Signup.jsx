@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Signup_pic from '../../assets/Signup_pic.png';
-import { duplCheck } from './authApi';
+import { duplCheck, signupRequest } from './authApi';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -21,7 +21,8 @@ const Signup = () => {
     email: '',
   });
 
-  const [profileImage, setProfileImage] = useState(null);
+  const [profileImage, setProfileImage] = useState(null); // 미리보기용
+  const [profileImgFile, setProfileImgFile] = useState(null); // 실제 파일 객체
   const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
   const [isIdChecked, setIsIdChecked] = useState(false);
   const [errors, setErrors] = useState({});
@@ -48,6 +49,8 @@ const Signup = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setProfileImgFile(file);
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setProfileImage(reader.result);
@@ -184,6 +187,20 @@ const Signup = () => {
     if (Object.keys(newErrors).length > 0) {
       return;
     }
+
+    const data = new FormData();
+
+    data.append(
+      'input',
+      new Blob([JSON.stringify(formData)], { type: 'application/json' })
+    )
+    if (profileImgFile) {
+      data.append('file', profileImgFile);
+    }
+
+    signupRequest(data).then(resp => {
+      navigate("/main");
+    })
   };
 
   return (
