@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Login_logo from '../../assets/Login_logo.png'
+import useAuthStore from '../../store/authStore';
 
 const Login = () => {
   const [login, setLogin] = useState({ id: "", pw: "" });
   const [error, setError] = useState({ id: false, pw: false });
+  const loginSuccess = useAuthStore(state => state.login);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -23,7 +25,10 @@ const Login = () => {
       return;
     }
 
-
+    login(login).then(resp => {
+      loginSuccess(resp.data)
+      alert("로그인 성공");
+    })
   };
 
   return (

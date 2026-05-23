@@ -1,2 +1,3 @@
-﻿// authApi API or configuration
-export const authApi = {};
+﻿import { maxios } from "../../api/axiosConfig";
+
+export const login = (login) => maxios.post("/auth/login", login);
