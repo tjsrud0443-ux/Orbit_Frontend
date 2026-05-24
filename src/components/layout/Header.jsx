@@ -4,7 +4,7 @@ import { faBell } from '@fortawesome/free-regular-svg-icons';
 
 const Header = ({ onMenuClick }) => {
   return (
-    <header className="h-14 bg-white border-b border-slate-200 flex items-center
+     <header className="h-14 bg-white border-b border-slate-200 flex items-center
       justify-between lg:justify-end px-4 lg:px-6 shrink-0">
 
       <button

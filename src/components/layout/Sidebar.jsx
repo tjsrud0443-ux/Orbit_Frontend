@@ -1,6 +1,8 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import OrbitLogo from '../../assets/Orbit_Logo.png';
+import OrbitTitle from '../../assets/Orbit_title.png';
 import {
   faHouse, faFolderOpen, faCalendar,
   faFileLines, faComments
@@ -53,23 +55,18 @@ const Sidebar = ({ isOpen, onClose }) => {
         />
       )}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-56 bg-white border-r border-slate-200
-        flex flex-col p-4 shrink-0 h-full transition-transform duration-300
+        fixed inset-y-0 left-0 z-50 w-56 bg-[#F8FAFC] border-r border-slate-200
+        flex flex-col py-4 pl-3 pr-4 shrink-0 h-full transition-transform duration-300
         lg:relative lg:translate-x-0
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="flex flex-col h-full overflow-hidden">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2.5 px-2 py-2">
-              <div className="w-8 h-8 bg-[#3530B8] rounded-md flex items-center justify-center font-black text-white text-sm">M</div>
-              <span className="text-lg font-bold text-slate-900 tracking-tight">Orbit</span>
+          <div className="relative flex items-center justify-start mb-1 py-2 pl-1">
+            <div className="flex items-center gap-2">
+              <img src={OrbitLogo} alt="Orbit Logo" className="w-12 h-12 object-contain" />
+              <img src={OrbitTitle} alt="Orbit" className="h-6 object-contain mt-1" />
             </div>
-            <button
-              className="p-2 lg:hidden text-slate-400 hover:text-slate-800"
-              onClick={onClose}
-            >✕</button>
           </div>
-
           <nav className="space-y-1 flex-1 overflow-y-auto pr-1">
             {menuItems.map((item, idx) => {
               if (item.subItems) {
@@ -81,8 +78,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                       className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm transition-all w-full
                         ${isSubItemActive
                           ? 'bg-[#DDE8FF] text-[#3530B8] font-bold'
-                          : 'text-slate-600 hover:bg-[#DDE8FF] hover:text-[#3530B8] font-semibold'}`}
-                    >
+                          : 'text-slate-600 hover:bg-[#DDE8FF] hover:text-[#3530B8] font-semibold'}`}>
                       <div className="flex items-center gap-3">
                         <FontAwesomeIcon icon={item.icon} className="w-4 h-4" />
                         <span>{item.name}</span>
@@ -101,8 +97,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                               className={`block py-1.5 text-xs transition-all
                                 ${isCurrent
                                   ? 'text-[#3530B8] font-bold'
-                                  : 'text-slate-500 hover:text-[#3530B8] font-medium'}`}
-                            >
+                                  : 'text-slate-500 hover:text-[#3530B8] font-medium'}`}>
                               {sub.name}
                             </Link>
                           );
@@ -122,8 +117,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all
                     ${isCurrent
                       ? 'bg-[#DDE8FF] text-[#3530B8] font-bold'
-                      : 'text-slate-600 hover:bg-[#DDE8FF] hover:text-[#3530B8] font-semibold'}`}
-                >
+                      : 'text-slate-600 hover:bg-[#DDE8FF] hover:text-[#3530B8] font-semibold'}`}>
                   <FontAwesomeIcon icon={item.icon} className="w-4 h-4" />
                   <span>{item.name}</span>
                 </Link>
@@ -133,8 +127,9 @@ const Sidebar = ({ isOpen, onClose }) => {
 
           <div className="mt-3 pt-3 border-t border-slate-100 shrink-0">
             <button className="flex items-center justify-center gap-2 w-full px-2 py-2
-              text-xs font-medium text-slate-400 hover:text-red-500 transition-colors
-              cursor-pointer border border-slate-200 rounded-lg bg-white">
+              text-xs font-medium text-slate-400 hover:text-[#3530B8] hover:border-[#3530B8] 
+              active:text-[#3530B8] active:border-[#3530B8] active:bg-[#DDE8FF] transition-colors
+              cursor-pointer border border-slate-200 rounded-lg bg-transparent">
               로그아웃
             </button>
           </div>
