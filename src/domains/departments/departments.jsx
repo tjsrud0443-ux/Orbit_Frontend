@@ -50,16 +50,16 @@ const OrgNode = ({ node, isChild = false }) => {
   const profileImg = displayNode.sysname || displayNode.sysName;
 
   return (
-    <div className="flex flex-col items-center relative">
+    <div className="flex flex-col items-center relative scale-[0.85] lg:scale-[0.9] origin-top">
       {/* Node Card */}
       <div className={`
-        relative z-10 flex items-center p-2.5 px-3 min-w-[150px] rounded-xl border-2 transition-all gap-2
+        relative z-10 flex items-center p-1 px-2 min-w-[110px] lg:min-w-[120px] rounded-lg border-2 transition-all gap-1.5
         ${isRoot
-          ? 'bg-[#3530B8] border-[#3530B8] text-white shadow-xl scale-110'
+          ? 'bg-[#3530B8] border-[#3530B8] text-white shadow-lg scale-105'
           : 'bg-white border-[#DDE8FF] text-gray-800 shadow-sm hover:border-[#3530B8]'}
       `}>
         <div className={`
-          w-9 h-9 rounded-full flex items-center justify-center shrink-0 overflow-hidden
+          w-6 h-6 lg:w-7 lg:h-7 rounded-full flex items-center justify-center shrink-0 overflow-hidden
           ${isRoot ? 'bg-white/20 text-white' : 'bg-[#F0F4FF] text-[#3530B8]'}
         `}>
           {profileImg ? (
@@ -71,18 +71,18 @@ const OrgNode = ({ node, isChild = false }) => {
           ) : (
             <FontAwesomeIcon 
               icon={isRoot && !isMember && !node.members?.length ? faBuilding : (isMember || displayNode.id ? faUser : faUsers)} 
-              className="text-sm" 
+              className="text-[9px] lg:text-[10px]" 
             />
           )}
         </div>
         <div className="text-left">
-          <p className={`text-[10px] opacity-70 mb-0.5 ${isRoot ? 'text-white' : 'text-[#3530B8] font-bold'}`}>
+          <p className={`text-[6px] lg:text-[7px] opacity-70 mb-0 ${isRoot ? 'text-white' : 'text-[#3530B8] font-bold'}`}>
             {displayNode.deptName}
           </p>
-          <p className="text-xs font-extrabold leading-tight">
+          <p className="text-[8px] lg:text-[9px] font-extrabold leading-tight">
             {displayNode.name || (isRoot && !displayNode.id ? '본사' : '')}
           </p>
-          <p className={`text-[9px] mt-0.5 ${isRoot ? 'text-white/60' : 'text-gray-400'}`}>
+          <p className={`text-[6px] lg:text-[7px] mt-0 ${isRoot ? 'text-white/60' : 'text-gray-400'}`}>
             {displayNode.position || (displayNode.name ? '-' : '')}
           </p>
         </div>
@@ -96,7 +96,7 @@ const OrgNode = ({ node, isChild = false }) => {
             <div className="flex flex-col items-center">
               {subMembers.map((member) => (
                 <div key={member.id} className="flex flex-col items-center">
-                  <div className="w-0.5 h-8 bg-[#DDE8FF]" />
+                  <div className="w-0.5 h-3 lg:h-4 bg-[#DDE8FF]" />
                   <OrgNode 
                     node={{
                       ...member,
@@ -115,11 +115,11 @@ const OrgNode = ({ node, isChild = false }) => {
           {subDepts.length > 0 && (
             <div className="flex flex-col items-center w-full">
               {/* Line down from parent to the branch */}
-              <div className="w-0.5 h-8 bg-[#DDE8FF]" />
+              <div className="w-0.5 h-3 lg:h-4 bg-[#DDE8FF]" />
               
               <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center">
                 {subDepts.map((child, idx) => (
-                  <div key={child.deptSeq} className="relative flex flex-col items-center lg:px-4">
+                  <div key={child.deptSeq} className="relative flex flex-col items-center lg:px-1">
                     {/* Horizontal Connector Line (Desktop Only) */}
                     {subDepts.length > 1 && (
                       <div className={`hidden lg:block absolute top-0 h-0.5 bg-[#DDE8FF] 
@@ -128,7 +128,7 @@ const OrgNode = ({ node, isChild = false }) => {
                     )}
                     
                     {/* Vertical Connector down to node */}
-                    <div className="w-0.5 h-8 bg-[#DDE8FF] relative z-10" />
+                    <div className="w-0.5 h-3 lg:h-4 bg-[#DDE8FF] relative z-10" />
                     
                     <OrgNode node={child} isChild={true} />
                   </div>
@@ -365,86 +365,61 @@ const Departments = () => {
   return (
     <div className="flex h-full bg-[#F8FAFC] font-sans overflow-hidden relative">
 
-      {/* 1. Mobile Sidebar Backdrop */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* 2. Left Sidebar */}
+      {/* 1. Sidebar (Inline Toggle) */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 flex flex-col shrink-0 transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
-        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        bg-white border-r border-gray-200 flex flex-col shrink-0 transition-all duration-300 ease-in-out overflow-hidden
+        ${isSidebarOpen ? 'w-64' : 'w-0'}
       `}>
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-            <FontAwesomeIcon icon={faSitemap} className="text-[#3530B8]" />
-            조직 구조
-          </h2>
-          <button
-            onClick={() => setIsSidebarOpen(false)}
-            className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
-          >
-            <FontAwesomeIcon icon={faTimes} />
-          </button>
-        </div>
-
-        <div className="p-6 pt-4 hidden lg:block">
-          <div className="relative">
-            <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
-            <input
-              type="text"
-              placeholder="부서/이름 검색"
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20 transition-all"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+        <div className="w-64 flex flex-col h-full"> {/* Fixed width inner container for smooth transition */}
+          <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
+            <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+              <FontAwesomeIcon icon={faSitemap} className="text-[#3530B8]" />
+              조직 구조
+            </h2>
+            <button
+              onClick={() => setIsSidebarOpen(false)}
+              className="p-2 text-gray-400 hover:text-gray-600"
+            >
+              <FontAwesomeIcon icon={faTimes} />
+            </button>
           </div>
-        </div>
 
-        <nav className="flex-1 overflow-y-auto p-3 pt-0 space-y-1">
-          <button
-            onClick={() => {
-              setSelectedDept('ALL');
-              setSearchTerm('');
-              setIsSidebarOpen(false);
-            }}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all mb-4 ${selectedDept === 'ALL' ? 'bg-[#3530B8] text-white font-bold shadow-md' : 'text-gray-600 hover:bg-gray-50'}`}
-          >
-            <FontAwesomeIcon icon={faLayerGroup} />
-            전체 조직도
-          </button>
-
-          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] px-3 mb-2">DEPARTMENTS</div>
-
-          {fullTree.root && (
-            <SidebarItem
-              node={fullTree.root}
-              selectedDept={selectedDept}
-              onSelect={(id) => {
-                setSelectedDept(id);
+          <nav className="flex-1 overflow-y-auto p-3 pt-4 space-y-1">
+            <button
+              onClick={() => {
+                setSelectedDept('ALL');
                 setSearchTerm('');
                 setIsSidebarOpen(false);
               }}
-              nodeMap={fullTree.nodeMap}
-            />
-          )}
-        </nav>
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all mb-4 ${selectedDept === 'ALL' ? 'bg-[#3530B8] text-white font-bold shadow-md' : 'text-gray-600 hover:bg-gray-50'}`}
+            >
+              <FontAwesomeIcon icon={faLayerGroup} />
+              전체 조직도
+            </button>
+
+            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] px-3 mb-2">DEPARTMENTS</div>
+
+            {fullTree.root && (
+              <SidebarItem
+                node={fullTree.root}
+                selectedDept={selectedDept}
+                onSelect={(id) => {
+                  setSelectedDept(id);
+                  setSearchTerm('');
+                  setIsSidebarOpen(false);
+                }}
+                nodeMap={fullTree.nodeMap}
+              />
+            )}
+          </nav>
+        </div>
       </aside>
 
-      {/* 3. Main Viewport */}
+      {/* 2. Main Viewport */}
       <main className="flex-1 flex flex-col overflow-hidden">
         <header className="h-16 bg-white border-b border-gray-200 px-4 lg:px-8 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4 text-sm w-full">
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="lg:hidden p-2 -ml-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <FontAwesomeIcon icon={faBars} />
-            </button>
-            <div className="flex items-center gap-2 flex-1 relative">
+            <div className="flex items-center gap-2 shrink-0">
               <span className="text-gray-400 hidden sm:inline">인사 관리</span>
               <FontAwesomeIcon icon={faChevronRight} className="text-gray-300 text-[10px] hidden sm:inline" />
               <span className="font-bold text-gray-700 shrink-0">
@@ -452,90 +427,115 @@ const Departments = () => {
                   ? `"${searchTerm}" 검색 결과` 
                   : (selectedDept === 'ALL' ? '전체 조직도' : currentDeptInfo?.deptName)}
               </span>
+            </div>
 
-              {/* Mobile Search Bar */}
-              <div className="lg:hidden flex-1 max-w-[200px] ml-4 relative">
-                <div className="relative">
-                  <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
-                  <input
-                    type="text"
-                    placeholder="이름/부서 검색"
-                    className="w-full pl-9 pr-4 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20"
-                    value={headerSearch}
-                    onChange={(e) => {
-                      setHeaderSearch(e.target.value);
-                      setIsHeaderSearchOpen(true);
-                    }}
-                    onFocus={() => setIsHeaderSearchOpen(true)}
-                  />
-                </div>
-                
-                {/* Dropdown Results */}
-                {isHeaderSearchOpen && headerSearch.trim() && (
-                  <>
-                    <div className="fixed inset-0 z-50" onClick={() => setIsHeaderSearchOpen(false)} />
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-[60] max-h-[350px] overflow-y-auto">
-                      
-                      {/* Department Results Section */}
-                      {headerResults.depts.length > 0 && (
-                        <div className="p-2 bg-gray-50/50 border-b border-gray-100">
-                          <p className="px-2 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">부서</p>
-                          {headerResults.depts.map((dept) => (
+            {/* Unified Search Bar */}
+            <div className="flex-1 max-w-[300px] ml-4 relative">
+              <div className="relative">
+                <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+                <input
+                  type="text"
+                  placeholder="이름/부서 검색"
+                  className="w-full pl-9 pr-4 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20"
+                  value={headerSearch}
+                  onChange={(e) => {
+                    setHeaderSearch(e.target.value);
+                    setIsHeaderSearchOpen(true);
+                  }}
+                  onFocus={() => setIsHeaderSearchOpen(true)}
+                />
+              </div>
+              
+              {/* Dropdown Results */}
+              {isHeaderSearchOpen && headerSearch.trim() && (
+                <>
+                  <div className="fixed inset-0 z-50" onClick={() => setIsHeaderSearchOpen(false)} />
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-[60] max-h-[350px] overflow-y-auto">
+                    
+                    {/* Department Results Section */}
+                    {headerResults.depts.length > 0 && (
+                      <div className="p-2 bg-gray-50/50 border-b border-gray-100">
+                        <p className="px-2 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">부서</p>
+                        {headerResults.depts.map((dept) => (
+                          <div 
+                            key={dept.deptSeq} 
+                            className="p-2 hover:bg-[#3530B8] hover:text-white rounded-lg flex items-center gap-3 cursor-pointer group transition-colors"
+                            onClick={() => {
+                              setSelectedDept(dept.deptSeq);
+                              setSearchTerm(''); // Show all members in dept
+                              setHeaderSearch('');
+                              setIsHeaderSearchOpen(false);
+                            }}
+                          >
+                            <FontAwesomeIcon icon={faUsers} className="text-[#3530B8] group-hover:text-white text-xs shrink-0" />
+                            <span className="text-xs font-bold truncate">{dept.deptName}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Employee Results Section */}
+                    <div className="p-2">
+                      {headerResults.employees.length > 0 ? (
+                        <>
+                          <p className="px-2 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">임직원</p>
+                          {headerResults.employees.map((emp) => (
                             <div 
-                              key={dept.deptSeq} 
-                              className="p-2 hover:bg-[#3530B8] hover:text-white rounded-lg flex items-center gap-3 cursor-pointer group transition-colors"
+                              key={emp.id} 
+                              className="p-2 hover:bg-gray-50 rounded-lg flex items-center gap-3 cursor-pointer"
                               onClick={() => {
-                                setSelectedDept(dept.deptSeq);
-                                setSearchTerm(''); // Show all members in dept
+                                setSelectedDept(emp.deptSeq);
+                                setSearchTerm(emp.name); // Isolate this person
                                 setHeaderSearch('');
                                 setIsHeaderSearchOpen(false);
                               }}
                             >
-                              <FontAwesomeIcon icon={faUsers} className="text-[#3530B8] group-hover:text-white text-xs shrink-0" />
-                              <span className="text-xs font-bold truncate">{dept.deptName}</span>
+                              <div className="w-8 h-8 rounded-full bg-[#DDE8FF] overflow-hidden shrink-0">
+                                <img 
+                                  src={`http://localhost/file/profile/view?sysname=${emp.sysname}&token=${token}`} 
+                                  className="w-full h-full object-cover" 
+                                  alt={emp.name} 
+                                />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-bold text-gray-800 truncate">{emp.name}</p>
+                                <p className="text-[10px] text-gray-500 truncate">{emp.deptName} · {emp.position}</p>
+                              </div>
                             </div>
                           ))}
-                        </div>
+                        </>
+                      ) : headerResults.depts.length === 0 && (
+                        <div className="p-4 text-center text-xs text-gray-400">결과가 없습니다.</div>
                       )}
-
-                      {/* Employee Results Section */}
-                      <div className="p-2">
-                        {headerResults.employees.length > 0 ? (
-                          <>
-                            <p className="px-2 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">임직원</p>
-                            {headerResults.employees.map((emp) => (
-                              <div 
-                                key={emp.id} 
-                                className="p-2 hover:bg-gray-50 rounded-lg flex items-center gap-3 cursor-pointer"
-                                onClick={() => {
-                                  setSelectedDept(emp.deptSeq);
-                                  setSearchTerm(emp.name); // Isolate this person
-                                  setHeaderSearch('');
-                                  setIsHeaderSearchOpen(false);
-                                }}
-                              >
-                                <div className="w-8 h-8 rounded-full bg-[#DDE8FF] overflow-hidden shrink-0">
-                                  <img 
-                                    src={`http://localhost/file/profile/view?sysname=${emp.sysname}&token=${token}`} 
-                                    className="w-full h-full object-cover" 
-                                    alt={emp.name} 
-                                  />
-                                </div>
-                                <div className="min-w-0">
-                                  <p className="text-xs font-bold text-gray-800 truncate">{emp.name}</p>
-                                  <p className="text-[10px] text-gray-500 truncate">{emp.deptName} · {emp.position}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </>
-                        ) : headerResults.depts.length === 0 && (
-                          <div className="p-4 text-center text-xs text-gray-400">결과가 없습니다.</div>
-                        )}
-                      </div>
                     </div>
-                  </>
-                )}
-              </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 ml-2 shrink-0">
+              {/* Back to Full Tree Button */}
+              <button
+                onClick={() => {
+                  setSelectedDept('ALL');
+                  setSearchTerm('');
+                  setHeaderSearch('');
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-600 hover:bg-[#3530B8] hover:text-white rounded-lg transition-all text-xs font-bold"
+                title="전체 조직도 보기"
+              >
+                <FontAwesomeIcon icon={faLayerGroup} />
+                <span className="hidden sm:inline">전체 조직도</span>
+              </button>
+
+              {/* Sidebar Toggle Button */}
+              <button
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-[#F0F4FF] text-[#3530B8] hover:bg-[#3530B8] hover:text-white rounded-lg transition-all text-xs font-bold"
+              >
+                <FontAwesomeIcon icon={isSidebarOpen ? faTimes : faSitemap} />
+                <span className="hidden sm:inline">조직 구조</span>
+              </button>
             </div>
           </div>
         </header>
@@ -554,8 +554,8 @@ const Departments = () => {
             </div>
           ) : selectedDept === 'ALL' ? (
             /* CASE 1: Full Org Chart (Visual) */
-            <div className="inline-block min-w-full p-4 lg:p-10">
-              <div className="flex justify-center min-w-max pb-20 pt-10">
+            <div className="inline-block min-w-full p-2 lg:p-4">
+              <div className="flex justify-center min-w-max pb-20 pt-4">
                 {fullTree.root && <OrgNode node={fullTree.root} />}
               </div>
             </div>
