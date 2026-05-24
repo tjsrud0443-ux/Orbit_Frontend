@@ -11,12 +11,15 @@ const AdminSignup = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
   const [tabCount, setTabCount] = useState({TOTAL: 0, PENDING: 0, APPROVED: 0, REJECTED: 0});
+  const [deptList, setDeptList] = useState([]);
+  const [rankList, setRankList] = useState([]);
 
   // Custom dropdown states
   const [isDeptOpen, setIsDeptOpen] = useState(false);
   const [isRankOpen, setIsRankOpen] = useState(false);
-  const [selectedDept, setSelectedDept] = useState('부서 또는 본부를 선택하세요');
-  const [selectedRank, setSelectedRank] = useState('직급을 선택하세요');
+  const [hireDate, setHireDate] = useState('');
+  const [selectedDept, setSelectedDept] = useState({ seq: null, name: '부서 또는 본부를 선택하세요' });
+  const [selectedRank, setSelectedRank] = useState({ seq: null, name: '직급을 선택하세요' });
 
   const statusMap = {
     '전체': 'TOTAL',
@@ -38,19 +41,60 @@ const AdminSignup = () => {
     setActiveTab(tab);
   };
 
-  useEffect(() => {
+  const loadList = () => {
     getAllRequest(page, statusMap[activeTab]).then(resp => {
       setAllInfo(resp.data.list);
       setTotalPages(Math.ceil(resp.data.count / 10));
       setTabCount(resp.data.tabCount);
     });
+  };
+
+  useEffect(() => {
+    loadList();
   }, [page, activeTab]);
 
+  useEffect(() => {
+    getDeptList().then(resp => setDeptList(resp.data));
+    getRankList().then(resp => setRankList(resp.data));
+  },[])
 
   const handleUserClick = (seq) => {
     setSelectedUser(seq);
     getUserInfo(seq).then(resp => {
       setUserInfo(resp.data);
+    })
+  };
+
+  const handleApprove = () => {
+    if (selectedDept.seq === null) {
+      alert('부서를 선택해 주세요.');
+      return;
+    }
+    if (selectedRank.seq === null) {
+      alert('직급을 선택해 주세요.');
+      return;
+    }
+    if (!hireDate) {
+      alert('입사일자를 선택해 주세요.');
+      return;
+    }
+
+    const approvalData = {
+      signup_seq: selectedUser,
+      dept_seq: selectedDept.seq,
+      rank_seq: selectedRank.seq,
+      hire_date: hireDate
+    };
+
+    approveUserSignup(approvalData).then(resp => {
+      alert('회원가입 승인이 완료되었습니다.');
+      
+      setSelectedUser(null);
+      setHireDate('');
+      setSelectedDept({ seq: null, name: '부서 또는 본부를 선택하세요' });
+      setSelectedRank({ seq: null, name: '직급을 선택하세요' });
+      
+      loadList();
     })
   };
 
@@ -132,7 +176,7 @@ const AdminSignup = () => {
                 <div className="text-xs font-bold text-gray-700">{info.name}</div>
                 <div className="text-[11px] text-gray-500">{info.id}</div>
                 <div className="text-[11px] text-gray-500 font-medium">{info.phone}</div>
-                <div className="text-[11px] text-gray-400">{info.signup_at}</div>
+                <div className="text-[11px] text-gray-400">{info.signup_at.split(" ")[0] }</div>
                 <div className="flex justify-center">
                   { 
                     info.status === "PENDING" ?
@@ -190,7 +234,7 @@ const AdminSignup = () => {
                       { label: '주민등록번호', value: userInfo.ssn_masked },
                       { label: '주소', value: `${userInfo.address1} ${userInfo.address2}` },
                       { label: '이메일 주소', value: userInfo.email },
-                      { label: '가입신청일', value: userInfo.signup_at }
+                      { label: '가입신청일', value: userInfo.signup_at?.split(" ")[0] }
                     ].map((info, idx) => (
                       <div key={idx} className="flex justify-between items-start border-b border-gray-100/50 pb-2 last:border-0 last:pb-0">
                         <span className="text-xs font-medium text-gray-500 flex-shrink-0 mr-4">{info.label}</span>
@@ -210,18 +254,18 @@ const AdminSignup = () => {
                         onClick={() => { setIsDeptOpen(!isDeptOpen); setIsRankOpen(false); }}
                         className={`w-full px-4 py-2.5 bg-white border ${isDeptOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-200'} rounded-xl text-xs font-medium transition-all cursor-pointer flex justify-between items-center`}
                       >
-                        <span className={selectedDept === '부서 또는 본부를 선택하세요' ? 'text-gray-400' : 'text-gray-800'}>{selectedDept}</span>
+                        <span className={selectedDept === '부서 또는 본부를 선택하세요' ? 'text-gray-400' : 'text-gray-800'}>{selectedDept.name}</span>
                         <svg className={`w-4 h-4 text-gray-400 transition-transform ${isDeptOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                       </div>
                       {isDeptOpen && (
                         <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-32 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
-                          {['개발팀', '기획팀', '인사팀', '총무팀', '재무팀', 'IT팀', '마케팅팀', '고객지원팀', '운영총괄팀', '기술본부', '경영지원본부', '사업운영본부', '운영총괄본부'].map((dept) => (
+                          {deptList.map((dept) => (
                             <div 
-                              key={dept}
-                              onClick={() => { setSelectedDept(dept); setIsDeptOpen(false); }}
+                              key={dept.dept_seq}
+                              onClick={() => { setSelectedDept({ seq: dept.dept_seq, name: dept.dept_name }); setIsDeptOpen(false); }}
                               className="px-4 py-2.5 text-xs hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-medium border-b border-gray-50 last:border-0"
                             >
-                              {dept}
+                              {dept.dept_name}
                             </div>
                           ))}
                         </div>
@@ -234,18 +278,18 @@ const AdminSignup = () => {
                         onClick={() => { setIsRankOpen(!isRankOpen); setIsDeptOpen(false); }}
                         className={`w-full px-4 py-2.5 bg-white border ${isRankOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-200'} rounded-xl text-xs font-medium transition-all cursor-pointer flex justify-between items-center`}
                       >
-                        <span className={selectedRank === '직급을 선택하세요' ? 'text-gray-400' : 'text-gray-800'}>{selectedRank}</span>
+                        <span className={selectedRank === '직급을 선택하세요' ? 'text-gray-400' : 'text-gray-800'}>{selectedRank.name}</span>
                         <svg className={`w-4 h-4 text-gray-400 transition-transform ${isRankOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                       </div>
                       {isRankOpen && (
                         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-32 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
-                          {['사원', '대리', '과장', '차장', '부서장', '본부장'].map((rank) => (
+                          {rankList.map((rank) => (
                             <div 
-                              key={rank}
-                              onClick={() => { setSelectedRank(rank); setIsRankOpen(false); }}
+                              key={rank.rank_seq}
+                              onClick={() => { setSelectedRank({ seq: rank.rank.seq, name: rank.rank_name}); setIsRankOpen(false); }}
                               className="px-4 py-2.5 text-xs hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-medium border-b border-gray-50 last:border-0"
                             >
-                              {rank}
+                              {rank.rank_name}
                             </div>
                           ))}
                         </div>
@@ -254,7 +298,12 @@ const AdminSignup = () => {
 
                     <div>
                       <label className="block text-[11px] font-bold text-gray-600 mb-1 ml-1">입사일자</label>
-                      <input type="date" className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all" />
+                      <input 
+                        type="date" 
+                        value={hireDate}
+                        onChange={(e) => setHireDate(e.target.value)} 
+                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all"
+                      />
                     </div>
                   </div>
                 </div>
@@ -263,7 +312,11 @@ const AdminSignup = () => {
              {/* Action Buttons - Fixed height */}
              <div className="p-6 border-t border-gray-50 flex gap-3 flex-shrink-0 bg-white">
                 <button className="flex-1 py-4 border-2 border-red-100 text-red-500 text-sm font-bold rounded-2xl hover:bg-red-50 transition-all text-center">반려</button>
-                <button className="flex-[2] py-4 bg-[#3530B8] text-white text-sm font-bold rounded-2xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all text-center">승인 완료</button>
+                <button 
+                  onClick={handleApprove}
+                  className="flex-[2] py-4 bg-[#3530B8] text-white text-sm font-bold rounded-2xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all text-center">
+                    승인 완료
+                </button>
              </div>
           </div>
         )}
