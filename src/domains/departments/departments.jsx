@@ -19,6 +19,7 @@ import useAuthStore from '../../store/authStore';
 // 2. Visual Org Chart Node Component
 const OrgNode = ({ node }) => {
   const isRoot = node.parentDeptSeq === null;
+  const token = useAuthStore(state => state.token);
 
   return (
     <div className="flex flex-col items-center relative">
@@ -30,10 +31,18 @@ const OrgNode = ({ node }) => {
           : 'bg-white border-[#DDE8FF] text-gray-800 shadow-sm hover:border-[#3530B8]'}
       `}>
         <div className={`
-          w-9 h-9 rounded-full flex items-center justify-center shrink-0
+          w-9 h-9 rounded-full flex items-center justify-center shrink-0 overflow-hidden
           ${isRoot ? 'bg-white/20 text-white' : 'bg-[#F0F4FF] text-[#3530B8]'}
         `}>
-          <FontAwesomeIcon icon={node.parentDeptSeq === null ? faBuilding : faUser} className="text-sm" />
+          {isRoot ? (
+            <FontAwesomeIcon icon={faBuilding} className="text-sm" />
+          ) : (
+            <img 
+              src={`http://localhost/file/profile/view?sysname=${node.sysname}&token=${token}`}
+              alt={node.name}
+              className="w-full h-full object-cover"
+            />
+          )}
         </div>
         <div className="text-left">
           <p className={`text-[10px] opacity-70 mb-0.5 ${isRoot ? 'text-white' : 'text-[#3530B8] font-bold'}`}>
