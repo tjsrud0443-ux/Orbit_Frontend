@@ -16,22 +16,29 @@ import { getGroup } from './departmentsApi';
 import useAuthStore from '../../store/authStore';
 
 
+// Position Rank for Sorting (Lower number = Higher rank)
+const POSITION_RANK = {
+  '대표이사': 1, '사장': 2, '부사장': 3, '전무': 4, '상무': 5, '이사': 6,
+  '부장': 7, '차장': 8, '과장': 9, '대리': 10, '주임': 11, '사원': 12,
+};
+
+const getRank = (pos) => POSITION_RANK[pos] || 99;
+
 // 2. Visual Org Chart Node Component
-const OrgNode = ({ node }) => {
+const OrgNode = ({ node, isChild = false }) => {
   const token = useAuthStore(state => state.token);
 
   // 1. Identify if this is a raw Department node or a Member node
   const isMember = !!node.id;
-  const isRoot = node.parentDeptSeq === null;
+  const isRoot = node.parentDeptSeq === null && !isMember;
 
-  // 2. Promotion Logic:
-  // If it's a Department node with members, use the first member as the 'face' of this node.
+  // 2. Promotion Logic & Sorting
   let displayNode = node;
-  let subMembers = node.members || [];
-  let subDepts = node.children || [];
+  let subMembers = [...(node.members || [])].sort((a, b) => getRank(a.position) - getRank(b.position));
+  let subDepts = [...(node.children || [])].sort((a, b) => (a.deptSeq - b.deptSeq));
 
-  if (!isMember && node.members && node.members.length > 0) {
-    const [first, ...rest] = node.members;
+  if (!isMember && subMembers.length > 0) {
+    const [first, ...rest] = subMembers;
     displayNode = {
       ...first,
       deptName: node.deptName,
@@ -40,15 +47,13 @@ const OrgNode = ({ node }) => {
     subMembers = rest;
   }
 
-  // 3. Image Path (defensive check)
   const profileImg = displayNode.sysname || displayNode.sysName;
-  const totalCount = subDepts.length + subMembers.length;
 
   return (
     <div className="flex flex-col items-center relative">
       {/* Node Card */}
       <div className={`
-        relative z-10 flex items-center p-2.5 px-3 min-w-[140px] rounded-xl border-2 transition-all gap-2
+        relative z-10 flex items-center p-2.5 px-3 min-w-[150px] rounded-xl border-2 transition-all gap-2
         ${isRoot
           ? 'bg-[#3530B8] border-[#3530B8] text-white shadow-xl scale-110'
           : 'bg-white border-[#DDE8FF] text-gray-800 shadow-sm hover:border-[#3530B8]'}
@@ -59,7 +64,7 @@ const OrgNode = ({ node }) => {
         `}>
           {profileImg ? (
             <img
-              src={`http://localhost/file/profile/view?sysname=${displayNode.sysname}&token=${token}`}
+              src={`http://localhost/file/profile/view?sysname=${profileImg}&token=${token}`}
               alt={displayNode.name}
               className="w-full h-full object-cover"
             />
@@ -83,60 +88,55 @@ const OrgNode = ({ node }) => {
         </div>
       </div>
 
-      {/* Connection Lines */}
-      {totalCount > 0 && (
-        <>
-          {/* Vertical Line Down from current node */}
-          <div className="w-0.5 h-6 bg-[#DDE8FF]" />
-
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Render sub-departments first */}
-            {subDepts.map((child, idx) => (
-              <div
-                key={child.deptSeq}
-                className={`
-                  relative flex flex-col items-center
-                  ${totalCount > 1 ? "lg:before:content-[''] lg:before:absolute lg:before:top-0 lg:before:h-0.5 lg:before:bg-[#DDE8FF]" : ""}
-                  ${totalCount > 1 && idx === 0 ? "lg:before:w-1/2 lg:before:right-0" : ""}
-                  ${totalCount > 1 && idx === totalCount - 1 ? "lg:before:w-1/2 lg:before:left-0" : ""}
-                  ${totalCount > 1 && idx > 0 && idx < totalCount - 1 ? "lg:before:w-full" : ""}
-                `}
-              >
-                <div className="w-0.5 h-3 bg-[#DDE8FF]" />
-                <OrgNode node={child} />
-              </div>
-            ))}
-
-            {/* Render remaining members as individual cards */}
-            {subMembers.map((member, idx) => {
-              const globalIdx = subDepts.length + idx;
-
-              // Map member to node-like structure for OrgNode
-              const memberNode = {
-                ...member,
-                deptName: node.deptName,
-                parentDeptSeq: node.deptSeq,
-                children: []
-              };
-
-              return (
-                <div
-                  key={member.id}
-                  className={`
-                    relative flex flex-col items-center
-                    ${totalCount > 1 ? "lg:before:content-[''] lg:before:absolute lg:before:top-0 lg:before:h-0.5 lg:before:bg-[#DDE8FF]" : ""}
-                    ${totalCount > 1 && globalIdx === 0 ? "lg:before:w-1/2 lg:before:right-0" : ""}
-                    ${totalCount > 1 && globalIdx === totalCount - 1 ? "lg:before:w-1/2 lg:before:left-0" : ""}
-                    ${totalCount > 1 && globalIdx > 0 && globalIdx < totalCount - 1 ? "lg:before:w-full" : ""}
-                  `}
-                >
-                  <div className="w-0.5 h-3 bg-[#DDE8FF]" />
-                  <OrgNode node={memberNode} />
+      {/* Children Section */}
+      {(subMembers.length > 0 || subDepts.length > 0) && (
+        <div className="flex flex-col items-center w-full">
+          {/* 1. Members Chain (Straight Vertical) */}
+          {subMembers.length > 0 && (
+            <div className="flex flex-col items-center">
+              {subMembers.map((member) => (
+                <div key={member.id} className="flex flex-col items-center">
+                  <div className="w-0.5 h-8 bg-[#DDE8FF]" />
+                  <OrgNode 
+                    node={{
+                      ...member,
+                      deptName: node.deptName,
+                      parentDeptSeq: node.deptSeq,
+                      children: []
+                    }} 
+                    isChild={true} 
+                  />
                 </div>
-              );
-            })}
-          </div>
-        </>
+              ))}
+            </div>
+          )}
+
+          {/* 2. Sub-Departments (Horizontal Branching) */}
+          {subDepts.length > 0 && (
+            <div className="flex flex-col items-center w-full">
+              {/* Line down from parent to the horizontal branch */}
+              <div className="w-0.5 h-8 bg-[#DDE8FF]" />
+              
+              <div className="flex flex-row items-start justify-center">
+                {subDepts.map((child, idx) => (
+                  <div key={child.deptSeq} className="relative flex flex-col items-center px-4">
+                    {/* Horizontal Connector Line */}
+                    {subDepts.length > 1 && (
+                      <div className={`absolute top-0 h-0.5 bg-[#DDE8FF] 
+                        ${idx === 0 ? 'left-1/2 w-1/2' : idx === subDepts.length - 1 ? 'right-1/2 w-1/2' : 'w-full'}
+                      `} />
+                    )}
+                    
+                    {/* Vertical Connector down to node */}
+                    <div className="w-0.5 h-8 bg-[#DDE8FF] relative z-10" />
+                    
+                    <OrgNode node={child} isChild={true} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
