@@ -1,10 +1,8 @@
-import React, { useState, useRef, useCallback } from 'react';
+﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { fetchHolidays } from '../../api/holidayApi';
-import Sidebar from '../../components/layout/Sidebar';
-import Header from '../../components/layout/Header';
 
 const PERSONAL_EVENTS = [
   { id: 'p1', title: '팀 주간 회의', start: '2026-05-04', category: 'meeting', color: '#7C3AED' },
@@ -14,13 +12,13 @@ const PERSONAL_EVENTS = [
 const generateCompanyEvents = (years) => {
   const events = [];
   years.forEach(year => {
-    events.push({ id: `c-town-${year}-02`, title: '타운홀 미팅 (12:00~14:00)', start: `${year}-02-15T12:00:00`, end: `${year}-02-15T14:00:00`, category: 'company', color: '#EF4444' });
-    events.push({ id: `c-town-${year}-07`, title: '타운홀 미팅 (12:00~14:00)', start: `${year}-07-15T12:00:00`, end: `${year}-07-15T14:00:00`, category: 'company', color: '#EF4444' });
-    events.push({ id: `c-work-${year}-04`, title: '전사 워크숍 (1박 2일)', start: `${year}-04-16`, end: `${year}-04-18`, category: 'team', color: '#0EA5E9' });
-    events.push({ id: `c-work-${year}-09`, title: '전사 워크숍 (1박 2일)', start: `${year}-09-17`, end: `${year}-09-19`, category: 'team', color: '#0EA5E9' });
-    events.push({ id: `c-survey-${year}-05`, title: '임직원 만족도 조사', start: `${year}-05-10`, category: 'company', color: '#EF4444' });
+    events.push({ id: `c-town-${year}-02`, title: '타운홀 미팅 (12:00~14:00)', start: `${year}-02-15T12:00:00`, end: `${year}-02-15T14:00:00`, category: 'company', color: '#F59E0B' });
+    events.push({ id: `c-town-${year}-07`, title: '타운홀 미팅 (12:00~14:00)', start: `${year}-07-15T12:00:00`, end: `${year}-07-15T14:00:00`, category: 'company', color: '#F59E0B' });
+    events.push({ id: `c-work-${year}-04`, title: '전사 워크숍 (1박 2일)', start: `${year}-04-16`, end: `${year}-04-18`, category: 'team', color: '#F59E0B' });
+    events.push({ id: `c-work-${year}-09`, title: '전사 워크숍 (1박 2일)', start: `${year}-09-17`, end: `${year}-09-19`, category: 'team', color: '#F59E0B' });
+    events.push({ id: `c-survey-${year}-05`, title: '임직원 만족도 조사', start: `${year}-05-10`, category: 'company', color: '#0EA5E9' });
     events.push({ id: `c-health-${year}-05`, title: '건강 챌린지 시작', start: `${year}-05-01`, category: 'team', color: '#0EA5E9' });
-    events.push({ id: `c-survey-${year}-11`, title: '임직원 만족도 조사', start: `${year}-11-10`, category: 'company', color: '#EF4444' });
+    events.push({ id: `c-survey-${year}-11`, title: '임직원 만족도 조사', start: `${year}-11-10`, category: 'company', color: '#0EA5E9' });
     events.push({ id: `c-health-${year}-11`, title: '건강 챌린지 시작', start: `${year}-11-01`, category: 'team', color: '#0EA5E9' });
     events.push({ id: `c-found-${year}`, title: '창립기념일 (휴무)', start: `${year}-07-06`, category: 'holiday', color: '#F59E0B' });
     events.push({ id: `c-award-${year}`, title: '연간 시상식', start: `${year}-12-24T15:00:00`, category: 'company', color: '#EC4899' });
@@ -28,28 +26,39 @@ const generateCompanyEvents = (years) => {
   return events;
 };
 
-const COMPANY_EVENTS = generateCompanyEvents([2026, 2027, 2028]);
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
+// 현재 연도 기준 -5년 ~ +5년, 총 11년치
+
+const COMPANY_EVENTS = generateCompanyEvents(years);
 
 const PERSONAL_FILTERS = [
   { key: 'personal', label: '내 일정',     color: '#3530B8' },
   { key: 'leave',    label: '연차 / 휴가', color: '#10B981' },
   { key: 'project',  label: '프로젝트',    color: '#6366F1' },
   { key: 'meeting',  label: '회의',        color: '#7C3AED' },
+  { key: 'holiday',  label: '공휴일',      color: '#EF4444' }
 ];
 
 const COMPANY_FILTERS = [
-  { key: 'company',     label: '회사 전체 일정', color: '#EF4444' },
+  { key: 'company',     label: '회사 전체 일정', color: '#F59E0B' },
   { key: 'team',        label: '부서/팀 일정',   color: '#0EA5E9' },
-  { key: 'holiday',     label: '공휴일',         color: '#F59E0B' },
-  { key: 'anniversary', label: '기념일',         color: '#EC4899' },
+  { key: 'holiday',     label: '공휴일',         color: '#EF4444' },
+  { key: 'anniversary', label: '기념일',         color: '#EC4899' }
 ];
 
 const COMPANY_CATEGORIES = ['company', 'team', 'holiday', 'anniversary'];
 
 const Calendar = () => {
   const calendarRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+
   const [activeTab, setActiveTab] = useState('personal');
   const [currentTitle, setCurrentTitle] = useState('');
   const [personalChecked, setPersonalChecked] = useState(Object.fromEntries(PERSONAL_FILTERS.map(f => [f.key, true])));
@@ -64,18 +73,20 @@ const Calendar = () => {
 
   const loadedYears = useRef(new Set());
   const loadHolidaysForYear = useCallback(async (year) => {
-    if (loadedYears.current.has(year)) return;
-    loadedYears.current.add(year);
-    try {
-      const holidays = await fetchHolidays(year);
-      if (holidays?.length > 0) {
-        setCompanyEvents(prev => {
-          const existingIds = new Set(prev.map(e => e.id));
-          return [...prev, ...holidays.filter(h => !existingIds.has(h.id))];
-        });
-      }
-    } catch (err) { console.error(`${year}년 공휴일 로드 실패:`, err); }
-  }, []);
+  if (loadedYears.current.has(year)) return;
+  loadedYears.current.add(year);
+  try {
+    const holidays = await fetchHolidays(year);
+    if (holidays?.length > 0) {
+      const addHolidays = (prev) => {
+        const existingIds = new Set(prev.map(e => e.id));
+        return [...prev, ...holidays.filter(h => !existingIds.has(h.id))];
+      };
+      setCompanyEvents(addHolidays);  // 기존
+      setPersonalEvents(addHolidays); // 추가
+    }
+  } catch (err) { console.error(`${year}년 공휴일 로드 실패:`, err); }
+}, []);
 
   const getApi = () => calendarRef.current?.getApi();
 
@@ -97,6 +108,7 @@ const Calendar = () => {
     : companyEvents.filter(e => companyChecked[e.category]);
 
   const handleDateClick = (info) => {
+    if (activeTab === 'company') return;
     setIsEditing(false);
     setForm({ id: '', title: '', category: activeTab === 'personal' ? 'personal' : 'company', date: info.dateStr, endDate: '', description: '' });
     setModal({ open: true, date: info.dateStr });
@@ -149,15 +161,8 @@ const Calendar = () => {
   };
 
   return (
-    <div className="flex h-screen bg-[#F8FAFC] font-sans antialiased text-gray-800 overflow-hidden relative">
-
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-
-        <Header onMenuClick={() => setSidebarOpen(true)} />
-
-        <main className="flex-1 p-4 flex flex-col gap-4 overflow-y-scroll">
+       <>
+        <div className="flex-1 p-4 flex flex-col gap-4 overflow-y-auto lg:overflow-hidden min-h-0">
           <div className="px-1">
             <h1 className="text-xl font-bold text-slate-900 leading-tight">캘린더</h1>
             <p className="text-xs text-slate-500 mt-0.5">일정을 한눈에 확인하세요.</p>
@@ -173,7 +178,7 @@ const Calendar = () => {
             ))}
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-4 flex-1">
+          <div className="flex flex-col lg:flex-row gap-4 flex-1 lg:items-stretch min-h-0">
             <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm p-4 flex flex-col min-w-0">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                 <div className="flex items-center gap-2">
@@ -187,24 +192,27 @@ const Calendar = () => {
                   </div>
                   <h2 className="text-sm font-bold text-slate-800 ml-1">{currentTitle}</h2>
                 </div>
-                <button onClick={() => {
-                  const t = new Date().toISOString().split('T')[0];
-                  setForm({ id: '', title: '', category: activeTab === 'personal' ? 'personal' : 'company', date: t, endDate: '', description: '' });
-                  setIsEditing(false);
-                  setModal({ open: true, date: t });
-                }} className="px-3 py-1.5 bg-[#3530B8] text-white rounded-lg text-[11px] font-semibold">+ 일정 추가</button>
+                {activeTab === 'personal' && (
+                  <button onClick={() => {
+                    const t = new Date().toISOString().split('T')[0];
+                    setForm({ id: '', title: '', category: 'personal', date: t, endDate: '', description: '' });
+                    setIsEditing(false);
+                    setModal({ open: true, date: t });
+                  }} className="px-3 py-1.5 bg-[#3530B8] text-white rounded-lg text-[11px] font-semibold">+ 일정 추가</button>
+                )}
               </div>
 
-              <div className="calendar-container flex-1">
+              <div className="calendar-container flex-1" style={{ minHeight: isMobile ? 'auto' : 0 }}>
                 <FullCalendar
                   ref={calendarRef}
                   plugins={[dayGridPlugin, interactionPlugin]}
                   initialView="dayGridMonth"
                   locale="ko"
                   headerToolbar={false}
-                  height="auto"
-                  editable={true}
-                  selectable={true}
+                  stickyHeaderDates={false}  // 헤더 고정 해제 - 스크롤하면 같이 올라감
+                  height={isMobile ? 'auto' : '100%'}
+                  editable={activeTab === 'personal'}
+                  selectable={activeTab === 'personal'}
                   events={filteredEvents}
                   dateClick={handleDateClick}
                   eventClick={handleEventClick}
@@ -213,15 +221,14 @@ const Calendar = () => {
               </div>
             </div>
 
-            <aside className="w-full lg:w-56 shrink-0 flex flex-col gap-4">
-              <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm flex-1 space-y-4">
+            <aside className="w-full lg:w-64 shrink-0 flex flex-col">
+              <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col gap-6 h-full">
                 <FilterSection title="개인 캘린더" filters={PERSONAL_FILTERS} checked={personalChecked} onChange={(k, v) => setPersonalChecked(p => ({ ...p, [k]: v }))} />
                 <FilterSection title="회사 공용 캘린더" filters={COMPANY_FILTERS} checked={companyChecked} onChange={(k, v) => setCompanyChecked(p => ({ ...p, [k]: v }))} />
               </div>
             </aside>
           </div>
-        </main>
-      </div>
+        </div>
 
       {modal.open && (
         <ModalOverlay onClose={() => setModal({ open: false, date: '' })}>
@@ -279,18 +286,18 @@ const Calendar = () => {
           )}
         </ModalOverlay>
       )}
-    </div>
+       </>
   );
 };
 
 const FilterSection = ({ title, filters, checked, onChange }) => (
   <div>
-    <h3 className="text-xs font-bold text-slate-800 border-b border-slate-100 pb-1.5 mb-2">{title}</h3>
-    <div className="space-y-2">
+    <h3 className="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2 mb-3">{title}</h3>
+    <div className="space-y-3">
       {filters.map(item => (
-        <label key={item.key} className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
-          <input type="checkbox" checked={checked[item.key] ?? true} onChange={e => onChange(item.key, e.target.checked)} className="w-3 h-3 accent-[#3530B8]" />
-          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.color }} />
+        <label key={item.key} className="flex items-center gap-2.5 text-sm text-slate-600 cursor-pointer">
+          <input type="checkbox" checked={checked[item.key] ?? true} onChange={e => onChange(item.key, e.target.checked)} className="w-4 h-4 accent-[#3530B8]" />
+          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
           <span>{item.label}</span>
         </label>
       ))}

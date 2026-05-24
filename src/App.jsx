@@ -16,14 +16,12 @@ function App() {
 
         {/* 1. 레이아웃이 적용되지 않는 독립된 페이지 (인증 관련) */}
         <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        
-        {/*Calendar*/}
-        <Route path="/calendar" element={<Calendar />} />
+        <Route path="/signup" element={<Signup />} />    
        
         {/* 2. 사이드바와 헤더가 전체적으로 공통 적용되는 페이지 묶음 */}
         <Route element={<Layout />}>
           {/*Departments*/}
+          <Route path="/calendar" element={<Calendar />} />
           <Route path="/departments" element={<Departments />} />
           <Route path="/adminSignup" element={<AdminSignup />} />
         </Route>
