@@ -50,16 +50,16 @@ const OrgNode = ({ node, isChild = false }) => {
   const profileImg = displayNode.sysname || displayNode.sysName;
 
   return (
-    <div className="flex flex-col items-center relative scale-[0.85] lg:scale-[0.9] origin-top">
+    <div className="flex flex-col items-center relative lg:scale-100 origin-top">
       {/* Node Card */}
       <div className={`
-        relative z-10 flex items-center p-1 px-2 min-w-[110px] lg:min-w-[120px] rounded-lg border-2 transition-all gap-1.5
+        relative z-10 flex items-center p-2.5 px-3 min-w-[150px] lg:p-1.5 lg:px-2.5 lg:min-w-[130px] rounded-lg border-2 transition-all gap-2 lg:gap-1.5
         ${isRoot
           ? 'bg-[#3530B8] border-[#3530B8] text-white shadow-lg scale-105'
           : 'bg-white border-[#DDE8FF] text-gray-800 shadow-sm hover:border-[#3530B8]'}
       `}>
         <div className={`
-          w-6 h-6 lg:w-7 lg:h-7 rounded-full flex items-center justify-center shrink-0 overflow-hidden
+          w-9 h-9 lg:w-8 lg:h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden
           ${isRoot ? 'bg-white/20 text-white' : 'bg-[#F0F4FF] text-[#3530B8]'}
         `}>
           {profileImg ? (
@@ -71,18 +71,18 @@ const OrgNode = ({ node, isChild = false }) => {
           ) : (
             <FontAwesomeIcon 
               icon={isRoot && !isMember && !node.members?.length ? faBuilding : (isMember || displayNode.id ? faUser : faUsers)} 
-              className="text-[9px] lg:text-[10px]" 
+              className="text-xs lg:text-[10px]" 
             />
           )}
         </div>
         <div className="text-left">
-          <p className={`text-[6px] lg:text-[7px] opacity-70 mb-0 ${isRoot ? 'text-white' : 'text-[#3530B8] font-bold'}`}>
+          <p className={`text-[10px] lg:text-[8px] opacity-70 mb-0 ${isRoot ? 'text-white' : 'text-[#3530B8] font-bold'}`}>
             {displayNode.deptName}
           </p>
-          <p className="text-[8px] lg:text-[9px] font-extrabold leading-tight">
+          <p className="text-xs lg:text-[10px] font-extrabold leading-tight">
             {displayNode.name || (isRoot && !displayNode.id ? '본사' : '')}
           </p>
-          <p className={`text-[6px] lg:text-[7px] mt-0 ${isRoot ? 'text-white/60' : 'text-gray-400'}`}>
+          <p className={`text-[9px] lg:text-[8px] mt-0 ${isRoot ? 'text-white/60' : 'text-gray-400'}`}>
             {displayNode.position || (displayNode.name ? '-' : '')}
           </p>
         </div>
@@ -96,7 +96,7 @@ const OrgNode = ({ node, isChild = false }) => {
             <div className="flex flex-col items-center">
               {subMembers.map((member) => (
                 <div key={member.id} className="flex flex-col items-center">
-                  <div className="w-0.5 h-3 lg:h-4 bg-[#DDE8FF]" />
+                  <div className="w-0.5 h-8 lg:h-5 bg-[#DDE8FF]" />
                   <OrgNode 
                     node={{
                       ...member,
@@ -115,11 +115,11 @@ const OrgNode = ({ node, isChild = false }) => {
           {subDepts.length > 0 && (
             <div className="flex flex-col items-center w-full">
               {/* Line down from parent to the branch */}
-              <div className="w-0.5 h-3 lg:h-4 bg-[#DDE8FF]" />
+              <div className="w-0.5 h-8 lg:h-5 bg-[#DDE8FF]" />
               
               <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center">
                 {subDepts.map((child, idx) => (
-                  <div key={child.deptSeq} className="relative flex flex-col items-center lg:px-1">
+                  <div key={child.deptSeq} className="relative flex flex-col items-center px-4 lg:px-1.5">
                     {/* Horizontal Connector Line (Desktop Only) */}
                     {subDepts.length > 1 && (
                       <div className={`hidden lg:block absolute top-0 h-0.5 bg-[#DDE8FF] 
@@ -128,7 +128,7 @@ const OrgNode = ({ node, isChild = false }) => {
                     )}
                     
                     {/* Vertical Connector down to node */}
-                    <div className="w-0.5 h-3 lg:h-4 bg-[#DDE8FF] relative z-10" />
+                    <div className="w-0.5 h-8 lg:h-5 bg-[#DDE8FF] relative z-10" />
                     
                     <OrgNode node={child} isChild={true} />
                   </div>
@@ -365,64 +365,88 @@ const Departments = () => {
   return (
     <div className="flex h-full bg-[#F8FAFC] font-sans overflow-hidden relative">
 
-      {/* 1. Sidebar (Inline Toggle) */}
+      {/* 1. Mobile Sidebar Backdrop */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* 2. Sidebar (Overlay on Mobile, Inline on Desktop) */}
       <aside className={`
-        bg-white border-r border-gray-200 flex flex-col shrink-0 transition-all duration-300 ease-in-out overflow-hidden
-        ${isSidebarOpen ? 'w-64' : 'w-0'}
-      `}>
-        <div className="w-64 flex flex-col h-full"> {/* Fixed width inner container for smooth transition */}
-          <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
-            <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-              <FontAwesomeIcon icon={faSitemap} className="text-[#3530B8]" />
-              조직 구조
-            </h2>
-            <button
-              onClick={() => setIsSidebarOpen(false)}
-              className="p-2 text-gray-400 hover:text-gray-600"
-            >
-              <FontAwesomeIcon icon={faTimes} />
-            </button>
-          </div>
+  bg-white border-r border-gray-200 flex flex-col shrink-0 transition-all duration-300 ease-in-out overflow-hidden
+  
+  /* 💻 데스크톱: 유저님이 원래 만드신 완벽한 레이아웃 그대로 고정 */
+  lg:relative lg:inset-auto lg:translate-x-0
+  ${isSidebarOpen ? 'lg:w-64' : 'lg:w-0'}
+  
+  /* 📱 모바일: 데스크톱에 절대 영향을 주지 않도록 fixed와 정렬 분리 */
+  fixed inset-y-0 left-0 z-50
+  ${isSidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full'}
+`}>
+  {/* 💡 [핵심 교정] lg:w-64로 데스크톱 크기를 꽉 잡아두고, 모바일(w-0)일 때만 내부 콘텐츠가 숨겨지도록 처리 */}
+  <div className="w-full lg:w-64 flex flex-col h-full shrink-0">
+    <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
+      <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+        <FontAwesomeIcon icon={faSitemap} className="text-[#3530B8]" />
+        조직 구조
+      </h2>
+      <button
+        onClick={() => setIsSidebarOpen(false)}
+        className="p-2 text-gray-400 hover:text-gray-600 lg:hidden"
+      >
+        <FontAwesomeIcon icon={faTimes} />
+      </button>
+    </div>
 
-          <nav className="flex-1 overflow-y-auto p-3 pt-4 space-y-1">
-            <button
-              onClick={() => {
-                setSelectedDept('ALL');
-                setSearchTerm('');
-                setIsSidebarOpen(false);
-              }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all mb-4 ${selectedDept === 'ALL' ? 'bg-[#3530B8] text-white font-bold shadow-md' : 'text-gray-600 hover:bg-gray-50'}`}
-            >
-              <FontAwesomeIcon icon={faLayerGroup} />
-              전체 조직도
-            </button>
+    <nav className="flex-1 overflow-y-auto p-3 pt-4 space-y-1">
+      <button
+        onClick={() => {
+          setSelectedDept('ALL');
+          setSearchTerm('');
+          setIsSidebarOpen(false);
+        }}
+        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all mb-4 ${selectedDept === 'ALL' ? 'bg-[#3530B8] text-white font-bold shadow-md' : 'text-gray-600 hover:bg-gray-50'}`}
+      >
+        <FontAwesomeIcon icon={faLayerGroup} />
+        전체 조직도
+      </button>
 
-            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] px-3 mb-2">DEPARTMENTS</div>
+      <div className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] px-3 mb-2">DEPARTMENTS</div>
 
-            {fullTree.root && (
-              <SidebarItem
-                node={fullTree.root}
-                selectedDept={selectedDept}
-                onSelect={(id) => {
-                  setSelectedDept(id);
-                  setSearchTerm('');
-                  setIsSidebarOpen(false);
-                }}
-                nodeMap={fullTree.nodeMap}
-              />
-            )}
-          </nav>
-        </div>
-      </aside>
+      {fullTree.root && (
+        <SidebarItem
+          node={fullTree.root}
+          selectedDept={selectedDept}
+          onSelect={(id) => {
+            setSelectedDept(id);
+            setSearchTerm('');
+            setIsSidebarOpen(false);
+          }}
+          nodeMap={fullTree.nodeMap}
+        />
+      )}
+    </nav>
+  </div>
+</aside>
 
-      {/* 2. Main Viewport */}
+      {/* 3. Main Viewport */}
       <main className="flex-1 flex flex-col overflow-hidden">
         <header className="h-16 bg-white border-b border-gray-200 px-4 lg:px-8 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-4 text-sm w-full">
+          <div className="flex items-center gap-2 lg:gap-4 text-sm w-full">
+            {/* Hamburger for Mobile */}
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="lg:hidden p-2 -ml-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <FontAwesomeIcon icon={faBars} />
+            </button>
+
             <div className="flex items-center gap-2 shrink-0">
               <span className="text-gray-400 hidden sm:inline">인사 관리</span>
               <FontAwesomeIcon icon={faChevronRight} className="text-gray-300 text-[10px] hidden sm:inline" />
-              <span className="font-bold text-gray-700 shrink-0">
+              <span className="font-bold text-gray-700 shrink-0 max-w-[80px] sm:max-w-none truncate">
                 {searchTerm.trim() 
                   ? `"${searchTerm}" 검색 결과` 
                   : (selectedDept === 'ALL' ? '전체 조직도' : currentDeptInfo?.deptName)}
@@ -430,7 +454,7 @@ const Departments = () => {
             </div>
 
             {/* Unified Search Bar */}
-            <div className="flex-1 max-w-[300px] ml-4 relative">
+            <div className="flex-1 max-w-[300px] ml-2 lg:ml-4 relative">
               <div className="relative">
                 <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
                 <input
@@ -513,7 +537,7 @@ const Departments = () => {
               )}
             </div>
 
-            <div className="flex items-center gap-2 ml-2 shrink-0">
+            <div className="hidden lg:flex items-center gap-2 ml-2 shrink-0">
               {/* Back to Full Tree Button */}
               <button
                 onClick={() => {
