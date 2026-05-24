@@ -8,15 +8,17 @@ import {
   faUser, 
   faLayerGroup, 
   faBuilding,
-  faSitemap
+  faSitemap,
+  faBars,
+  faTimes
 } from '@fortawesome/free-solid-svg-icons';
 
 // 1. Initial Static Data
 const initialDepartments = [
   { deptCode: 'D001', deptName: '대표이사', parentDeptCode: null },
-  { deptCode: 'D002', deptName: '개발본부', parentDeptCode: 'D001' },
-  { deptCode: 'D003', deptName: '플랫폼팀', parentDeptCode: 'D002' },
-  { deptCode: 'D004', deptName: '인프라팀', parentDeptCode: 'D002' },
+  { deptCode: 'D002', deptName: '기술본부', parentDeptCode: 'D001' },
+  { deptCode: 'D003', deptName: '개발팀', parentDeptCode: 'D002' },
+  { deptCode: 'D004', deptName: '디자인팀', parentDeptCode: 'D002' },
   { deptCode: 'D005', deptName: '기획본부', parentDeptCode: 'D001' },
   { deptCode: 'D006', deptName: '서비스기획팀', parentDeptCode: 'D005' },
   { deptCode: 'D007', deptName: '디자인본부', parentDeptCode: 'D001' },
@@ -40,25 +42,25 @@ const OrgNode = ({ node }) => {
     <div className="flex flex-col items-center relative">
       {/* Node Card */}
       <div className={`
-        relative z-10 flex flex-col items-center p-4 min-w-[160px] rounded-xl border-2 transition-all
+        relative z-10 flex items-center p-2.5 px-4 min-w-[170px] rounded-xl border-2 transition-all gap-3
         ${isRoot 
           ? 'bg-[#3530B8] border-[#3530B8] text-white shadow-xl scale-110' 
           : 'bg-white border-[#DDE8FF] text-gray-800 shadow-sm hover:border-[#3530B8]'}
       `}>
         <div className={`
-          w-10 h-10 rounded-full flex items-center justify-center mb-2
+          w-9 h-9 rounded-full flex items-center justify-center shrink-0
           ${isRoot ? 'bg-white/20 text-white' : 'bg-[#F0F4FF] text-[#3530B8]'}
         `}>
-          <FontAwesomeIcon icon={node.type === 'dept' ? faBuilding : faUser} />
+          <FontAwesomeIcon icon={node.type === 'dept' ? faBuilding : faUser} className="text-sm" />
         </div>
-        <div className="text-center">
-          <p className={`text-xs opacity-70 mb-0.5 ${isRoot ? 'text-white' : 'text-[#3530B8] font-bold'}`}>
+        <div className="text-left">
+          <p className={`text-[10px] opacity-70 mb-0.5 ${isRoot ? 'text-white' : 'text-[#3530B8] font-bold'}`}>
             {node.deptName}
           </p>
-          <p className="text-sm font-extrabold leading-tight">
+          <p className="text-xs font-extrabold leading-tight">
             {node.leaderName || '미지정'}
           </p>
-          <p className={`text-[10px] mt-1 ${isRoot ? 'text-white/60' : 'text-gray-400'}`}>
+          <p className={`text-[9px] mt-0.5 ${isRoot ? 'text-white/60' : 'text-gray-400'}`}>
             {node.position || '-'}
           </p>
         </div>
@@ -68,7 +70,7 @@ const OrgNode = ({ node }) => {
       {node.children && node.children.length > 0 && (
         <>
           {/* Vertical Line Down from current node */}
-          <div className="w-0.5 h-8 bg-[#DDE8FF]" />
+          <div className="w-0.5 h-6 bg-[#DDE8FF]" />
           
           <div className="relative flex">
             {/* Horizontal Connector Line */}
@@ -81,7 +83,7 @@ const OrgNode = ({ node }) => {
               {node.children.map((child, idx) => (
                 <div key={child.id} className="relative flex flex-col items-center">
                   {/* Small Vertical line connecting to horizontal bar */}
-                  <div className="w-0.5 h-4 bg-[#DDE8FF]" />
+                  <div className="w-0.5 h-3 bg-[#DDE8FF]" />
                   <OrgNode node={child} />
                 </div>
               ))}
@@ -154,19 +156,34 @@ const SidebarItem = ({ node, level = 0, selectedDept, onSelect, nodeMap }) => {
 };
 
 // 3. Employee List Component (Table View)
-const EmployeeList = ({ deptCode, deptName }) => {
+const EmployeeList = ({ deptCode, deptName, searchTerm = '' }) => {
   const filteredEmployees = useMemo(() => {
-    // If we want to show employees of current dept AND its sub-depts, we'd need a recursive search.
-    // For now, let's show employees belonging directly to this selection.
-    return initialEmployees.filter(emp => emp.deptCode === deptCode);
-  }, [deptCode]);
+    let list = initialEmployees;
+    
+    // 1. Filter by Dept if specified
+    if (deptCode !== 'ALL') {
+      list = list.filter(emp => emp.deptCode === deptCode);
+    }
+
+    // 2. Filter by Search Term (Name or Position)
+    if (searchTerm.trim()) {
+      const lowerSearch = searchTerm.toLowerCase();
+      list = list.filter(emp => 
+        emp.name.toLowerCase().includes(lowerSearch) || 
+        emp.position.toLowerCase().includes(lowerSearch) ||
+        emp.empId.toLowerCase().includes(lowerSearch)
+      );
+    }
+    
+    return list;
+  }, [deptCode, searchTerm]);
 
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+      <div className="p-4 px-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
         <h3 className="font-bold text-gray-800 flex items-center gap-2">
           <FontAwesomeIcon icon={faUsers} className="text-[#3530B8]" />
-          {deptName} 소속 임직원
+          {deptCode === 'ALL' ? '검색 결과' : `${deptName} 소속 임직원`}
         </h3>
         <span className="text-xs text-gray-500 font-medium">총 {filteredEmployees.length}명</span>
       </div>
@@ -174,18 +191,18 @@ const EmployeeList = ({ deptCode, deptName }) => {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-50/50">
-              <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">이름</th>
-              <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">소속(부서)</th>
-              <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">직급</th>
-              <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">전화번호</th>
-              <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">출근상태</th>
+              <th className="px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">이름</th>
+              <th className="px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">소속(부서)</th>
+              <th className="px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">직급</th>
+              <th className="px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">전화번호</th>
+              <th className="px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">출근상태</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
             {filteredEmployees.length > 0 ? (
               filteredEmployees.map((emp) => (
                 <tr key={emp.empId} className="hover:bg-blue-50/30 transition-colors group">
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-[#DDE8FF] text-[#3530B8] flex items-center justify-center text-xs font-bold group-hover:bg-[#3530B8] group-hover:text-white transition-all">
                         {emp.name.charAt(0)}
@@ -193,10 +210,10 @@ const EmployeeList = ({ deptCode, deptName }) => {
                       <span className="text-sm font-bold text-gray-700">{emp.name}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500 font-mono">{emp.empId}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600 font-medium">{emp.position}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{deptName}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-3 text-sm text-gray-500 font-mono">{emp.empId}</td>
+                  <td className="px-6 py-3 text-sm text-gray-600 font-medium">{emp.position}</td>
+                  <td className="px-6 py-3 text-sm text-gray-600">{deptName}</td>
+                  <td className="px-6 py-3">
                     <span className="px-2 py-1 bg-green-50 text-green-600 text-[10px] font-bold rounded-md border border-green-100">재직</span>
                   </td>
                 </tr>
@@ -218,6 +235,7 @@ const EmployeeList = ({ deptCode, deptName }) => {
 const Departments = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDept, setSelectedDept] = useState('ALL');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // 4. Build Visual Org Data
   const fullOrgTree = useMemo(() => {
@@ -253,15 +271,35 @@ const Departments = () => {
   }, [selectedDept, fullOrgTree]);
 
   return (
-    <div className="flex h-full bg-[#F8FAFC] font-sans overflow-hidden">
+    <div className="flex h-full bg-[#F8FAFC] font-sans overflow-hidden relative">
       
-      {/* 1. Left Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shrink-0">
-        <div className="p-6 border-b border-gray-100">
-          <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+      {/* 1. Mobile Sidebar Backdrop */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* 2. Left Sidebar */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 flex flex-col shrink-0 transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
             <FontAwesomeIcon icon={faSitemap} className="text-[#3530B8]" />
             조직 구조
           </h2>
+          <button 
+            onClick={() => setIsSidebarOpen(false)}
+            className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
+          >
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
+        </div>
+        
+        <div className="p-6 pt-4">
           <div className="relative">
             <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
             <input 
@@ -274,9 +312,12 @@ const Departments = () => {
           </div>
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+        <nav className="flex-1 overflow-y-auto p-3 pt-0 space-y-1">
           <button 
-            onClick={() => setSelectedDept('ALL')}
+            onClick={() => {
+              setSelectedDept('ALL');
+              setIsSidebarOpen(false);
+            }}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all mb-4 ${selectedDept === 'ALL' ? 'bg-[#3530B8] text-white font-bold shadow-md' : 'text-gray-600 hover:bg-gray-50'}`}
           >
             <FontAwesomeIcon icon={faLayerGroup} />
@@ -289,28 +330,48 @@ const Departments = () => {
             <SidebarItem 
               node={fullOrgTree.root} 
               selectedDept={selectedDept}
-              onSelect={setSelectedDept}
+              onSelect={(id) => {
+                setSelectedDept(id);
+                setIsSidebarOpen(false);
+              }}
               nodeMap={fullOrgTree.nodeMap}
             />
           )}
         </nav>
       </aside>
 
-      {/* 2. Main Viewport */}
+      {/* 3. Main Viewport */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-16 bg-white border-b border-gray-200 px-8 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-gray-400">인사 관리</span>
-            <FontAwesomeIcon icon={faChevronRight} className="text-gray-300 text-[10px]" />
-            <span className="font-bold text-gray-700">
-              {selectedDept === 'ALL' ? '전체 조직도' : currentDeptInfo?.deptName}
-            </span>
+        <header className="h-16 bg-white border-b border-gray-200 px-4 lg:px-8 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-4 text-sm">
+            <button 
+              onClick={() => setIsSidebarOpen(true)}
+              className="lg:hidden p-2 -ml-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <FontAwesomeIcon icon={faBars} />
+            </button>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400 hidden sm:inline">인사 관리</span>
+              <FontAwesomeIcon icon={faChevronRight} className="text-gray-300 text-[10px] hidden sm:inline" />
+              <span className="font-bold text-gray-700">
+                {selectedDept === 'ALL' ? '전체 조직도' : currentDeptInfo?.deptName}
+              </span>
+            </div>
           </div>
         </header>
 
         {/* Dynamic Content Area */}
-        <div className="flex-1 overflow-auto bg-[#F8FAFC] p-10">
-          {selectedDept === 'ALL' ? (
+        <div className="flex-1 overflow-auto bg-[#F8FAFC] p-4 lg:p-10">
+          {searchTerm.trim() ? (
+            /* CASE 0: Search Mode (Global Results) */
+            <div className="max-w-5xl mx-auto">
+              <EmployeeList 
+                deptCode="ALL" 
+                deptName="전체" 
+                searchTerm={searchTerm} 
+              />
+            </div>
+          ) : selectedDept === 'ALL' ? (
             /* CASE 1: Full Org Chart (Visual) */
             <div className="inline-block min-w-full">
                <div className="flex justify-center pb-20 pt-10">
@@ -324,6 +385,7 @@ const Departments = () => {
                 <EmployeeList 
                   deptCode={currentDeptInfo.id} 
                   deptName={currentDeptInfo.deptName} 
+                  searchTerm={searchTerm}
                 />
               )}
             </div>
