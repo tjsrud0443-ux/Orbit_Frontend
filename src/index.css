@@ -2,10 +2,8 @@
 /* 역할: "SUIT라는 이름의 폰트 파일은 인터넷의 이 주소(url)에 있으니 준비해둬!"라고 브라우저에게 폰트를
 등록하는 과정 */
 @font-face {
-    font-family: 'SUIT';
-    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2402_1@1.0/SUIT-Regular.woff2') format('woff2');
-    font-weight: normal;
-    font-style: normal;
+    font-family: 'SUIT-Regular';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_suit@1.0/SUIT-Thin.woff2') format('woff2');
 }
 
 *, body, button, input, select, textarea {
