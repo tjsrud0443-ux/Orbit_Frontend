@@ -13,6 +13,7 @@ import {
   faTimes
 } from '@fortawesome/free-solid-svg-icons';
 import { getGroup } from './departmentsApi';
+import useAuthStore from '../../store/authStore';
 
 
 // 2. Visual Org Chart Node Component
@@ -160,6 +161,8 @@ const EmployeeList = ({ employees = [], deptSeq, deptCode, deptName, searchTerm 
     return list;
   }, [employees, deptSeq, deptCode, searchTerm]);
 
+  
+  const token = useAuthStore(state => state.token);
   return (
     // 목록형 조직도
     <div className="bg-white overflow-hidden">
@@ -181,7 +184,7 @@ const EmployeeList = ({ employees = [], deptSeq, deptCode, deptName, searchTerm 
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-[#DDE8FF] text-[#3530B8] flex items-center justify-center text-xs font-bold group-hover:bg-[#3530B8] group-hover:text-white transition-all">
-                        {emp.name.charAt(0)}
+                        <img src={`http://localhost/file/profile/view?sysname=${emp.sysname}&token=${token}`}/>
                       </div>
                       <span className="text-sm font-bold text-gray-700">{emp.name}</span>
                     </div>
@@ -193,9 +196,9 @@ const EmployeeList = ({ employees = [], deptSeq, deptCode, deptName, searchTerm 
                     <span
                       className={`
                         px-2 py-1  text-[10px] font-bold rounded-md border 
-                        ${emp.attendanceStatus === '근무중' ? 'bg-green-50 text-green-600 border-green-100'
-                          : emp.attendanceStatus === '퇴근' ? 'bg-gray-100 text-gray-600 border-gray-200'
-                            : 'bg-red-50 text-red-600 border-red-100'}
+                        ${emp.attendanceStatus === '근무중' ? 'bg-[#F0FDF4] text-[#10B981] border-[#F0FDF4]'
+                          : emp.attendanceStatus === '퇴근' ? 'bg-[#FFF9F0] text-[#FF9800] border-[#FFF9F0]'
+                            : 'bg-[#FFF0F0] text-[#FF4D4F] border-[#FFF0F0]'}
                         `}>{emp.attendanceStatus}</span>
                   </td>
                 </tr>
@@ -229,6 +232,7 @@ const Departments = () => {
 
   useEffect(() => {
     getGroup().then(resp => {
+      console.log(resp.data)
 
       setFullTree({
         root: resp.data.root,
