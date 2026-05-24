@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Pagination from '../../components/common/Pagination';
-import { getAllRequest, getUserInfo } from './adminApi';
+import { getAllRequest, getDeptList, getRankList, getUserInfo } from './adminApi';
 
 const AdminSignup = () => {
   const [activeTab, setActiveTab] = useState('전체');
@@ -18,8 +18,8 @@ const AdminSignup = () => {
   const [isDeptOpen, setIsDeptOpen] = useState(false);
   const [isRankOpen, setIsRankOpen] = useState(false);
   const [hireDate, setHireDate] = useState('');
-  const [selectedDept, setSelectedDept] = useState({ seq: null, name: '부서 또는 본부를 선택하세요' });
-  const [selectedRank, setSelectedRank] = useState({ seq: null, name: '직급을 선택하세요' });
+  const [selectedDept, setSelectedDept] = useState({ dept_seq: null, dept_name: '부서 또는 본부를 선택하세요' });
+  const [selectedRank, setSelectedRank] = useState({ rank_seq: null, rank_name: '직급을 선택하세요' });
 
   const statusMap = {
     '전체': 'TOTAL',
@@ -66,11 +66,11 @@ const AdminSignup = () => {
   };
 
   const handleApprove = () => {
-    if (selectedDept.seq === null) {
+    if (selectedDept.dept_seq === null) {
       alert('부서를 선택해 주세요.');
       return;
     }
-    if (selectedRank.seq === null) {
+    if (selectedRank.rank_seq === null) {
       alert('직급을 선택해 주세요.');
       return;
     }
@@ -81,8 +81,8 @@ const AdminSignup = () => {
 
     const approvalData = {
       signup_seq: selectedUser,
-      dept_seq: selectedDept.seq,
-      rank_seq: selectedRank.seq,
+      dept_seq: selectedDept.dept_seq,
+      rank_seq: selectedRank.rank_seq,
       hire_date: hireDate
     };
 
@@ -91,8 +91,8 @@ const AdminSignup = () => {
       
       setSelectedUser(null);
       setHireDate('');
-      setSelectedDept({ seq: null, name: '부서 또는 본부를 선택하세요' });
-      setSelectedRank({ seq: null, name: '직급을 선택하세요' });
+      setSelectedDept({ dept_seq: null, dept_name: '부서 또는 본부를 선택하세요' });
+      setSelectedRank({ rank_seq: null, rank_name: '직급을 선택하세요' });
       
       loadList();
     })
@@ -262,7 +262,7 @@ const AdminSignup = () => {
                           {deptList.map((dept) => (
                             <div 
                               key={dept.dept_seq}
-                              onClick={() => { setSelectedDept({ seq: dept.dept_seq, name: dept.dept_name }); setIsDeptOpen(false); }}
+                              onClick={() => { setSelectedDept({ dept_seq: dept.dept_seq, dept_name: dept.dept_name }); setIsDeptOpen(false); }}
                               className="px-4 py-2.5 text-xs hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-medium border-b border-gray-50 last:border-0"
                             >
                               {dept.dept_name}
@@ -286,7 +286,7 @@ const AdminSignup = () => {
                           {rankList.map((rank) => (
                             <div 
                               key={rank.rank_seq}
-                              onClick={() => { setSelectedRank({ seq: rank.rank.seq, name: rank.rank_name}); setIsRankOpen(false); }}
+                              onClick={() => { setSelectedRank({ rank_seq: rank.rank.seq, rank_name: rank.rank_name}); setIsRankOpen(false); }}
                               className="px-4 py-2.5 text-xs hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-medium border-b border-gray-50 last:border-0"
                             >
                               {rank.rank_name}
