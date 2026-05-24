@@ -183,8 +183,12 @@ const EmployeeList = ({ employees = [], deptSeq, deptCode, deptName, searchTerm 
                 <tr key={emp.id} className="hover:bg-blue-50/30 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#DDE8FF] text-[#3530B8] flex items-center justify-center text-xs font-bold group-hover:bg-[#3530B8] group-hover:text-white transition-all">
-                        <img src={`http://localhost/file/profile/view?sysname=${emp.sysname}&token=${token}`}/>
+                      <div className="w-8 h-8 rounded-full bg-[#DDE8FF] text-[#3530B8] flex items-center justify-center text-xs font-bold group-hover:bg-[#3530B8] group-hover:text-white transition-all overflow-hidden">
+                        <img 
+                          src={`http://localhost/file/profile/view?sysname=${emp.sysname}&token=${token}`}
+                          alt={emp.name}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                       <span className="text-sm font-bold text-gray-700">{emp.name}</span>
                     </div>
@@ -232,8 +236,6 @@ const Departments = () => {
 
   useEffect(() => {
     getGroup().then(resp => {
-      console.log(resp.data)
-
       setFullTree({
         root: resp.data.root,
         nodeMap: resp.data.nodeMap
