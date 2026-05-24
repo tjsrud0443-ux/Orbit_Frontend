@@ -1,9 +1,12 @@
 ﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
+
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { fetchHolidays } from '../../api/holidayApi';
 
+import { fetchHolidays } from '../../api/holidayApi';
+import { getSchedules, createSchedule} from './schedulesApi';
+//import { getSchedules, createSchedule, updateSchedule, deleteSchedule } from './schedulesApi';
 const PERSONAL_EVENTS = [
   { id: 'p1', title: '팀 주간 회의', start: '2026-05-04', category: 'meeting', color: '#7C3AED' },
   { id: 'p2', title: '연차', start: '2026-05-07', end: '2026-05-08', category: 'leave', color: '#10B981' },
@@ -12,10 +15,14 @@ const PERSONAL_EVENTS = [
 const generateCompanyEvents = (years) => {
   const events = [];
   years.forEach(year => {
-    events.push({ id: `c-town-${year}-02`, title: '타운홀 미팅 (12:00~14:00)', start: `${year}-02-15T12:00:00`, end: `${year}-02-15T14:00:00`, category: 'company', color: '#F59E0B' });
-    events.push({ id: `c-town-${year}-07`, title: '타운홀 미팅 (12:00~14:00)', start: `${year}-07-15T12:00:00`, end: `${year}-07-15T14:00:00`, category: 'company', color: '#F59E0B' });
-    events.push({ id: `c-work-${year}-04`, title: '전사 워크숍 (1박 2일)', start: `${year}-04-16`, end: `${year}-04-18`, category: 'team', color: '#F59E0B' });
-    events.push({ id: `c-work-${year}-09`, title: '전사 워크숍 (1박 2일)', start: `${year}-09-17`, end: `${year}-09-19`, category: 'team', color: '#F59E0B' });
+    events.push({ id: `c-town-${year}-02`, title: '타운홀 미팅 (12:00~14:00)', 
+      start: `${year}-02-15T12:00:00`, end: `${year}-02-15T14:00:00`, category: 'company', color: '#F59E0B' });
+    events.push({ id: `c-town-${year}-07`, title: '타운홀 미팅 (12:00~14:00)', 
+      start: `${year}-07-15T12:00:00`, end: `${year}-07-15T14:00:00`, category: 'company', color: '#F59E0B' });
+    events.push({ id: `c-work-${year}-04`, title: '전사 워크숍 (1박 2일)', 
+      start: `${year}-04-16`, end: `${year}-04-18`, category: 'team', color: '#F59E0B' });
+    events.push({ id: `c-work-${year}-09`, title: '전사 워크숍 (1박 2일)', 
+      start: `${year}-09-17`, end: `${year}-09-19`, category: 'team', color: '#F59E0B' });
     events.push({ id: `c-survey-${year}-05`, title: '임직원 만족도 조사', start: `${year}-05-10`, category: 'company', color: '#0EA5E9' });
     events.push({ id: `c-health-${year}-05`, title: '건강 챌린지 시작', start: `${year}-05-01`, category: 'team', color: '#0EA5E9' });
     events.push({ id: `c-survey-${year}-11`, title: '임직원 만족도 조사', start: `${year}-11-10`, category: 'company', color: '#0EA5E9' });
@@ -32,6 +39,7 @@ const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
 
 const COMPANY_EVENTS = generateCompanyEvents(years);
 
+/*체크박스 */
 const PERSONAL_FILTERS = [
   { key: 'personal', label: '내 일정',     color: '#3530B8' },
   { key: 'leave',    label: '연차 / 휴가', color: '#10B981' },
@@ -51,35 +59,83 @@ const COMPANY_CATEGORIES = ['company', 'team', 'holiday', 'anniversary'];
 
 const Calendar = () => {
   const calendarRef = useRef(null);
+  // 화면이 모바일인지 여부 (캘린더 height 분기용)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
   useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 1024);
-    window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
+    const handler = () => setIsMobile(window.innerWidth < 1024);//1024 미만이면 모바일 처리
+    window.addEventListener('resize', handler);// 창을 늘리거나 줄일 때마다 자동으로 호출
+    return () => window.removeEventListener('resize', handler);// 페이지 이동시 이벤트 제거해서 메모리 누수 방지
   }, []);
-
+  // '개인 캘린더' / '공용 캘린더' 탭 선택 상태
   const [activeTab, setActiveTab] = useState('personal');
+  // 헤더에 표시되는 "2026년 5월" 텍스트
   const [currentTitle, setCurrentTitle] = useState('');
+  // 개인 체크박스 on/off 상태 { personal: true, leave: true }
   const [personalChecked, setPersonalChecked] = useState(Object.fromEntries(PERSONAL_FILTERS.map(f => [f.key, true])));
+  // 회사 체크박스 on/off 상태
   const [companyChecked, setCompanyChecked]   = useState(Object.fromEntries(COMPANY_FILTERS.map(f => [f.key, true])));
+  // 개인 일정 목록 (추가/수정/삭제로 변함)
   const [personalEvents, setPersonalEvents] = useState(PERSONAL_EVENTS);
+  // 회사 일정 목록 (공휴일도 여기 합쳐짐)
   const [companyEvents, setCompanyEvents]   = useState(COMPANY_EVENTS);
-
+  // 일정 추가/수정 모달 열림 여부 + 날짜
   const [modal, setModal] = useState({ open: false, date: '' });
-  const [form, setForm]   = useState({ id: '', title: '', category: 'personal', date: '', endDate: '', description: '' });
+  // 모달 안 입력값들(제목, 카테고리, 날짜 등)
+  const [form, setForm]   = useState({ schedule_seq: '', title: '', schedule_type: 'personal', start_dt: '', end_dt: '', sked_reason: '', is_public: 0 });
+  // 지금 모달이 추가 모드인지 수정 모드인지
   const [isEditing, setIsEditing] = useState(false);
+  // 일정 클릭 시 상세 보기 모달
   const [detailModal, setDetailModal] = useState({ open: false, event: null });
 
+  useEffect(() => {
+    getSchedules()
+      .then(res => {
+        const allEvents = res.data.map(item => {
+          const filter = [...PERSONAL_FILTERS, ...COMPANY_FILTERS].find(f => f.key === item.schedule_type);
+          return {
+            id: item.schedule_seq.toString(),
+            title: item.title,
+            start: item.start_dt,
+            end: item.end_dt || undefined,
+            extendedProps: { 
+              category: item.schedule_type, 
+              description: item.sked_reason,
+              is_public: item.is_public
+            },
+            category: item.schedule_type,
+            color: filter?.color ?? '#3530B8',
+          };
+        });
+
+        const pEvents = allEvents.filter(e => PERSONAL_FILTERS.some(f => f.key === e.category));
+        const cEvents = allEvents.filter(e => COMPANY_FILTERS.some(f => f.key === e.category));
+
+        setPersonalEvents(prev => {
+          // 기존 Mock 데이터(ID가 숫자가 아닌 것)와 공휴일은 유지하고, 서버 데이터만 교체
+          const persistentEvents = prev.filter(e => isNaN(Number(e.id)) || e.category === 'holiday');
+          return [...persistentEvents, ...pEvents];
+        });
+        setCompanyEvents(prev => {
+          // 기존 Mock 데이터(ID가 숫자가 아닌 것)와 공휴일은 유지하고, 서버 데이터만 교체
+          const persistentEvents = prev.filter(e => isNaN(Number(e.id)) || e.category === 'holiday');
+          return [...persistentEvents, ...cEvents];
+        });
+      })
+      .catch(err => console.error('일정 로드 실패:', err));
+  }, []);
+
+  //useRef : 컴포넌트가 재렌더링되어도 값을 유지
   const loadedYears = useRef(new Set());
+  // API에서 공휴일 가져와서 companyEvents에 추가
   const loadHolidaysForYear = useCallback(async (year) => {
-  if (loadedYears.current.has(year)) return;
-  loadedYears.current.add(year);
+  if (loadedYears.current.has(year)) return;//공휴일 이미있음. return
+  loadedYears.current.add(year);//아직이면 공휴일 api 부름
   try {
-    const holidays = await fetchHolidays(year);
+    const holidays = await fetchHolidays(year);//해당 연도 공휴일 1년치
     if (holidays?.length > 0) {
       const addHolidays = (prev) => {
-        const existingIds = new Set(prev.map(e => e.id));
+        const existingIds = new Set(prev.map(e => e.id));//기존 이벤트 id 목록
         return [...prev, ...holidays.filter(h => !existingIds.has(h.id))];
       };
       setCompanyEvents(addHolidays);  // 기존
@@ -89,7 +145,7 @@ const Calendar = () => {
 }, []);
 
   const getApi = () => calendarRef.current?.getApi();
-
+// 캘린더 날짜 바뀔 때 2026년 5월 텍스트 업데이트
   const updateTitle = useCallback(() => {
     setTimeout(() => {
       const api = getApi();
@@ -107,57 +163,102 @@ const Calendar = () => {
     ? personalEvents.filter(e => personalChecked[e.category])
     : companyEvents.filter(e => companyChecked[e.category]);
 
+    // 날짜 클릭 → 추가 모달 열기
   const handleDateClick = (info) => {
     if (activeTab === 'company') return;
     setIsEditing(false);
-    setForm({ id: '', title: '', category: activeTab === 'personal' ? 'personal' : 'company', date: info.dateStr, endDate: '', description: '' });
+    setForm({ 
+      schedule_seq: '', 
+      title: '', 
+      schedule_type: 'personal', 
+      start_dt: info.dateStr, 
+      end_dt: '', 
+      sked_reason: '',
+      is_public: 0
+    });
     setModal({ open: true, date: info.dateStr });
   };
-
+// 이벤트 클릭 → 상세 모달 열기
   const handleEventClick = (info) => {
     setDetailModal({ open: true, event: info.event });
   };
-
+// 상세 모달에서 수정 버튼 → 수정 모달로 전환
   const handleEditStart = () => {
     const event = detailModal.event;
     setIsEditing(true);
     setForm({
-      id: event.id,
+      schedule_seq: event.id,
       title: event.title,
-      category: event.extendedProps.category || 'personal',
-      date: event.startStr.split('T')[0],
-      endDate: event.endStr ? event.endStr.split('T')[0] : '',
-      description: event.extendedProps.description || '',
+      schedule_type: event.extendedProps.category || 'personal',
+      start_dt: event.startStr.split('T')[0],
+      end_dt: event.endStr ? event.endStr.split('T')[0] : '',
+      sked_reason: event.extendedProps.description || '',
+      is_public: event.extendedProps.is_public || 0
     });
     setDetailModal({ open: false, event: null });
     setModal({ open: true, date: event.startStr });
   };
-
+// 모달에서 저장/완료 → 이벤트 추가 또는 수정
   const handleSaveEvent = () => {
     if (!form.title.trim()) return;
-    const isPersonalCategory = PERSONAL_FILTERS.some(f => f.key === form.category);
-    const filter = [...PERSONAL_FILTERS, ...COMPANY_FILTERS].find(f => f.key === form.category);
-    const eventData = {
-      id: isEditing ? form.id : `u${Date.now()}`,
+    const isPersonalCategory = PERSONAL_FILTERS.some(f => f.key === form.schedule_type);
+    const filter = [...PERSONAL_FILTERS, ...COMPANY_FILTERS].find(f => f.key === form.schedule_type);
+    
+    // 백엔드 전송용 데이터 (DTO 형식)
+    const payload = {
       title: form.title,
-      start: form.date,
-      end: form.endDate || undefined,
-      extendedProps: { category: form.category, description: form.description },
-      category: form.category,
+      schedule_type: form.schedule_type,
+      start_dt: form.start_dt ? `${form.start_dt}T00:00:00` : null,
+      end_dt: form.end_dt ? `${form.end_dt}T00:00:00` : null,
+      sked_reason: form.sked_reason || '',
+      is_public: isPersonalCategory ? 0 : 1,
+    };
+
+    const eventData = {
+      id: isEditing ? form.schedule_seq : `u${Date.now()}`,
+      title: form.title,
+      start: form.start_dt,
+      end: form.end_dt || undefined,
+      extendedProps: { 
+        category: form.schedule_type, 
+        description: form.sked_reason,
+        is_public: form.is_public
+      },
+      category: form.schedule_type,
       color: filter?.color ?? '#3530B8',
     };
-    const updater = (prev) => isEditing
-      ? prev.map(e => e.id === form.id ? eventData : e)
-      : [...prev, eventData];
-    if (isPersonalCategory) setPersonalEvents(updater);
-    else                    setCompanyEvents(updater);
-    setModal({ open: false, date: '' });
-  };
 
+    const updater = (prev) => isEditing
+      ? prev.map(e => e.id === form.schedule_seq ? eventData : e)
+      : [...prev, eventData];
+
+    if (isEditing) {
+      updateSchedule(form.schedule_seq, payload)
+        .then(() => {
+          if (isPersonalCategory) setPersonalEvents(updater);
+          else                    setCompanyEvents(updater);
+          setModal({ open: false, date: '' });
+        })
+        .catch(err => console.error('일정 수정 실패:', err));
+    } else {
+      createSchedule(payload)
+        .then(() => {
+          if (isPersonalCategory) setPersonalEvents(updater);
+          else                    setCompanyEvents(updater);
+          setModal({ open: false, date: '' });
+        })
+        .catch(err => console.error('일정 추가 실패:', err));
+    }
+  };
+ // 이벤트 삭제
   const handleDeleteEvent = (id) => {
-    setPersonalEvents(prev => prev.filter(e => e.id !== id));
-    setCompanyEvents(prev => prev.filter(e => e.id !== id));
-    setModal({ open: false, date: '' });
+    deleteSchedule(id)
+      .then(() => {
+        setPersonalEvents(prev => prev.filter(e => e.id !== id));
+        setCompanyEvents(prev => prev.filter(e => e.id !== id));
+        setModal({ open: false, date: '' });
+      })
+      .catch(err => console.error('일정 삭제 실패:', err));
   };
 
   return (
@@ -195,7 +296,15 @@ const Calendar = () => {
                 {activeTab === 'personal' && (
                   <button onClick={() => {
                     const t = new Date().toISOString().split('T')[0];
-                    setForm({ id: '', title: '', category: 'personal', date: t, endDate: '', description: '' });
+                    setForm({ 
+                      schedule_seq: '', 
+                      title: '', 
+                      schedule_type: 'personal', 
+                      start_dt: t, 
+                      end_dt: '', 
+                      sked_reason: '',
+                      is_public: 0
+                    });
                     setIsEditing(false);
                     setModal({ open: true, date: t });
                   }} className="px-3 py-1.5 bg-[#3530B8] text-white rounded-lg text-[11px] font-semibold">+ 일정 추가</button>
@@ -234,19 +343,19 @@ const Calendar = () => {
         <ModalOverlay onClose={() => setModal({ open: false, date: '' })}>
           <h3 className="text-sm font-bold text-slate-800 mb-4">{isEditing ? '일정 수정' : '새 일정 추가'}</h3>
           <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="일정 제목" className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs mb-3 focus:outline-none focus:ring-1 focus:ring-[#3530B8]" />
-          <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs mb-3">
+          <select value={form.schedule_type} onChange={e => setForm(f => ({ ...f, schedule_type: e.target.value }))} className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs mb-3">
             <optgroup label="개인">{PERSONAL_FILTERS.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}</optgroup>
             <optgroup label="공용">{COMPANY_FILTERS.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}</optgroup>
           </select>
           <div className="flex gap-2 mb-3">
-            <input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} className="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-xs" />
-            <input type="date" value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} className="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-xs" />
+            <input type="date" value={form.start_dt} onChange={e => setForm(f => ({ ...f, start_dt: e.target.value }))} className="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-xs" />
+            <input type="date" value={form.end_dt} onChange={e => setForm(f => ({ ...f, end_dt: e.target.value }))} className="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-xs" />
           </div>
-          <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="일정 설명을 입력하세요" className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs h-20 resize-none mb-4 focus:outline-none focus:ring-1 focus:ring-[#3530B8]" />
+          <textarea value={form.sked_reason} onChange={e => setForm(f => ({ ...f, sked_reason: e.target.value }))} placeholder="일정 설명을 입력하세요" className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs h-20 resize-none mb-4 focus:outline-none focus:ring-1 focus:ring-[#3530B8]" />
           <div className="flex gap-2 justify-end">
             {isEditing ? (
               <>
-                <button onClick={() => handleDeleteEvent(form.id)} className="px-4 py-1.5 text-xs text-red-500 font-semibold border border-red-200 rounded-lg hover:bg-red-50">삭제</button>
+                <button onClick={() => handleDeleteEvent(form.schedule_seq)} className="px-4 py-1.5 text-xs text-red-500 font-semibold border border-red-200 rounded-lg hover:bg-red-50">삭제</button>
                 <button onClick={handleSaveEvent} className="px-4 py-1.5 text-xs bg-[#3530B8] text-white rounded-lg font-semibold">완료</button>
               </>
             ) : (
