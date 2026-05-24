@@ -111,18 +111,18 @@ const OrgNode = ({ node, isChild = false }) => {
             </div>
           )}
 
-          {/* 2. Sub-Departments (Horizontal Branching) */}
+          {/* 2. Sub-Departments (Horizontal Branching on Desktop, Vertical on Mobile) */}
           {subDepts.length > 0 && (
             <div className="flex flex-col items-center w-full">
-              {/* Line down from parent to the horizontal branch */}
+              {/* Line down from parent to the branch */}
               <div className="w-0.5 h-8 bg-[#DDE8FF]" />
               
-              <div className="flex flex-row items-start justify-center">
+              <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center">
                 {subDepts.map((child, idx) => (
-                  <div key={child.deptSeq} className="relative flex flex-col items-center px-4">
-                    {/* Horizontal Connector Line */}
+                  <div key={child.deptSeq} className="relative flex flex-col items-center lg:px-4">
+                    {/* Horizontal Connector Line (Desktop Only) */}
                     {subDepts.length > 1 && (
-                      <div className={`absolute top-0 h-0.5 bg-[#DDE8FF] 
+                      <div className={`hidden lg:block absolute top-0 h-0.5 bg-[#DDE8FF] 
                         ${idx === 0 ? 'left-1/2 w-1/2' : idx === subDepts.length - 1 ? 'right-1/2 w-1/2' : 'w-full'}
                       `} />
                     )}
