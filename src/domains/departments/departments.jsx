@@ -72,22 +72,23 @@ const OrgNode = ({ node }) => {
           {/* Vertical Line Down from current node */}
           <div className="w-0.5 h-6 bg-[#DDE8FF]" />
           
-          <div className="relative flex">
-            {/* Horizontal Connector Line */}
-            {node.children.length > 1 && (
-              <div className="absolute top-0 left-[50%] right-[50%] h-0.5 bg-[#DDE8FF] translate-x-[-50%]" 
-                   style={{ width: `calc(100% - ${100/node.children.length}%)` }} />
-            )}
-            
-            <div className="flex gap-8">
-              {node.children.map((child, idx) => (
-                <div key={child.id} className="relative flex flex-col items-center">
-                  {/* Small Vertical line connecting to horizontal bar */}
-                  <div className="w-0.5 h-3 bg-[#DDE8FF]" />
-                  <OrgNode node={child} />
-                </div>
-              ))}
-            </div>
+          <div className="flex gap-8">
+            {node.children.map((child, idx) => (
+              <div 
+                key={child.id} 
+                className={`
+                  relative flex flex-col items-center
+                  ${node.children.length > 1 ? "before:content-[''] before:absolute before:top-0 before:h-0.5 before:bg-[#DDE8FF]" : ""}
+                  ${node.children.length > 1 && idx === 0 ? "before:w-1/2 before:right-0" : ""}
+                  ${node.children.length > 1 && idx === node.children.length - 1 ? "before:w-1/2 before:left-0" : ""}
+                  ${node.children.length > 1 && idx > 0 && idx < node.children.length - 1 ? "before:w-full" : ""}
+                `}
+              >
+                {/* Small Vertical line connecting to horizontal bar */}
+                <div className="w-0.5 h-3 bg-[#DDE8FF]" />
+                <OrgNode node={child} />
+              </div>
+            ))}
           </div>
         </>
       )}
@@ -361,7 +362,7 @@ const Departments = () => {
         </header>
 
         {/* Dynamic Content Area */}
-        <div className="flex-1 overflow-auto bg-[#F8FAFC] p-4 lg:p-10">
+        <div className="flex-1 overflow-auto bg-white p-4 lg:p-10">
           {searchTerm.trim() ? (
             /* CASE 0: Search Mode (Global Results) */
             <div className="max-w-5xl mx-auto">
@@ -374,7 +375,7 @@ const Departments = () => {
           ) : selectedDept === 'ALL' ? (
             /* CASE 1: Full Org Chart (Visual) */
             <div className="inline-block min-w-full">
-               <div className="flex justify-center pb-20 pt-10">
+               <div className="flex justify-center min-w-max pb-20 pt-10">
                  {fullOrgTree.root && <OrgNode node={fullOrgTree.root} />}
                </div>
             </div>
