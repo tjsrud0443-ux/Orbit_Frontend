@@ -217,13 +217,14 @@ const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptNa
       }
     }
 
-    // 2. Filter by Search Term (Name or Position)
+    // 2. Filter by Search Term (Name, Position, or Department)
     if (searchTerm.trim()) {
       const lowerSearch = searchTerm.toLowerCase();
       list = list.filter(emp =>
         emp.name.toLowerCase().includes(lowerSearch) ||
         emp.position.toLowerCase().includes(lowerSearch) ||
-        emp.id.toLowerCase().includes(lowerSearch)
+        emp.id.toLowerCase().includes(lowerSearch) ||
+        emp.deptName.toLowerCase().includes(lowerSearch)
       );
     }
 
@@ -294,6 +295,9 @@ const Departments = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDept, setSelectedDept] = useState('ALL');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [headerSearch, setHeaderSearch] = useState('');
+  const [isHeaderSearchOpen, setIsHeaderSearchOpen] = useState(false);
+  const token = useAuthStore(state => state.token);
 
   // 1. Initial Static Data
   const [fullTree, setFullTree] = useState({
@@ -341,6 +345,23 @@ const Departments = () => {
     return allDeptSeq(currentDeptInfo);
   }, [selectedDept, currentDeptInfo]);
 
+  // Header search results filtering (Employees + Departments)
+  const headerResults = useMemo(() => {
+    if (!headerSearch.trim()) return { employees: [], depts: [] };
+    const lower = headerSearch.toLowerCase();
+    
+    const matchedEmployees = employees.filter(emp => 
+      emp.name.toLowerCase().includes(lower) || 
+      emp.position.toLowerCase().includes(lower)
+    ).slice(0, 5);
+
+    const matchedDepts = Object.values(fullTree.nodeMap).filter(dept => 
+      dept.deptName.toLowerCase().includes(lower)
+    ).slice(0, 5);
+
+    return { employees: matchedEmployees, depts: matchedDepts };
+  }, [headerSearch, employees, fullTree.nodeMap]);
+
   return (
     <div className="flex h-full bg-[#F8FAFC] font-sans overflow-hidden relative">
 
@@ -370,7 +391,7 @@ const Departments = () => {
           </button>
         </div>
 
-        <div className="p-6 pt-4">
+        <div className="p-6 pt-4 hidden lg:block">
           <div className="relative">
             <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
             <input
@@ -416,19 +437,105 @@ const Departments = () => {
       {/* 3. Main Viewport */}
       <main className="flex-1 flex flex-col overflow-hidden">
         <header className="h-16 bg-white border-b border-gray-200 px-4 lg:px-8 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-4 text-sm w-full">
             <button
               onClick={() => setIsSidebarOpen(true)}
               className="lg:hidden p-2 -ml-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <FontAwesomeIcon icon={faBars} />
             </button>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-1 relative">
               <span className="text-gray-400 hidden sm:inline">인사 관리</span>
               <FontAwesomeIcon icon={faChevronRight} className="text-gray-300 text-[10px] hidden sm:inline" />
-              <span className="font-bold text-gray-700">
-                {selectedDept === 'ALL' ? '전체 조직도' : currentDeptInfo?.deptName}
+              <span className="font-bold text-gray-700 shrink-0">
+                {searchTerm.trim() 
+                  ? `"${searchTerm}" 검색 결과` 
+                  : (selectedDept === 'ALL' ? '전체 조직도' : currentDeptInfo?.deptName)}
               </span>
+
+              {/* Mobile Search Bar */}
+              <div className="lg:hidden flex-1 max-w-[200px] ml-4 relative">
+                <div className="relative">
+                  <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+                  <input
+                    type="text"
+                    placeholder="이름/부서 검색"
+                    className="w-full pl-9 pr-4 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20"
+                    value={headerSearch}
+                    onChange={(e) => {
+                      setHeaderSearch(e.target.value);
+                      setIsHeaderSearchOpen(true);
+                    }}
+                    onFocus={() => setIsHeaderSearchOpen(true)}
+                  />
+                </div>
+                
+                {/* Dropdown Results */}
+                {isHeaderSearchOpen && headerSearch.trim() && (
+                  <>
+                    <div className="fixed inset-0 z-50" onClick={() => setIsHeaderSearchOpen(false)} />
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-[60] max-h-[350px] overflow-y-auto">
+                      
+                      {/* Department Results Section */}
+                      {headerResults.depts.length > 0 && (
+                        <div className="p-2 bg-gray-50/50 border-b border-gray-100">
+                          <p className="px-2 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">부서</p>
+                          {headerResults.depts.map((dept) => (
+                            <div 
+                              key={dept.deptSeq} 
+                              className="p-2 hover:bg-[#3530B8] hover:text-white rounded-lg flex items-center gap-3 cursor-pointer group transition-colors"
+                              onClick={() => {
+                                setSelectedDept(dept.deptSeq);
+                                setSearchTerm(''); // Show all members in dept
+                                setHeaderSearch('');
+                                setIsHeaderSearchOpen(false);
+                              }}
+                            >
+                              <FontAwesomeIcon icon={faUsers} className="text-[#3530B8] group-hover:text-white text-xs shrink-0" />
+                              <span className="text-xs font-bold truncate">{dept.deptName}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Employee Results Section */}
+                      <div className="p-2">
+                        {headerResults.employees.length > 0 ? (
+                          <>
+                            <p className="px-2 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">임직원</p>
+                            {headerResults.employees.map((emp) => (
+                              <div 
+                                key={emp.id} 
+                                className="p-2 hover:bg-gray-50 rounded-lg flex items-center gap-3 cursor-pointer"
+                                onClick={() => {
+                                  setSelectedDept(emp.deptSeq);
+                                  setSearchTerm(emp.name); // Isolate this person
+                                  setHeaderSearch('');
+                                  setIsHeaderSearchOpen(false);
+                                }}
+                              >
+                                <div className="w-8 h-8 rounded-full bg-[#DDE8FF] overflow-hidden shrink-0">
+                                  <img 
+                                    src={`http://localhost/file/profile/view?sysname=${emp.sysname}&token=${token}`} 
+                                    className="w-full h-full object-cover" 
+                                    alt={emp.name} 
+                                  />
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-bold text-gray-800 truncate">{emp.name}</p>
+                                  <p className="text-[10px] text-gray-500 truncate">{emp.deptName} · {emp.position}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        ) : headerResults.depts.length === 0 && (
+                          <div className="p-4 text-center text-xs text-gray-400">결과가 없습니다.</div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </header>
