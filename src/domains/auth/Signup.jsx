@@ -9,18 +9,18 @@ const Signup = () => {
   const postcodeRef = useRef(null);
 
   const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
     id: '',
     pw: '',
-    confirmPw: '',
+    name: '',
+    phone: '',
+    email: '',
     ssn: '',
     zonecode: '',
     address1: '',
-    address2: '',
-    email: '',
+    address2: ''
   });
 
+  const [confirmPw, setConfirmPw] = useState('');
   const [profileImage, setProfileImage] = useState(null); // 미리보기용
   const [profileImgFile, setProfileImgFile] = useState(null); // 실제 파일 객체
   const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
@@ -29,6 +29,15 @@ const Signup = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === 'confirmPw') {
+      setConfirmPw(value);
+      if (errors.confirmPw) {
+        setErrors((prev) => ({ ...prev, confirmPw: '' }));
+      }
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -115,9 +124,9 @@ const Signup = () => {
 
     let fullYear = '';
 
-    if (genderCode === '1' || genderCode === '2') {
+    if (genderCode === '1' || genderCode === '2' || genderCode === '5' || genderCode === '6') {
       fullYear = '19' + yy;
-    } else if (genderCode === '3' || genderCode === '4') {
+    } else if (genderCode === '3' || genderCode === '4' || genderCode === '7' || genderCode === '8') {
       fullYear = '20' + yy;
     } else {
       return false;
@@ -125,11 +134,19 @@ const Signup = () => {
 
     const birthDate = new Date(`${fullYear}-${mm}-${dd}`);
 
-    return (
+    const isRealDate = (
       birthDate.getFullYear() === Number(fullYear) &&
       birthDate.getMonth() + 1 === Number(mm) &&
       birthDate.getDate() === Number(dd)
     );
+    if (!isRealDate) return false;
+
+    const today = new Date();
+    if (birthDate > today) {
+      return false;
+    }
+
+    return true;
   };
 
   const phoneRegex = /^010-\d{4}-\d{4}$/;
@@ -161,9 +178,9 @@ const Signup = () => {
     }else if(!pwRegex.test(formData.pw)){
       newErrors.pw = '영문 대/소문자와 특수문자(!@#$%^&*)로 8~20자 입력 가능합니다.';
     }
-    if (!formData.confirmPw) {
+    if (!confirmPw) {
       newErrors.confirmPw = '비밀번호를 한 번 더 입력해주세요.';
-    }else if(formData.pw !== formData.confirmPw){
+    }else if(formData.pw !== confirmPw){
       newErrors.confirmPw = '비밀번호가 일치하지 않습니다.';
     }
     if (!formData.ssn) {
@@ -348,7 +365,7 @@ const Signup = () => {
                     <input
                       type="password"
                       name="confirmPw"
-                      value={formData.confirmPw}
+                      value={confirmPw}
                       onChange={handleChange}
                       placeholder="비밀번호 확인"
                       className={`w-full px-4 md:px-5 py-3 md:py-4 bg-white border ${errors.confirmPw ? 'border-red-500' : 'border-gray-200'} rounded-xl md:rounded-2xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-gray-700 shadow-sm`}
