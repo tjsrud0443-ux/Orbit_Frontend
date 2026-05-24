@@ -5,6 +5,7 @@ import Calendar from './domains/schedules/Calendar';
 import Departments from './domains/departments/Departments';
 import Layout from './components/layout/Layout';
 import './App.css';
+import AdminSignup from './domains/admin/AdminSignup';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route element={<Layout />}>
           {/*Departments*/}
           <Route path="/departments" element={<Departments />} />
+          <Route path="/adminSignup" element={<AdminSignup />} />
         </Route>
       </Routes>
     </Router>
