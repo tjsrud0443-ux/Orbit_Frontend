@@ -21,6 +21,10 @@ const AdminSignup = () => {
   const [hireDate, setHireDate] = useState('');
   const [selectedDept, setSelectedDept] = useState({ dept_seq: null, dept_name: '부서 또는 본부를 선택하세요' });
   const [selectedRank, setSelectedRank] = useState({ rank_seq: null, rank_name: '직급을 선택하세요' });
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [isRejectSuccess, setIsRejectSuccess] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [viewDate, setViewDate] = useState(new Date());
 
   const token = useAuthStore(state => state.token);
 
@@ -126,18 +130,80 @@ const AdminSignup = () => {
   };
 
   const handleReject = () => {
-    if (window.confirm('정말 이 신청을 반려하시겠습니까?')) {
-      rejectUserSignup(selectedUser).then(resp => {
-        alert('회원가입 신청이 반려되었습니다.');
+    setIsRejectModalOpen(true);
+  };
+
+  const performReject = () => {
+    rejectUserSignup(selectedUser).then(resp => {
+      setIsRejectSuccess(true);
+      setTimeout(() => {
+        setIsRejectModalOpen(false);
+        setIsRejectSuccess(false);
         setSelectedUser(null);
         loadList();
-      });
-    }
+      }, 1500);
+    });
   };
+
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
+  const calendarYear = viewDate.getFullYear();
+  const calendarMonth = viewDate.getMonth();
+  const firstDay = new Date(calendarYear, calendarMonth, 1).getDay();
+  const lastDate = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+  const calendarDays = [];
+  for (let i = 0; i < firstDay; i++) calendarDays.push(null);
+  for (let i = 1; i <= lastDate; i++) calendarDays.push(i);
 
   return (
     <div className={`h-full flex flex-col ${selectedUser ? 'p-0 md:p-8' : 'p-6 md:p-8'} font-sans overflow-hidden bg-[#FFFFFF]`}>
       
+      {/* Rejection Confirmation Modal */}
+      {isRejectModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-sm rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            {!isRejectSuccess ? (
+              <>
+                <div className="p-8 text-center">
+                  <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">신청 반려 확인</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    정말 이 회원의 가입 신청을 반려하시겠습니까?<br/>반려된 신청은 되돌릴 수 없습니다.
+                  </p>
+                </div>
+                <div className="flex border-t border-gray-50">
+                  <button 
+                    onClick={() => setIsRejectModalOpen(false)}
+                    className="flex-1 py-4 text-sm font-bold text-gray-400 hover:bg-gray-50 transition-colors border-r border-gray-50"
+                  >
+                    취소
+                  </button>
+                  <button 
+                    onClick={performReject}
+                    className="flex-1 py-4 text-sm font-bold text-red-500 hover:bg-red-50 transition-colors"
+                  >
+                    반려하기
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="p-10 text-center animate-in zoom-in-95 duration-300">
+                <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4 text-green-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-1">반려 완료</h3>
+                <p className="text-sm text-gray-500">성공적으로 반려 처리되었습니다.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Header Section - Fixed height */}
       <div className={`mb-6 flex-shrink-0 ${selectedUser ? 'hidden md:block' : 'block'}`}>
         <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">회원가입 관리</h1>
@@ -395,18 +461,50 @@ const AdminSignup = () => {
                             )}
                           </div>
 
-                          <div>
+                          <div className="relative">
                             <label className="block text-[11px] font-bold text-gray-600 mb-1 ml-1">입사일자</label>
-                            <input 
-                              type="date" 
-                              value={hireDate}
-                              onChange={(e) => {
-                                setHireDate(e.target.value);
-                                setErrors(prev => ({ ...prev, hireDate: '' }));
-                              }} 
-                              className={`w-full px-4 py-2.5 bg-white border ${errors.hireDate ? 'border-red-500' : 'border-gray-200'} rounded-xl text-xs font-medium focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all`}
-                            />
+                            <div 
+                              onClick={() => { setIsCalendarOpen(!isCalendarOpen); setIsDeptOpen(false); setIsRankOpen(false); }}
+                              className={`w-full px-4 py-2.5 bg-white border ${errors.hireDate ? 'border-red-500' : isCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-200'} rounded-xl text-xs font-medium transition-all cursor-pointer flex justify-between items-center`}
+                            >
+                              <span className={!hireDate ? 'text-gray-400' : 'text-gray-800'}>{hireDate || '입사일자를 선택하세요'}</span>
+                              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            </div>
                             {errors.hireDate && <p className="text-red-500 text-[10px] mt-1 ml-1 font-medium">{errors.hireDate}</p>}
+                            
+                            {isCalendarOpen && (
+                              <div className="absolute z-30 w-full bottom-full mb-1 bg-white border border-gray-100 rounded-2xl shadow-2xl p-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                                <div className="flex items-center justify-between mb-4 px-1">
+                                  <button onClick={(e) => { e.stopPropagation(); setViewDate(new Date(calendarYear, calendarMonth - 1, 1)); }} className="p-1 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-[#3530B8] transition-colors">&lt;</button>
+                                  <div className="text-xs font-bold text-gray-900">{calendarYear}년 {calendarMonth + 1}월</div>
+                                  <button onClick={(e) => { e.stopPropagation(); setViewDate(new Date(calendarYear, calendarMonth + 1, 1)); }} className="p-1 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-[#3530B8] transition-colors">&gt;</button>
+                                </div>
+                                <div className="grid grid-cols-7 gap-1 mb-2">
+                                  {days.map(d => <div key={d} className="text-[10px] font-bold text-gray-400 text-center py-1">{d}</div>)}
+                                </div>
+                                <div className="grid grid-cols-7 gap-1">
+                                  {calendarDays.map((d, i) => (
+                                    <div 
+                                      key={i}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if(!d) return;
+                                        const dateStr = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                                        setHireDate(dateStr);
+                                        setIsCalendarOpen(false);
+                                        setErrors(prev => ({ ...prev, hireDate: '' }));
+                                      }}
+                                      className={`text-[10px] font-medium text-center py-2 rounded-lg transition-all cursor-pointer
+                                        ${!d ? 'invisible' : 'hover:bg-[#F0F4FF] hover:text-[#3530B8] text-gray-600'}
+                                        ${hireDate === `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}` ? 'bg-[#3530B8] text-white' : ''}
+                                      `}
+                                    >
+                                      {d}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </>
                       )}
