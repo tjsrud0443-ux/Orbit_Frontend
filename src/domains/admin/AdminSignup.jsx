@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Pagination from '../../components/common/Pagination';
-import { getAllRequest, getDeptList, getRankList, getUserInfo } from './adminApi';
+import { approveUserSignup, getAllRequest, getDeptList, getRankList, getUserInfo } from './adminApi';
 
 const AdminSignup = () => {
   const [activeTab, setActiveTab] = useState('전체');
@@ -254,7 +254,7 @@ const AdminSignup = () => {
                         onClick={() => { setIsDeptOpen(!isDeptOpen); setIsRankOpen(false); }}
                         className={`w-full px-4 py-2.5 bg-white border ${isDeptOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-200'} rounded-xl text-xs font-medium transition-all cursor-pointer flex justify-between items-center`}
                       >
-                        <span className={selectedDept === '부서 또는 본부를 선택하세요' ? 'text-gray-400' : 'text-gray-800'}>{selectedDept.name}</span>
+                        <span className={selectedDept === '부서 또는 본부를 선택하세요' ? 'text-gray-400' : 'text-gray-800'}>{selectedDept.dept_name}</span>
                         <svg className={`w-4 h-4 text-gray-400 transition-transform ${isDeptOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                       </div>
                       {isDeptOpen && (
@@ -278,7 +278,7 @@ const AdminSignup = () => {
                         onClick={() => { setIsRankOpen(!isRankOpen); setIsDeptOpen(false); }}
                         className={`w-full px-4 py-2.5 bg-white border ${isRankOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-200'} rounded-xl text-xs font-medium transition-all cursor-pointer flex justify-between items-center`}
                       >
-                        <span className={selectedRank === '직급을 선택하세요' ? 'text-gray-400' : 'text-gray-800'}>{selectedRank.name}</span>
+                        <span className={selectedRank === '직급을 선택하세요' ? 'text-gray-400' : 'text-gray-800'}>{selectedRank.rank_name}</span>
                         <svg className={`w-4 h-4 text-gray-400 transition-transform ${isRankOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                       </div>
                       {isRankOpen && (
@@ -286,7 +286,7 @@ const AdminSignup = () => {
                           {rankList.map((rank) => (
                             <div 
                               key={rank.rank_seq}
-                              onClick={() => { setSelectedRank({ rank_seq: rank.rank.seq, rank_name: rank.rank_name}); setIsRankOpen(false); }}
+                              onClick={() => { setSelectedRank({ rank_seq: rank.rank_seq, rank_name: rank.rank_name}); setIsRankOpen(false); }}
                               className="px-4 py-2.5 text-xs hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-medium border-b border-gray-50 last:border-0"
                             >
                               {rank.rank_name}
