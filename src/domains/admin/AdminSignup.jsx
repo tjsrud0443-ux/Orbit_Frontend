@@ -46,7 +46,7 @@ const AdminSignup = () => {
   };
 
   const loadList = () => {
-    getAllRequest(page, statusMap[activeTab]).then(resp => {
+    getAllRequest(page, statusMap[activeTab], searchTerm).then(resp => {
       setAllInfo(resp.data.list);
       const calculatedPages = Math.ceil(resp.data.count / 10);
       setTotalPages(calculatedPages === 0 ? 1 : calculatedPages);
@@ -56,12 +56,16 @@ const AdminSignup = () => {
 
   useEffect(() => {
     loadList();
-  }, [page, activeTab]);
+  }, [page, activeTab, searchTerm]);
 
   useEffect(() => {
     getDeptList().then(resp => setDeptList(resp.data));
     getRankList().then(resp => setRankList(resp.data));
   },[])
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
 
   const handleUserClick = (info) => {
     setSelectedUser(info.signup_seq);
