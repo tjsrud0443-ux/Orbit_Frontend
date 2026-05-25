@@ -32,17 +32,17 @@ const AdminSignup = () => {
     '전체': 'TOTAL',
     '승인 대기': 'PENDING',
     '승인 완료': 'APPROVED',
-    '거절': 'REJECTED'
+    '반려': 'REJECTED'
   };
 
   const tabKeyMap = {
     '전체': 'TOTAL',
     '승인 대기': 'PENDING',
     '승인 완료': 'APPROVED',
-    '거절': 'REJECTED'
+    '반려': 'REJECTED'
   };
 
-  const tabs = ['전체', '승인 대기', '승인 완료', '거절'];
+  const tabs = ['전체', '승인 대기', '승인 완료', '반려'];
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
@@ -208,7 +208,7 @@ const AdminSignup = () => {
       <div className={`mb-6 flex-shrink-0 ${selectedUser ? 'hidden md:block' : 'block'}`}>
         <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">회원가입 관리</h1>
         <p className="text-[11px] md:text-sm text-gray-500 whitespace-nowrap">
-          신규 회원가입 신청 내역을 확인하고 승인, 거절할 수 있습니다.
+          신규 회원가입 신청 내역을 확인하고 승인, 반려할 수 있습니다.
         </p>
       </div>
 
@@ -313,7 +313,7 @@ const AdminSignup = () => {
                     info.status === "APPROVED" ?
                     <span className="px-2.5 py-0.5 bg-[#F0FDF4] text-[#10B981] text-[10px] font-bold rounded-full text-center whitespace-nowrap">승인 완료</span>
                     :
-                    <span className="px-2.5 py-0.5 bg-[#FFF0F0] text-[#FF4D4F] text-[10px] font-bold rounded-full text-center whitespace-nowrap">거절</span>
+                    <span className="px-2.5 py-0.5 bg-[#FFF0F0] text-[#FF4D4F] text-[10px] font-bold rounded-full text-center whitespace-nowrap">반려</span>
                   }
                 </div>
               </div>
