@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState } from 'react';
 import Pagination from '../../components/common/Pagination';
 import { approveUserSignup, getAllRequest, getDeptList, getHrInfo, getRankList, getUserInfo, rejectUserSignup } from './adminApi';
+import useAuthStore from '../../store/authStore';
 
 const AdminSignup = () => {
   const [activeTab, setActiveTab] = useState('전체');
@@ -15,12 +16,13 @@ const AdminSignup = () => {
   const [rankList, setRankList] = useState([]);
   const [errors, setErrors] = useState({ dept: '', rank: '', hireDate: '' });
 
-  // Custom dropdown states
   const [isDeptOpen, setIsDeptOpen] = useState(false);
   const [isRankOpen, setIsRankOpen] = useState(false);
   const [hireDate, setHireDate] = useState('');
   const [selectedDept, setSelectedDept] = useState({ dept_seq: null, dept_name: '부서 또는 본부를 선택하세요' });
   const [selectedRank, setSelectedRank] = useState({ rank_seq: null, rank_name: '직급을 선택하세요' });
+
+  const token = useAuthStore(state => state.token);
 
   const statusMap = {
     '전체': 'TOTAL',
@@ -201,7 +203,15 @@ const AdminSignup = () => {
               >
                 <div className="flex justify-center">
                   <div className="w-9 h-9 rounded-full bg-[#DDE8FF] flex items-center justify-center overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
-                    <svg className="w-5 h-5 text-[#3530B8]/40" fill="currentColor" viewBox="0 0 24 24"><path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    {info.sysname ? (
+                      <img 
+                        src={`http://localhost/file/profile/view?sysname=${info.sysname}&token=${token}`} 
+                        className="w-full h-full object-cover" 
+                        alt="Profile" 
+                      />
+                    ) : (
+                      <svg className="w-5 h-5 text-[#3530B8]/40" fill="currentColor" viewBox="0 0 24 24"><path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    )}
                   </div>
                 </div>
                 <div className="text-xs font-bold text-gray-700">{info.name}</div>
@@ -248,7 +258,15 @@ const AdminSignup = () => {
                 {/* Profile Header */}
                 <div className="flex items-center gap-5 mb-8 bg-[#F8FAFF] p-6 rounded-2xl border border-[#F0F4FF] flex-shrink-0">
                   <div className="w-20 h-20 rounded-full bg-white border-2 border-[#DDE8FF] shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0">
-                    <svg className="w-10 h-10 text-[#3530B8]/30" fill="currentColor" viewBox="0 0 24 24"><path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    {userInfo.sysname ? (
+                      <img 
+                        src={`http://localhost/file/profile/view?sysname=${userInfo.sysname}&token=${token}`} 
+                        className="w-full h-full object-cover" 
+                        alt="Profile" 
+                      />
+                    ) : (
+                      <svg className="w-10 h-10 text-[#3530B8]/30" fill="currentColor" viewBox="0 0 24 24"><path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    )}
                   </div>
                   <div className="min-w-0 overflow-hidden">
                     <h2 className="text-xl font-bold text-gray-900 truncate">{userInfo.name}</h2>
