@@ -1,2 +1,4 @@
-﻿// departmentsApi API or configuration
-export const departmentsApi = {};
+﻿import { maxios } from "../../api/axiosConfig";
+
+
+export const getGroup = () => maxios.get("/departments/group");
