@@ -5,12 +5,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 
 import { fetchHolidays } from '../../api/holidayApi';
-import { getSchedules, createSchedule} from './schedulesApi';
-//import { getSchedules, createSchedule, updateSchedule, deleteSchedule } from './schedulesApi';
-const PERSONAL_EVENTS = [
-  { id: 'p1', title: '팀 주간 회의', start: '2026-05-04', category: 'meeting', color: '#7C3AED' },
-  { id: 'p2', title: '연차', start: '2026-05-07', end: '2026-05-08', category: 'leave', color: '#10B981' },
-];
+import { getSchedules, createSchedule, deleteSchedule} from './schedulesApi';
 
 const generateCompanyEvents = (years) => {
   const events = [];
@@ -38,6 +33,40 @@ const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
 // 현재 연도 기준 -5년 ~ +5년, 총 11년치
 
 const COMPANY_EVENTS = generateCompanyEvents(years);
+/*오늘일정*/
+const TodayEvents = ({ events = [] }) => {
+  const todayStr = new Date().toISOString().split('T')[0];
+  const week = new Date();//현재 시간 날짜 가져옴
+  week.setDate(week.getDate()+7);
+  const weekStr = week.toISOString().split('T')[0];
+
+const upcomingEvents = events.filter(e => {
+  if (e.category === 'holiday') return false; // 공휴일 제외
+  const start = e.start?.split('T')[0];
+  return start >= todayStr && start <= weekStr;
+}).sort((a, b) => a.start > b.start ? 1 : -1); // 날짜순 정렬
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+      <h3 className="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2 mb-3">다가오는 일정</h3>
+      {upcomingEvents.length === 0 ? (
+        <p className="text-xs text-slate-400">7일 내 일정이 없습니다.</p>
+      ) : (
+         <div className="flex flex-col gap-2">
+          {upcomingEvents.map(e => (
+            <div key={e.id} className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: e.color ?? '#3530B8' }} />
+              <div className="flex flex-col">
+                <span className="text-xs text-slate-700 truncate">{e.title}</span>
+                <span className="text-[10px] text-slate-400">{e.start?.split('T')[0]}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 /*체크박스 */
 const PERSONAL_FILTERS = [
@@ -75,8 +104,8 @@ const Calendar = () => {
   const [personalChecked, setPersonalChecked] = useState(Object.fromEntries(PERSONAL_FILTERS.map(f => [f.key, true])));
   // 회사 체크박스 on/off 상태
   const [companyChecked, setCompanyChecked]   = useState(Object.fromEntries(COMPANY_FILTERS.map(f => [f.key, true])));
-  // 개인 일정 목록 (추가/수정/삭제로 변함)
-  const [personalEvents, setPersonalEvents] = useState(PERSONAL_EVENTS);
+  // 개인 일정 목록
+  const [personalEvents, setPersonalEvents] = useState([]);
   // 회사 일정 목록 (공휴일도 여기 합쳐짐)
   const [companyEvents, setCompanyEvents]   = useState(COMPANY_EVENTS);
   // 일정 추가/수정 모달 열림 여부 + 날짜
@@ -96,11 +125,15 @@ const Calendar = () => {
           //filter들 다 묶어놓고 filer의 key가 스케ㅌ입이랑 같은걸 찾음 
           // .find() → 조건에 맞는 항목 자체를 반환
           const filter = [...PERSONAL_FILTERS, ...COMPANY_FILTERS].find(f => f.key === item.schedule_type);
+          const startDate = item.start_dt?.split('T')[0];  //날짜만 추출
+          const endDate = item.end_dt?.split('T')[0]; 
           return {
-            id: item.schedule_seq.toString(),
+            id: item.schedule_seq.toString(),//shedules_seq
             title: item.title, //일정제목
+            //
             start: item.start_dt, 
-            end: item.end_dt || undefined, //끝 일정은 미정일수도 있음을 고려
+            //fullcal은 end가 없거나 undefined이면 하루일정-> 점으로 처리
+            end: item.start_dt === item.end_dt?.split('T')[0] ? undefined : (item.end_dt || undefined),
             //fullcalendar의 정해진 필드 외 추가 데이터 넣으려면 extendedProps 사용
             extendedProps: { 
               category: item.schedule_type, 
@@ -264,6 +297,14 @@ const Calendar = () => {
   const isFormValid = form.title.trim() && form.start_dt && form.end_dt && form.sked_reason.trim() && (form.start_dt <= form.end_dt);
  // 이벤트 삭제
   const handleDeleteEvent = (id) => {
+    console.log('삭제 sched_seq',id);
+    // 공용 데이터(숫자 아닌 seq)는 API 호출 안 함
+  if (isNaN(Number(id))) {
+    setPersonalEvents(prev => prev.filter(e => e.id !== id));
+    setCompanyEvents(prev => prev.filter(e => e.id !== id));
+    setModal({ open: false, date: '' });
+    return;
+  }
     deleteSchedule(id)
       .then(() => {
         setPersonalEvents(prev => prev.filter(e => e.id !== id));
@@ -282,7 +323,8 @@ const Calendar = () => {
           </div>
 
           <div className="flex gap-1 border-b border-slate-200 px-1">
-            {[{ key: 'personal', label: '개인 캘린더' }, { key: 'company', label: '공용 캘린더' }].map(tab => (
+            {[{ key: 'personal', label: '개인 캘린더' }, 
+            { key: 'company', label: '공용 캘린더' }].map(tab => (
               <button key={tab.key} onClick={() => setActiveTab(tab.key)}
                 className={`px-4 py-2 rounded-t-lg text-xs font-bold transition-all whitespace-nowrap border border-b-0
                   ${activeTab === tab.key ? 'bg-[#3530B8] text-white border-[#3530B8]' : 'bg-white text-slate-500 border-slate-200'}`}>
@@ -343,10 +385,16 @@ const Calendar = () => {
               </div>
             </div>
 
-            <aside className="w-full lg:w-64 shrink-0 flex flex-col">
-              <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col gap-6 h-full">
-                <FilterSection title="개인 캘린더" filters={PERSONAL_FILTERS} checked={personalChecked} onChange={(k, v) => setPersonalChecked(p => ({ ...p, [k]: v }))} />
-                <FilterSection title="회사 공용 캘린더" filters={COMPANY_FILTERS} checked={companyChecked} onChange={(k, v) => setCompanyChecked(p => ({ ...p, [k]: v }))} />
+            <aside className="w-full lg:w-64 shrink-0 flex flex-col gap-4 justify-end">
+               {/* 오늘의 일정 */}
+    <TodayEvents events={filteredEvents} />
+              {/* 필터 섹션 박스 */}
+              <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm min-h-[45%]">
+                {activeTab === 'personal' ? (
+                  <FilterSection title="개인 캘린더" filters={PERSONAL_FILTERS} checked={personalChecked} onChange={(k, v) => setPersonalChecked(p => ({ ...p, [k]: v }))} />
+                ) : (
+                  <FilterSection title="회사 공용 캘린더" filters={COMPANY_FILTERS} checked={companyChecked} onChange={(k, v) => setCompanyChecked(p => ({ ...p, [k]: v }))} />
+                )}
               </div>
             </aside>
           </div>
@@ -359,11 +407,6 @@ const Calendar = () => {
           <select value={form.schedule_type} onChange={e => setForm(f => ({ ...f, schedule_type: e.target.value }))} className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs mb-3">
             <optgroup label="개인">
               {PERSONAL_FILTERS.filter(f => f.key !== 'holiday').map(f => (
-                <option key={f.key} value={f.key}>{f.label}</option>
-              ))}
-            </optgroup>
-            <optgroup label="공용">
-              {COMPANY_FILTERS.filter(f => f.key !== 'holiday').map(f => (
                 <option key={f.key} value={f.key}>{f.label}</option>
               ))}
             </optgroup>
