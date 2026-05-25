@@ -5,7 +5,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 
 import { fetchHolidays } from '../../api/holidayApi';
-import { getSchedules, createSchedule, deleteSchedule} from './schedulesApi';
+import { getSchedules, createSchedule, deleteSchedule, updateSchedule} from './schedulesApi';
 
 const generateCompanyEvents = (years) => {
   const events = [];
@@ -134,6 +134,22 @@ const Calendar = () => {
   const calendarRef = useRef(null);
   // 화면이 모바일인지 여부 (캘린더 height 분기용)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+//(커스텀 달력 상태)
+  const [openCalendar, setOpenCalendar] = useState(null); // 'start' | 'end' | null
+  const [viewDate, setViewDate] = useState(new Date());
+  const calendarYear = viewDate.getFullYear();
+  const calendarMonth = viewDate.getMonth();
+
+  const getCustomCalendarDays = () => {
+    const startOfMonth = new Date(calendarYear, calendarMonth, 1);
+    const endOfMonth = new Date(calendarYear, calendarMonth + 1, 0);
+    const startDayOfWeek = startOfMonth.getDay();
+    const totalDays = endOfMonth.getDate();
+    const daysArr = [];
+    for (let i = 0; i < startDayOfWeek; i++) daysArr.push(null);
+    for (let i = 1; i <= totalDays; i++) daysArr.push(i);
+    return daysArr;
+  };
 
   useEffect(() => {
     const handler = () => setIsMobile(window.innerWidth < 1024);//1024 미만이면 모바일 처리
@@ -161,32 +177,41 @@ const Calendar = () => {
   // 일정 클릭 시 상세 보기 모달
   const [detailModal, setDetailModal] = useState({ open: false, event: null });
 
+  
   useEffect(() => {
     //일정 출력
     getSchedules()
       .then(resp => {
         const allEvents = resp.data.map(item => {
-          //filter들 다 묶어놓고 filer의 key가 스케ㅌ입이랑 같은걸 찾음 
-          // .find() → 조건에 맞는 항목 자체를 반환
           const filter = [...PERSONAL_FILTERS, ...COMPANY_FILTERS].find(f => f.key === item.schedule_type);
-          const startDate = item.start_dt?.split('T')[0];  //날짜만 추출
-          const endDate = item.end_dt?.split('T')[0]; 
+          const startDate = item.start_dt?.split('T')[0];
+          const endDate = item.end_dt?.split('T')[0];
+          
+          const isSameDay = startDate === endDate;
+
+          // FullCalendar의 end date는 exclusive하므로, 
+          // 기간 일정일 때만 종료일에 1일을 더해줌
+          let displayEnd = undefined;
+          if (endDate && !isSameDay) {
+            const d = new Date(endDate);
+            d.setDate(d.getDate() + 1);
+            displayEnd = d.toISOString().split('T')[0];
+          }
+
           return {
-            id: item.schedule_seq.toString(),//shedules_seq
-            title: item.title, //일정제목
-            //
-            start: item.start_dt, 
-            //fullcal은 end가 없거나 undefined이면 하루일정-> 점으로 처리
-            end: item.start_dt === item.end_dt?.split('T')[0] ? undefined : (item.end_dt || undefined),
-            //fullcalendar의 정해진 필드 외 추가 데이터 넣으려면 extendedProps 사용
+            id: item.schedule_seq.toString(),
+            title: item.title,
+            start: startDate, 
+            end: displayEnd,
+            allDay: !isSameDay, // 하루면 false(점), 이틀 이상이면 true(바)
             extendedProps: { 
               category: item.schedule_type, 
               description: item.sked_reason,
-              is_public: item.is_public
+              is_public: item.is_public,
+              actualEnd: endDate // 화면 표시용 실제 종료일
             },
             category: item.schedule_type,
-            //a?.color -> ? 옵셔널 체이닝 : 있으면 반환 없으면 undifined (null이어도 에러 ㄴ)
-            color: filter?.color ?? '#3530B8', //만약 null일경우 기본 사용
+            color: filter?.color ?? '#3530B8',
           };
         });
 //.some()은 배열에서 조건에 맞는 게 하나라도 있으면 true를 반환
@@ -208,6 +233,9 @@ const Calendar = () => {
       })
       .catch(err => console.error('일정 로드 실패:', err));
   }, []);
+
+//날짜 인풋 디자인
+
 
   //useRef : 컴포넌트가 재렌더링되어도 값을 유지
   const loadedYears = useRef(new Set());
@@ -275,7 +303,7 @@ const Calendar = () => {
       title: event.title,
       schedule_type: event.extendedProps.category || 'personal',
       start_dt: event.startStr.split('T')[0],
-      end_dt: event.endStr ? event.endStr.split('T')[0] : '',
+      end_dt: event.extendedProps.actualEnd || event.startStr.split('T')[0],
       sked_reason: event.extendedProps.description || '',
       is_public: event.extendedProps.is_public || 0
     });
@@ -284,7 +312,7 @@ const Calendar = () => {
   };
 // 모달에서 저장/완료 → 이벤트 추가 또는 수정
   const handleSaveEvent = () => {
-    const isValid = form.title.trim() && form.start_dt && form.end_dt && form.sked_reason.trim() && (form.start_dt <= form.end_dt);
+    const isValid = form.title.trim() && form.start_dt && form.end_dt && (form.start_dt <= form.end_dt);
     if (!isValid) return;
 
     const isPersonalCategory = PERSONAL_FILTERS.some(f => f.key === form.schedule_type);
@@ -300,15 +328,25 @@ const Calendar = () => {
       is_public: isPersonalCategory ? 0 : 1,
     };
 
+    const isSameDay = form.start_dt === form.end_dt;
+    let displayEnd = undefined;
+    if (form.end_dt && !isSameDay) {
+      const d = new Date(form.end_dt);
+      d.setDate(d.getDate() + 1);
+      displayEnd = d.toISOString().split('T')[0];
+    }
+
     const eventData = {
       id: isEditing ? form.schedule_seq : `u${Date.now()}`,
       title: form.title,
       start: form.start_dt,
-      end: form.end_dt || undefined,
+      end: displayEnd,
+      allDay: !isSameDay,
       extendedProps: { 
         category: form.schedule_type, 
         description: form.sked_reason,
-        is_public: form.is_public
+        is_public: form.is_public,
+        actualEnd: form.end_dt
       },
       category: form.schedule_type,
       color: filter?.color ?? '#3530B8',
@@ -338,10 +376,9 @@ const Calendar = () => {
   };
 
   // 폼 유효성 검사 (모든 필드 입력 및 날짜 순서 확인)
-  const isFormValid = form.title.trim() && form.start_dt && form.end_dt && form.sked_reason.trim() && (form.start_dt <= form.end_dt);
+  const isFormValid = form.title.trim() && form.start_dt && form.end_dt && (form.start_dt <= form.end_dt);
  // 이벤트 삭제
   const handleDeleteEvent = (id) => {
-    console.log('삭제 sched_seq',id);
     // 공용 데이터(숫자 아닌 seq)는 API 호출 안 함
   if (isNaN(Number(id))) {
     setPersonalEvents(prev => prev.filter(e => e.id !== id));
@@ -358,8 +395,90 @@ const Calendar = () => {
       .catch(err => console.error('일정 삭제 실패:', err));
   };
 
+// --- [Calendar 컴포넌트 내부 맨 밑바닥에 배치할 함수] ---
+  function renderInlineCalendar(type) {
+    const currentTargetDate = type === 'start' ? form.start_dt : form.end_dt;
+    const positionClass = type === 'start' ? 'left-0' : 'right-0';
+    const calendarDays = getCustomCalendarDays();
+
+    return (
+      <div 
+        onClick={(e) => e.stopPropagation()} 
+        className={`absolute z-30 w-[240px] bottom-full mb-1 ${positionClass} bg-white border border-gray-100 rounded-2xl shadow-2xl p-4 animate-in fade-in slide-in-from-bottom-2 duration-200`}
+      >
+        {/* 달력 헤더 */}
+        <div className="flex items-center justify-between mb-3 px-1">
+          <button
+            onClick={(e) => { e.stopPropagation(); setViewDate(new Date(calendarYear, calendarMonth - 1, 1)); }}
+            className="p-1 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-[#3530B8] transition-colors"
+          >
+            &lt;
+          </button>
+          <div className="text-xs font-bold text-gray-900">{calendarYear}년 {calendarMonth + 1}월</div>
+          <button
+            onClick={(e) => { e.stopPropagation(); setViewDate(new Date(calendarYear, calendarMonth + 1, 1)); }}
+            className="p-1 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-[#3530B8] transition-colors"
+          >
+            &gt;
+          </button>
+        </div>
+
+        {/* 요일 표시 */}
+        <div className="grid grid-cols-7 gap-1 mb-1.5">
+          {['일', '월', '화', '수', '목', '금', '토'].map(d => (
+            <div key={d} className="text-[10px] font-bold text-gray-400 text-center py-0.5">{d}</div>
+          ))}
+        </div>
+
+        {/* 날짜 그리드 */}
+        <div className="grid grid-cols-7 gap-1">
+          {calendarDays.map((d, i) => {
+            const isSelected = d && currentTargetDate === `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            
+            return (
+              <div
+                key={i}
+                onClick={() => {
+                  if(!d) return;
+                  const formattedDate = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                  setForm(prev => ({ ...prev, [type === 'start' ? 'start_dt' : 'end_dt']: formattedDate }));
+                  setOpenCalendar(null);
+                }}
+                className={`text-[10px] font-medium text-center py-1.5 rounded-lg transition-all
+                  ${!d ? 'invisible' : 'cursor-pointer'}
+                  ${d && !isSelected ? 'hover:bg-[#F0F4FF] hover:text-[#3530B8] text-slate-600' : ''}
+                  ${isSelected ? 'bg-[#3530B8] text-white font-bold' : ''}
+                `}
+              >
+                {d}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+  // --- [renderInlineCalendar 끝] ---
+
   return (
        <>
+        <style>
+          {`
+            .custom-scrollbar::-webkit-scrollbar {
+              width: 4px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-track {
+              background: transparent;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+              background: #E5E7EB;
+              border-radius: 10px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+              background: #D1D5DB;
+            }
+          `}
+        </style>
         <div className="flex-1 p-4 flex flex-col gap-4 overflow-y-auto lg:overflow-hidden min-h-0">
           <div className="px-1">
             <h1 className="text-xl font-bold text-slate-900 leading-tight">캘린더</h1>
@@ -470,9 +589,40 @@ const Calendar = () => {
               ))}
             </optgroup>
           </select>
-          <div className="flex gap-2 mb-3">
-            <input type="date" value={form.start_dt} onChange={e => setForm(f => ({ ...f, start_dt: e.target.value }))} className="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-xs" />
-            <input type="date" value={form.end_dt} onChange={e => setForm(f => ({ ...f, end_dt: e.target.value }))} className="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-xs" />
+          {/* 날짜 선택 영역 (커스텀 달력 팝업 적용) */}
+<div className="flex gap-2 mb-3">
+  
+  {/* [시작일 커스텀 달력] */}
+  <div className="flex-1 relative">
+    <div
+      onClick={() => setOpenCalendar(openCalendar === 'start' ? null : 'start')}
+      className={`w-full border rounded-lg px-3 py-1.5 text-xs bg-white text-slate-700 flex justify-between items-center cursor-pointer transition-all ${openCalendar === 'start' ? 'border-[#3530B8]' : 'border-slate-300'}`}
+    >
+      <span className={!form.start_dt ? 'text-slate-400' : 'text-slate-700'}>
+        {form.start_dt || '시작일'}
+      </span>
+      <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    </div>
+
+    {openCalendar === 'start' && renderInlineCalendar('start')}
+  </div>
+          {/* [종료일 커스텀 달력] */}
+          <div className="flex-1 relative">
+              <div
+                onClick={() => setOpenCalendar(openCalendar === 'end' ? null : 'end')}
+                className={`w-full border rounded-lg px-3 py-1.5 text-xs bg-white text-slate-700 flex justify-between items-center cursor-pointer transition-all ${openCalendar === 'end' ? 'border-[#3530B8]' : 'border-slate-300'}`}
+              >
+                <span className={!form.end_dt ? 'text-slate-400' : 'text-slate-700'}>
+                  {form.end_dt || '종료일'}
+                </span>
+                <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              {openCalendar === 'end' && renderInlineCalendar('end')}
+            </div>
           </div>
           <textarea value={form.sked_reason} onChange={e => setForm(f => ({ ...f, sked_reason: e.target.value }))} placeholder="일정 설명을 입력하세요" className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs h-20 resize-none mb-4 focus:outline-none focus:ring-1 focus:ring-[#3530B8]" />
           <div className="flex gap-2 justify-end">
@@ -513,8 +663,8 @@ const Calendar = () => {
           <div className="p-3 mb-4 rounded-lg bg-[#3530B8] text-white text-xs font-semibold">{detailModal.event.title}</div>
           <div className="space-y-2 mb-5 text-xs text-slate-600">
             <p><span className="font-semibold">시작:</span> {detailModal.event.startStr.split('T')[0]}</p>
-            {detailModal.event.end && (
-              <p><span className="font-semibold">종료:</span> {detailModal.event.endStr.split('T')[0]}</p>
+            {detailModal.event.extendedProps?.actualEnd && detailModal.event.startStr.split('T')[0] !== detailModal.event.extendedProps.actualEnd && (
+              <p><span className="font-semibold">종료:</span> {detailModal.event.extendedProps.actualEnd}</p>
             )}
             {detailModal.event.extendedProps?.description && (
               <div className="pt-2 border-t border-slate-100">
@@ -559,5 +709,7 @@ const ModalOverlay = ({ children, onClose }) => (
     <div className="bg-white rounded-2xl p-6 w-full max-w-sm mx-4">{children}</div>
   </div>
 );
+
+
 
 export default Calendar;
