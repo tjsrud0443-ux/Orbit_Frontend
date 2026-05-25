@@ -22,10 +22,10 @@ const generalMenuItems = [
     icon: faFileSignature,
     subItems: [
       { name: '전자결재 홈', path: '/approval' },
-      { name: '나의 전자결재', path: '/approval/mypage' },
-      { name: '결재할 문서함', path: '/approval/inbox' },
-      { name: '참조 문서함', path: '/approval/cc' },
-      { name: '임시 문서함', path: '/approval/temp' },
+      { name: '나의 전자결재', path: '/approvalMypage' },
+      { name: '결재할 문서함', path: '/approvalInbox' },
+      { name: '참조 문서함', path: '/approvalCc' },
+      { name: '임시 문서함', path: '/approvalTemp' },
     ]
   },
   {
@@ -61,7 +61,7 @@ const generalMenuItems = [
     name: 'AI 미답변 질문 관리',
     icon: faFileSignature,
     rank: ['부서장', '본부장', '대표'],
-    path: '/adminAiQuestions'
+    path: '/adminQna'
   },
   { name: '프로젝트 관리', path: '/projects', icon: faDiagramProject },
   { name: '자료실', path: '/documents', icon: faFolderOpen },
@@ -89,7 +89,7 @@ const adminMenuItems = [
     name: '자산 관리',
     icon: faFileSignature,
     subItems: [
-      { name: '비품 관리', path: '/adminSupplies' },
+      { name: '비품 관리', path: '/adminSupply' },
       { name: '비품 신청 관리', path: '/adminSupplyRequest' },
       { name: '비품 대여이력 관리', path: '/adminSupplyRental' },
       { name: '회의실 관리', path: '/adminMeetingRoom' }
@@ -103,7 +103,7 @@ const adminMenuItems = [
   {
     name: 'AI 미답변 질문 관리',
     icon: faFileSignature,
-    path: '/adminAiQuestions'
+    path: '/adminQna'
   },
 ];
 
