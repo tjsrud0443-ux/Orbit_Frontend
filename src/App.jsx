@@ -31,20 +31,20 @@ import BoardList from './domains/board/BoardList';
 import BoardWrite from './domains/board/BoardWrite';
 import BoardDetail from './domains/board/BoardDetail';
 import AiChat from './domains/aiChat/AiChat';
+import MyPage from './domains/mypage/MyPage';
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* 기본 경로를 /login으로 리다이렉트 (선택 사항) */}
         <Route path="/" element={<Navigate to="/login" replace />} />
 
-        {/* 1. 레이아웃이 적용되지 않는 독립된 페이지 (인증 관련) */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
-        {/* 2. 사이드바와 헤더가 전체적으로 공통 적용되는 페이지 묶음 */}
+        {/* 레이아웃(사이드바+헤더) 내부 페이지 */}
         <Route element={<Layout />}>
+          <Route path="/mypage" element={<MyPage />} />
           <Route path="/main" element={<Main />} />
           <Route path="/departments" element={<Departments />} />
 
