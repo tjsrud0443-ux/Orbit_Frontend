@@ -30,7 +30,7 @@ const generalMenuItems = [
   {
     name: '인사 관리',
     icon: faFileSignature,
-    team: ['인사팀'], 
+    team: ['인사팀'],
     rank: ['대표'],
     subItems: [
       { name: '직원 관리', path: '/adminUsers' },
@@ -41,7 +41,7 @@ const generalMenuItems = [
   {
     name: '자산 관리',
     icon: faFileSignature,
-    team: ['총무팀'], 
+    team: ['총무팀'],
     rank: ['대표'],
     subItems: [
       { name: '비품 관리', path: '/adminSupplies' },
@@ -107,14 +107,14 @@ const adminMenuItems = [
 ];
 
 
-const mockUser = {
-  name: '이인사',
-  team: '총무팀',
-  rank: '대표',
-  role: 'ADMIN'
-};
+// const mockUser = {
+//   name: '이인사',
+//   team: '총무팀',
+//   rank: '대표',
+//   role: 'ADMIN'
+// };
 
-const Sidebar = ({ isOpen, onClose, user = mockUser }) => {
+const Sidebar = ({ isOpen, onClose, user }) => {
   const location = useLocation();
   const [openMenuName, setOpenMenuName] = useState(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
@@ -136,8 +136,9 @@ const Sidebar = ({ isOpen, onClose, user = mockUser }) => {
 
   const filteredMenuItems = currentMenuPool.filter(item => {
     if (!item.team && !item.rank && !item.role) return true; // 직원 사이드바 조건 없음 무조건 표시
-    if (item.team && item.team.includes(user?.team)) return true; // 팀 권한 메뉴 표시
-    if (item.rank && item.rank.includes(user?.rank)) return true; // 직급 권한 메뉴 표시
+    if (!isAdminMode && (user?.dept_name === '운영총괄팀')) { return false; }
+    if (item.team && item.team.includes(user?.dept_name)) return true; // 팀 권한 메뉴 표시
+    if (item.rank && item.rank.includes(user?.rank_name)) return true; // 직급 권한 메뉴 표시
     if (item.role && item.role.includes(user?.role)) return true; // 직원/관리자 권한 버튼 표시
 
     return false;
@@ -153,7 +154,7 @@ const Sidebar = ({ isOpen, onClose, user = mockUser }) => {
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="flex flex-col h-full overflow-hidden">
-          
+
           <div className="relative flex items-center justify-between mb-1 py-2 pl-1">
             <div className="flex items-center gap-2">
               <img src={OrbitLogo} alt="Orbit Logo" className="w-12 h-12 object-contain" />
@@ -230,15 +231,15 @@ const Sidebar = ({ isOpen, onClose, user = mockUser }) => {
           </nav>
 
           <div className="mt-3 pt-3 border-t border-slate-100 shrink-0 space-y-1.5">
-            {(user?.role === 'ADMIN' || user?.team === '운영총괄팀' || user?.team === '운영총괄본부') && (
+            {(user?.role === 'ADMIN' || user?.dept_name === '운영총괄팀' || user?.dept_name === '운영총괄본부') && (
               <button
                 onClick={() => {
                   setIsAdminMode(!isAdminMode);
                   setOpenMenuName(null);
                 }}
                 className={`flex items-center justify-center gap-2 w-full px-2 py-2 text-xs font-bold hover:border-[#3530B8] transition-colors cursor-pointer border rounded-lg
-                  ${isAdminMode 
-                    ? 'bg-slate-800 text-white border-slate-950 hover:bg-slate-900' 
+                  ${isAdminMode
+                    ? 'bg-slate-800 text-white border-slate-950 hover:bg-slate-900'
                     : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:text-[#3530B8]'}`}
               >
                 <FontAwesomeIcon icon={isAdminMode ? faSliders : faUserShield} className="text-sm" />
