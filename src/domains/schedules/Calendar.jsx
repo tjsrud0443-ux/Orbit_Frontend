@@ -11,18 +11,18 @@ const generateCompanyEvents = (years) => {
   const events = [];
   years.forEach(year => {
     events.push({ id: `c-town-${year}-02`, title: '타운홀 미팅 (12:00~14:00)', 
-      start: `${year}-02-15T12:00:00`, end: `${year}-02-15T14:00:00`, category: 'company', color: '#F59E0B' });
+      start: `${year}-02-15T12:00:00`, end: `${year}-02-15T14:00:00`, category: 'team', color: '#0EA5E9' });
     events.push({ id: `c-town-${year}-07`, title: '타운홀 미팅 (12:00~14:00)', 
-      start: `${year}-07-15T12:00:00`, end: `${year}-07-15T14:00:00`, category: 'company', color: '#F59E0B' });
+      start: `${year}-07-15T12:00:00`, end: `${year}-07-15T14:00:00`, category: 'team', color: '#0EA5E9' });
     events.push({ id: `c-work-${year}-04`, title: '전사 워크숍 (1박 2일)', 
-      start: `${year}-04-16`, end: `${year}-04-18`, category: 'team', color: '#F59E0B' });
+      start: `${year}-04-16`, end: `${year}-04-18`, category: 'company', color: '#F59E0B' });
     events.push({ id: `c-work-${year}-09`, title: '전사 워크숍 (1박 2일)', 
-      start: `${year}-09-17`, end: `${year}-09-19`, category: 'team', color: '#F59E0B' });
-    events.push({ id: `c-survey-${year}-05`, title: '임직원 만족도 조사', start: `${year}-05-10`, category: 'company', color: '#0EA5E9' });
-    events.push({ id: `c-health-${year}-05`, title: '건강 챌린지 시작', start: `${year}-05-01`, category: 'team', color: '#0EA5E9' });
-    events.push({ id: `c-survey-${year}-11`, title: '임직원 만족도 조사', start: `${year}-11-10`, category: 'company', color: '#0EA5E9' });
-    events.push({ id: `c-health-${year}-11`, title: '건강 챌린지 시작', start: `${year}-11-01`, category: 'team', color: '#0EA5E9' });
-    events.push({ id: `c-found-${year}`, title: '창립기념일 (휴무)', start: `${year}-07-06`, category: 'holiday', color: '#F59E0B' });
+      start: `${year}-09-17`, end: `${year}-09-19`, category: 'company', color: '#F59E0B' });
+    events.push({ id: `c-survey-${year}-05`, title: '임직원 만족도 조사', start: `${year}-05-10`, category: 'company', color: '#F59E0B' });
+    events.push({ id: `c-health-${year}-05`, title: '건강 챌린지 시작', start: `${year}-05-01`, category: 'company', color: '#F59E0B' });
+    events.push({ id: `c-survey-${year}-11`, title: '임직원 만족도 조사', start: `${year}-11-10`, category: 'company', color: '#F59E0B' });
+    events.push({ id: `c-health-${year}-11`, title: '건강 챌린지 시작', start: `${year}-11-01`, category: 'company', color: '#F59E0B' });
+    events.push({ id: `c-found-${year}`, title: '창립기념일 (휴무)', start: `${year}-07-06`, category: 'holiday', color: '#EC4899' });
     events.push({ id: `c-award-${year}`, title: '연간 시상식', start: `${year}-12-24T15:00:00`, category: 'company', color: '#EC4899' });
   });
   return events;
@@ -33,37 +33,81 @@ const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
 // 현재 연도 기준 -5년 ~ +5년, 총 11년치
 
 const COMPANY_EVENTS = generateCompanyEvents(years);
-/*오늘일정*/
-const TodayEvents = ({ events = [] }) => {
-  const todayStr = new Date().toISOString().split('T')[0];
-  const week = new Date();//현재 시간 날짜 가져옴
-  week.setDate(week.getDate()+7);
-  const weekStr = week.toISOString().split('T')[0];
+const MiniCalendar = () => {
+  const [date, setDate] = useState(new Date());
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const lastDate = new Date(year, month + 1, 0).getDate();
+  const today = new Date();
 
-const upcomingEvents = events.filter(e => {
-  if (e.category === 'holiday') return false; // 공휴일 제외
-  const start = e.start?.split('T')[0];
-  return start >= todayStr && start <= weekStr;
-}).sort((a, b) => a.start > b.start ? 1 : -1); // 날짜순 정렬
+  const days = Array.from({ length: 42 }, (_, i) => {
+    const day = i - firstDay + 1;
+    return day > 0 && day <= lastDate ? day : null;
+  });
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-      <h3 className="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2 mb-3">다가오는 일정</h3>
-      {upcomingEvents.length === 0 ? (
-        <p className="text-xs text-slate-400">7일 내 일정이 없습니다.</p>
-      ) : (
-         <div className="flex flex-col gap-2">
-          {upcomingEvents.map(e => (
-            <div key={e.id} className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: e.color ?? '#3530B8' }} />
-              <div className="flex flex-col">
-                <span className="text-xs text-slate-700 truncate">{e.title}</span>
-                <span className="text-[10px] text-slate-400">{e.start?.split('T')[0]}</span>
+    <div className="text-xs h-full flex flex-col">
+      <div className="flex items-center justify-between mb-4 px-1">
+        <button onClick={() => setDate(new Date(year, month - 1, 1))} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">&lt;</button>
+        <span className="font-bold text-slate-800">{year}년 {month + 1}월</span>
+        <button onClick={() => setDate(new Date(year, month + 1, 1))} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">&gt;</button>
+      </div>
+      <div className="grid grid-cols-7 text-center text-[10px] text-slate-400 mb-2 font-medium">
+        {['일','월','화','수','목','금','토'].map(d => <span key={d}>{d}</span>)}
+      </div>
+      <div className="grid grid-cols-7 text-center text-[11px] flex-1 content-between">
+        {days.map((day, i) => (
+          <div key={i} className="flex items-center justify-center py-1">
+            <span className={`w-7 h-7 flex items-center justify-center rounded-full transition-all
+              ${day === today.getDate() && month === today.getMonth() && year === today.getFullYear()
+                ? 'bg-[#3530B8] text-white font-bold shadow-sm' : 'text-slate-600 hover:bg-slate-50 cursor-pointer'}
+              ${!day ? 'invisible' : ''}`}>
+              {day || ''}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const MonthlyEvents = ({ events, currentTitle, title = "이달의 주요 일정" }) => {
+  const match = currentTitle.match(/(\d+)년\s+(\d+)월/);
+  if (!match) return null;
+  const year = parseInt(match[1]);
+  const month = parseInt(match[2]);
+
+  const monthlyEvents = events.filter(e => {
+    const d = new Date(e.start);
+    return d.getFullYear() === year && (d.getMonth() + 1) === month;
+  }).sort((a, b) => new Date(a.start) - new Date(b.start));
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      <h3 className="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2 mb-3 shrink-0">{title}</h3>
+      <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-3">
+        {monthlyEvents.length > 0 ? (
+          monthlyEvents.map(e => (
+            <div key={e.id} className="flex gap-3 items-start p-1.5 rounded-lg hover:bg-slate-50 transition-colors group">
+              <div className="text-[10px] font-bold text-[#3530B8] bg-[#F0F4FF] px-1.5 py-1 rounded shrink-0 min-w-[34px] text-center group-hover:bg-[#3530B8] group-hover:text-white transition-colors">
+                {new Date(e.start).getDate()}일
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-semibold text-slate-800 truncate">{e.title}</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: e.color || '#3530B8' }} />
+                  <p className="text-[10px] text-slate-400 capitalize">{e.category}</p>
+                </div>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          ))
+        ) : (
+          <div className="h-full flex flex-col items-center justify-center py-8 text-center">
+            <p className="text-[11px] text-slate-400">등록된 일정이 없습니다.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -385,17 +429,32 @@ const Calendar = () => {
               </div>
             </div>
 
-            <aside className="w-full lg:w-64 shrink-0 flex flex-col gap-4 justify-end">
-               {/* 오늘의 일정 */}
-    <TodayEvents events={filteredEvents} />
-              {/* 필터 섹션 박스 */}
-              <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm min-h-[45%]">
-                {activeTab === 'personal' ? (
-                  <FilterSection title="개인 캘린더" filters={PERSONAL_FILTERS} checked={personalChecked} onChange={(k, v) => setPersonalChecked(p => ({ ...p, [k]: v }))} />
-                ) : (
-                  <FilterSection title="회사 공용 캘린더" filters={COMPANY_FILTERS} checked={companyChecked} onChange={(k, v) => setCompanyChecked(p => ({ ...p, [k]: v }))} />
-                )}
-              </div>
+            <aside className="w-full lg:w-64 shrink-0 flex flex-col gap-4">
+              {activeTab === 'personal' ? (
+                <>
+                  {/* 개인 탭: 일정 목록 + 필터 (50:50 배분) */}
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex-1 overflow-hidden">
+                    <MonthlyEvents 
+                      events={personalEvents.filter(e => e.category !== 'holiday')} 
+                      currentTitle={currentTitle} 
+                      title="이달의 내 일정"
+                    />
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex-1 overflow-y-auto">
+                    <FilterSection title="개인 캘린더" filters={PERSONAL_FILTERS} checked={personalChecked} onChange={(k, v) => setPersonalChecked(p => ({ ...p, [k]: v }))} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* 공용 탭: 일정 목록 + 필터 (50:50 배분) */}
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex-1 overflow-hidden">
+                    <MonthlyEvents events={companyEvents} currentTitle={currentTitle} title="이달의 전사 일정" />
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex-1 overflow-y-auto">
+                    <FilterSection title="회사 공용 캘린더" filters={COMPANY_FILTERS} checked={companyChecked} onChange={(k, v) => setCompanyChecked(p => ({ ...p, [k]: v }))} />
+                  </div>
+                </>
+              )}
             </aside>
           </div>
         </div>
