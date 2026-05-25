@@ -89,26 +89,33 @@ const Calendar = () => {
   const [detailModal, setDetailModal] = useState({ open: false, event: null });
 
   useEffect(() => {
+    //일정 출력
     getSchedules()
-      .then(res => {
-        const allEvents = res.data.map(item => {
+      .then(resp => {
+        const allEvents = resp.data.map(item => {
+          //filter들 다 묶어놓고 filer의 key가 스케ㅌ입이랑 같은걸 찾음 
+          // .find() → 조건에 맞는 항목 자체를 반환
           const filter = [...PERSONAL_FILTERS, ...COMPANY_FILTERS].find(f => f.key === item.schedule_type);
           return {
             id: item.schedule_seq.toString(),
-            title: item.title,
-            start: item.start_dt,
-            end: item.end_dt || undefined,
+            title: item.title, //일정제목
+            start: item.start_dt, 
+            end: item.end_dt || undefined, //끝 일정은 미정일수도 있음을 고려
+            //fullcalendar의 정해진 필드 외 추가 데이터 넣으려면 extendedProps 사용
             extendedProps: { 
               category: item.schedule_type, 
               description: item.sked_reason,
               is_public: item.is_public
             },
             category: item.schedule_type,
-            color: filter?.color ?? '#3530B8',
+            //a?.color -> ? 옵셔널 체이닝 : 있으면 반환 없으면 undifined (null이어도 에러 ㄴ)
+            color: filter?.color ?? '#3530B8', //만약 null일경우 기본 사용
           };
         });
-
+//.some()은 배열에서 조건에 맞는 게 하나라도 있으면 true를 반환
+      // allEvents에서 개인 카테고리인 것만 골라내기
         const pEvents = allEvents.filter(e => PERSONAL_FILTERS.some(f => f.key === e.category));
+      // allEvents에서 회사 카테고리인 것만 골라내기
         const cEvents = allEvents.filter(e => COMPANY_FILTERS.some(f => f.key === e.category));
 
         setPersonalEvents(prev => {
@@ -200,7 +207,9 @@ const Calendar = () => {
   };
 // 모달에서 저장/완료 → 이벤트 추가 또는 수정
   const handleSaveEvent = () => {
-    if (!form.title.trim()) return;
+    const isValid = form.title.trim() && form.start_dt && form.end_dt && form.sked_reason.trim() && (form.start_dt <= form.end_dt);
+    if (!isValid) return;
+
     const isPersonalCategory = PERSONAL_FILTERS.some(f => f.key === form.schedule_type);
     const filter = [...PERSONAL_FILTERS, ...COMPANY_FILTERS].find(f => f.key === form.schedule_type);
     
@@ -250,6 +259,9 @@ const Calendar = () => {
         .catch(err => console.error('일정 추가 실패:', err));
     }
   };
+
+  // 폼 유효성 검사 (모든 필드 입력 및 날짜 순서 확인)
+  const isFormValid = form.title.trim() && form.start_dt && form.end_dt && form.sked_reason.trim() && (form.start_dt <= form.end_dt);
  // 이벤트 삭제
   const handleDeleteEvent = (id) => {
     deleteSchedule(id)
@@ -326,6 +338,7 @@ const Calendar = () => {
                   dateClick={handleDateClick}
                   eventClick={handleEventClick}
                   datesSet={updateTitle}
+                  displayEventTime={false} // 이벤트 시간 표시 숨기기
                 />
               </div>
             </div>
@@ -344,8 +357,16 @@ const Calendar = () => {
           <h3 className="text-sm font-bold text-slate-800 mb-4">{isEditing ? '일정 수정' : '새 일정 추가'}</h3>
           <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="일정 제목" className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs mb-3 focus:outline-none focus:ring-1 focus:ring-[#3530B8]" />
           <select value={form.schedule_type} onChange={e => setForm(f => ({ ...f, schedule_type: e.target.value }))} className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs mb-3">
-            <optgroup label="개인">{PERSONAL_FILTERS.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}</optgroup>
-            <optgroup label="공용">{COMPANY_FILTERS.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}</optgroup>
+            <optgroup label="개인">
+              {PERSONAL_FILTERS.filter(f => f.key !== 'holiday').map(f => (
+                <option key={f.key} value={f.key}>{f.label}</option>
+              ))}
+            </optgroup>
+            <optgroup label="공용">
+              {COMPANY_FILTERS.filter(f => f.key !== 'holiday').map(f => (
+                <option key={f.key} value={f.key}>{f.label}</option>
+              ))}
+            </optgroup>
           </select>
           <div className="flex gap-2 mb-3">
             <input type="date" value={form.start_dt} onChange={e => setForm(f => ({ ...f, start_dt: e.target.value }))} className="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-xs" />
@@ -356,12 +377,28 @@ const Calendar = () => {
             {isEditing ? (
               <>
                 <button onClick={() => handleDeleteEvent(form.schedule_seq)} className="px-4 py-1.5 text-xs text-red-500 font-semibold border border-red-200 rounded-lg hover:bg-red-50">삭제</button>
-                <button onClick={handleSaveEvent} className="px-4 py-1.5 text-xs bg-[#3530B8] text-white rounded-lg font-semibold">완료</button>
+                <button 
+                  onClick={handleSaveEvent} 
+                  disabled={!isFormValid}
+                  className={`px-4 py-1.5 text-xs rounded-lg font-semibold transition-colors ${
+                    isFormValid ? 'bg-[#3530B8] text-white hover:bg-[#2a2696]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  }`}
+                >
+                  완료
+                </button>
               </>
             ) : (
               <>
                 <button onClick={() => setModal({ open: false, date: '' })} className="px-4 py-1.5 text-xs text-slate-500 font-semibold border border-slate-200 rounded-lg hover:bg-slate-50">취소</button>
-                <button onClick={handleSaveEvent} className="px-4 py-1.5 text-xs bg-[#3530B8] text-white rounded-lg font-semibold">저장</button>
+                <button 
+                  onClick={handleSaveEvent} 
+                  disabled={!isFormValid}
+                  className={`px-4 py-1.5 text-xs rounded-lg font-semibold transition-colors ${
+                    isFormValid ? 'bg-[#3530B8] text-white hover:bg-[#2a2696]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  }`}
+                >
+                  저장
+                </button>
               </>
             )}
           </div>
