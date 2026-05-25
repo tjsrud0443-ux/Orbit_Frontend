@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import OrbitLogo from '../../assets/Orbit_Logo.png';
 import OrbitTitle from '../../assets/Orbit_title.png';
@@ -11,6 +11,7 @@ import {
   faSitemap, faFileSignature, faDiagramProject,
   faDoorOpen, faRobot, faBox, faChevronDown, faChevronUp, faSliders, faUserShield
 } from '@fortawesome/free-solid-svg-icons';
+import useAuthStore from '../../store/authStore';
 
 // 직원 사이드바
 const generalMenuItems = [
@@ -106,16 +107,10 @@ const adminMenuItems = [
   },
 ];
 
-
-// const mockUser = {
-//   name: '이인사',
-//   team: '총무팀',
-//   rank: '대표',
-//   role: 'ADMIN'
-// };
-
 const Sidebar = ({ isOpen, onClose, user }) => {
   const location = useLocation();
+  const navi = useNavigate();
+  const logout = useAuthStore(state => state.logout);
   const [openMenuName, setOpenMenuName] = useState(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
 
@@ -129,6 +124,11 @@ const Sidebar = ({ isOpen, onClose, user }) => {
       setOpenMenuName(currentActiveMenu.name);
     }
   }, [location.pathname, isAdminMode]);
+
+  const handleLogout = () => {
+    logout();
+    navi("/");
+  }
 
   const handleToggleMenu = (menuName) => {
     setOpenMenuName(prev => prev === menuName ? null : menuName);
@@ -247,7 +247,7 @@ const Sidebar = ({ isOpen, onClose, user }) => {
               </button>
             )}
 
-            <button className="flex items-center justify-center gap-2 w-full px-2 py-2 text-xs font-medium text-slate-400 hover:text-[#3530B8] hover:border-[#3530B8] transition-colors cursor-pointer border border-slate-200 rounded-lg bg-transparent">
+            <button onClick={handleLogout} className="flex items-center justify-center gap-2 w-full px-2 py-2 text-xs font-medium text-slate-400 hover:text-[#3530B8] hover:border-[#3530B8] transition-colors cursor-pointer border border-slate-200 rounded-lg bg-transparent">
               로그아웃
             </button>
           </div>
