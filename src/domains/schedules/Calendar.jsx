@@ -328,12 +328,13 @@ const Calendar = () => {
       is_public: isPersonalCategory ? 0 : 1,
     };
 
+    //시작일과 끝일 같냐(당일이냐)
     const isSameDay = form.start_dt === form.end_dt;
     let displayEnd = undefined;
     if (form.end_dt && !isSameDay) {
       const d = new Date(form.end_dt);
-      d.setDate(d.getDate() + 1);
-      displayEnd = d.toISOString().split('T')[0];
+      d.setDate(d.getDate() + 1); 
+      displayEnd = d.toISOString().split('T')[0];//시간 자르기
     }
 
     const eventData = {
@@ -477,6 +478,45 @@ const Calendar = () => {
             .custom-scrollbar::-webkit-scrollbar-thumb:hover {
               background: #D1D5DB;
             }
+              /* 1. 팝업창 전체 테두리 및 그림자 (모달 느낌으로 변경) */
+            .fc-popover {
+              border: 1px solid #E2E8F0 !important; /* slate-200 */
+              border-radius: 16px !important;       /* 부드러운 라운딩 */
+              box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important; /* 서브 모달급 입체감 */
+              background: #ffffff !important;
+              overflow: hidden;
+              animation: popoverFade 0.2s ease-out; /* 부드러운 등장 애니메이션 */
+            }
+
+            /* 2. 팝업창 헤더 (날짜 표시 구역) */
+            .fc-popover-header {
+              background: #F8FAFC !important;       /* slate-50 */
+              padding: 12px 16px !important;
+              border-b: 1px solid #F1F5F9 !important;
+              display: flex;
+              flex-direction: row-reverse;          /* 제목과 닫기 버튼 위치 밸런스 */
+              justify-content: space-between;
+              items-center: center;
+            }
+
+            /* 헤더 날짜 텍스트 */
+            .fc-popover-title {
+              font-size: 13px !important;
+              font-weight: 700 !important;
+              color: #1E293B !important;            /* slate-800 */
+            }
+              /* "+1 more" 텍스트 링크 버튼 자체 디자인 */
+            .fc-daygrid-more-link {
+              font-size: 10px !important;
+              font-weight: 700 !important;
+              color: #3530B8 !important;            /* 우리 시그니처 블루 색상 */
+              background-color: #F0F4FF !important; /* 연한 블루 배경 */
+              padding: 2px 6px !important;
+              border-radius: 6px !important;
+              transition: all 0.2s;
+              margin-top: 2px;
+              display: inline-block;
+            }
           `}
         </style>
         <div className="flex-1 p-4 flex flex-col gap-4 overflow-y-auto lg:overflow-hidden min-h-0">
@@ -536,6 +576,8 @@ const Calendar = () => {
                   locale="ko"
                   headerToolbar={false}
                   stickyHeaderDates={false}  // 헤더 고정 해제 - 스크롤하면 같이 올라감
+                  // dayMaxEvents={true}  // true시 셀 높이에 맞춰 자동으로 "+N개" 표시
+                  dayMaxEvents={3} //보여줄 일정 고정
                   height={isMobile ? 'auto' : '100%'}
                   editable={activeTab === 'personal'}
                   selectable={activeTab === 'personal'}
