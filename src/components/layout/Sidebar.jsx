@@ -10,10 +10,8 @@ import {
 import {
   faSitemap, faFileSignature, faDiagramProject,
   faDoorOpen, faRobot, faBox, faChevronDown, faChevronUp,
-  faSliders, faUserShield, faAddressCard,
-  faBoxesStacked , faBuilding , faCoins , faBriefcase, // 자산관리
-  faFileShield, faFolderTree, faClipboardCheck, // 문서관리
-  faCircleQuestion, faCommentDots // AI 미답변질문
+  faSliders, faUserShield, faAddressCard,faDesktop,
+  faFileShield, faCommentDots
 } from '@fortawesome/free-solid-svg-icons';
 import useAuthStore from '../../store/authStore';
 
@@ -44,27 +42,24 @@ const generalMenuItems = [
     ]
   },
   {
-  // faBoxesStacked ,faBuilding ,faCoins , faBriefcase, // 자산관리
     name: '자산 관리',
-    icon: faBuilding,
+    icon: faDesktop,
     team: ['총무팀'],
     rank: ['대표'],
     subItems: [
-      { name: '비품 관리', path: '/adminSupplies' },
+      { name: '비품 관리', path: '/adminSupply' },
       { name: '비품 신청 관리', path: '/adminSupplyRequest' },
       { name: '비품 대여이력 관리', path: '/adminSupplyRental' },
       { name: '회의실 관리', path: '/adminMeetingRoom' }
     ]
   },
   {
-  // faFileShield, faFolderTree , faClipboardCheck, // 문서관리
     name: '문서 관리',
     icon: faFileShield,
     rank: ['부서장', '본부장', '대표'],
     path: '/adminDocument'
   },
   {
-  // faCircleQuestion , faCommentDots // AI 미답변질문
     name: 'AI 미답변 질문 관리',
     icon: faCommentDots,
     rank: ['부서장', '본부장', '대표'],
@@ -85,7 +80,7 @@ const adminMenuItems = [
   { name: '관리자 홈', path: '/adminMain', icon: faHouse },
   {
     name: '인사 관리',
-    icon: faFileSignature,
+    icon: faAddressCard,
     subItems: [
       { name: '직원 관리', path: '/adminUsers' },
       { name: '부서 관리', path: '/adminDepartments' },
@@ -94,7 +89,7 @@ const adminMenuItems = [
   },
   {
     name: '자산 관리',
-    icon: faFileSignature,
+    icon: faDesktop,
     subItems: [
       { name: '비품 관리', path: '/adminSupply' },
       { name: '비품 신청 관리', path: '/adminSupplyRequest' },
@@ -104,12 +99,12 @@ const adminMenuItems = [
   },
   {
     name: '문서 관리',
-    icon: faFileSignature,
+    icon: faFileShield,
     path: '/adminDocument'
   },
   {
     name: 'AI 미답변 질문 관리',
-    icon: faFileSignature,
+    icon: faCommentDots,
     path: '/adminQna'
   },
 ];
@@ -246,7 +241,7 @@ const Sidebar = ({ isOpen, onClose, user }) => {
                 }}
                 className={`flex items-center justify-center gap-2 w-full px-2 py-2 text-xs font-bold hover:border-[#3530B8] transition-colors cursor-pointer border rounded-lg
                   ${isAdminMode
-                    ? 'bg-slate-800 text-white border-slate-950 hover:bg-slate-900'
+                    ? ' text-white bg-[#3530B8]'
                     : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:text-[#3530B8]'}`}
               >
                 <FontAwesomeIcon icon={isAdminMode ? faSliders : faUserShield} className="text-sm" />
