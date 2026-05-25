@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Pagination from '../../components/common/Pagination';
-import { approveUserSignup, getAllRequest, getDeptList, getRankList, getUserInfo } from './adminApi';
+import { approveUserSignup, getAllRequest, getDeptList, getHrInfo, getRankList, getUserInfo } from './adminApi';
 
 const AdminSignup = () => {
   const [activeTab, setActiveTab] = useState('전체');
@@ -59,12 +59,20 @@ const AdminSignup = () => {
     getRankList().then(resp => setRankList(resp.data));
   },[])
 
-  const handleUserClick = (seq) => {
-    setSelectedUser(seq);
-    setErrors({ dept: '', rank: '', hireDate: '' }); // Reset errors when switching users
-    getUserInfo(seq).then(resp => {
-      setUserInfo(resp.data);
-    })
+  const handleUserClick = (info) => {
+    setSelectedUser(info.signup_seq);
+    setErrors({ dept: '', rank: '', hireDate: '' });
+
+    getUserInfo(info.signup_seq).then(resp => {
+      const basicInfo = resp.data;
+      if (info.status === 'APPROVED') {
+        getHrInfo(info.id).then(hrResp => {
+          setUserInfo({ ...basicInfo, ...hrResp.data });
+        });
+      } else {
+        setUserInfo(basicInfo);
+      }
+    });
   };
 
   const handleApprove = () => {
@@ -176,8 +184,8 @@ const AdminSignup = () => {
               allInfo.map((info, item) => (
               <div 
                 key={item}
-                onClick={() => handleUserClick(info.signup_seq)}
-                className={`grid grid-cols-6 px-6 py-3.5 items-center cursor-pointer hover:bg-[#F8FAFF] transition-colors border-b border-gray-50/50 ${selectedUser?.id === item ? 'bg-[#F0F4FF]' : ''}`}
+                onClick={() => handleUserClick(info)}
+                className={`grid grid-cols-6 px-6 py-3.5 items-center cursor-pointer hover:bg-[#F8FAFF] transition-colors border-b border-gray-50/50 ${selectedUser === info.signup_seq ? 'bg-[#F0F4FF]' : ''}`}
               >
                 <div className="flex justify-center">
                   <div className="w-9 h-9 rounded-full bg-[#DDE8FF] flex items-center justify-center overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
@@ -256,102 +264,104 @@ const AdminSignup = () => {
                 </div>
 
                 {/* Admin Assignment Section */}
-                <div className="space-y-4">
-                  <h3 className="text-xs font-bold text-gray-400 uppercase ml-1">인사 정보 {userInfo.status === 'APPROVED' ? '상세' : '설정'}</h3>
-                  <div className="space-y-3">
-                    {userInfo.status === 'APPROVED' ? (
-                      <div className="bg-[#F8FAFF] rounded-2xl p-5 space-y-4">
-                        {[
-                          { label: '부서', value: userInfo.dept_name },
-                          { label: '직급', value: userInfo.rank_name },
-                          { label: '입사일자', value: userInfo.hire_date }
-                        ].map((info, idx) => (
-                          <div key={idx} className="flex justify-between items-start border-b border-gray-100/50 pb-2 last:border-0 last:pb-0">
-                            <span className="text-xs font-medium text-gray-500 flex-shrink-0 mr-4">{info.label}</span>
-                            <span className="text-xs font-bold text-gray-800 text-right break-all">{info.value}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <>
-                        <div className="relative">
-                          <label className="block text-[11px] font-bold text-gray-600 mb-1 ml-1">부서 배정</label>
-                          <div 
-                            onClick={() => { setIsDeptOpen(!isDeptOpen); setIsRankOpen(false); }}
-                            className={`w-full px-4 py-2.5 bg-white border ${errors.dept ? 'border-red-500' : isDeptOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-200'} rounded-xl text-xs font-medium transition-all cursor-pointer flex justify-between items-center`}
-                          >
-                            <span className={selectedDept.dept_seq === null ? 'text-gray-400' : 'text-gray-800'}>{selectedDept.dept_name}</span>
-                            <svg className={`w-4 h-4 text-gray-400 transition-transform ${isDeptOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                          </div>
-                          {errors.dept && <p className="text-red-500 text-[10px] mt-1 ml-1 font-medium">{errors.dept}</p>}
-                          {isDeptOpen && (
-                            <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-32 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
-                              {deptList.map((dept) => (
-                                <div 
-                                  key={dept.dept_seq}
-                                  onClick={() => { 
-                                    setSelectedDept({ dept_seq: dept.dept_seq, dept_name: dept.dept_name }); 
-                                    setIsDeptOpen(false); 
-                                    setErrors(prev => ({ ...prev, dept: '' }));
-                                    setSelectedRank({ rank_seq: null, rank_name: '직급을 선택하세요' });
-                                  }}
-                                  className="px-4 py-2.5 text-xs hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-medium border-b border-gray-50 last:border-0"
-                                >
-                                  {dept.dept_name}
-                                </div>
-                              ))}
+                {(userInfo.status === 'APPROVED' || userInfo.status === 'PENDING') && (
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase ml-1">인사 정보 {userInfo.status === 'APPROVED' ? '상세' : '설정'}</h3>
+                    <div className="space-y-3">
+                      {userInfo.status === 'APPROVED' ? (
+                        <div className="bg-[#F8FAFF] rounded-2xl p-5 space-y-4">
+                          {[
+                            { label: '부서', value: userInfo.dept_name },
+                            { label: '직급', value: userInfo.rank_name },
+                            { label: '입사일자', value: userInfo.hire_date }
+                          ].map((info, idx) => (
+                            <div key={idx} className="flex justify-between items-start border-b border-gray-100/50 pb-2 last:border-0 last:pb-0">
+                              <span className="text-xs font-medium text-gray-500 flex-shrink-0 mr-4">{info.label}</span>
+                              <span className="text-xs font-bold text-gray-800 text-right break-all">{info.value}</span>
                             </div>
-                          )}
+                          ))}
                         </div>
-
-                        <div className="relative">
-                          <label className="block text-[11px] font-bold text-gray-600 mb-1 ml-1">직급 설정</label>
-                          <div 
-                            onClick={() => { setIsRankOpen(!isRankOpen); setIsDeptOpen(false); }}
-                            className={`w-full px-4 py-2.5 bg-white border ${errors.rank ? 'border-red-500' : isRankOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-200'} rounded-xl text-xs font-medium transition-all cursor-pointer flex justify-between items-center`}
-                          >
-                            <span className={selectedRank.rank_seq === null ? 'text-gray-400' : 'text-gray-800'}>{selectedRank.rank_name}</span>
-                            <svg className={`w-4 h-4 text-gray-400 transition-transform ${isRankOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                          </div>
-                          {errors.rank && <p className="text-red-500 text-[10px] mt-1 ml-1 font-medium">{errors.rank}</p>}
-                          {isRankOpen && (
-                            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-32 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
-                              {rankList
-                                .filter(rank => selectedDept.dept_name.includes('본부') ? rank.rank_name === '본부장' : rank.rank_name !== '본부장')
-                                .map((rank) => (
-                                <div 
-                                  key={rank.rank_seq}
-                                  onClick={() => { 
-                                    setSelectedRank({ rank_seq: rank.rank_seq, rank_name: rank.rank_name}); 
-                                    setIsRankOpen(false); 
-                                    setErrors(prev => ({ ...prev, rank: '' }));
-                                  }}
-                                  className="px-4 py-2.5 text-xs hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-medium border-b border-gray-50 last:border-0"
-                                >
-                                  {rank.rank_name}
-                                </div>
-                              ))}
+                      ) : (
+                        <>
+                          <div className="relative">
+                            <label className="block text-[11px] font-bold text-gray-600 mb-1 ml-1">부서 배정</label>
+                            <div 
+                              onClick={() => { setIsDeptOpen(!isDeptOpen); setIsRankOpen(false); }}
+                              className={`w-full px-4 py-2.5 bg-white border ${errors.dept ? 'border-red-500' : isDeptOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-200'} rounded-xl text-xs font-medium transition-all cursor-pointer flex justify-between items-center`}
+                            >
+                              <span className={selectedDept.dept_seq === null ? 'text-gray-400' : 'text-gray-800'}>{selectedDept.dept_name}</span>
+                              <svg className={`w-4 h-4 text-gray-400 transition-transform ${isDeptOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                             </div>
-                          )}
-                        </div>
+                            {errors.dept && <p className="text-red-500 text-[10px] mt-1 ml-1 font-medium">{errors.dept}</p>}
+                            {isDeptOpen && (
+                              <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-32 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
+                                {deptList.map((dept) => (
+                                  <div 
+                                    key={dept.dept_seq}
+                                    onClick={() => { 
+                                      setSelectedDept({ dept_seq: dept.dept_seq, dept_name: dept.dept_name }); 
+                                      setIsDeptOpen(false); 
+                                      setErrors(prev => ({ ...prev, dept: '' }));
+                                      setSelectedRank({ rank_seq: null, rank_name: '직급을 선택하세요' });
+                                    }}
+                                    className="px-4 py-2.5 text-xs hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-medium border-b border-gray-50 last:border-0"
+                                  >
+                                    {dept.dept_name}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
 
-                        <div>
-                          <label className="block text-[11px] font-bold text-gray-600 mb-1 ml-1">입사일자</label>
-                          <input 
-                            type="date" 
-                            value={hireDate}
-                            onChange={(e) => {
-                              setHireDate(e.target.value);
-                              setErrors(prev => ({ ...prev, hireDate: '' }));
-                            }} 
-                            className={`w-full px-4 py-2.5 bg-white border ${errors.hireDate ? 'border-red-500' : 'border-gray-200'} rounded-xl text-xs font-medium focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all`}
-                          />
-                          {errors.hireDate && <p className="text-red-500 text-[10px] mt-1 ml-1 font-medium">{errors.hireDate}</p>}
-                        </div>
-                      </>
-                    )}
+                          <div className="relative">
+                            <label className="block text-[11px] font-bold text-gray-600 mb-1 ml-1">직급 설정</label>
+                            <div 
+                              onClick={() => { setIsRankOpen(!isRankOpen); setIsDeptOpen(false); }}
+                              className={`w-full px-4 py-2.5 bg-white border ${errors.rank ? 'border-red-500' : isRankOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-200'} rounded-xl text-xs font-medium transition-all cursor-pointer flex justify-between items-center`}
+                            >
+                              <span className={selectedRank.rank_seq === null ? 'text-gray-400' : 'text-gray-800'}>{selectedRank.rank_name}</span>
+                              <svg className={`w-4 h-4 text-gray-400 transition-transform ${isRankOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                            </div>
+                            {errors.rank && <p className="text-red-500 text-[10px] mt-1 ml-1 font-medium">{errors.rank}</p>}
+                            {isRankOpen && (
+                              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-32 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
+                                {rankList
+                                  .filter(rank => selectedDept.dept_name.includes('본부') ? rank.rank_name === '본부장' : rank.rank_name !== '본부장')
+                                  .map((rank) => (
+                                  <div 
+                                    key={rank.rank_seq}
+                                    onClick={() => { 
+                                      setSelectedRank({ rank_seq: rank.rank_seq, rank_name: rank.rank_name}); 
+                                      setIsRankOpen(false); 
+                                      setErrors(prev => ({ ...prev, rank: '' }));
+                                    }}
+                                    className="px-4 py-2.5 text-xs hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-medium border-b border-gray-50 last:border-0"
+                                  >
+                                    {rank.rank_name}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold text-gray-600 mb-1 ml-1">입사일자</label>
+                            <input 
+                              type="date" 
+                              value={hireDate}
+                              onChange={(e) => {
+                                setHireDate(e.target.value);
+                                setErrors(prev => ({ ...prev, hireDate: '' }));
+                              }} 
+                              className={`w-full px-4 py-2.5 bg-white border ${errors.hireDate ? 'border-red-500' : 'border-gray-200'} rounded-xl text-xs font-medium focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all`}
+                            />
+                            {errors.hireDate && <p className="text-red-500 text-[10px] mt-1 ml-1 font-medium">{errors.hireDate}</p>}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
              </div>
 
              {/* Action Buttons - Fixed height */}
