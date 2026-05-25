@@ -9,7 +9,11 @@ import {
 } from '@fortawesome/free-regular-svg-icons';
 import {
   faSitemap, faFileSignature, faDiagramProject,
-  faDoorOpen, faRobot, faBox, faChevronDown, faChevronUp, faSliders, faUserShield
+  faDoorOpen, faRobot, faBox, faChevronDown, faChevronUp,
+  faSliders, faUserShield, faAddressCard,
+  faBoxesStacked , faBuilding , faCoins , faBriefcase, // 자산관리
+  faFileShield, faFolderTree, faClipboardCheck, // 문서관리
+  faCircleQuestion, faCommentDots // AI 미답변질문
 } from '@fortawesome/free-solid-svg-icons';
 import useAuthStore from '../../store/authStore';
 
@@ -30,7 +34,7 @@ const generalMenuItems = [
   },
   {
     name: '인사 관리',
-    icon: faFileSignature,
+    icon: faAddressCard,
     team: ['인사팀'],
     rank: ['대표'],
     subItems: [
@@ -40,8 +44,9 @@ const generalMenuItems = [
     ]
   },
   {
+  // faBoxesStacked ,faBuilding ,faCoins , faBriefcase, // 자산관리
     name: '자산 관리',
-    icon: faFileSignature,
+    icon: faBuilding,
     team: ['총무팀'],
     rank: ['대표'],
     subItems: [
@@ -52,14 +57,16 @@ const generalMenuItems = [
     ]
   },
   {
+  // faFileShield, faFolderTree , faClipboardCheck, // 문서관리
     name: '문서 관리',
-    icon: faFileSignature,
+    icon: faFileShield,
     rank: ['부서장', '본부장', '대표'],
     path: '/adminDocument'
   },
   {
+  // faCircleQuestion , faCommentDots // AI 미답변질문
     name: 'AI 미답변 질문 관리',
-    icon: faFileSignature,
+    icon: faCommentDots,
     rank: ['부서장', '본부장', '대표'],
     path: '/adminQna'
   },
