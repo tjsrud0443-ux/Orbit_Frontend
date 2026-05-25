@@ -3,15 +3,18 @@ import { useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { getUsersInfo } from '../../api/userApi';
+import useUserStore from '../../store/userStore';
 
 export default function Layout() {
   const navi = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const setUserInfo = useUserStore(state => state.setUser);
 
   useEffect(() => {
     getUsersInfo().then(resp => {
       setUser(resp.data)
+      setUserInfo(resp.data)
     })
     .catch(error => {
       alert("로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
