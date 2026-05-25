@@ -40,12 +40,14 @@ const AdminSignup = () => {
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
+    setPage(1);
   };
 
   const loadList = () => {
     getAllRequest(page, statusMap[activeTab]).then(resp => {
       setAllInfo(resp.data.list);
-      setTotalPages(Math.ceil(resp.data.count / 10));
+      const calculatedPages = Math.ceil(resp.data.count / 10);
+      setTotalPages(calculatedPages === 0 ? 1 : calculatedPages);
       setTabCount(resp.data.tabCount);
     });
   };
