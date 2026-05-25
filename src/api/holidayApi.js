@@ -29,7 +29,7 @@ const fetchHolidaysByMonth = async (year, month) => {
       title: item.dateName,
       start,
       category: 'holiday',
-      color: '#F59E0B', // 캘린더에 노란색 점으로 표시
+      color: '#EF4444', // 캘린더에 빨강으로
     };
   });
 };
