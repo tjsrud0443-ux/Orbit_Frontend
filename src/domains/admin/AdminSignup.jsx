@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import Pagination from '../../components/common/Pagination';
-import { approveUserSignup, getAllRequest, getDeptList, getHrInfo, getRankList, getUserInfo } from './adminApi';
+import { approveUserSignup, getAllRequest, getDeptList, getHrInfo, getRankList, getUserInfo, rejectUserSignup } from './adminApi';
 
 const AdminSignup = () => {
   const [activeTab, setActiveTab] = useState('전체');
@@ -66,8 +66,8 @@ const AdminSignup = () => {
     getUserInfo(info.signup_seq).then(resp => {
       const basicInfo = resp.data;
       if (info.status === 'APPROVED') {
-        getHrInfo(info.id).then(hrResp => {
-          setUserInfo({ ...basicInfo, ...hrResp.data });
+        getHrInfo(basicInfo.id).then(hrResp => {
+          setUserInfo({ ...basicInfo, ...hrResp.data, status: basicInfo.status });
         });
       } else {
         setUserInfo(basicInfo);
@@ -115,6 +115,16 @@ const AdminSignup = () => {
       
       loadList();
     })
+  };
+
+  const handleReject = () => {
+    if (window.confirm('정말 이 신청을 반려하시겠습니까?')) {
+      rejectUserSignup(selectedUser).then(resp => {
+        alert('회원가입 신청이 반려되었습니다.');
+        setSelectedUser(null);
+        loadList();
+      });
+    }
   };
 
   return (
@@ -273,7 +283,7 @@ const AdminSignup = () => {
                           {[
                             { label: '부서', value: userInfo.dept_name },
                             { label: '직급', value: userInfo.rank_name },
-                            { label: '입사일자', value: userInfo.hire_date }
+                            { label: '입사일자', value: userInfo.hire_date?.split(" ")[0] }
                           ].map((info, idx) => (
                             <div key={idx} className="flex justify-between items-start border-b border-gray-100/50 pb-2 last:border-0 last:pb-0">
                               <span className="text-xs font-medium text-gray-500 flex-shrink-0 mr-4">{info.label}</span>
@@ -367,7 +377,11 @@ const AdminSignup = () => {
              {/* Action Buttons - Fixed height */}
              {userInfo.status === 'PENDING' && (
                <div className="p-6 border-t border-gray-50 flex gap-3 flex-shrink-0 bg-white">
-                  <button className="flex-1 py-4 border-2 border-red-100 text-red-500 text-sm font-bold rounded-2xl hover:bg-red-50 transition-all text-center">반려</button>
+                  <button 
+                    onClick={handleReject}
+                    className="flex-1 py-4 border-2 border-red-100 text-red-500 text-sm font-bold rounded-2xl hover:bg-red-50 transition-all text-center">
+                      반려
+                  </button>
                   <button 
                     onClick={handleApprove}
                     className="flex-[2] py-4 bg-[#3530B8] text-white text-sm font-bold rounded-2xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all text-center">
