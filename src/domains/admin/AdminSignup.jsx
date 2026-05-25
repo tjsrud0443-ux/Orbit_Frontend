@@ -140,20 +140,20 @@ const AdminSignup = () => {
       
       {/* Header Section - Fixed height */}
       <div className="mb-6 flex-shrink-0">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">회원가입 관리</h1>
-        <p className="text-sm text-gray-500">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">회원가입 관리</h1>
+        <p className="text-[11px] md:text-sm text-gray-500 whitespace-nowrap">
           신규 회원가입 신청 내역을 확인하고 승인, 거절할 수 있습니다.
         </p>
       </div>
 
       {/* Filters and Search Section - Fixed height */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 flex-shrink-0">
-        <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-[#F0F4FF] flex-shrink-0">
+        <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-[#F0F4FF] flex-shrink-0 overflow-x-auto no-scrollbar">
           {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => handleTabClick(tab)}
-              className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all whitespace-nowrap ${
+              className={`px-2.5 md:px-4 py-2 rounded-xl text-[11px] md:text-sm font-bold transition-all whitespace-nowrap flex-shrink-0 ${
                 activeTab === tab
                   ? 'bg-[#3530B8] text-white shadow-md'
                   : 'text-gray-500 hover:text-[#3530B8] hover:bg-[#F0F4FF]'
@@ -187,7 +187,7 @@ const AdminSignup = () => {
         
         {/* List Section */}
         <div className={`flex flex-col bg-white rounded-[32px] border border-[#F0F4FF] shadow-sm overflow-hidden transition-all duration-500 min-h-0 ${selectedUser ? 'flex-[0.6]' : 'flex-1'}`}>
-          <div className="grid grid-cols-6 px-6 py-4 border-b border-gray-50 text-[11px] font-bold text-gray-400 uppercase tracking-wider flex-shrink-0">
+          <div className="hidden md:grid grid-cols-6 px-6 py-4 border-b border-gray-50 text-[11px] font-bold text-gray-400 uppercase tracking-wider flex-shrink-0">
             <div className="text-center">프로필</div>
             <div>이름</div>
             <div>아이디</div>
@@ -203,10 +203,11 @@ const AdminSignup = () => {
               <div 
                 key={item}
                 onClick={() => handleUserClick(info)}
-                className={`grid grid-cols-6 px-6 py-3.5 items-center cursor-pointer hover:bg-[#F8FAFF] transition-colors border-b border-gray-50/50 ${selectedUser === info.signup_seq ? 'bg-[#F0F4FF]' : ''}`}
+                className={`flex md:grid md:grid-cols-6 px-4 md:px-6 py-3.5 items-center cursor-pointer hover:bg-[#F8FAFF] transition-colors border-b border-gray-50/50 ${selectedUser === info.signup_seq ? 'bg-[#F0F4FF]' : ''}`}
               >
-                <div className="flex justify-center">
-                  <div className="w-9 h-9 rounded-full bg-[#DDE8FF] flex items-center justify-center overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
+                {/* Profile Section */}
+                <div className="flex-shrink-0 md:flex md:justify-center mr-4 md:mr-0">
+                  <div className="w-10 h-10 md:w-9 md:h-9 rounded-full bg-[#DDE8FF] flex items-center justify-center overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
                     {info.sysname ? (
                       <img 
                         src={`http://localhost/file/profile/view?sysname=${info.sysname}&token=${token}`} 
@@ -218,19 +219,35 @@ const AdminSignup = () => {
                     )}
                   </div>
                 </div>
-                <div className="text-xs font-bold text-gray-700">{info.name}</div>
-                <div className="text-[11px] text-gray-500">{info.id}</div>
-                <div className="text-[11px] text-gray-500 font-medium">{info.phone}</div>
-                <div className="text-[11px] text-gray-400">{info.signup_at.split(" ")[0] }</div>
-                <div className="flex justify-center">
+
+                {/* Info Section */}
+                <div className="flex-1 min-w-0 md:contents">
+                  <div className="flex items-baseline gap-2 md:block">
+                    <div className="text-xs md:text-xs font-bold text-gray-700 truncate">{info.name}</div>
+                    <div className="text-[10px] md:text-[11px] text-gray-500 truncate md:mt-0.5">{info.id}</div>
+                  </div>
+                  
+                  {/* Mobile Only Info */}
+                  <div className="md:hidden flex flex-col mt-0.5">
+                    <div className="text-[10px] text-gray-500 font-medium">{info.phone}</div>
+                    <div className="text-[10px] text-gray-400 mt-0.5">{info.signup_at.split(" ")[0]}</div>
+                  </div>
+
+                  {/* PC Only Info (Hidden on mobile via md:contents logic) */}
+                  <div className="hidden md:block text-[11px] text-gray-500 font-medium truncate">{info.phone}</div>
+                  <div className="hidden md:block text-[11px] text-gray-400 truncate">{info.signup_at.split(" ")[0]}</div>
+                </div>
+
+                {/* Status Section */}
+                <div className="flex-shrink-0 ml-3 md:ml-0 md:flex md:justify-center">
                   { 
                     info.status === "PENDING" ?
-                    <span className="px-2.5 py-0.5 bg-[#FFF9F0] text-[#FF9800] text-[10px] font-bold rounded-full text-center">승인 대기</span>
+                    <span className="px-2.5 py-0.5 bg-[#FFF9F0] text-[#FF9800] text-[10px] font-bold rounded-full text-center whitespace-nowrap">승인 대기</span>
                     :
                     info.status === "APPROVED" ?
-                    <span className="px-2.5 py-0.5 bg-[#F0FDF4] text-[#10B981] text-[10px] font-bold rounded-full text-center">승인 완료</span>
+                    <span className="px-2.5 py-0.5 bg-[#F0FDF4] text-[#10B981] text-[10px] font-bold rounded-full text-center whitespace-nowrap">승인 완료</span>
                     :
-                    <span className="px-2.5 py-0.5 bg-[#FFF0F0] text-[#FF4D4F] text-[10px] font-bold rounded-full text-center">거절</span>
+                    <span className="px-2.5 py-0.5 bg-[#FFF0F0] text-[#FF4D4F] text-[10px] font-bold rounded-full text-center whitespace-nowrap">거절</span>
                   }
                 </div>
               </div>
