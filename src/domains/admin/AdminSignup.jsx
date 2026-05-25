@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import Pagination from '../../components/common/Pagination';
-import { approveUserSignup, getAllRequest, getDeptList, getHrInfo, getRankList, getUserInfo } from './adminApi';
+import { approveUserSignup, getAllRequest, getDeptList, getHrInfo, getRankList, getUserInfo, rejectUserSignup } from './adminApi';
+import useAuthStore from '../../store/authStore';
 
 const AdminSignup = () => {
   const [activeTab, setActiveTab] = useState('전체');
@@ -15,12 +16,17 @@ const AdminSignup = () => {
   const [rankList, setRankList] = useState([]);
   const [errors, setErrors] = useState({ dept: '', rank: '', hireDate: '' });
 
-  // Custom dropdown states
   const [isDeptOpen, setIsDeptOpen] = useState(false);
   const [isRankOpen, setIsRankOpen] = useState(false);
   const [hireDate, setHireDate] = useState('');
   const [selectedDept, setSelectedDept] = useState({ dept_seq: null, dept_name: '부서 또는 본부를 선택하세요' });
   const [selectedRank, setSelectedRank] = useState({ rank_seq: null, rank_name: '직급을 선택하세요' });
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [isRejectSuccess, setIsRejectSuccess] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [viewDate, setViewDate] = useState(new Date());
+
+  const token = useAuthStore(state => state.token);
 
   const statusMap = {
     '전체': 'TOTAL',
@@ -40,24 +46,30 @@ const AdminSignup = () => {
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
+    setPage(1);
   };
 
   const loadList = () => {
-    getAllRequest(page, statusMap[activeTab]).then(resp => {
+    getAllRequest(page, statusMap[activeTab], searchTerm).then(resp => {
       setAllInfo(resp.data.list);
-      setTotalPages(Math.ceil(resp.data.count / 10));
+      const calculatedPages = Math.ceil(resp.data.count / 10);
+      setTotalPages(calculatedPages === 0 ? 1 : calculatedPages);
       setTabCount(resp.data.tabCount);
     });
   };
 
   useEffect(() => {
     loadList();
-  }, [page, activeTab]);
+  }, [page, activeTab, searchTerm]);
 
   useEffect(() => {
     getDeptList().then(resp => setDeptList(resp.data));
     getRankList().then(resp => setRankList(resp.data));
   },[])
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
 
   const handleUserClick = (info) => {
     setSelectedUser(info.signup_seq);
@@ -66,8 +78,8 @@ const AdminSignup = () => {
     getUserInfo(info.signup_seq).then(resp => {
       const basicInfo = resp.data;
       if (info.status === 'APPROVED') {
-        getHrInfo(info.id).then(hrResp => {
-          setUserInfo({ ...basicInfo, ...hrResp.data });
+        getHrInfo(basicInfo.id).then(hrResp => {
+          setUserInfo({ ...basicInfo, ...hrResp.data, status: basicInfo.status });
         });
       } else {
         setUserInfo(basicInfo);
@@ -117,25 +129,97 @@ const AdminSignup = () => {
     })
   };
 
+  const handleReject = () => {
+    setIsRejectModalOpen(true);
+  };
+
+  const performReject = () => {
+    rejectUserSignup(selectedUser).then(resp => {
+      setIsRejectSuccess(true);
+      setTimeout(() => {
+        setIsRejectModalOpen(false);
+        setIsRejectSuccess(false);
+        setSelectedUser(null);
+        loadList();
+      }, 1500);
+    });
+  };
+
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
+  const calendarYear = viewDate.getFullYear();
+  const calendarMonth = viewDate.getMonth();
+  const firstDay = new Date(calendarYear, calendarMonth, 1).getDay();
+  const lastDate = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+  const calendarDays = [];
+  for (let i = 0; i < firstDay; i++) calendarDays.push(null);
+  for (let i = 1; i <= lastDate; i++) calendarDays.push(i);
+
   return (
-    <div className="h-full flex flex-col p-6 md:p-8 font-sans overflow-hidden bg-[#FFFFFF]">
+    <div className={`h-full flex flex-col ${selectedUser ? 'p-0 md:p-8' : 'p-6 md:p-8'} font-sans overflow-hidden bg-[#FFFFFF]`}>
       
+      {/* Rejection Confirmation Modal */}
+      {isRejectModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-sm rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            {!isRejectSuccess ? (
+              <>
+                <div className="p-8 text-center">
+                  <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">신청 반려 확인</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    정말 이 회원의 가입 신청을 반려하시겠습니까?<br/>반려된 신청은 되돌릴 수 없습니다.
+                  </p>
+                </div>
+                <div className="flex border-t border-gray-50">
+                  <button 
+                    onClick={() => setIsRejectModalOpen(false)}
+                    className="flex-1 py-4 text-sm font-bold text-gray-400 hover:bg-gray-50 transition-colors border-r border-gray-50"
+                  >
+                    취소
+                  </button>
+                  <button 
+                    onClick={performReject}
+                    className="flex-1 py-4 text-sm font-bold text-red-500 hover:bg-red-50 transition-colors"
+                  >
+                    반려하기
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="p-10 text-center animate-in zoom-in-95 duration-300">
+                <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4 text-green-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-1">반려 완료</h3>
+                <p className="text-sm text-gray-500">성공적으로 반려 처리되었습니다.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Header Section - Fixed height */}
-      <div className="mb-6 flex-shrink-0">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">회원가입 관리</h1>
-        <p className="text-sm text-gray-500">
+      <div className={`mb-6 flex-shrink-0 ${selectedUser ? 'hidden md:block' : 'block'}`}>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">회원가입 관리</h1>
+        <p className="text-[11px] md:text-sm text-gray-500 whitespace-nowrap">
           신규 회원가입 신청 내역을 확인하고 승인, 거절할 수 있습니다.
         </p>
       </div>
 
       {/* Filters and Search Section - Fixed height */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 flex-shrink-0">
-        <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-[#F0F4FF] flex-shrink-0">
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 flex-shrink-0 ${selectedUser ? 'hidden md:flex' : 'flex'}`}>
+        <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-[#F0F4FF] flex-shrink-0 overflow-x-auto no-scrollbar">
           {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => handleTabClick(tab)}
-              className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all whitespace-nowrap ${
+              className={`px-2.5 md:px-4 py-2 rounded-xl text-[11px] md:text-sm font-bold transition-all whitespace-nowrap flex-shrink-0 ${
                 activeTab === tab
                   ? 'bg-[#3530B8] text-white shadow-md'
                   : 'text-gray-500 hover:text-[#3530B8] hover:bg-[#F0F4FF]'
@@ -168,8 +252,8 @@ const AdminSignup = () => {
       <div className="flex-1 flex gap-6 min-h-0 overflow-hidden">
         
         {/* List Section */}
-        <div className={`flex flex-col bg-white rounded-[32px] border border-[#F0F4FF] shadow-sm overflow-hidden transition-all duration-500 min-h-0 ${selectedUser ? 'flex-[0.6]' : 'flex-1'}`}>
-          <div className="grid grid-cols-6 px-6 py-4 border-b border-gray-50 text-[11px] font-bold text-gray-400 uppercase tracking-wider flex-shrink-0">
+        <div className={`flex flex-col bg-white rounded-[32px] border border-[#F0F4FF] shadow-sm overflow-hidden transition-all duration-500 min-h-0 ${selectedUser ? 'hidden md:flex md:flex-[0.6]' : 'flex-1'}`}>
+          <div className="hidden md:grid grid-cols-6 px-6 py-4 border-b border-gray-50 text-[11px] font-bold text-gray-400 uppercase tracking-wider flex-shrink-0">
             <div className="text-center">프로필</div>
             <div>이름</div>
             <div>아이디</div>
@@ -185,26 +269,51 @@ const AdminSignup = () => {
               <div 
                 key={item}
                 onClick={() => handleUserClick(info)}
-                className={`grid grid-cols-6 px-6 py-3.5 items-center cursor-pointer hover:bg-[#F8FAFF] transition-colors border-b border-gray-50/50 ${selectedUser === info.signup_seq ? 'bg-[#F0F4FF]' : ''}`}
+                className={`flex md:grid md:grid-cols-6 px-4 md:px-6 py-3.5 items-center cursor-pointer hover:bg-[#F8FAFF] transition-colors border-b border-gray-50/50 ${selectedUser === info.signup_seq ? 'bg-[#F0F4FF]' : ''}`}
               >
-                <div className="flex justify-center">
-                  <div className="w-9 h-9 rounded-full bg-[#DDE8FF] flex items-center justify-center overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
-                    <svg className="w-5 h-5 text-[#3530B8]/40" fill="currentColor" viewBox="0 0 24 24"><path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                {/* Profile Section - Column 1 on PC */}
+                <div className="flex-shrink-0 md:flex md:justify-center mr-4 md:mr-0">
+                  <div className="w-10 h-10 md:w-9 md:h-9 rounded-full bg-[#DDE8FF] flex items-center justify-center overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
+                    {info.sysname ? (
+                      <img 
+                        src={`http://localhost/file/profile/view?sysname=${info.sysname}&token=${token}`} 
+                        className="w-full h-full object-cover" 
+                        alt="Profile" 
+                      />
+                    ) : (
+                      <svg className="w-5 h-5 text-[#3530B8]/40" fill="currentColor" viewBox="0 0 24 24"><path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    )}
                   </div>
                 </div>
-                <div className="text-xs font-bold text-gray-700">{info.name}</div>
-                <div className="text-[11px] text-gray-500">{info.id}</div>
-                <div className="text-[11px] text-gray-500 font-medium">{info.phone}</div>
-                <div className="text-[11px] text-gray-400">{info.signup_at.split(" ")[0] }</div>
-                <div className="flex justify-center">
+
+                {/* PC ONLY: Columns 2, 3, 4, 5 */}
+                <div className="hidden md:block text-xs font-bold text-gray-700 truncate">{info.name}</div>
+                <div className="hidden md:block text-[11px] text-gray-500 truncate">{info.id}</div>
+                <div className="hidden md:block text-[11px] text-gray-500 font-medium truncate">{info.phone}</div>
+                <div className="hidden md:block text-[11px] text-gray-400 truncate">{info.signup_at.split(" ")[0]}</div>
+
+                {/* MOBILE ONLY: Middle Info Section */}
+                <div className="flex-1 min-w-0 md:hidden">
+                  <div className="flex items-baseline gap-2">
+                    <div className="text-xs font-bold text-gray-700 truncate">{info.name}</div>
+                    <div className="text-[10px] text-gray-500 truncate">{info.id}</div>
+                  </div>
+                  <div className="flex flex-col mt-0.5">
+                    <div className="text-[10px] text-gray-500 font-medium">{info.phone}</div>
+                    <div className="text-[10px] text-gray-400 mt-0.5">{info.signup_at.split(" ")[0]}</div>
+                  </div>
+                </div>
+
+                {/* Status Section - Column 6 on PC */}
+                <div className="flex-shrink-0 ml-3 md:ml-0 md:flex md:justify-center">
                   { 
                     info.status === "PENDING" ?
-                    <span className="px-2.5 py-0.5 bg-[#FFF9F0] text-[#FF9800] text-[10px] font-bold rounded-full text-center">승인 대기</span>
+                    <span className="px-2.5 py-0.5 bg-[#FFF9F0] text-[#FF9800] text-[10px] font-bold rounded-full text-center whitespace-nowrap">승인 대기</span>
                     :
                     info.status === "APPROVED" ?
-                    <span className="px-2.5 py-0.5 bg-[#F0FDF4] text-[#10B981] text-[10px] font-bold rounded-full text-center">승인 완료</span>
+                    <span className="px-2.5 py-0.5 bg-[#F0FDF4] text-[#10B981] text-[10px] font-bold rounded-full text-center whitespace-nowrap">승인 완료</span>
                     :
-                    <span className="px-2.5 py-0.5 bg-[#FFF0F0] text-[#FF4D4F] text-[10px] font-bold rounded-full text-center">거절</span>
+                    <span className="px-2.5 py-0.5 bg-[#FFF0F0] text-[#FF4D4F] text-[10px] font-bold rounded-full text-center whitespace-nowrap">거절</span>
                   }
                 </div>
               </div>
@@ -224,7 +333,7 @@ const AdminSignup = () => {
 
         {/* Detail View Section */}
         {selectedUser && (
-          <div className={`flex flex-col bg-white rounded-[32px] border border-[#F0F4FF] shadow-sm overflow-hidden min-h-0 animate-in slide-in-from-right duration-500 ${selectedUser ? 'flex-[0.4]' : 'hidden'}`}>
+          <div className={`flex flex-col bg-white rounded-none md:rounded-[32px] border-0 md:border border-[#F0F4FF] shadow-sm overflow-hidden min-h-0 animate-in slide-in-from-right duration-500 ${selectedUser ? 'flex-1 md:flex-[0.4]' : 'hidden'}`}>
              <div className="p-6 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
                 <h2 className="text-lg font-bold text-gray-900">신청 정보 상세</h2>
                 <button onClick={() => setSelectedUser(null)} className="text-gray-300 hover:text-gray-500 transition-colors">
@@ -236,7 +345,15 @@ const AdminSignup = () => {
                 {/* Profile Header */}
                 <div className="flex items-center gap-5 mb-8 bg-[#F8FAFF] p-6 rounded-2xl border border-[#F0F4FF] flex-shrink-0">
                   <div className="w-20 h-20 rounded-full bg-white border-2 border-[#DDE8FF] shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0">
-                    <svg className="w-10 h-10 text-[#3530B8]/30" fill="currentColor" viewBox="0 0 24 24"><path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    {userInfo.sysname ? (
+                      <img 
+                        src={`http://localhost/file/profile/view?sysname=${userInfo.sysname}&token=${token}`} 
+                        className="w-full h-full object-cover" 
+                        alt="Profile" 
+                      />
+                    ) : (
+                      <svg className="w-10 h-10 text-[#3530B8]/30" fill="currentColor" viewBox="0 0 24 24"><path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    )}
                   </div>
                   <div className="min-w-0 overflow-hidden">
                     <h2 className="text-xl font-bold text-gray-900 truncate">{userInfo.name}</h2>
@@ -273,7 +390,7 @@ const AdminSignup = () => {
                           {[
                             { label: '부서', value: userInfo.dept_name },
                             { label: '직급', value: userInfo.rank_name },
-                            { label: '입사일자', value: userInfo.hire_date }
+                            { label: '입사일자', value: userInfo.hire_date?.split(" ")[0] }
                           ].map((info, idx) => (
                             <div key={idx} className="flex justify-between items-start border-b border-gray-100/50 pb-2 last:border-0 last:pb-0">
                               <span className="text-xs font-medium text-gray-500 flex-shrink-0 mr-4">{info.label}</span>
@@ -344,18 +461,50 @@ const AdminSignup = () => {
                             )}
                           </div>
 
-                          <div>
+                          <div className="relative">
                             <label className="block text-[11px] font-bold text-gray-600 mb-1 ml-1">입사일자</label>
-                            <input 
-                              type="date" 
-                              value={hireDate}
-                              onChange={(e) => {
-                                setHireDate(e.target.value);
-                                setErrors(prev => ({ ...prev, hireDate: '' }));
-                              }} 
-                              className={`w-full px-4 py-2.5 bg-white border ${errors.hireDate ? 'border-red-500' : 'border-gray-200'} rounded-xl text-xs font-medium focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all`}
-                            />
+                            <div 
+                              onClick={() => { setIsCalendarOpen(!isCalendarOpen); setIsDeptOpen(false); setIsRankOpen(false); }}
+                              className={`w-full px-4 py-2.5 bg-white border ${errors.hireDate ? 'border-red-500' : isCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-200'} rounded-xl text-xs font-medium transition-all cursor-pointer flex justify-between items-center`}
+                            >
+                              <span className={!hireDate ? 'text-gray-400' : 'text-gray-800'}>{hireDate || '입사일자를 선택하세요'}</span>
+                              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            </div>
                             {errors.hireDate && <p className="text-red-500 text-[10px] mt-1 ml-1 font-medium">{errors.hireDate}</p>}
+                            
+                            {isCalendarOpen && (
+                              <div className="absolute z-30 w-full bottom-full mb-1 bg-white border border-gray-100 rounded-2xl shadow-2xl p-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                                <div className="flex items-center justify-between mb-4 px-1">
+                                  <button onClick={(e) => { e.stopPropagation(); setViewDate(new Date(calendarYear, calendarMonth - 1, 1)); }} className="p-1 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-[#3530B8] transition-colors">&lt;</button>
+                                  <div className="text-xs font-bold text-gray-900">{calendarYear}년 {calendarMonth + 1}월</div>
+                                  <button onClick={(e) => { e.stopPropagation(); setViewDate(new Date(calendarYear, calendarMonth + 1, 1)); }} className="p-1 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-[#3530B8] transition-colors">&gt;</button>
+                                </div>
+                                <div className="grid grid-cols-7 gap-1 mb-2">
+                                  {days.map(d => <div key={d} className="text-[10px] font-bold text-gray-400 text-center py-1">{d}</div>)}
+                                </div>
+                                <div className="grid grid-cols-7 gap-1">
+                                  {calendarDays.map((d, i) => (
+                                    <div 
+                                      key={i}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if(!d) return;
+                                        const dateStr = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                                        setHireDate(dateStr);
+                                        setIsCalendarOpen(false);
+                                        setErrors(prev => ({ ...prev, hireDate: '' }));
+                                      }}
+                                      className={`text-[10px] font-medium text-center py-2 rounded-lg transition-all cursor-pointer
+                                        ${!d ? 'invisible' : 'hover:bg-[#F0F4FF] hover:text-[#3530B8] text-gray-600'}
+                                        ${hireDate === `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}` ? 'bg-[#3530B8] text-white' : ''}
+                                      `}
+                                    >
+                                      {d}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </>
                       )}
@@ -367,7 +516,11 @@ const AdminSignup = () => {
              {/* Action Buttons - Fixed height */}
              {userInfo.status === 'PENDING' && (
                <div className="p-6 border-t border-gray-50 flex gap-3 flex-shrink-0 bg-white">
-                  <button className="flex-1 py-4 border-2 border-red-100 text-red-500 text-sm font-bold rounded-2xl hover:bg-red-50 transition-all text-center">반려</button>
+                  <button 
+                    onClick={handleReject}
+                    className="flex-1 py-4 border-2 border-red-100 text-red-500 text-sm font-bold rounded-2xl hover:bg-red-50 transition-all text-center">
+                      반려
+                  </button>
                   <button 
                     onClick={handleApprove}
                     className="flex-[2] py-4 bg-[#3530B8] text-white text-sm font-bold rounded-2xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all text-center">
