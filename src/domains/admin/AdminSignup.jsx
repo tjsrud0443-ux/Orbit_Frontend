@@ -136,10 +136,10 @@ const AdminSignup = () => {
   };
 
   return (
-    <div className="h-full flex flex-col p-6 md:p-8 font-sans overflow-hidden bg-[#FFFFFF]">
+    <div className={`h-full flex flex-col ${selectedUser ? 'p-0 md:p-8' : 'p-6 md:p-8'} font-sans overflow-hidden bg-[#FFFFFF]`}>
       
       {/* Header Section - Fixed height */}
-      <div className="mb-6 flex-shrink-0">
+      <div className={`mb-6 flex-shrink-0 ${selectedUser ? 'hidden md:block' : 'block'}`}>
         <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">회원가입 관리</h1>
         <p className="text-[11px] md:text-sm text-gray-500 whitespace-nowrap">
           신규 회원가입 신청 내역을 확인하고 승인, 거절할 수 있습니다.
@@ -147,7 +147,7 @@ const AdminSignup = () => {
       </div>
 
       {/* Filters and Search Section - Fixed height */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 flex-shrink-0">
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 flex-shrink-0 ${selectedUser ? 'hidden md:flex' : 'flex'}`}>
         <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-[#F0F4FF] flex-shrink-0 overflow-x-auto no-scrollbar">
           {tabs.map((tab) => (
             <button
@@ -186,7 +186,7 @@ const AdminSignup = () => {
       <div className="flex-1 flex gap-6 min-h-0 overflow-hidden">
         
         {/* List Section */}
-        <div className={`flex flex-col bg-white rounded-[32px] border border-[#F0F4FF] shadow-sm overflow-hidden transition-all duration-500 min-h-0 ${selectedUser ? 'flex-[0.6]' : 'flex-1'}`}>
+        <div className={`flex flex-col bg-white rounded-[32px] border border-[#F0F4FF] shadow-sm overflow-hidden transition-all duration-500 min-h-0 ${selectedUser ? 'hidden md:flex md:flex-[0.6]' : 'flex-1'}`}>
           <div className="hidden md:grid grid-cols-6 px-6 py-4 border-b border-gray-50 text-[11px] font-bold text-gray-400 uppercase tracking-wider flex-shrink-0">
             <div className="text-center">프로필</div>
             <div>이름</div>
@@ -205,7 +205,7 @@ const AdminSignup = () => {
                 onClick={() => handleUserClick(info)}
                 className={`flex md:grid md:grid-cols-6 px-4 md:px-6 py-3.5 items-center cursor-pointer hover:bg-[#F8FAFF] transition-colors border-b border-gray-50/50 ${selectedUser === info.signup_seq ? 'bg-[#F0F4FF]' : ''}`}
               >
-                {/* Profile Section */}
+                {/* Profile Section - Column 1 on PC */}
                 <div className="flex-shrink-0 md:flex md:justify-center mr-4 md:mr-0">
                   <div className="w-10 h-10 md:w-9 md:h-9 rounded-full bg-[#DDE8FF] flex items-center justify-center overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
                     {info.sysname ? (
@@ -220,25 +220,25 @@ const AdminSignup = () => {
                   </div>
                 </div>
 
-                {/* Info Section */}
-                <div className="flex-1 min-w-0 md:contents">
-                  <div className="flex items-baseline gap-2 md:block">
-                    <div className="text-xs md:text-xs font-bold text-gray-700 truncate">{info.name}</div>
-                    <div className="text-[10px] md:text-[11px] text-gray-500 truncate md:mt-0.5">{info.id}</div>
+                {/* PC ONLY: Columns 2, 3, 4, 5 */}
+                <div className="hidden md:block text-xs font-bold text-gray-700 truncate">{info.name}</div>
+                <div className="hidden md:block text-[11px] text-gray-500 truncate">{info.id}</div>
+                <div className="hidden md:block text-[11px] text-gray-500 font-medium truncate">{info.phone}</div>
+                <div className="hidden md:block text-[11px] text-gray-400 truncate">{info.signup_at.split(" ")[0]}</div>
+
+                {/* MOBILE ONLY: Middle Info Section */}
+                <div className="flex-1 min-w-0 md:hidden">
+                  <div className="flex items-baseline gap-2">
+                    <div className="text-xs font-bold text-gray-700 truncate">{info.name}</div>
+                    <div className="text-[10px] text-gray-500 truncate">{info.id}</div>
                   </div>
-                  
-                  {/* Mobile Only Info */}
-                  <div className="md:hidden flex flex-col mt-0.5">
+                  <div className="flex flex-col mt-0.5">
                     <div className="text-[10px] text-gray-500 font-medium">{info.phone}</div>
                     <div className="text-[10px] text-gray-400 mt-0.5">{info.signup_at.split(" ")[0]}</div>
                   </div>
-
-                  {/* PC Only Info (Hidden on mobile via md:contents logic) */}
-                  <div className="hidden md:block text-[11px] text-gray-500 font-medium truncate">{info.phone}</div>
-                  <div className="hidden md:block text-[11px] text-gray-400 truncate">{info.signup_at.split(" ")[0]}</div>
                 </div>
 
-                {/* Status Section */}
+                {/* Status Section - Column 6 on PC */}
                 <div className="flex-shrink-0 ml-3 md:ml-0 md:flex md:justify-center">
                   { 
                     info.status === "PENDING" ?
@@ -267,7 +267,7 @@ const AdminSignup = () => {
 
         {/* Detail View Section */}
         {selectedUser && (
-          <div className={`flex flex-col bg-white rounded-[32px] border border-[#F0F4FF] shadow-sm overflow-hidden min-h-0 animate-in slide-in-from-right duration-500 ${selectedUser ? 'flex-[0.4]' : 'hidden'}`}>
+          <div className={`flex flex-col bg-white rounded-none md:rounded-[32px] border-0 md:border border-[#F0F4FF] shadow-sm overflow-hidden min-h-0 animate-in slide-in-from-right duration-500 ${selectedUser ? 'flex-1 md:flex-[0.4]' : 'hidden'}`}>
              <div className="p-6 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
                 <h2 className="text-lg font-bold text-gray-900">신청 정보 상세</h2>
                 <button onClick={() => setSelectedUser(null)} className="text-gray-300 hover:text-gray-500 transition-colors">
