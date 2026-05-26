@@ -2,6 +2,7 @@
 import Pagination from '../../components/common/Pagination';
 import { approveUserSignup, getAllRequest, getDeptList, getHrInfo, getRankList, getUserInfo, rejectUserSignup } from './adminApi';
 import useAuthStore from '../../store/authStore';
+import Calendar from '../../components/common/Calendar';
 
 const AdminSignup = () => {
   const [activeTab, setActiveTab] = useState('전체');
@@ -24,7 +25,6 @@ const AdminSignup = () => {
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [isRejectSuccess, setIsRejectSuccess] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [viewDate, setViewDate] = useState(new Date());
 
   const token = useAuthStore(state => state.token);
 
@@ -144,15 +144,6 @@ const AdminSignup = () => {
       }, 1500);
     });
   };
-
-  const days = ['일', '월', '화', '수', '목', '금', '토'];
-  const calendarYear = viewDate.getFullYear();
-  const calendarMonth = viewDate.getMonth();
-  const firstDay = new Date(calendarYear, calendarMonth, 1).getDay();
-  const lastDate = new Date(calendarYear, calendarMonth + 1, 0).getDate();
-  const calendarDays = [];
-  for (let i = 0; i < firstDay; i++) calendarDays.push(null);
-  for (let i = 1; i <= lastDate; i++) calendarDays.push(i);
 
   return (
     <div className={`h-full flex flex-col ${selectedUser ? 'p-0 md:p-8' : 'p-6 md:p-8'} font-sans overflow-hidden bg-[#FFFFFF]`}>
@@ -473,37 +464,14 @@ const AdminSignup = () => {
                             {errors.hireDate && <p className="text-red-500 text-[0.625rem] mt-1 ml-1 font-medium">{errors.hireDate}</p>}
                             
                             {isCalendarOpen && (
-                              <div className="absolute z-30 w-full bottom-full mb-1 bg-white border border-gray-100 rounded-2xl shadow-2xl p-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
-                                <div className="flex items-center justify-between mb-4 px-1">
-                                  <button onClick={(e) => { e.stopPropagation(); setViewDate(new Date(calendarYear, calendarMonth - 1, 1)); }} className="p-1 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-[#3530B8] transition-colors">&lt;</button>
-                                  <div className="text-xs font-bold text-gray-900">{calendarYear}년 {calendarMonth + 1}월</div>
-                                  <button onClick={(e) => { e.stopPropagation(); setViewDate(new Date(calendarYear, calendarMonth + 1, 1)); }} className="p-1 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-[#3530B8] transition-colors">&gt;</button>
-                                </div>
-                                <div className="grid grid-cols-7 gap-1 mb-2">
-                                  {days.map(d => <div key={d} className="text-[0.625rem] font-bold text-gray-400 text-center py-1">{d}</div>)}
-                                </div>
-                                <div className="grid grid-cols-7 gap-1">
-                                  {calendarDays.map((d, i) => (
-                                    <div 
-                                      key={i}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        if(!d) return;
-                                        const dateStr = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                                        setHireDate(dateStr);
-                                        setIsCalendarOpen(false);
-                                        setErrors(prev => ({ ...prev, hireDate: '' }));
-                                      }}
-                                      className={`text-[0.625rem] font-medium text-center py-2 rounded-lg transition-all cursor-pointer
-                                        ${!d ? 'invisible' : 'hover:bg-[#F0F4FF] hover:text-[#3530B8] text-gray-600'}
-                                        ${hireDate === `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}` ? 'bg-[#3530B8] text-white' : ''}
-                                      `}
-                                    >
-                                      {d}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
+                              <Calendar
+                                value={hireDate}
+                                onChange={(dateStr) => {
+                                  setHireDate(dateStr);
+                                  setErrors(prev => ({ ...prev, hireDate: '' }));
+                                }}
+                                onClose={() => setIsCalendarOpen(false)}
+                              />
                             )}
                           </div>
                         </>
