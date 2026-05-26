@@ -15,25 +15,25 @@ import {
 import { getGroup } from './departmentsApi';
 import useAuthStore from '../../store/authStore';
 
-
 // // Position Rank for Sorting (Lower number = Higher rank)
-// const POSITION_RANK = {
-//   '대표이사': 1, '사장': 2, '부사장': 3, '전무': 4, '상무': 5, '이사': 6,
-//   '부장': 7, '차장': 8, '과장': 9, '대리': 10, '주임': 11, '사원': 12,
-// };
 
-// const getRank = (pos) => POSITION_RANK[pos] || 99;
+const POSITION_RANK = {
+  '대표이사': 1, '사장': 2, '부사장': 3, '전무': 4, '상무': 5, '이사': 6,
+  '부장': 7, '차장': 8, '과장': 9, '대리': 10, '주임': 11, '사원': 12,
+};
 
-// 2. Visual Org Chart Node Component
+
+
+const getRank = (pos) => POSITION_RANK[pos] || 99;
+
 const OrgNode = ({ node, isChild = false }) => {
   const token = useAuthStore(state => state.token);
 
-  // 1. Identify if this is a raw Department node or a Member node
   const isMember = !!node.id;
   const isRoot = node.parentDeptSeq === null && !isMember;
 
-  // 2. Promotion Logic & Sorting
   let displayNode = node;
+  let subMembers = [...(node.members || [])].sort((a, b) => getRank(a.position) - getRank(b.position));
   let subDepts = [...(node.children || [])].sort((a, b) => (a.deptSeq - b.deptSeq));
 
   if (!isMember && subMembers.length > 0) {
@@ -68,9 +68,9 @@ const OrgNode = ({ node, isChild = false }) => {
               className="w-full h-full object-cover"
             />
           ) : (
-            <FontAwesomeIcon 
-              icon={isRoot && !isMember && !node.members?.length ? faBuilding : (isMember || displayNode.id ? faUser : faUsers)} 
-              className="text-xs lg:text-[10px]" 
+            <FontAwesomeIcon
+              icon={isRoot && !isMember && !node.members?.length ? faBuilding : (isMember || displayNode.id ? faUser : faUsers)}
+              className="text-xs lg:text-[10px]"
             />
           )}
         </div>
@@ -96,14 +96,14 @@ const OrgNode = ({ node, isChild = false }) => {
               {subMembers.map((member) => (
                 <div key={member.id} className="flex flex-col items-center">
                   <div className="w-0.5 h-8 lg:h-5 bg-[#DDE8FF]" />
-                  <OrgNode 
+                  <OrgNode
                     node={{
                       ...member,
                       deptName: node.deptName,
                       parentDeptSeq: node.deptSeq,
                       children: []
-                    }} 
-                    isChild={true} 
+                    }}
+                    isChild={true}
                   />
                 </div>
               ))}
@@ -115,7 +115,7 @@ const OrgNode = ({ node, isChild = false }) => {
             <div className="flex flex-col items-center w-full">
               {/* Line down from parent to the branch */}
               <div className="w-0.5 h-8 lg:h-5 bg-[#DDE8FF]" />
-              
+
               <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center">
                 {subDepts.map((child, idx) => (
                   <div key={child.deptSeq} className="relative flex flex-col items-center px-4 lg:px-1.5">
@@ -125,10 +125,10 @@ const OrgNode = ({ node, isChild = false }) => {
                         ${idx === 0 ? 'left-1/2 w-1/2' : idx === subDepts.length - 1 ? 'right-1/2 w-1/2' : 'w-full'}
                       `} />
                     )}
-                    
+
                     {/* Vertical Connector down to node */}
                     <div className="w-0.5 h-8 lg:h-5 bg-[#DDE8FF] relative z-10" />
-                    
+
                     <OrgNode node={child} isChild={true} />
                   </div>
                 ))}
@@ -208,7 +208,12 @@ const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptNa
 
     // 1. Filter by Dept if specified
     if (deptCode !== 'ROOT' && deptSeqs.length > 0) {
+      if (deptCode === "CEO") {
+        list = list.filter(emp => emp.deptSeq === deptSeqs[0]);
+      } else {
+        // 일반 부서들은 기존대로 하위 팀/부서원들까지 전부 묶어서 출력
         list = list.filter(emp => deptSeqs.includes(emp.deptSeq));
+      }
     }
 
     // 2. Filter by Search Term (Name, Position, or Department)
@@ -263,11 +268,16 @@ const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptNa
                   <td className="px-6 py-4">
                     <span
                       className={`
-                        px-2 py-1  text-[10px] font-bold rounded-md border 
-                        ${emp.attendanceStatus === '근무중' ? 'bg-[#F0FDF4] text-[#10B981] border-[#F0FDF4]'
-                          : emp.attendanceStatus === '퇴근' ? 'bg-[#FFF9F0] text-[#FF9800] border-[#FFF9F0]'
-                            : 'bg-[#FFF0F0] text-[#FF4D4F] border-[#FFF0F0]'}
+                        text-[10px] font-bold rounded-md
+                        ${emp.attendanceStatus === '근무중' ? 'px-2 py-1 border bg-[#F0FDF4] text-[#10B981] border-[#F0FDF4]'
+                          : emp.attendanceStatus === '퇴근' ? 'px-2 py-1 border bg-[#FFF9F0] text-[#FF9800] border-[#FFF9F0]'
+                            : emp.attendanceStatus === '연차' ||
+                              emp.attendanceStatus === '오전반차' ||
+                              emp.attendanceStatus === '오후반차' ? 'px-2 py-1 border bg-blue-50 text-blue-600 border-blue-50'
+                              : emp.attendanceStatus === '결근' ? 'px-2 py-1 border bg-[#FFF0F0] text-[#FF4D4F] border-[#FFF0F0]'
+                                : ''}
                         `}>{emp.attendanceStatus}</span>
+
                   </td>
                 </tr>
               ))
@@ -343,13 +353,13 @@ const Departments = () => {
   const headerResults = useMemo(() => {
     if (!headerSearch.trim()) return { employees: [], depts: [] };
     const lower = headerSearch.toLowerCase();
-    
-    const matchedEmployees = employees.filter(emp => 
-      emp.name.toLowerCase().includes(lower) || 
+
+    const matchedEmployees = employees.filter(emp =>
+      emp.name.toLowerCase().includes(lower) ||
       emp.position.toLowerCase().includes(lower)
     ).slice(0, 5);
 
-    const matchedDepts = Object.values(fullTree.nodeMap).filter(dept => 
+    const matchedDepts = Object.values(fullTree.nodeMap).filter(dept =>
       dept.deptName.toLowerCase().includes(lower)
     ).slice(0, 5);
 
@@ -379,51 +389,51 @@ const Departments = () => {
   fixed inset-y-0 left-0 z-50
   ${isSidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full'}
 `}>
-  {/* 💡 [핵심 교정] lg:w-64로 데스크톱 크기를 꽉 잡아두고, 모바일(w-0)일 때만 내부 콘텐츠가 숨겨지도록 처리 */}
-  <div className="w-full lg:w-64 flex flex-col h-full shrink-0">
-    <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
-      <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-        <FontAwesomeIcon icon={faSitemap} className="text-[#3530B8]" />
-        조직 구조
-      </h2>
-      <button
-        onClick={() => setIsSidebarOpen(false)}
-        className="p-2 text-gray-400 hover:text-gray-600 lg:hidden"
-      >
-        <FontAwesomeIcon icon={faTimes} />
-      </button>
-    </div>
+        {/* 💡 [핵심 교정] lg:w-64로 데스크톱 크기를 꽉 잡아두고, 모바일(w-0)일 때만 내부 콘텐츠가 숨겨지도록 처리 */}
+        <div className="w-full lg:w-64 flex flex-col h-full shrink-0">
+          <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
+            <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+              <FontAwesomeIcon icon={faSitemap} className="text-[#3530B8]" />
+              조직 구조
+            </h2>
+            <button
+              onClick={() => setIsSidebarOpen(false)}
+              className="p-2 text-gray-400 hover:text-gray-600 lg:hidden"
+            >
+              <FontAwesomeIcon icon={faTimes} />
+            </button>
+          </div>
 
-    <nav className="flex-1 overflow-y-auto p-3 pt-4 space-y-1">
-      <button
-        onClick={() => {
-          setSelectedDept('ALL');
-          setSearchTerm('');
-          setIsSidebarOpen(false);
-        }}
-        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all mb-4 ${selectedDept === 'ALL' ? 'bg-[#3530B8] text-white font-bold shadow-md' : 'text-gray-600 hover:bg-gray-50'}`}
-      >
-        <FontAwesomeIcon icon={faLayerGroup} />
-        전체 조직도
-      </button>
+          <nav className="flex-1 overflow-y-auto p-3 pt-4 space-y-1">
+            <button
+              onClick={() => {
+                setSelectedDept('ALL');
+                setSearchTerm('');
+                setIsSidebarOpen(false);
+              }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all mb-4 ${selectedDept === 'ALL' ? 'bg-[#3530B8] text-white font-bold shadow-md' : 'text-gray-600 hover:bg-gray-50'}`}
+            >
+              <FontAwesomeIcon icon={faLayerGroup} />
+              전체 조직도
+            </button>
 
-      <div className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] px-3 mb-2">DEPARTMENTS</div>
+            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] px-3 mb-2">DEPARTMENTS</div>
 
-      {fullTree.root && (
-        <SidebarItem
-          node={fullTree.root}
-          selectedDept={selectedDept}
-          onSelect={(id) => {
-            setSelectedDept(id);
-            setSearchTerm('');
-            setIsSidebarOpen(false);
-          }}
-          nodeMap={fullTree.nodeMap}
-        />
-      )}
-    </nav>
-  </div>
-</aside>
+            {fullTree.root && (
+              <SidebarItem
+                node={fullTree.root}
+                selectedDept={selectedDept}
+                onSelect={(id) => {
+                  setSelectedDept(id);
+                  setSearchTerm('');
+                  setIsSidebarOpen(false);
+                }}
+                nodeMap={fullTree.nodeMap}
+              />
+            )}
+          </nav>
+        </div>
+      </aside>
 
       {/* 3. Main Viewport */}
       <main className="flex-1 flex flex-col overflow-hidden">
@@ -441,8 +451,8 @@ const Departments = () => {
               <span className="text-gray-400 hidden sm:inline">인사 관리</span>
               <FontAwesomeIcon icon={faChevronRight} className="text-gray-300 text-[10px] hidden sm:inline" />
               <span className="font-bold text-gray-700 shrink-0 max-w-[80px] sm:max-w-none truncate">
-                {searchTerm.trim() 
-                  ? `"${searchTerm}" 검색 결과` 
+                {searchTerm.trim()
+                  ? `"${searchTerm}" 검색 결과`
                   : (selectedDept === 'ALL' ? '전체 조직도' : currentDeptInfo?.deptName)}
               </span>
             </div>
@@ -463,20 +473,20 @@ const Departments = () => {
                   onFocus={() => setIsHeaderSearchOpen(true)}
                 />
               </div>
-              
+
               {/* Dropdown Results */}
               {isHeaderSearchOpen && headerSearch.trim() && (
                 <>
                   <div className="fixed inset-0 z-50" onClick={() => setIsHeaderSearchOpen(false)} />
                   <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-[60] max-h-[350px] overflow-y-auto">
-                    
+
                     {/* Department Results Section */}
                     {headerResults.depts.length > 0 && (
                       <div className="p-2 bg-gray-50/50 border-b border-gray-100">
                         <p className="px-2 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">부서</p>
                         {headerResults.depts.map((dept) => (
-                          <div 
-                            key={dept.deptSeq} 
+                          <div
+                            key={dept.deptSeq}
                             className="p-2 hover:bg-[#3530B8] hover:text-white rounded-lg flex items-center gap-3 cursor-pointer group transition-colors"
                             onClick={() => {
                               setSelectedDept(dept.deptSeq);
@@ -498,8 +508,8 @@ const Departments = () => {
                         <>
                           <p className="px-2 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">임직원</p>
                           {headerResults.employees.map((emp) => (
-                            <div 
-                              key={emp.id} 
+                            <div
+                              key={emp.id}
                               className="p-2 hover:bg-gray-50 rounded-lg flex items-center gap-3 cursor-pointer"
                               onClick={() => {
                                 setSelectedDept(emp.deptSeq);
@@ -509,10 +519,10 @@ const Departments = () => {
                               }}
                             >
                               <div className="w-8 h-8 rounded-full bg-[#DDE8FF] overflow-hidden shrink-0">
-                                <img 
-                                  src={`http://localhost/file/profile/view?sysname=${emp.sysname}&token=${token}`} 
-                                  className="w-full h-full object-cover" 
-                                  alt={emp.name} 
+                                <img
+                                  src={`http://localhost/file/profile/view?sysname=${emp.sysname}&token=${token}`}
+                                  className="w-full h-full object-cover"
+                                  alt={emp.name}
                                 />
                               </div>
                               <div className="min-w-0">
