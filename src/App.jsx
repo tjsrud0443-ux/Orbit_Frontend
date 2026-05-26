@@ -33,6 +33,11 @@ import BoardDetail from './domains/board/BoardDetail';
 import AiChat from './domains/aiChat/AiChat';
 import MyPage from './domains/mypage/MyPage';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import GeneralForm from './domains/approval/forms/GeneralForm';
+import PaymentForm from './domains/approval/forms/PaymentForm';
+import PurchaseForm from './domains/approval/forms/PurchaseForm';
+import VacationForm from './domains/approval/forms/VacationForm';
+
 
 function App() {
   return (
@@ -54,6 +59,18 @@ function App() {
           <Route path="/approvalInbox" element={<ApprovalInbox />} />
           <Route path="/approvalCc" element={<ApprovalCc />} />
           <Route path="/approvalTemp" element={<ApprovalTemp />} />
+
+          <Route path="/approval/write/general" element={<GeneralForm isReadOnly={false} />} />
+          <Route path="/approval/detail/general/:seq" element={<GeneralForm isReadOnly={true} />} />
+
+          <Route path="/approval/write/payment" element={<PaymentForm isReadOnly={false} />} />
+          <Route path="/approval/detail/payment/:seq" element={<PaymentForm isReadOnly={true} />} />
+
+          <Route path="/approval/write/purchase" element={<PurchaseForm isReadOnly={false} />} />
+          <Route path="/approval/detail/purchase/:seq" element={<PurchaseForm isReadOnly={true} />} />
+
+          <Route path="/approval/write/vacation" element={<VacationForm isReadOnly={false} />} />
+          <Route path="/approval/detail/vacation/:seq" element={<VacationForm isReadOnly={true} />} />
 
           <Route path="/projects" element={<ProjectsList />} />
           <Route path="/documents" element={<DocumentsList />} />

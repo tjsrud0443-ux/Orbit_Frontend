@@ -85,7 +85,8 @@ const ApprovalHome = () => {
       desc: '연차, 반차 등\n휴가 신청을 위한 양식',
       color: 'bg-orange-50',
       iconBg: 'bg-orange-100',
-      iconColor: 'text-orange-500'
+      iconColor: 'text-orange-500',
+      path: '/approval/write/vacation'
     },
     { 
       title: '지출결의서', 
@@ -97,10 +98,11 @@ const ApprovalHome = () => {
       desc: '업무 관련 지출에 대한\n결의 및 비용 처리 양식',
       color: 'bg-blue-50',
       iconBg: 'bg-blue-100',
-      iconColor: 'text-blue-500'
+      iconColor: 'text-blue-500',
+      path: '/approval/write/payment'
     },
     { 
-      title: '일반품의', 
+      title: '일반품의서', 
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -109,7 +111,8 @@ const ApprovalHome = () => {
       desc: '업무 진행 및 운영 관련 등\n다양한 사항에 대한 승인 요청 양식',
       color: 'bg-purple-50',
       iconBg: 'bg-purple-100',
-      iconColor: 'text-purple-500'
+      iconColor: 'text-purple-500',
+      path: '/approval/write/general'
     },
     { 
       title: '구매신청서', 
@@ -121,7 +124,8 @@ const ApprovalHome = () => {
       desc: '비품 및 업무용 물품 구매를 위한\n신청 및 승인 요청 양식',
       color: 'bg-emerald-50',
       iconBg: 'bg-emerald-100',
-      iconColor: 'text-emerald-500'
+      iconColor: 'text-emerald-500',
+      path: '/approval/write/purchase'
     }
   ];
 
@@ -132,7 +136,7 @@ const ApprovalHome = () => {
       {isDraftModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
           <div 
-            className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300"
+            className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-10">
@@ -152,7 +156,11 @@ const ApprovalHome = () => {
                 {draftForms.map((form, idx) => (
                   <div 
                     key={idx}
-                    className={`${form.color} p-8 rounded-[32px] cursor-pointer hover:scale-[1.03] hover:shadow-xl transition-all border border-black/5 flex flex-col items-center text-center aspect-square justify-center group`}
+                    onClick={() => {
+                      setIsDraftModalOpen(false);
+                      navi(form.path);
+                    }}
+                    className={`${form.color} p-8 rounded-[2rem] cursor-pointer hover:scale-[1.03] hover:shadow-xl transition-all border border-black/5 flex flex-col items-center text-center aspect-square justify-center group`}
                   >
                     <div className={`${form.iconBg} ${form.iconColor} w-16 h-16 rounded-3xl flex items-center justify-center mb-5 shadow-sm group-hover:scale-110 transition-transform`}>
                       {form.icon}
@@ -171,7 +179,7 @@ const ApprovalHome = () => {
         </div>
       )}
 
-      <div className="max-w-[1600px] mx-auto flex flex-col gap-8">
+      <div className="max-w-[100rem] mx-auto flex flex-col gap-8">
         
         {/* Header Section */}
         <div className="flex-shrink-0 px-2">
@@ -190,21 +198,21 @@ const ApprovalHome = () => {
               <div 
                 key={idx} 
                 onClick={() => navi(item.label === '결재 대기' ? '/approvalInbox' : '/approvalMypage')}
-                className={`${cardStyles[item.color].bg} ${cardStyles[item.color].border} p-5 rounded-[32px] border-2 shadow-sm flex flex-col justify-between transition-all hover:shadow-md cursor-pointer group`}
+                className={`${cardStyles[item.color].bg} ${cardStyles[item.color].border} p-5 rounded-[2rem] border-2 shadow-sm flex flex-col justify-between transition-all hover:shadow-md cursor-pointer group`}
               >
                 <div className="flex items-center gap-4">
                   <div className={`w-12 h-12 rounded-full ${cardStyles[item.color].iconBg} flex items-center justify-center flex-shrink-0`}>
                     <div className={cardStyles[item.color].icon}>{item.icon}</div>
                   </div>
                   <div className="flex flex-col items-start translate-x-1">
-                    <span className="text-[13px] font-bold text-gray-800 mb-1">{item.label}</span>
+                    <span className="text-[0.8125rem] font-bold text-gray-800 mb-1">{item.label}</span>
                     <span className={`text-3xl font-bold ${cardStyles[item.color].text}`}>
                       {item.count}<span className="text-sm font-bold ml-1">건</span>
                     </span>
                   </div>
                 </div>
                 <div className="mt-4 pt-3 border-t border-black/5 flex justify-between items-center">
-                  <p className="text-[11px] font-bold text-gray-400">{item.desc}</p>
+                  <p className="text-[0.6875rem] font-bold text-gray-400">{item.desc}</p>
                   <span className="text-gray-300 font-bold text-base group-hover:text-gray-500 transition-colors">&gt;</span>
                 </div>
               </div>
@@ -212,17 +220,17 @@ const ApprovalHome = () => {
           </div>
 
           {/* New Draft Box (25%) */}
-          <div className="xl:w-1/4 bg-[#3530B8] rounded-[32px] p-6 shadow-xl shadow-[#3530B8]/20 flex relative overflow-hidden group hover:bg-[#2a2594] transition-all min-h-[160px]">
+          <div className="xl:w-1/4 bg-[#3530B8] rounded-[2rem] p-6 shadow-xl shadow-[#3530B8]/20 flex relative overflow-hidden group hover:bg-[#2a2594] transition-all min-h-[160px]">
              <div className="flex flex-col justify-between h-full z-10 w-full">
                 <div>
                   <h2 className="text-white text-lg font-bold mb-1.5">새 기안 작성</h2>
-                  <p className="text-white/60 text-[11px] font-medium leading-relaxed">
+                  <p className="text-white/60 text-[0.6875rem] font-medium leading-relaxed">
                     문서를 새로 작성하여 결재를 요청하세요.
                   </p>
                 </div>
                 <button 
                   onClick={() => setIsDraftModalOpen(true)}
-                  className="bg-white text-[#3530B8] py-2 px-4 rounded-xl font-bold text-[11px] flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors w-fit shadow-lg"
+                  className="bg-white text-[#3530B8] py-2 px-4 rounded-xl font-bold text-[0.6875rem] flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors w-fit shadow-lg"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -238,7 +246,7 @@ const ApprovalHome = () => {
         </div>
 
         {/* Recent Documents Area */}
-        <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden flex-1 h-[460px] mb-4 flex flex-col">
+        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex-1 h-[28.75rem] mb-4 flex flex-col">
           <div className="p-6 px-10 border-b border-gray-50 flex items-center justify-between bg-gray-50/30 flex-shrink-0">
             <h2 className="text-lg font-bold text-gray-900">최근 문서 목록</h2>
             <button 
@@ -249,7 +257,7 @@ const ApprovalHome = () => {
           </div>
 
           {/* Table Header */}
-          <div className="grid grid-cols-12 px-10 py-4 border-b border-gray-50 text-[13px] font-bold text-gray-400 bg-gray-50/10 flex-shrink-0">
+          <div className="grid grid-cols-12 px-10 py-4 border-b border-gray-50 text-[0.8125rem] font-bold text-gray-400 bg-gray-50/10 flex-shrink-0">
             <div className="col-span-4">제목</div>
             <div className="col-span-2 text-center">문서 종류</div>
             <div className="col-span-2 text-center">기안일</div>
@@ -273,7 +281,7 @@ const ApprovalHome = () => {
                     {doc.date}
                   </div>
                   <div className="col-span-2 text-center">
-                    <span className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full ${
+                    <span className={`px-2.5 py-0.5 text-[0.625rem] font-bold rounded-full ${
                       doc.status === '진행 중' ? 'bg-blue-50 text-blue-600' :
                       doc.status === '결재 대기' ? 'bg-amber-50 text-amber-600' :
                       doc.status === '결재 완료' ? 'bg-green-50 text-green-600' :
