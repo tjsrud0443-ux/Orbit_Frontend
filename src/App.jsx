@@ -33,10 +33,7 @@ import BoardDetail from './domains/board/BoardDetail';
 import AiChat from './domains/aiChat/AiChat';
 import MyPage from './domains/mypage/MyPage';
 import ProtectedRoute from './components/common/ProtectedRoute';
-import GeneralForm from './domains/approval/forms/GeneralForm';
-import PaymentForm from './domains/approval/forms/PaymentForm';
-import PurchaseForm from './domains/approval/forms/PurchaseForm';
-import VacationForm from './domains/approval/forms/VacationForm';
+import ApprovalDetail from './domains/approval/ApprovalDetail';
 
 
 function App() {
@@ -60,17 +57,9 @@ function App() {
           <Route path="/approvalCc" element={<ApprovalCc />} />
           <Route path="/approvalTemp" element={<ApprovalTemp />} />
 
-          <Route path="/approval/write/general" element={<GeneralForm isReadOnly={false} />} />
-          <Route path="/approval/detail/general/:seq" element={<GeneralForm isReadOnly={true} />} />
-
-          <Route path="/approval/write/payment" element={<PaymentForm isReadOnly={false} />} />
-          <Route path="/approval/detail/payment/:seq" element={<PaymentForm isReadOnly={true} />} />
-
-          <Route path="/approval/write/purchase" element={<PurchaseForm isReadOnly={false} />} />
-          <Route path="/approval/detail/purchase/:seq" element={<PurchaseForm isReadOnly={true} />} />
-
-          <Route path="/approval/write/vacation" element={<VacationForm isReadOnly={false} />} />
-          <Route path="/approval/detail/vacation/:seq" element={<VacationForm isReadOnly={true} />} />
+          {/* 리팩토링된 통합 결재 상세/작성 페이지 */}
+          <Route path="/approval/write/:type" element={<ApprovalDetail />} />
+          <Route path="/approval/detail/:type/:docId" element={<ApprovalDetail />} />
 
           <Route path="/projects" element={<ProjectsList />} />
           <Route path="/documents" element={<DocumentsList />} />
