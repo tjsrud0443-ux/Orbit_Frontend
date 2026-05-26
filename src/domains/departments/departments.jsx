@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faSearch,
@@ -302,6 +302,19 @@ const Departments = () => {
   const [headerSearch, setHeaderSearch] = useState('');
   const [isHeaderSearchOpen, setIsHeaderSearchOpen] = useState(false);
   const token = useAuthStore(state => state.token);
+  const sidebarRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isSidebarOpen && sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        if (!event.target.closest('.sidebar-toggle')) {
+          setIsSidebarOpen(false);
+        }
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isSidebarOpen]);
 
   // 1. Initial Static Data
   const [fullTree, setFullTree] = useState({
@@ -378,7 +391,9 @@ const Departments = () => {
       )}
 
       {/* 2. Sidebar (Overlay on Mobile, Inline on Desktop) */}
-      <aside className={`
+      <aside 
+        ref={sidebarRef}
+        className={`
   bg-white border-r border-gray-200 flex flex-col shrink-0 transition-all duration-300 ease-in-out overflow-hidden
   
   /* 💻 데스크톱: 유저님이 원래 만드신 완벽한 레이아웃 그대로 고정 */
@@ -409,7 +424,6 @@ const Departments = () => {
               onClick={() => {
                 setSelectedDept('ALL');
                 setSearchTerm('');
-                setIsSidebarOpen(false);
               }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all mb-4 ${selectedDept === 'ALL' ? 'bg-[#3530B8] text-white font-bold shadow-md' : 'text-gray-600 hover:bg-gray-50'}`}
             >
@@ -426,7 +440,6 @@ const Departments = () => {
                 onSelect={(id) => {
                   setSelectedDept(id);
                   setSearchTerm('');
-                  setIsSidebarOpen(false);
                 }}
                 nodeMap={fullTree.nodeMap}
               />
@@ -442,7 +455,7 @@ const Departments = () => {
             {/* Hamburger for Mobile */}
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="lg:hidden p-2 -ml-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+              className="sidebar-toggle lg:hidden p-2 -ml-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <FontAwesomeIcon icon={faBars} />
             </button>
@@ -559,7 +572,7 @@ const Departments = () => {
               {/* Sidebar Toggle Button */}
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="flex items-center gap-2 px-3 py-1.5 bg-[#F0F4FF] text-[#3530B8] hover:bg-[#3530B8] hover:text-white rounded-lg transition-all text-xs font-bold"
+                className="sidebar-toggle flex items-center gap-2 px-3 py-1.5 bg-[#F0F4FF] text-[#3530B8] hover:bg-[#3530B8] hover:text-white rounded-lg transition-all text-xs font-bold"
               >
                 <FontAwesomeIcon icon={isSidebarOpen ? faTimes : faSitemap} />
                 <span className="hidden sm:inline">조직 구조</span>
