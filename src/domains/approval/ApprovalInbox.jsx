@@ -12,17 +12,17 @@ import Pagination from '../../components/common/Pagination';
 
 // --- Dummy Data ---
 const PENDING_DOCUMENTS = [
-  { id: 1, title: '2024년 상반기 사무용품 구매 신청', type: '구매신청서', drafter: '김철수 대리', date: '2024-05-20', status: '진행중' },
-  { id: 2, title: '연차 휴가 신청서 (6/1 ~ 6/3)', type: '휴가신청서', drafter: '이영희 사원', date: '2024-05-22', status: '대기중' },
-  { id: 3, title: '영업부 외부 미팅 비용 정산', type: '지출결의서', drafter: '박지민 과장', date: '2024-05-23', status: '대기중' },
-  { id: 4, title: '신규 프로젝트 추진 기안문', type: '일반기안서', drafter: '최동현 차장', date: '2024-05-24', status: '대기중' },
-  { id: 5, title: '출장 보고서 및 비용 정산', type: '지출결의서', drafter: '정수빈 사원', date: '2024-05-25', status: '대기중' },
+  { id: 1, title: '2024년 상반기 사무용품 구매 신청', type: '구매신청서', drafter: '김철수 대리', date: '2024-05-20', status: '진행 중' },
+  { id: 2, title: '연차 휴가 신청서 (6/1 ~ 6/3)', type: '휴가신청서', drafter: '이영희 사원', date: '2024-05-22', status: '결재 대기' },
+  { id: 3, title: '영업부 외부 미팅 비용 정산', type: '지출결의서', drafter: '박지민 과장', date: '2024-05-23', status: '결재 대기' },
+  { id: 4, title: '신규 프로젝트 추진 기안문', type: '일반기안서', drafter: '최동현 차장', date: '2024-05-24', status: '결재 대기' },
+  { id: 5, title: '출장 보고서 및 비용 정산', type: '지출결의서', drafter: '정수빈 사원', date: '2024-05-25', status: '결재 대기' },
 ];
 
 const COMPLETED_DOCUMENTS = [
-  { id: 101, title: '개발팀 신규 서버 도입 건', type: '구매신청서', drafter: '강하늘 과장', date: '2024-05-10', status: '승인완료' },
+  { id: 101, title: '개발팀 신규 서버 도입 건', type: '구매신청서', drafter: '강하늘 과장', date: '2024-05-10', status: '결재 완료' },
   { id: 102, title: '재택근무 신청 (5/15)', type: '휴가신청서', drafter: '오진우 대리', date: '2024-05-12', status: '반려' },
-  { id: 103, title: '마케팅 협력업체 계약 검토', type: '일반기안서', drafter: '한소희 대리', date: '2024-05-15', status: '승인완료' },
+  { id: 103, title: '마케팅 협력업체 계약 검토', type: '일반기안서', drafter: '한소희 대리', date: '2024-05-15', status: '결재 완료' },
 ];
 
 const APPROVAL_LINE = [
@@ -35,10 +35,10 @@ const APPROVAL_LINE = [
 
 const StatusBadge = ({ status }) => {
   const styles = {
-    '대기중': 'bg-[#FFF9F0] text-[#FF9800] border-[#FFF9F0]',
-    '승인완료': 'bg-[#F0FDF4] text-[#10B981] border-[#F0FDF4]',
+    '결재 대기': 'bg-[#FFF9F0] text-[#FF9800] border-[#FFF9F0]',
+    '결재 완료': 'bg-[#F0FDF4] text-[#10B981] border-[#F0FDF4]',
     '반려': 'bg-[#FFF0F0] text-[#FF4D4F] border-[#FFF0F0]',
-    '진행중': 'bg-amber-50 text-amber-600 border-amber-200',
+    '진행 중': 'bg-blue-50 text-blue-600 border-blue-50',
   };
 
   return (
@@ -271,14 +271,14 @@ const ApprovalInbox = () => {
   };
 
   return (
-    <div className="flex-1 bg-slate-100 overflow-y-auto p-5 lg:p-6">
+    <div className="flex-1 bg-white overflow-y-auto p-5 lg:p-6">
       <div className="max-w-[1440px] mx-auto space-y-10">
         
         {/* Title & Description */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">결재할 문서함</h1>
-            <p className="text-xs text-slate-500 font-medium">나의 승인을 기다리는 문서와 이미 처리된 문서 목록입니다.</p>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">결재할 문서함</h1>
+            <p className="text-xs text-slate-500 font-medium">나의 승인을 기다리는 문서와 이미 처리된 문서를 확인하세요.</p>
           </div>
           
           {/* Search Bar */}

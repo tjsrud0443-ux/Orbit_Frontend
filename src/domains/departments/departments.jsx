@@ -16,13 +16,13 @@ import { getGroup } from './departmentsApi';
 import useAuthStore from '../../store/authStore';
 
 
-// Position Rank for Sorting (Lower number = Higher rank)
-const POSITION_RANK = {
-  '대표이사': 1, '사장': 2, '부사장': 3, '전무': 4, '상무': 5, '이사': 6,
-  '부장': 7, '차장': 8, '과장': 9, '대리': 10, '주임': 11, '사원': 12,
-};
+// // Position Rank for Sorting (Lower number = Higher rank)
+// const POSITION_RANK = {
+//   '대표이사': 1, '사장': 2, '부사장': 3, '전무': 4, '상무': 5, '이사': 6,
+//   '부장': 7, '차장': 8, '과장': 9, '대리': 10, '주임': 11, '사원': 12,
+// };
 
-const getRank = (pos) => POSITION_RANK[pos] || 99;
+// const getRank = (pos) => POSITION_RANK[pos] || 99;
 
 // 2. Visual Org Chart Node Component
 const OrgNode = ({ node, isChild = false }) => {
@@ -34,7 +34,6 @@ const OrgNode = ({ node, isChild = false }) => {
 
   // 2. Promotion Logic & Sorting
   let displayNode = node;
-  let subMembers = [...(node.members || [])].sort((a, b) => getRank(a.position) - getRank(b.position));
   let subDepts = [...(node.children || [])].sort((a, b) => (a.deptSeq - b.deptSeq));
 
   if (!isMember && subMembers.length > 0) {
@@ -209,12 +208,7 @@ const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptNa
 
     // 1. Filter by Dept if specified
     if (deptCode !== 'ROOT' && deptSeqs.length > 0) {
-      if (deptCode === "CEO") {
-        list = list.filter(emp => emp.deptSeq === deptSeqs[0]
-        );
-      } else {
         list = list.filter(emp => deptSeqs.includes(emp.deptSeq));
-      }
     }
 
     // 2. Filter by Search Term (Name, Position, or Department)
