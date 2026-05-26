@@ -14,8 +14,8 @@ const ApprovalDocumentContainer = ({
   children 
 }) => {
   return (
-    <div className="flex justify-center py-14 bg-gray-50 min-h-screen font-sans">
-      <div className="w-[70%] min-w-[800px] bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 flex flex-col h-fit max-h-[95vh] mb-4">
+    <div className="flex justify-center py-10 font-sans">
+      <div className="w-[85%] min-w-[800px] bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 flex flex-col h-fit mb-10">
         
         {/* Header Section */}
         <div className="bg-[#3530B8] px-8 py-4 text-white flex justify-between items-center flex-shrink-0">
@@ -34,7 +34,7 @@ const ApprovalDocumentContainer = ({
         </div>
 
         {/* Content Section */}
-        <div className="px-10 py-5 space-y-5 overflow-y-auto custom-scrollbar">
+        <div className="px-10 py-8 space-y-8">
           {children}
           
           {/* Action Buttons */}

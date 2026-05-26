@@ -3,9 +3,62 @@ import { useParams, useLocation } from 'react-router-dom';
 import useUserStore from '../../store/userStore';
 import ApprovalDocumentContainer from './components/ApprovalDocumentContainer';
 import VacationForm from './forms/VacationForm';
-// import PurchaseForm from './forms/PurchaseForm'; // 추후 추가
-// import PaymentForm from './forms/PaymentForm'; // 추후 추가
-// import GeneralForm from './forms/GeneralForm'; // 추후 추가
+
+// 결재자 선택 모달 컴포넌트
+const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
+  if (!isOpen) return null;
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const mockEmployees = [
+    { id: 1, name: '김철수', dept_name: '개발본부', rank_name: '팀장' },
+    { id: 2, name: '이영희', dept_name: '인사팀', rank_name: '과장' },
+    { id: 3, name: '박지민', dept_name: '경영지원팀', rank_name: '대리' },
+    { id: 4, name: '최유진', dept_name: '마케팅팀', rank_name: '본부장' },
+    { id: 5, name: '한소희', dept_name: '디자인팀', rank_name: '사원' },
+  ];
+
+  const filtered = searchQuery 
+    ? mockEmployees.filter(emp => 
+        emp.name.includes(searchQuery) || emp.dept_name.includes(searchQuery)
+      ) 
+    : mockEmployees;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl w-[400px] shadow-2xl overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-200">
+        <div className="bg-[#3530B8] px-6 py-4 flex justify-between items-center">
+          <h2 className="text-sm font-bold text-white">결재자 추가</h2>
+          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">✕</button>
+        </div>
+        <div className="p-4">
+          <input 
+            type="text" 
+            placeholder="이름/부서로 검색하세요." 
+            className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:border-[#3530B8] transition-all"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            autoFocus
+          />
+          <div className="h-64 overflow-y-auto mt-3 custom-scrollbar">
+            {filtered.map((emp) => (
+              <div 
+                key={emp.id} 
+                className="p-3 border-b border-gray-50 hover:bg-[#F0F4FF] cursor-pointer flex justify-between text-xs group transition-colors"
+                onClick={() => onSelect(emp)}
+              >
+                <div className="flex flex-col">
+                    <span className="font-bold text-gray-700 group-hover:text-[#3530B8]">{emp.name}</span>
+                    <span className="text-[10px] text-gray-400">{emp.dept_name}</span>
+                </div>
+                <span className="text-[#3530B8] font-bold bg-[#F0F4FF] px-2 py-1 rounded-md h-fit">{emp.rank_name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const ApprovalDetail = () => {
   const { docId } = useParams();
@@ -18,6 +71,7 @@ const ApprovalDetail = () => {
   const [docType, setDocType] = useState('VACATION'); // VACATION, PURCHASE, etc.
   const [approvers, setApprovers] = useState([]);
   const [formData, setFormData] = useState({});
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // 2. 권한 및 데이터 초기화 (사용자 요구사항 반영)
   useEffect(() => {
@@ -25,57 +79,42 @@ const ApprovalDetail = () => {
       // [신규 작성 모드]
       setUserRole('DRAFTER');
       setMode('EDIT');
-      setApprovers([]); // 초기 결재라인은 비어있거나 기본값 설정
+      setApprovers([]);
       setFormData({
         vacationType: '연차',
         startDate: '',
         endDate: '',
         totalDays: 0,
-        reason: ''
+        reason: '',
+        referrers: []
       });
       
-      // URL 경로 등으로 docType 판별 (예: /approval/write/vacation)
       if (location.pathname.includes('vacation')) setDocType('VACATION');
-      // else if ... 
     } else {
-      // [기존 문서 조회 모드] - API 호출 필요
       fetchDocumentData(docId);
     }
   }, [docId, location.pathname]);
 
   const fetchDocumentData = async (id) => {
-    // API 호출 시뮬레이션
-    // const res = await approvalApi.getDetail(id);
-    // setFormData(res.data);
-    // setApprovers(res.approvers);
-    // setUserRole(res.userRole); // 서버에서 판별해준 권한 설정
     setMode('VIEW');
   };
 
   // 3. 비즈니스 로직 핸들러
   const handleAction = (actionType) => {
     console.log(`Action: ${actionType}`, formData, approvers);
-    switch (actionType) {
-      case 'SUBMIT':
-        // 결재 상신 로직
-        break;
-      case 'APPROVE':
-        // 승인 로직
-        break;
-      case 'REJECT':
-        // 반려 로직
-        break;
-      case 'TEMP_SAVE':
-        // 임시저장 로직
-        break;
-      default:
-        break;
-    }
   };
 
   const handleAddApprover = () => {
-    // 결재자 선택 모달 오픈 로직 등
-    console.log("Open Approver Selection Modal");
+    setIsModalOpen(true);
+  };
+
+  const handleSelectApprover = (selectedUser) => {
+    if (approvers.some(a => a.id === selectedUser.id)) {
+      alert('이미 추가된 결재자입니다.');
+      return;
+    }
+    setApprovers(prev => [...prev, { ...selectedUser, status: '대기' }]);
+    setIsModalOpen(false);
   };
 
   const handleRemoveApprover = (idx) => {
@@ -94,7 +133,6 @@ const ApprovalDetail = () => {
     switch (docType) {
       case 'VACATION':
         return <VacationForm {...props} />;
-      // case 'PURCHASE': return <PurchaseForm {...props} />;
       default:
         return <div>알 수 없는 문서 형식입니다.</div>;
     }
@@ -103,24 +141,30 @@ const ApprovalDetail = () => {
   const getTitle = () => {
     switch (docType) {
       case 'VACATION': return '휴가 신청서';
-      case 'PURCHASE': return '구매 신청서';
       default: return '전자결재';
     }
   };
 
   return (
-    <ApprovalDocumentContainer
-      title={getTitle()}
-      user={user}
-      userRole={userRole}
-      mode={mode}
-      approvers={approvers}
-      onAddApprover={handleAddApprover}
-      onRemoveApprover={handleRemoveApprover}
-      onAction={handleAction}
-    >
-      {renderForm()}
-    </ApprovalDocumentContainer>
+    <>
+      <EmployeeSelectionModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSelect={handleSelectApprover} 
+      />
+      <ApprovalDocumentContainer
+        title={getTitle()}
+        user={user}
+        userRole={userRole}
+        mode={mode}
+        approvers={approvers}
+        onAddApprover={handleAddApprover}
+        onRemoveApprover={handleRemoveApprover}
+        onAction={handleAction}
+      >
+        {renderForm()}
+      </ApprovalDocumentContainer>
+    </>
   );
 };
 
