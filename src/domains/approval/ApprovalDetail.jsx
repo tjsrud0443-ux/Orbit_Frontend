@@ -3,6 +3,7 @@ import { useParams, useLocation } from 'react-router-dom';
 import useUserStore from '../../store/userStore';
 import ApprovalDocumentContainer from './components/ApprovalDocumentContainer';
 import VacationForm from './forms/VacationForm';
+import PaymentForm from './forms/PaymentForm';
 
 // 결재자 선택 모달 컴포넌트
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
@@ -75,22 +76,40 @@ const ApprovalDetail = () => {
 
   // 2. 권한 및 데이터 초기화 (사용자 요구사항 반영)
   useEffect(() => {
+    const isPaymentPath = location.pathname.includes('payment');
+    const isVacationPath = location.pathname.includes('vacation');
+
     if (!docId) {
       // [신규 작성 모드]
       setUserRole('DRAFTER');
       setMode('EDIT');
       setApprovers([]);
-      setFormData({
-        vacationType: '연차',
-        startDate: '',
-        endDate: '',
-        totalDays: 0,
-        reason: '',
-        referrers: []
-      });
-      
-      if (location.pathname.includes('vacation')) setDocType('VACATION');
+
+      if (isVacationPath) {
+        setDocType('VACATION');
+        setFormData({
+          vacationType: '연차',
+          startDate: '',
+          endDate: '',
+          totalDays: 0,
+          reason: '',
+          referrers: []
+        });
+      } else if (isPaymentPath) {
+        setDocType('PAYMENT');
+        setFormData({
+          expenditureDate: '',
+          requestDate: new Date().toISOString().split('T')[0],
+          purpose: '',
+          accountInfo: '',
+          items: [{ id: 1, itemName: '', amount: 0, receipt: null, note: '' }]
+        });
+      }
     } else {
+      // [조회 모드]
+      if (isVacationPath) setDocType('VACATION');
+      else if (isPaymentPath) setDocType('PAYMENT');
+      
       fetchDocumentData(docId);
     }
   }, [docId, location.pathname]);
@@ -133,6 +152,8 @@ const ApprovalDetail = () => {
     switch (docType) {
       case 'VACATION':
         return <VacationForm {...props} />;
+      case 'PAYMENT':
+        return <PaymentForm {...props} />;
       default:
         return <div>알 수 없는 문서 형식입니다.</div>;
     }
@@ -141,6 +162,7 @@ const ApprovalDetail = () => {
   const getTitle = () => {
     switch (docType) {
       case 'VACATION': return '휴가 신청서';
+      case 'PAYMENT': return '지출 결의서';
       default: return '전자결재';
     }
   };
