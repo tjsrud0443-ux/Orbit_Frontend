@@ -86,8 +86,8 @@ const AdminUsers = () => {
           <input 
             type="text" 
             placeholder="사번, 이름, 부서로 검색" 
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-sm text-gray-700 shadow-sm"
-          />
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl 
+            focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-sm text-gray-700 shadow-sm"/>
           <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3530B8] transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -100,7 +100,8 @@ const AdminUsers = () => {
       <div className="flex-1 flex gap-6 min-h-0 overflow-hidden">
         
         {/* 좌측 테이블 카드 */}
-        <div className={`flex flex-col bg-white border border-slate-100 rounded-[32px] shadow-sm overflow-hidden transition-all duration-500 min-h-0 ${selectedUser ? 'hidden md:flex md:flex-[0.6]' : 'flex-1'}`}>
+        <div className={`flex flex-col bg-white border border-slate-100 rounded-[32px] 
+          shadow-sm overflow-hidden transition-all duration-500 min-h-0 ${selectedUser ? 'hidden md:flex md:flex-[0.6]' : 'flex-1'}`}>
           <div className="flex-1 overflow-y-auto custom-scrollbar p-6 pt-0">
             <table className="w-full text-left border-collapse block sm:table mt-6">
               <thead className="sticky top-0 bg-white z-10">
@@ -122,8 +123,8 @@ const AdminUsers = () => {
                   <tr 
                     key={emp.id} 
                     onClick={() => { setSelectedUser(emp); setIsDetailEditing(false); }}
-                    className={`hover:bg-slate-50/40 transition-colors block sm:table-row py-4 sm:py-0 border-b border-slate-50 sm:border-none relative cursor-pointer ${selectedUser?.id === emp.id ? 'bg-[#F0F4FF] hover:bg-[#F0F4FF]' : ''}`}
-                  >
+                    className={`hover:bg-slate-50/40 transition-colors block sm:table-row py-4 sm:py-0 border-b border-slate-50 sm:border-none
+                       relative cursor-pointer ${selectedUser?.id === emp.id ? 'bg-[#F0F4FF] hover:bg-[#F0F4FF]' : ''}`}>
                     <td className="py-1 sm:py-4 pl-4 text-xs font-bold text-slate-400 font-mono block sm:table-cell sm:text-slate-700">
                       <span className="inline sm:hidden text-[0.625rem] font-medium text-slate-300 mr-1">사번</span>
                       {emp.id}
@@ -167,20 +168,20 @@ const AdminUsers = () => {
                         <div className="flex gap-1 justify-center">
                           <button 
                             onClick={(e) => handleStatusChange(e, emp.id, '재직')}
-                            className="px-2.5 py-0.5 text-[10px] font-semibold text-[#10B981] bg-white border border-[#10B981]/30 hover:bg-[#10B981] hover:text-white rounded-full transition-all text-center whitespace-nowrap"
-                          >
+                            className="px-2.5 py-0.5 text-[10px] font-semibold text-[#10B981] bg-white 
+                            border border-[#10B981]/30 hover:bg-[#10B981] hover:text-white rounded-full transition-all text-center whitespace-nowrap">
                             재직
                           </button>
                           <button 
                             onClick={(e) => handleStatusChange(e, emp.id, '휴직')}
-                            className="px-2.5 py-0.5 text-[10px] font-semibold text-[#FF9800] bg-white border border-[#FF9800]/30 hover:bg-[#FF9800] hover:text-white rounded-full transition-all text-center whitespace-nowrap"
-                          >
+                            className="px-2.5 py-0.5 text-[10px] font-semibold text-[#FF9800] bg-white 
+                            border border-[#FF9800]/30 hover:bg-[#FF9800] hover:text-white rounded-full transition-all text-center whitespace-nowrap">
                             휴직
                           </button>
                           <button 
                             onClick={(e) => handleStatusChange(e, emp.id, '퇴사')}
-                            className="px-2.5 py-0.5 text-[10px] font-semibold text-[#FF4D4F] bg-white border border-[#FF4D4F]/30 hover:bg-[#FF4D4F] hover:text-white rounded-full transition-all text-center whitespace-nowrap"
-                          >
+                            className="px-2.5 py-0.5 text-[10px] font-semibold text-[#FF4D4F] bg-white 
+                            border border-[#FF4D4F]/30 hover:bg-[#FF4D4F] hover:text-white rounded-full transition-all text-center whitespace-nowrap">
                             퇴사
                           </button>
                         </div>
@@ -190,8 +191,8 @@ const AdminUsers = () => {
                             e.stopPropagation();
                             setEditingId(emp.id);
                           }}
-                          className="px-3 py-1 text-[0.6875rem] font-bold text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 hover:text-[#3530B8] hover:border-[#3530B8]/30 rounded-full transition-all w-auto sm:w-full max-w-[4.5rem]"
-                        >
+                          className="px-3 py-1 text-[0.6875rem] font-bold text-slate-500 bg-white 
+                          border border-slate-200 hover:bg-slate-50 hover:text-[#3530B8] hover:border-[#3530B8]/30 rounded-full transition-all w-auto sm:w-full max-w-[4.5rem]">
                           수정
                         </button>
                       )}
@@ -209,7 +210,8 @@ const AdminUsers = () => {
 
         {/* 우측 상세정보 카드 */}
         {selectedUser && (
-          <div className={`flex flex-col bg-white rounded-none md:rounded-[32px] border-0 md:border border-slate-100 shadow-sm overflow-hidden min-h-0 animate-in slide-in-from-right duration-500 ${selectedUser ? 'flex-1 md:flex-[0.4]' : 'hidden'}`}>
+          <div className={`flex flex-col bg-white rounded-none md:rounded-[32px] 
+          border-0 md:border border-slate-100 shadow-sm overflow-hidden min-h-0 animate-in slide-in-from-right duration-500 ${selectedUser ? 'flex-1 md:flex-[0.4]' : 'hidden'}`}>
             <div className="p-6 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
               <h2 className="text-lg font-bold text-slate-900">직원 상세 정보</h2>
               <button onClick={() => { setSelectedUser(null); setIsDetailEditing(false); }} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400">
@@ -288,8 +290,7 @@ const AdminUsers = () => {
                         <select 
                           value={editForm.rank} 
                           onChange={(e) => setEditForm({...editForm, rank: e.target.value})}
-                          className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded px-2 py-1 outline-none focus:border-[#3530B8]"
-                        >
+                          className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded px-2 py-1 outline-none focus:border-[#3530B8]">
                           <option value="팀원">팀원</option>
                           <option value="팀장">팀장</option>
                           <option value="본부장">본부장</option>
