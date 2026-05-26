@@ -3,13 +3,44 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import useUserStore from '../../../store/userStore';
 import Calendar from '../../../components/common/Calendar';
 
+const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
+  if (!isOpen) return null;
+  const employees = [
+    { name: '김철수', rank: '팀장' },
+    { name: '이영희', rank: '본부장' },
+    { name: '박지민', rank: '대표이사' },
+    { name: '최고수', rank: '대리' }
+  ];
+  
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl w-[400px] shadow-2xl overflow-hidden border border-gray-100">
+        <div className="bg-[#3530B8] px-6 py-4 flex justify-between items-center">
+          <h2 className="text-sm font-bold text-white">결재자 선택</h2>
+          <button onClick={onClose} className="text-white/70 hover:text-white">✕</button>
+        </div>
+        <div className="p-4">
+          <input type="text" placeholder="이름으로 검색..." className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:border-[#3530B8]" />
+          <div className="h-64 overflow-y-auto mt-3 custom-scrollbar">
+            {employees.map((emp, idx) => (
+              <div key={idx} className="p-3 border-b border-gray-50 hover:bg-[#F0F4FF] cursor-pointer flex justify-between items-center text-xs" onClick={() => onSelect(emp)}>
+                <span className="font-bold text-gray-700">{emp.name}</span>
+                <span className="text-[#3530B8] font-medium">{emp.rank}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const VacationForm = () => {
   const navi = useNavigate();
   const location = useLocation();
   const isWriteMode = location.pathname.includes('/write/');
   const { user } = useUserStore();
 
-  // Form states
   const [vacationType, setVacationType] = useState('연차');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -17,11 +48,32 @@ const VacationForm = () => {
   const [reason, setReason] = useState('');
   const [today] = useState(new Date().toISOString().split('T')[0]);
 
-  // Calendar states
   const [isStartCalendarOpen, setIsStartCalendarOpen] = useState(false);
   const [isEndCalendarOpen, setIsEndCalendarOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Calculate total days
+  const [approvers, setApprovers] = useState(isWriteMode ? [
+    { rank: '부서장', name: '김철수', status: '결재 대기' }
+  ] : [
+    { rank: '팀장', name: '김철수', status: '결재 완료' },
+    { rank: '본부장', name: '이영희', status: '결재 진행중' },
+    { rank: '대표이사', name: '박지민', status: '결재 대기' }
+  ]);
+
+  const removeApprover = (idx) => {
+    setApprovers(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleSelectApprover = (selectedUser) => {
+    setApprovers(prev => [...prev, { ...selectedUser, status: '결재 대기' }]);
+    setIsModalOpen(false);
+  };
+
+  const openApprovalModal = () => {
+    setApprovers([]);
+    setIsModalOpen(true);
+  };
+
   useEffect(() => {
     if (vacationType === '연차') {
       if (startDate && endDate) {
@@ -34,32 +86,9 @@ const VacationForm = () => {
         setTotalDays(0);
       }
     } else {
-      // 반차 (오전/오후)
       setTotalDays(0.5);
     }
   }, [startDate, endDate, vacationType]);
-
-  // Mock data for approval line
-  const [approvers, setApprovers] = useState([
-    { rank: '팀장', name: '김철수', status: '결재 완료' },
-    { rank: '본부장', name: '이영희', status: '결재 진행중' },
-    { rank: '대표이사', name: '박지민', status: '결재 대기' }
-  ]);
-
-  const handleApprovalLineChange = () => {
-    if (approvers.length === 3) {
-      setApprovers([
-        { rank: '팀장', name: '김철수', status: '결재 완료' }, 
-        { rank: '대표이사', name: '박지민', status: '결재 대기' }
-      ]);
-    } else {
-      setApprovers([
-        { rank: '팀장', name: '김철수', status: '결재 완료' }, 
-        { rank: '본부장', name: '이영희', status: '결재 진행중' }, 
-        { rank: '대표이사', name: '박지민', status: '결재 대기' }
-      ]);
-    }
-  };
 
   const handleTemp = () => {
     navi("/approvalTemp");
@@ -67,6 +96,7 @@ const VacationForm = () => {
 
   return (
     <div className="flex justify-center py-14 bg-gray-50 min-h-screen font-sans">
+      <EmployeeSelectionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSelect={handleSelectApprover} />
       <div className="w-[70%] min-w-[800px] bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 flex flex-col h-fit max-h-[95vh] mb-4">
         
         {/* Header Section */}
@@ -77,40 +107,45 @@ const VacationForm = () => {
           </div>
 
           <div className="flex flex-col items-end gap-1.5">
-            <button 
-              onClick={handleApprovalLineChange}
-              className="text-[0.625rem] font-bold bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-0.5 rounded-full transition-all"
-            >
-              결재선 변경
-            </button>
+            {isWriteMode && (
+              <button 
+                onClick={() => setIsModalOpen(true)}
+                className="text-[0.625rem] font-bold bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-0.5 rounded-full transition-all"
+              >
+                결재선 변경
+              </button>
+            )}
             
             <div className="flex">
               <div className="w-16 border border-white/30 flex flex-col">
                 <div className="bg-white/10 text-[0.625rem] py-0.5 text-center font-bold border-b border-white/30">기안</div>
                 <div className="h-11 flex items-center justify-center text-[0.625rem] font-medium text-white/90">
-                  기안
+                  {user?.name || '본인'}
                 </div>
               </div>
 
               {approvers.map((approver, idx) => (
-                <div key={idx} className="w-16 border-y border-r border-white/30 flex flex-col border-l-0">
+                <div key={idx} className="w-16 border-y border-r border-white/30 flex flex-col border-l-0 relative">
                   <div className="bg-white/10 text-[0.625rem] py-0.5 text-center font-bold border-b border-white/30 text-white/90">
                     {approver.rank}
+                    {isWriteMode && (
+                      <button 
+                        onClick={() => removeApprover(idx)}
+                        className="absolute top-0.5 right-0 text-white rounded-full w-3 h-3 text-[8px] flex items-center justify-center leading-none"
+                      >
+                        ✕
+                      </button>
+                    )}
                   </div>
-                  <div className={`h-11 flex items-center justify-center text-[0.625rem] font-bold ${
-                    !isWriteMode ? (
-                      approver.status === '결재 완료' ? 'text-white/90' :
-                      approver.status === '결재 진행중' ? 'text-white/90' :
-                      approver.status === '반려' ? 'text-red-300' : 'text-white/90'
-                    ) : 'text-transparent'
-                  }`}>
-                    {!isWriteMode ? approver.status : ''}
+                  <div className="h-11 flex items-center justify-center text-[0.625rem] font-bold text-white/90">
+                    {isWriteMode ? approver.name : approver.status}
                   </div>
                 </div>
               ))}
             </div>
           </div>
         </div>
+
 
         {/* Content Section */}
         <div className="px-10 py-5 space-y-5 overflow-y-auto custom-scrollbar">
@@ -248,9 +283,9 @@ const VacationForm = () => {
           <div className="flex justify-center gap-3 pt-5 pb-2 border-t border-gray-50 flex-shrink-0">
             <button 
               className="px-5 py-1.5 border border-gray-200 text-gray-500 font-bold text-xs rounded-lg hover:bg-gray-50 transition-all"
-              onClick={() => navi("/approval")}
+              onClick={() => navi(-1)}
             >
-              취소
+              닫기
             </button>
             {isWriteMode && (
               <>
