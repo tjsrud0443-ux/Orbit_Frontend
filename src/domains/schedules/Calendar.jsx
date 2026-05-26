@@ -53,10 +53,10 @@ const MiniCalendar = () => {
         <span className="font-bold text-slate-800">{year}년 {month + 1}월</span>
         <button onClick={() => setDate(new Date(year, month + 1, 1))} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">&gt;</button>
       </div>
-      <div className="grid grid-cols-7 text-center text-[10px] text-slate-400 mb-2 font-medium">
+      <div className="grid grid-cols-7 text-center text-[0.625rem] text-slate-400 mb-2 font-medium">
         {['일','월','화','수','목','금','토'].map(d => <span key={d}>{d}</span>)}
       </div>
-      <div className="grid grid-cols-7 text-center text-[11px] flex-1 content-between">
+      <div className="grid grid-cols-7 text-center text-[0.6875rem] flex-1 content-between">
         {days.map((day, i) => (
           <div key={i} className="flex items-center justify-center py-1">
             <span className={`w-7 h-7 flex items-center justify-center rounded-full transition-all
@@ -90,21 +90,21 @@ const MonthlyEvents = ({ events, currentTitle, title = "이달의 주요 일정"
         {monthlyEvents.length > 0 ? (
           monthlyEvents.map(e => (
             <div key={e.id} className="flex gap-3 items-start p-1.5 rounded-lg hover:bg-slate-50 transition-colors group">
-              <div className="text-[10px] font-bold text-[#3530B8] bg-[#F0F4FF] px-1.5 py-1 rounded shrink-0 min-w-[34px] text-center group-hover:bg-[#3530B8] group-hover:text-white transition-colors">
+              <div className="text-[0.625rem] font-bold text-[#3530B8] bg-[#F0F4FF] px-1.5 py-1 rounded shrink-0 min-w-[2.125rem] text-center group-hover:bg-[#3530B8] group-hover:text-white transition-colors">
                 {new Date(e.start).getDate()}일
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-semibold text-slate-800 truncate">{e.title}</p>
+                <p className="text-[0.6875rem] font-semibold text-slate-800 truncate">{e.title}</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: e.color || '#3530B8' }} />
-                  <p className="text-[10px] text-slate-400 capitalize">{e.category}</p>
+                  <p className="text-[0.625rem] text-slate-400 capitalize">{e.category}</p>
                 </div>
               </div>
             </div>
           ))
         ) : (
           <div className="h-full flex flex-col items-center justify-center py-8 text-center">
-            <p className="text-[11px] text-slate-400">등록된 일정이 없습니다.</p>
+            <p className="text-[0.6875rem] text-slate-400">등록된 일정이 없습니다.</p>
           </div>
         )}
       </div>
@@ -176,6 +176,22 @@ const Calendar = () => {
   const [isEditing, setIsEditing] = useState(false);
   // 일정 클릭 시 상세 보기 모달
   const [detailModal, setDetailModal] = useState({ open: false, event: null });
+
+  // 하루 일정 보기 패널 상태
+  const [showDaily, setShowDaily] = useState(false);
+  const [selectedDayEvents, setSelectedDayEvents] = useState([]);
+  const [selectedDayLabel, setSelectedDayLabel] = useState('');
+
+  // showDaily 상태 변경 시 캘린더 크기 재계산
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const api = getApi();
+      if (api) {
+        api.updateSize();
+      }
+    }, 300); // transition duration과 일치
+    return () => clearTimeout(timer);
+  }, [showDaily]);
 
   
   useEffect(() => {
@@ -405,7 +421,7 @@ const Calendar = () => {
     return (
       <div 
         onClick={(e) => e.stopPropagation()} 
-        className={`absolute z-30 w-[240px] bottom-full mb-1 ${positionClass} bg-white border border-gray-100 rounded-2xl shadow-2xl p-4 animate-in fade-in slide-in-from-bottom-2 duration-200`}
+        className={`absolute z-30 w-[15rem] bottom-full mb-1 ${positionClass} bg-white border border-gray-100 rounded-2xl shadow-2xl p-4 animate-in fade-in slide-in-from-bottom-2 duration-200`}
       >
         {/* 달력 헤더 */}
         <div className="flex items-center justify-between mb-3 px-1">
@@ -427,7 +443,7 @@ const Calendar = () => {
         {/* 요일 표시 */}
         <div className="grid grid-cols-7 gap-1 mb-1.5">
           {['일', '월', '화', '수', '목', '금', '토'].map(d => (
-            <div key={d} className="text-[10px] font-bold text-gray-400 text-center py-0.5">{d}</div>
+            <div key={d} className="text-[0.625rem] font-bold text-gray-400 text-center py-0.5">{d}</div>
           ))}
         </div>
 
@@ -445,7 +461,7 @@ const Calendar = () => {
                   setForm(prev => ({ ...prev, [type === 'start' ? 'start_dt' : 'end_dt']: formattedDate }));
                   setOpenCalendar(null);
                 }}
-                className={`text-[10px] font-medium text-center py-1.5 rounded-lg transition-all
+                className={`text-[0.625rem] font-medium text-center py-1.5 rounded-lg transition-all
                   ${!d ? 'invisible' : 'cursor-pointer'}
                   ${d && !isSelected ? 'hover:bg-[#F0F4FF] hover:text-[#3530B8] text-slate-600' : ''}
                   ${isSelected ? 'bg-[#3530B8] text-white font-bold' : ''}
@@ -466,23 +482,23 @@ const Calendar = () => {
         <style>
           {`
             .custom-scrollbar::-webkit-scrollbar {
-              width: 4px;
+              width: 0.25rem;
             }
             .custom-scrollbar::-webkit-scrollbar-track {
               background: transparent;
             }
             .custom-scrollbar::-webkit-scrollbar-thumb {
               background: #E5E7EB;
-              border-radius: 10px;
+              border-radius: 0.625rem;
             }
             .custom-scrollbar::-webkit-scrollbar-thumb:hover {
               background: #D1D5DB;
             }
               /* 1. 팝업창 전체 테두리 및 그림자 (모달 느낌으로 변경) */
             .fc-popover {
-              border: 1px solid #E2E8F0 !important; /* slate-200 */
-              border-radius: 16px !important;       /* 부드러운 라운딩 */
-              box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important; /* 서브 모달급 입체감 */
+              border: 0.0625rem solid #E2E8F0 !important; /* slate-200 */
+              border-radius: 1rem !important;       /* 부드러운 라운딩 */
+              box-shadow: 0 1.25rem 1.5625rem -0.3125rem rgb(0 0 0 / 0.1), 0 0.5rem 0.625rem -0.375rem rgb(0 0 0 / 0.1) !important; /* 서브 모달급 입체감 */
               background: #ffffff !important;
               overflow: hidden;
               animation: popoverFade 0.2s ease-out; /* 부드러운 등장 애니메이션 */
@@ -491,8 +507,8 @@ const Calendar = () => {
             /* 2. 팝업창 헤더 (날짜 표시 구역) */
             .fc-popover-header {
               background: #F8FAFC !important;       /* slate-50 */
-              padding: 12px 16px !important;
-              border-b: 1px solid #F1F5F9 !important;
+              padding: 0.75rem 1rem !important;
+              border-b: 0.0625rem solid #F1F5F9 !important;
               display: flex;
               flex-direction: row-reverse;          /* 제목과 닫기 버튼 위치 밸런스 */
               justify-content: space-between;
@@ -501,20 +517,20 @@ const Calendar = () => {
 
             /* 헤더 날짜 텍스트 */
             .fc-popover-title {
-              font-size: 13px !important;
+              font-size: 0.8125rem !important;
               font-weight: 700 !important;
               color: #1E293B !important;            /* slate-800 */
             }
               /* "+1 more" 텍스트 링크 버튼 자체 디자인 */
             .fc-daygrid-more-link {
-              font-size: 10px !important;
+              font-size: 0.625rem !important;
               font-weight: 700 !important;
               color: #3530B8 !important;            /* 우리 시그니처 블루 색상 */
               background-color: #F0F4FF !important; /* 연한 블루 배경 */
-              padding: 2px 6px !important;
-              border-radius: 6px !important;
+              padding: 0.125rem 0.375rem !important;
+              border-radius: 0.375rem !important;
               transition: all 0.2s;
-              margin-top: 2px;
+              margin-top: 0.125rem;
               display: inline-block;
             }
           `}
@@ -536,17 +552,17 @@ const Calendar = () => {
             ))}
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-4 flex-1 lg:items-stretch min-h-0">
-            <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm p-4 flex flex-col min-w-0">
+          <div className="flex flex-col lg:flex-row gap-2 flex-1 lg:items-stretch min-h-0 lg:overflow-hidden">
+            <div className={`bg-white border border-slate-200 rounded-xl shadow-sm p-4 flex flex-col min-w-0 transition-all duration-300 flex-1 shrink-0 lg:shrink`}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                 <div className="flex items-center gap-2">
                   <button onClick={() => { getApi()?.today(); updateTitle(); }}
-                    className="px-2.5 py-1 border border-slate-200 rounded-lg text-[11px] font-medium bg-white hover:bg-[#DDE8FF] transition-colors">오늘</button>
+                    className="px-2.5 py-1 border border-slate-200 rounded-lg text-[0.6875rem] font-medium bg-white hover:bg-[#DDE8FF] transition-colors">오늘</button>
                   <div className="flex border border-slate-200 rounded-lg overflow-hidden bg-white">
                     <button onClick={() => { getApi()?.prev(); updateTitle(); }}
-                      className="px-1.5 py-1 border-r border-slate-200 hover:bg-[#DDE8FF] text-[11px]">&lt;</button>
+                      className="px-1.5 py-1 border-r border-slate-200 hover:bg-[#DDE8FF] text-[0.6875rem]">&lt;</button>
                     <button onClick={() => { getApi()?.next(); updateTitle(); }}
-                      className="px-1.5 py-1 hover:bg-[#DDE8FF] text-[11px]">&gt;</button>
+                      className="px-1.5 py-1 hover:bg-[#DDE8FF] text-[0.6875rem]">&gt;</button>
                   </div>
                   <h2 className="text-sm font-bold text-slate-800 ml-1">{currentTitle}</h2>
                 </div>
@@ -564,7 +580,7 @@ const Calendar = () => {
                     });
                     setIsEditing(false);
                     setModal({ open: true, date: t });
-                  }} className="px-3 py-1.5 bg-[#3530B8] text-white rounded-lg text-[11px] font-semibold">+ 일정 추가</button>
+                  }} className="px-3 py-1.5 bg-[#3530B8] text-white rounded-lg text-[0.6875rem] font-semibold">+ 일정 추가</button>
                 )}
               </div>
 
@@ -586,39 +602,67 @@ const Calendar = () => {
                   eventClick={handleEventClick}
                   datesSet={updateTitle}
                   displayEventTime={false} // 이벤트 시간 표시 숨기기
+                  moreLinkClick={(arg) => {
+                    setSelectedDayEvents(arg.allSegs.map(seg => seg.event));
+                    setSelectedDayLabel(`${arg.date.getMonth() + 1}월 ${arg.date.getDate()}일`);
+                    setShowDaily(true);
+                    return 'none'; // 기본 팝업 방지
+                  }}
                 />
               </div>
             </div>
 
-            <aside className="w-full lg:w-64 shrink-0 flex flex-col gap-4">
-              {activeTab === 'personal' ? (
-                <>
-                  {/* 개인 탭: 일정 목록 + 필터 (50:50 배분) */}
-                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex-1 overflow-hidden">
-                    <MonthlyEvents 
-                      events={personalEvents.filter(e => e.category !== 'holiday')} 
-                      currentTitle={currentTitle} 
-                      title="이달의 내 일정"
-                    />
-                  </div>
-                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex-1 overflow-y-auto">
-                    <FilterSection title="개인 캘린더" filters={PERSONAL_FILTERS} checked={personalChecked} onChange={(k, v) => setPersonalChecked(p => ({ ...p, [k]: v }))} />
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* 공용 탭: 일정 목록 + 필터 (50:50 배분) */}
-                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex-1 overflow-hidden">
-                    <MonthlyEvents events={companyEvents} currentTitle={currentTitle} title="이달의 전사 일정" />
-                  </div>
-                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex-1 overflow-y-auto">
-                    <FilterSection title="회사 공용 캘린더" filters={COMPANY_FILTERS} checked={companyChecked} onChange={(k, v) => setCompanyChecked(p => ({ ...p, [k]: v }))} />
-                  </div>
-                </>
-              )}
+            <aside className={`w-full shrink-0 flex flex-col lg:flex-row-reverse gap-4 lg:gap-2 transition-all duration-300 ${showDaily ? 'lg:w-[32.5rem]' : 'lg:w-64'}`}>
+              <div className="w-full lg:w-64 flex flex-col gap-4 lg:gap-2 shrink-0">
+                {activeTab === 'personal' ? (
+                  <>
+                    <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-hidden">
+                      <MonthlyEvents 
+                        events={personalEvents.filter(e => e.category !== 'holiday')} 
+                        currentTitle={currentTitle} 
+                        title="이달의 내 일정"
+                      />
+                    </div>
+                    <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-y-auto">
+                      <FilterSection title="개인 캘린더" filters={PERSONAL_FILTERS} checked={personalChecked} onChange={(k, v) => setPersonalChecked(p => ({ ...p, [k]: v }))} />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-hidden">
+                      <MonthlyEvents events={companyEvents} currentTitle={currentTitle} title="이달의 전사 일정 및 공휴일" />
+                    </div>
+                    <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-y-auto">
+                      <FilterSection title="회사 공용 캘린더" filters={COMPANY_FILTERS} checked={companyChecked} onChange={(k, v) => setCompanyChecked(p => ({ ...p, [k]: v }))} />
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className={`hidden lg:block bg-white border border-slate-200 rounded-xl p-4 shadow-sm overflow-hidden transition-all duration-300 ${showDaily ? 'w-64 opacity-100' : 'w-0 opacity-0 p-0 border-0 m-0'}`}>
+                {showDaily && (
+                  <DailyEvents 
+                    events={selectedDayEvents} 
+                    title={selectedDayLabel} 
+                    onClose={() => setShowDaily(false)} 
+                    onEventClick={handleEventClick}
+                  />
+                )}
+              </div>
             </aside>
           </div>
         </div>
+
+      {/* 모바일용 하루 일정 모달 */}
+      {isMobile && showDaily && (
+        <ModalOverlay onClose={() => setShowDaily(false)}>
+          <DailyEvents 
+            events={selectedDayEvents} 
+            title={selectedDayLabel} 
+            onClose={() => setShowDaily(false)} 
+            onEventClick={handleEventClick}
+          />
+        </ModalOverlay>
+      )}
 
       {modal.open && (
         <ModalOverlay onClose={() => setModal({ open: false, date: '' })}>
@@ -710,7 +754,7 @@ const Calendar = () => {
             )}
             {detailModal.event.extendedProps?.description && (
               <div className="pt-2 border-t border-slate-100">
-                <p className="text-[10px] text-slate-400 mb-1">설명</p>
+                <p className="text-[0.625rem] text-slate-400 mb-1">설명</p>
                 <p className="text-slate-700 whitespace-pre-wrap">{detailModal.event.extendedProps.description}</p>
               </div>
             )}
@@ -722,11 +766,50 @@ const Calendar = () => {
             )}
           </div>
           {COMPANY_CATEGORIES.includes(detailModal.event.extendedProps?.category) && (
-            <p className="mt-2 text-[10px] text-slate-400 text-right">* 공용 일정은 수정할 수 없습니다.</p>
+            <p className="mt-2 text-[0.625rem] text-slate-400 text-right">* 공용 일정은 수정할 수 없습니다.</p>
           )}
         </ModalOverlay>
       )}
        </>
+  );
+};
+
+const DailyEvents = ({ events, title, onClose, onEventClick }) => {
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-3 shrink-0">
+        <h3 className="text-sm font-bold text-slate-800">{title} 일정</h3>
+        <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-full transition-colors">
+          <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-3">
+        {events.length > 0 ? (
+          events.map(e => (
+            <div 
+              key={e.id} 
+              onClick={() => onEventClick({ event: e })}
+              className="flex gap-3 items-start p-2 rounded-lg hover:bg-slate-50 transition-colors group cursor-pointer border border-transparent hover:border-slate-100"
+            >
+              <div className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: e.backgroundColor || e.color || '#3530B8' }} />
+              <div className="flex-1 min-w-0">
+                <p className="text-[0.6875rem] font-semibold text-slate-800 truncate">{e.title}</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: e.backgroundColor || e.color || '#3530B8' }} />
+                  <p className="text-[0.625rem] text-slate-400 capitalize">{e.extendedProps?.category || '일정'}</p>
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="h-full flex flex-col items-center justify-center py-8 text-center">
+            <p className="text-[0.6875rem] text-slate-400">등록된 일정이 없습니다.</p>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
