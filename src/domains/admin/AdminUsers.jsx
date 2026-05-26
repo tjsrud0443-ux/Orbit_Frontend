@@ -23,6 +23,32 @@ const AdminUsers = () => {
   // 상세 정보 수정 모드 관리
   const [isDetailEditing, setIsDetailEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
+  // 현재 선택된 탭 관리
+  const [activeTab, setActiveTab] = useState('전체');
+
+  // 외부 클릭 시 수정 모드 해제
+  React.useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (editingId !== null && !e.target.closest('.mobile-edit-btn')) {
+        setEditingId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [editingId]);
+
+  // 상태별 인원수 계산
+  const counts = {
+    전체: employees.length,
+    재직: employees.filter(e => e.status === '재직').length,
+    휴직: employees.filter(e => e.status === '휴직').length,
+    퇴사: employees.filter(e => e.status === '퇴사').length,
+  };
+
+  // 필터링된 직원 목록
+  const filteredEmployees = activeTab === '전체' 
+    ? employees 
+    : employees.filter(emp => emp.status === activeTab);
 
   // 상세 정보 수정 시작
   const handleDetailEdit = () => {
@@ -68,18 +94,19 @@ const AdminUsers = () => {
       {/* [2] 필터 탭 & 검색창 라인 */}
       <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 flex-shrink-0 ${selectedUser ? 'hidden md:flex' : 'flex'}`}>
         <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-[#F0F4FF] flex-shrink-0 overflow-x-auto no-scrollbar">
-          <button className="px-2.5 md:px-4 py-2 bg-[#3530B8] text-white text-[0.6875rem] md:text-sm font-semibold rounded-xl shadow-md transition-all whitespace-nowrap">
-            전체 <span className="ml-1 opacity-80">(22)</span>
-          </button>
-          <button className="px-2.5 md:px-4 py-2 text-gray-500 hover:text-[#3530B8] hover:bg-[#F0F4FF] text-[0.6875rem] md:text-sm font-semibold rounded-xl transition-all whitespace-nowrap">
-            재직 <span className="ml-1 text-gray-400">(12)</span>
-          </button>
-          <button className="px-2.5 md:px-4 py-2 text-gray-500 hover:text-[#3530B8] hover:bg-[#F0F4FF] text-[0.6875rem] md:text-sm font-semibold rounded-xl transition-all whitespace-nowrap">
-            휴직 <span className="ml-1 text-gray-400">(1)</span>
-          </button>
-          <button className="px-2.5 md:px-4 py-2 text-gray-500 hover:text-[#3530B8] hover:bg-[#F0F4FF] text-[0.6875rem] md:text-sm font-semibold rounded-xl transition-all whitespace-nowrap">
-            퇴사 <span className="ml-1 text-gray-400">(9)</span>
-          </button>
+          {['전체', '재직', '휴직', '퇴사'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-2.5 md:px-4 py-2 text-[0.6875rem] md:text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${
+                activeTab === tab 
+                  ? 'bg-[#3530B8] text-white shadow-md' 
+                  : 'text-gray-500 hover:text-[#3530B8] hover:bg-[#F0F4FF]'
+              }`}
+            >
+              {tab} <span className={`ml-1 ${activeTab === tab ? 'opacity-80' : 'text-gray-400'}`}>({counts[tab]})</span>
+            </button>
+          ))}
         </div>
 
         <div className="relative group w-full md:w-72 flex-shrink-0">
@@ -119,7 +146,7 @@ const AdminUsers = () => {
               </thead>
               
               <tbody className="divide-y divide-slate-100 sm:divide-slate-50/60 block sm:table-row-group">
-                {employees.map((emp) => (
+                {filteredEmployees.map((emp) => (
                   <tr 
                     key={emp.id} 
                     onClick={() => { setSelectedUser(emp); setIsDetailEditing(false); }}
@@ -258,7 +285,6 @@ const AdminUsers = () => {
                     </div>
                   </div>
                 </div>
-
                 <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
                   <h4 className="text-[0.6875rem] font-bold text-slate-400 uppercase tracking-wider mb-4">근무 정보</h4>
                   <div className="space-y-4">
