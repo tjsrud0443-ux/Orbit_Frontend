@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import useUserStore from '../../../store/userStore';
+import Calendar from '../../../components/common/Calendar';
 
 const VacationForm = () => {
   const navi = useNavigate();
@@ -15,6 +16,10 @@ const VacationForm = () => {
   const [totalDays, setTotalDays] = useState(0);
   const [reason, setReason] = useState('');
   const [today] = useState(new Date().toISOString().split('T')[0]);
+
+  // Calendar states
+  const [isStartCalendarOpen, setIsStartCalendarOpen] = useState(false);
+  const [isEndCalendarOpen, setIsEndCalendarOpen] = useState(false);
 
   // Calculate total days
   useEffect(() => {
@@ -61,7 +66,7 @@ const VacationForm = () => {
   }
 
   return (
-    <div className="flex justify-center py-2 bg-gray-50 min-h-screen font-sans">
+    <div className="flex justify-center py-14 bg-gray-50 min-h-screen font-sans">
       <div className="w-[70%] min-w-[800px] bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 flex flex-col h-fit max-h-[95vh] mb-4">
         
         {/* Header Section */}
@@ -169,21 +174,43 @@ const VacationForm = () => {
                   <td className="p-2">
                     {isWriteMode ? (
                       <div className="flex items-center gap-2">
-                        <input 
-                          type="date" 
-                          value={startDate}
-                          onChange={(e) => setStartDate(e.target.value)}
-                          className="p-1 border border-gray-300 rounded outline-none focus:border-[#3530B8]" 
-                        />
+                        <div className="relative w-50">
+                          <input 
+                            type="text" 
+                            readOnly 
+                            value={startDate} 
+                            onClick={() => { setIsStartCalendarOpen(!isStartCalendarOpen); setIsEndCalendarOpen(false); }} 
+                            placeholder="시작일" 
+                            className={`w-full p-2 border ${isStartCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-xl outline-none cursor-pointer text-xs transition-all`}
+                          />
+                          <svg className="absolute right-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                          {isStartCalendarOpen && (
+                            <Calendar 
+                              selectedDate={startDate} 
+                              onDateSelect={(d) => { setStartDate(d); setIsStartCalendarOpen(false); }} 
+                            />
+                          )}
+                        </div>
                         {vacationType === '연차' && (
                           <>
-                            <span>~</span>
-                            <input 
-                              type="date" 
-                              value={endDate}
-                              onChange={(e) => setEndDate(e.target.value)}
-                              className="p-1 border border-gray-300 rounded outline-none focus:border-[#3530B8]" 
-                            />
+                            <span className="px-1">~</span>
+                            <div className="relative w-50">
+                              <input 
+                                type="text" 
+                                readOnly 
+                                value={endDate} 
+                                onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }} 
+                                placeholder="종료일" 
+                                className={`w-full p-2 border ${isEndCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-xl outline-none cursor-pointer text-xs transition-all`}
+                              />
+                              <svg className="absolute right-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                              {isEndCalendarOpen && (
+                                <Calendar 
+                                  selectedDate={endDate} 
+                                  onDateSelect={(d) => { setEndDate(d); setIsEndCalendarOpen(false); }} 
+                                />
+                              )}
+                            </div>
                           </>
                         )}
                       </div>

@@ -35,7 +35,7 @@ const Calendar = ({ value, onChange, onClose }) => {
 
   return (
     <div className="absolute z-30 w-full bottom-full mb-1 bg-white border border-gray-100 rounded-2xl shadow-2xl p-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
-      <div className="flex items-center justify-between mb-4 px-1">
+      <div className="flex items-center justify-between 2 px-0">
         <button 
           onClick={handlePrevMonth} 
           className="p-1 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-[#3530B8] transition-colors"
@@ -70,7 +70,7 @@ const Calendar = ({ value, onChange, onClose }) => {
             <div 
               key={i}
               onClick={(e) => handleDateSelect(e, d)}
-              className={`text-[0.625rem] font-medium text-center py-2 rounded-lg transition-all cursor-pointer
+              className={`text-[0.625rem] font-medium text-center py-1 rounded-lg transition-all cursor-pointer
                 ${!d ? 'invisible' : 'hover:bg-[#F0F4FF] hover:text-[#3530B8] text-gray-600'}
                 ${isSelected ? 'bg-[#3530B8] text-white' : ''}
               `}
