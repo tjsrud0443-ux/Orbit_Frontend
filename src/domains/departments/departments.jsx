@@ -274,8 +274,7 @@ const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptNa
                             : emp.attendanceStatus === '연차' ||
                               emp.attendanceStatus === '오전반차' ||
                               emp.attendanceStatus === '오후반차' ? 'px-2 py-1 border bg-blue-50 text-blue-600 border-blue-50'
-                              : emp.attendanceStatus === '결근' ? 'px-2 py-1 border bg-[#FFF0F0] text-[#FF4D4F] border-[#FFF0F0]'
-                                : ''}
+                              : ''}
                         `}>{emp.attendanceStatus}</span>
 
                   </td>
