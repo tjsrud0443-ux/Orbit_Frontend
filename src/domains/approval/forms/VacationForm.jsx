@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import useUserStore from '../../../store/userStore';
 
 const VacationForm = () => {
+  const navi = useNavigate();
   const location = useLocation();
   const isWriteMode = location.pathname.includes('/write/');
   const { user } = useUserStore();
@@ -17,16 +18,21 @@ const VacationForm = () => {
 
   // Calculate total days
   useEffect(() => {
-    if (startDate && endDate) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const diffTime = Math.abs(end - start);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-      setTotalDays(diffDays > 0 ? diffDays : 0);
+    if (vacationType === '연차') {
+      if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        setTotalDays(diffDays > 0 ? diffDays : 0);
+      } else {
+        setTotalDays(0);
+      }
     } else {
-      setTotalDays(0);
+      // 반차 (오전/오후)
+      setTotalDays(0.5);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, vacationType]);
 
   // Mock data for approval line
   const [approvers, setApprovers] = useState([
@@ -50,16 +56,19 @@ const VacationForm = () => {
     }
   };
 
+  const handleTemp = () => {
+    navi("/approvalTemp");
+  }
+
   return (
-    <div className="flex justify-center py-13 bg-gray-50 min-h-screen font-sans">
-      {/* Form Container - Height reduced by removing flex-1 and overflow-y-auto on content, and adjusting paddings */}
-      <div className="w-[70%] min-w-[800px] bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 flex flex-col h-full max-h-[70vh]">
+    <div className="flex justify-center py-2 bg-gray-50 min-h-screen font-sans">
+      <div className="w-[70%] min-w-[800px] bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 flex flex-col h-fit max-h-[95vh] mb-4">
         
         {/* Header Section */}
-        <div className="bg-[#3530B8] px-8 py-5 text-white flex justify-between items-center flex-shrink-0">
+        <div className="bg-[#3530B8] px-8 py-4 text-white flex justify-between items-center flex-shrink-0">
           <div className="flex flex-col">
             <span className="text-[0.625rem] font-bold opacity-80 tracking-widest mb-0.5">(주)Lunex Soft</span>
-            <h1 className="text-2xl font-extrabold tracking-tight">휴가 신청서</h1>
+            <h1 className="text-xl font-extrabold tracking-tight">휴가 신청서</h1>
           </div>
 
           <div className="flex flex-col items-end gap-1.5">
@@ -71,25 +80,24 @@ const VacationForm = () => {
             </button>
             
             <div className="flex">
-              {/* 기안자 칸 */}
               <div className="w-16 border border-white/30 flex flex-col">
-                <div className="bg-white/10 text-[0.625rem] py-0.5 text-center font-bold border-b border-white/30 text-white/90">
-                  기안
-                </div>
-                <div className="h-10 flex items-center justify-center text-[0.625rem] font-medium text-white/90">
+                <div className="bg-white/10 text-[0.625rem] py-0.5 text-center font-bold border-b border-white/30">기안</div>
+                <div className="h-11 flex items-center justify-center text-[0.625rem] font-medium text-white/90">
                   기안
                 </div>
               </div>
 
-              {/* 결재자 라인 (팀장, 본부장, 대표이사 등) */}
               {approvers.map((approver, idx) => (
                 <div key={idx} className="w-16 border-y border-r border-white/30 flex flex-col border-l-0">
                   <div className="bg-white/10 text-[0.625rem] py-0.5 text-center font-bold border-b border-white/30 text-white/90">
                     {approver.rank}
                   </div>
-                  
-                  <div className={`h-10 flex items-center justify-center text-[0.625rem] font-bold ${
-                    !isWriteMode ? 'text-white/90' : 'text-transparent'
+                  <div className={`h-11 flex items-center justify-center text-[0.625rem] font-bold ${
+                    !isWriteMode ? (
+                      approver.status === '결재 완료' ? 'text-white/90' :
+                      approver.status === '결재 진행중' ? 'text-white/90' :
+                      approver.status === '반려' ? 'text-red-300' : 'text-white/90'
+                    ) : 'text-transparent'
                   }`}>
                     {!isWriteMode ? approver.status : ''}
                   </div>
@@ -99,7 +107,7 @@ const VacationForm = () => {
           </div>
         </div>
 
-        {/* Content Section - Adjusted padding to prevent cutting off bottom */}
+        {/* Content Section */}
         <div className="px-10 py-5 space-y-5 overflow-y-auto custom-scrollbar">
           
           {/* Applicant Info Section */}
@@ -141,35 +149,47 @@ const VacationForm = () => {
                 <tr className="border-b border-gray-200">
                   <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">연차 종류</th>
                   <td className="p-2">
-                    <select 
-                      value={vacationType}
-                      onChange={(e) => setVacationType(e.target.value)}
-                      className="w-full p-1 bg-white border border-gray-300 rounded outline-none focus:border-[#3530B8]"
-                    >
-                      <option value="연차">연차</option>
-                      <option value="오전반차">오전반차</option>
-                      <option value="오후반차">오후반차</option>
-                    </select>
+                    {isWriteMode ? (
+                      <select 
+                        value={vacationType}
+                        onChange={(e) => setVacationType(e.target.value)}
+                        className="w-full p-1 bg-white border border-gray-300 rounded outline-none focus:border-[#3530B8]"
+                      >
+                        <option value="연차">연차</option>
+                        <option value="오전반차">오전반차</option>
+                        <option value="오후반차">오후반차</option>
+                      </select>
+                    ) : (
+                      <span>{vacationType}</span>
+                    )}
                   </td>
                 </tr>
                 <tr className="border-b border-gray-200">
                   <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">신청 기간</th>
                   <td className="p-2">
-                    <div className="flex items-center gap-2">
-                      <input 
-                        type="date" 
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        className="p-1 border border-gray-300 rounded outline-none focus:border-[#3530B8]" 
-                      />
-                      <span>~</span>
-                      <input 
-                        type="date" 
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        className="p-1 border border-gray-300 rounded outline-none focus:border-[#3530B8]" 
-                      />
-                    </div>
+                    {isWriteMode ? (
+                      <div className="flex items-center gap-2">
+                        <input 
+                          type="date" 
+                          value={startDate}
+                          onChange={(e) => setStartDate(e.target.value)}
+                          className="p-1 border border-gray-300 rounded outline-none focus:border-[#3530B8]" 
+                        />
+                        {vacationType === '연차' && (
+                          <>
+                            <span>~</span>
+                            <input 
+                              type="date" 
+                              value={endDate}
+                              onChange={(e) => setEndDate(e.target.value)}
+                              className="p-1 border border-gray-300 rounded outline-none focus:border-[#3530B8]" 
+                            />
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <span>{startDate} {vacationType === '연차' ? `~ ${endDate}` : ''}</span>
+                    )}
                   </td>
                 </tr>
                 <tr className="border-b border-gray-200">
@@ -179,31 +199,44 @@ const VacationForm = () => {
                 <tr>
                   <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">신청 사유</th>
                   <td className="p-2">
-                    <textarea 
-                      value={reason}
-                      onChange={(e) => setReason(e.target.value)}
-                      placeholder="사유를 입력하세요"
-                      className="w-full h-25 p-2 bg-white border border-gray-300 rounded outline-none focus:border-[#3530B8] resize-none"
-                    ></textarea>
+                    {isWriteMode ? (
+                      <textarea 
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="사유를 입력하세요"
+                        className="w-full h-25 p-2 bg-white border border-gray-300 rounded outline-none focus:border-[#3530B8] resize-none"
+                      ></textarea>
+                    ) : (
+                      <div className="min-h-[4rem] whitespace-pre-wrap">{reason}</div>
+                    )}
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          {/* Action Buttons - Fixed at bottom of scrolling area or as part of flow */}
+          {/* Action Buttons */}
           <div className="flex justify-center gap-3 pt-5 pb-2 border-t border-gray-50 flex-shrink-0">
-            <button className="px-5 py-1.5 border border-gray-200 text-gray-500 font-bold text-xs rounded-lg hover:bg-gray-50 transition-all">
+            <button 
+              className="px-5 py-1.5 border border-gray-200 text-gray-500 font-bold text-xs rounded-lg hover:bg-gray-50 transition-all"
+              onClick={() => navi("/approval")}
+            >
               취소
             </button>
-            <button className="px-5 py-1.5 bg-[#F0F4FF] text-[#3530B8] font-bold text-xs rounded-lg hover:bg-[#DDE8FF] transition-all">
-              임시저장
-            </button>
-            <button className="px-7 py-1.5 bg-[#3530B8] text-white font-bold text-xs rounded-lg hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all">
-              결재상신
-            </button>
+            {isWriteMode && (
+              <>
+                <button 
+                  className="px-5 py-1.5 bg-[#F0F4FF] text-[#3530B8] font-bold text-xs rounded-lg hover:bg-[#DDE8FF] transition-all"
+                  onClick={handleTemp}
+                >
+                  임시저장
+                </button>
+                <button className="px-7 py-1.5 bg-[#3530B8] text-white font-bold text-xs rounded-lg hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all">
+                  결재상신
+                </button>
+              </>
+            )}
           </div>
-
         </div>
       </div>
 
