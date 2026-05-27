@@ -4,6 +4,7 @@ import useUserStore from '../../store/userStore';
 import ApprovalDocumentContainer from './components/ApprovalDocumentContainer';
 import VacationForm from './forms/VacationForm';
 import PaymentForm from './forms/PaymentForm';
+import GeneralForm from './forms/GeneralForm';
 
 // 결재자 선택 모달 컴포넌트
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
@@ -78,6 +79,7 @@ const ApprovalDetail = () => {
   useEffect(() => {
     const isPaymentPath = location.pathname.includes('payment');
     const isVacationPath = location.pathname.includes('vacation');
+    const isGeneralPath = location.pathname.includes('general');
 
     if (!docId) {
       // [신규 작성 모드]
@@ -104,11 +106,19 @@ const ApprovalDetail = () => {
           accountInfo: '',
           items: [{ id: 1, itemName: '', amount: 0, receipt: null, note: '' }]
         });
+      } else if (isGeneralPath) {
+        setDocType('GENERAL');
+        setFormData({
+          requestDate: new Date().toISOString().split('T')[0],
+          purpose: '',
+          content: ''
+        });
       }
     } else {
       // [조회 모드]
       if (isVacationPath) setDocType('VACATION');
       else if (isPaymentPath) setDocType('PAYMENT');
+      else if (isGeneralPath) setDocType('GENERAL');
       
       fetchDocumentData(docId);
     }
@@ -154,6 +164,8 @@ const ApprovalDetail = () => {
         return <VacationForm {...props} />;
       case 'PAYMENT':
         return <PaymentForm {...props} />;
+      case 'GENERAL':
+        return <GeneralForm {...props} />;
       default:
         return <div>알 수 없는 문서 형식입니다.</div>;
     }
@@ -163,6 +175,7 @@ const ApprovalDetail = () => {
     switch (docType) {
       case 'VACATION': return '휴가 신청서';
       case 'PAYMENT': return '지출 결의서';
+      case 'GENERAL': return '일반 품의서';
       default: return '전자결재';
     }
   };
