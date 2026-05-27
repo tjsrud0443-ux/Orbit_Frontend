@@ -1,6 +1,6 @@
 import React from 'react';
-import approval_img from '../../assets/approval_img.png';
 import { useNavigate } from 'react-router-dom';
+import { IMAGES } from '../../images/images';
 
 const ApprovalHome = () => {
 
@@ -240,7 +240,7 @@ const ApprovalHome = () => {
              </div>
              {/* Illustration Image */}
              <div className="absolute -right-4 -bottom-6 w-36 h-36 opacity-90 group-hover:scale-110 transition-transform duration-500 ease-out pointer-events-none">
-                <img src={approval_img} alt="Approval Illustration" className="w-full h-full object-contain filter drop-shadow-2xl" />
+                <img src={IMAGES.APPROVAL_IMG} alt="Approval Illustration" className="w-full h-full object-contain filter drop-shadow-2xl" />
              </div>
           </div>
         </div>

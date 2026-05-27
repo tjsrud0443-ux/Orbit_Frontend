@@ -12,7 +12,7 @@ const CC_DOCUMENTS = [
   { 
     id: 201, 
     title: '2024년 2분기 마케팅 예산 편성 안', 
-    type: '일반기안서', 
+    type: '일반품의서', 
     typeKey: 'general', 
     drafter: '홍길동 과장', 
     date: '2024-05-20', 
@@ -27,7 +27,7 @@ const CC_DOCUMENTS = [
   { 
     id: 202, 
     title: '신규 협력업체 계약 검토 요청', 
-    type: '일반기안서', 
+    type: '일반품의서', 
     typeKey: 'general', 
     drafter: '이몽룡 대리', 
     date: '2024-05-21', 
@@ -74,7 +74,7 @@ const CC_DOCUMENTS = [
   { 
     id: 205, 
     title: 'IT 자산 교체 주기 변경 기안', 
-    type: '일반기안서', 
+    type: '일반품의서', 
     typeKey: 'general', 
     drafter: '장길산 대리', 
     date: '2024-05-24', 
@@ -87,7 +87,7 @@ const CC_DOCUMENTS = [
   { 
     id: 206, 
     title: '법인카드 부정 사용 방지 가이드라인', 
-    type: '일반기안서', 
+    type: '일반품의서', 
     typeKey: 'general', 
     drafter: '홍길동 과장', 
     date: '2024-05-25', 
@@ -177,7 +177,7 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
           <tbody className="divide-y divide-slate-100">
             {displayData.map((doc) => (
               <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors">
-                <td className="pl-4 md:pl-6 pr-3 py-4 text-sm font-bold text-gray-700 truncate whitespace-nowrap">{doc.title}</td>
+                <td className="pl-4 md:pl-6 pr-3 py-4 text-xs font-bold text-gray-700 truncate whitespace-nowrap">{doc.title}</td>
                 <td className="px-3 py-4 text-xs font-medium text-gray-500 truncate whitespace-nowrap">{doc.type}</td>
                 <td className="px-3 py-4 truncate whitespace-nowrap">
                   <div className="flex items-center gap-2 overflow-hidden">
@@ -260,7 +260,7 @@ const ApprovalCc = () => {
               className="px-3 py-1.5 text-xs bg-slate-50 border-none rounded-lg focus:ring-0 text-slate-600 font-medium cursor-pointer outline-none"
             >
               <option>전체 문서</option>
-              <option>일반기안서</option>
+              <option>일반품의서</option>
               <option>지출결의서</option>
               <option>휴가신청서</option>
               <option>구매신청서</option>
