@@ -56,35 +56,35 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true }) =>
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-3">
-      <div className="pl-4 md:pl-6 pr-4 py-3 border-b border-slate-100 bg-slate-50/50">
+      <div className="pl-4 md:pl-6 pr-4 py-3 border-b border-slate-100 bg-white">
         <h3 className="text-base md:text-lg font-bold text-slate-800">{title}</h3>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[900px] md:min-w-full text-left border-collapse md:table-fixed">
           <thead>
-            <tr className="bg-slate-50 text-slate-500 text-[10px] md:text-xs uppercase tracking-wider">
-              <th className="pl-4 md:pl-6 pr-3 py-3 font-bold w-[35%] whitespace-nowrap">제목</th>
-              <th className="px-3 py-3 font-bold w-[18%] whitespace-nowrap">문서 종류</th>
-              <th className="px-3 py-3 font-bold w-[15%] whitespace-nowrap">기안자</th>
-              <th className="px-3 py-3 font-bold w-[14%] text-center whitespace-nowrap">기안일</th>
-              <th className="px-3 py-3 font-bold text-center w-[10%] whitespace-nowrap">결재 상태</th>
-              <th className="px-3 py-3 font-bold text-center w-[8%] whitespace-nowrap">상세보기</th>
+            <tr className="bg-white text-gray-400 text-[0.8125rem] font-bold uppercase tracking-wider border-b border-slate-100">
+              <th className="pl-4 md:pl-6 pr-3 py-3 w-[35%] whitespace-nowrap">제목</th>
+              <th className="px-3 py-3 w-[18%] whitespace-nowrap">문서 종류</th>
+              <th className="px-3 py-3 w-[15%] whitespace-nowrap">기안자</th>
+              <th className="px-3 py-3 text-center w-[14%] whitespace-nowrap">기안일</th>
+              <th className="px-3 py-3 text-center w-[10%] whitespace-nowrap">결재 상태</th>
+              <th className="px-3 py-3 text-center w-[8%] whitespace-nowrap">상세보기</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {displayData.map((doc) => (
               <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors">
-                <td className="pl-4 md:pl-6 pr-3 py-4 text-[12px] md:text-sm font-semibold text-slate-800 truncate whitespace-nowrap">{doc.title}</td>
-                <td className="px-3 py-4 text-[12px] md:text-sm text-slate-600 truncate whitespace-nowrap">{doc.type}</td>
-                <td className="px-3 py-4 text-[12px] md:text-sm text-slate-600 truncate whitespace-nowrap">
+                <td className="pl-4 md:pl-6 pr-3 py-4 text-xs font-bold text-gray-700 truncate whitespace-nowrap">{doc.title}</td>
+                <td className="px-3 py-4 text-xs font-medium text-gray-500 truncate whitespace-nowrap">{doc.type}</td>
+                <td className="px-3 py-4 truncate whitespace-nowrap">
                   <div className="flex items-center gap-2 overflow-hidden">
                     <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 rounded-full bg-slate-200 flex items-center justify-center text-[9px] md:text-[10px]">
                       <FontAwesomeIcon icon={faUser} className="text-slate-400" />
                     </div>
-                    <span className="truncate">{doc.drafter}</span>
+                    <span className="text-xs font-bold text-gray-600 truncate">{doc.drafter}</span>
                   </div>
                 </td>
-                <td className="px-3 py-4 text-[12px] md:text-sm text-slate-500 text-center truncate whitespace-nowrap">{doc.date}</td>
+                <td className="px-3 py-4 text-xs font-medium text-gray-400 text-center truncate whitespace-nowrap">{doc.date}</td>
                 <td className="px-3 py-4 text-center whitespace-nowrap">
                   <StatusBadge status={doc.status} />
                 </td>
@@ -100,7 +100,7 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true }) =>
             ))}
             {displayData.length === 0 && (
               <tr>
-                <td colSpan="6" className="py-10 text-center text-slate-400 text-xs">해당 문서가 없습니다.</td>
+                <td colSpan="6" className="py-10 text-center text-gray-400 text-[0.8125rem] font-bold italic">해당 문서가 없습니다.</td>
               </tr>
             )}
           </tbody>

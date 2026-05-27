@@ -9,15 +9,128 @@ import Pagination from '../../components/common/Pagination';
 
 // --- Dummy Data ---
 const CC_DOCUMENTS = [
-  { id: 201, title: '2024년 2분기 마케팅 예산 편성 안', type: '일반기안서', typeKey: 'general', drafter: '홍길동 과장', date: '2024-05-20', status: '결재 대기' },
-  { id: 202, title: '신규 협력업체 계약 검토 요청', type: '일반기안서', typeKey: 'general', drafter: '이몽룡 대리', date: '2024-05-21', status: '진행 중' },
-  { id: 203, title: '영업부 하반기 전략 회의 비용', type: '지출결의서', typeKey: 'payment', drafter: '성춘향 팀장', date: '2024-05-22', status: '결재 완료' },
-  { id: 204, title: '전사 하계 워크숍 장소 선정', type: '구매신청서', typeKey: 'purchase', drafter: '임꺽정 차장', date: '2024-05-23', status: '반려' },
-  { id: 205, title: 'IT 자산 교체 주기 변경 기안', type: '일반기안서', typeKey: 'general', drafter: '장길산 대리', date: '2024-05-24', status: '결재 완료' },
-  { id: 206, title: '법인카드 부정 사용 방지 가이드라인', type: '일반기안서', typeKey: 'general', drafter: '홍길동 과장', date: '2024-05-25', status: '반려' },
+  { 
+    id: 201, 
+    title: '2024년 2분기 마케팅 예산 편성 안', 
+    type: '일반기안서', 
+    typeKey: 'general', 
+    drafter: '홍길동 과장', 
+    date: '2024-05-20', 
+    status: '결재 대기',
+    currentApprover: '김철수 부장',
+    approvalLine: [
+      { name: '김철수', rank: '부장' },
+      { name: '이영희', rank: '차장' },
+      { name: '박지민', rank: '팀장' }
+    ]
+  },
+  { 
+    id: 202, 
+    title: '신규 협력업체 계약 검토 요청', 
+    type: '일반기안서', 
+    typeKey: 'general', 
+    drafter: '이몽룡 대리', 
+    date: '2024-05-21', 
+    status: '진행 중',
+    currentApprover: '박상무 상무',
+    approvalLine: [
+      { name: '박상무', rank: '상무' },
+      { name: '최전무', rank: '전무' },
+      { name: '이대표', rank: '대표' },
+      { name: '정회장', rank: '회장' }
+    ]
+  },
+  { 
+    id: 203, 
+    title: '영업부 하반기 전략 회의 비용', 
+    type: '지출결의서', 
+    typeKey: 'payment', 
+    drafter: '성춘향 팀장', 
+    date: '2024-05-22', 
+    status: '결재 완료',
+    currentApprover: '김영희 대리',
+    approvalLine: [
+      { name: '홍길동', rank: '과장' },
+      { name: '김영희', rank: '대리' }
+    ]
+  },
+  { 
+    id: 204, 
+    title: '전사 하계 워크숍 장소 선정', 
+    type: '구매신청서', 
+    typeKey: 'purchase', 
+    drafter: '임꺽정 차장', 
+    date: '2024-05-23', 
+    status: '반려',
+    currentApprover: '오진우 회장',
+    approvalLine: [
+      { name: '박지민', rank: '대리' },
+      { name: '최유진', rank: '팀장' },
+      { name: '강하늘', rank: '본부장' },
+      { name: '한소희', rank: '대표' },
+      { name: '오진우', rank: '회장' }
+    ]
+  },
+  { 
+    id: 205, 
+    title: 'IT 자산 교체 주기 변경 기안', 
+    type: '일반기안서', 
+    typeKey: 'general', 
+    drafter: '장길산 대리', 
+    date: '2024-05-24', 
+    status: '결재 완료',
+    currentApprover: '박상무 상무',
+    approvalLine: [
+      { name: '박상무', rank: '상무' }
+    ]
+  },
+  { 
+    id: 206, 
+    title: '법인카드 부정 사용 방지 가이드라인', 
+    type: '일반기안서', 
+    typeKey: 'general', 
+    drafter: '홍길동 과장', 
+    date: '2024-05-25', 
+    status: '반려',
+    currentApprover: '최전무 전무',
+    approvalLine: [
+      { name: '이영희', rank: '과장' },
+      { name: '박지민', rank: '부장' },
+      { name: '최전무', rank: '전무' }
+    ]
+  },
 ];
 
 // --- Sub Components ---
+
+const ApprovalLineStack = ({ line }) => {
+  const displayLimit = 3;
+  const displayLine = line.slice(0, displayLimit);
+  const remainingCount = line.length > displayLimit ? line.length - displayLimit : 0;
+
+  return (
+    <div className="flex items-center">
+      <div className="flex items-center -space-x-2">
+        {displayLine.map((person, idx) => (
+          <div 
+            key={idx} 
+            className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center shadow-sm overflow-hidden relative group"
+            title={`${person.name} ${person.rank}`}
+          >
+            <div className="w-full h-full bg-indigo-50 flex items-center justify-center text-[10px] md:text-[11px] font-bold text-indigo-600 uppercase">
+              {person.name[0]}
+            </div>
+          </div>
+        ))}
+        {remainingCount > 0 && (
+          <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-indigo-50 border-2 border-white flex items-center justify-center shadow-sm z-10">
+            <span className="text-[9px] md:text-[10px] font-bold text-indigo-600">+{remainingCount}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const StatusBadge = ({ status }) => {
   const styles = {
@@ -28,13 +141,13 @@ const StatusBadge = ({ status }) => {
   };
 
   return (
-    <span className={`px-2 py-0.5 md:px-2.5 md:py-1 rounded-full text-[10px] md:text-xs font-semibold border whitespace-nowrap ${styles[status] || 'bg-gray-50 text-gray-600'}`}>
+    <span className={`px-2 py-0.5 md:px-2.5 md:py-1 rounded-full text-[10px] md:text-xs font-bold border whitespace-nowrap ${styles[status] || 'bg-gray-50 text-gray-600'}`}>
       {status}
     </span>
   );
 };
 
-const DocumentTable = ({ title, data, onDetailClick, showPagination = true }) => {
+const DocumentTable = ({ title, data, onDetailClick, showPagination = true, approverLabel = '현재 결재자' }) => {
   const [page, setPage] = useState(1);
   const itemsPerPage = 5;
   const count = Math.ceil(data.length / itemsPerPage);
@@ -45,35 +158,41 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true }) =>
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-3">
-      <div className="pl-4 md:pl-6 pr-4 py-3 border-b border-slate-100 bg-slate-50/50">
+      <div className="pl-4 md:pl-6 pr-4 py-3 border-b border-slate-100 bg-white">
         <h3 className="text-base md:text-lg font-bold text-slate-800">{title}</h3>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[900px] md:min-w-full text-left border-collapse md:table-fixed">
+        <table className="w-full min-w-[1100px] md:min-w-full text-left border-collapse md:table-fixed">
           <thead>
-            <tr className="bg-slate-50 text-slate-500 text-[10px] md:text-xs uppercase tracking-wider">
-              <th className="pl-4 md:pl-6 pr-3 py-3 font-bold w-[35%] whitespace-nowrap">제목</th>
-              <th className="px-3 py-3 font-bold w-[18%] whitespace-nowrap">문서 종류</th>
-              <th className="px-3 py-3 font-bold w-[15%] whitespace-nowrap">기안자</th>
-              <th className="px-3 py-3 font-bold w-[14%] text-center whitespace-nowrap">기안일</th>
+            <tr className="bg-white text-gray-400 text-[0.8125rem] font-bold uppercase tracking-wider border-b border-slate-100">
+              <th className="pl-4 md:pl-6 pr-3 py-3 font-bold w-[22%] whitespace-nowrap">제목</th>
+              <th className="px-3 py-3 font-bold w-[11%] whitespace-nowrap">문서 종류</th>
+              <th className="px-3 py-3 font-bold w-[12%] whitespace-nowrap">기안자</th>
+              <th className="px-3 py-3 font-bold w-[18%] whitespace-nowrap">결재선</th>
+              <th className="px-3 py-3 font-bold w-[12%] whitespace-nowrap">{approverLabel}</th>
               <th className="px-3 py-3 font-bold text-center w-[10%] whitespace-nowrap">결재 상태</th>
-              <th className="px-3 py-3 font-bold text-center w-[8%] whitespace-nowrap">상세보기</th>
+              <th className="px-3 py-3 font-bold text-center w-[11%] whitespace-nowrap">상세보기</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {displayData.map((doc) => (
               <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors">
-                <td className="pl-4 md:pl-6 pr-3 py-4 text-[12px] md:text-sm font-semibold text-slate-800 truncate whitespace-nowrap">{doc.title}</td>
-                <td className="px-3 py-4 text-[12px] md:text-sm text-slate-600 truncate whitespace-nowrap">{doc.type}</td>
-                <td className="px-3 py-4 text-[12px] md:text-sm text-slate-600 truncate whitespace-nowrap">
+                <td className="pl-4 md:pl-6 pr-3 py-4 text-sm font-bold text-gray-700 truncate whitespace-nowrap">{doc.title}</td>
+                <td className="px-3 py-4 text-xs font-medium text-gray-500 truncate whitespace-nowrap">{doc.type}</td>
+                <td className="px-3 py-4 truncate whitespace-nowrap">
                   <div className="flex items-center gap-2 overflow-hidden">
                     <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 rounded-full bg-slate-200 flex items-center justify-center text-[9px] md:text-[10px]">
                       <FontAwesomeIcon icon={faUser} className="text-slate-400" />
                     </div>
-                    <span className="truncate">{doc.drafter}</span>
+                    <span className="text-xs font-bold text-gray-600 truncate">{doc.drafter}</span>
                   </div>
                 </td>
-                <td className="px-3 py-4 text-[12px] md:text-sm text-slate-500 text-center truncate whitespace-nowrap">{doc.date}</td>
+                <td className="px-3 py-4">
+                  <ApprovalLineStack line={doc.approvalLine || []} />
+                </td>
+                <td className="px-3 py-4 text-xs font-bold text-gray-600 truncate whitespace-nowrap">
+                  {doc.currentApprover}
+                </td>
                 <td className="px-3 py-4 text-center whitespace-nowrap">
                   <StatusBadge status={doc.status} />
                 </td>
@@ -89,7 +208,7 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true }) =>
             ))}
             {displayData.length === 0 && (
               <tr>
-                <td colSpan="6" className="py-10 text-center text-slate-400 text-xs">해당 문서가 없습니다.</td>
+                <td colSpan="7" className="py-10 text-center text-gray-400 text-[0.8125rem] font-bold italic">해당 문서가 없습니다.</td>
               </tr>
             )}
           </tbody>
@@ -182,12 +301,14 @@ const ApprovalCc = () => {
             data={filterDocuments(CC_DOCUMENTS, '결재 완료')} 
             onDetailClick={handleOpenDetail} 
             showPagination={true}
+            approverLabel="최종 결재자"
           />
           <DocumentTable 
             title="결재 반려" 
             data={filterDocuments(CC_DOCUMENTS, '반려')} 
             onDetailClick={handleOpenDetail} 
             showPagination={true}
+            approverLabel="최종 결재자"
           />
         </div>
       </div>
