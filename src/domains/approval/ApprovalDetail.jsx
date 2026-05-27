@@ -11,14 +11,22 @@ import PurchaseForm from './forms/PurchaseForm';
 // 결재자 선택 모달 컴포넌트
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
   const { allEmployees } = useEmployeeStore();
+  const { user } = useUserStore();
   const [searchQuery, setSearchQuery] = useState('');
   if (!isOpen) return null;
 
+  // 1. 직급 필터링 (부서장, 본부장, 대표) 및 기안자 제외
+  const allowedRanks = ['부서장', '본부장', '대표'];
+  const baseFiltered = allEmployees.filter(emp => 
+    allowedRanks.includes(emp.rank_name) && emp.users_seq !== user?.users_seq
+  );
+
+  // 2. 검색어 필터링
   const filtered = searchQuery 
-    ? allEmployees.filter(emp => 
+    ? baseFiltered.filter(emp => 
         emp.name.includes(searchQuery) || emp.dept_name.includes(searchQuery)
       ) 
-    : allEmployees;
+    : baseFiltered;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] animate-in fade-in duration-200">

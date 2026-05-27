@@ -56,6 +56,8 @@ const PaymentForm = ({ data, onChange, mode, user }) => {
     return items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
   };
 
+  const applicant = isEditMode ? user : data;
+
   return (
     <div className="space-y-5">
       {/* 신청 정보 Section */}
@@ -68,15 +70,15 @@ const PaymentForm = ({ data, onChange, mode, user }) => {
           <tbody>
             <tr className="border-b border-gray-200">
               <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">성명</th>
-              <td className="p-2 w-125 border-r border-gray-200">{user?.name || '-'}</td>
+              <td className="p-2 w-125 border-r border-gray-200">{applicant?.name || '-'}</td>
               <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">사번</th>
-              <td className="p-2">{user?.users_seq || '-'}</td>
+              <td className="p-2">{applicant?.users_seq || '-'}</td>
             </tr>
             <tr className="border-b border-gray-200">
               <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">부서</th>
-              <td className="p-2 border-r border-gray-200">{user?.dept_name || '-'}</td>
+              <td className="p-2 border-r border-gray-200">{applicant?.dept_name || '-'}</td>
               <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">직급</th>
-              <td className="p-2">{user?.rank_name || '-'}</td>
+              <td className="p-2">{applicant?.rank_name || '-'}</td>
             </tr>
             <tr>
               <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">지출일</th>

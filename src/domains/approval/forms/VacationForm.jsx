@@ -51,6 +51,8 @@ const VacationForm = ({ data, onChange, mode, user }) => {
     onChange(updatedData);
   };
 
+  const applicant = isEditMode ? user : data;
+
   return (
     <div className="space-y-5">
       {/* Applicant Info Section */}
@@ -63,15 +65,15 @@ const VacationForm = ({ data, onChange, mode, user }) => {
           <tbody>
             <tr className="border-b border-gray-200">
               <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">성명</th>
-              <td className="p-2 border-r border-gray-200">{user?.name || '-'}</td>
+              <td className="p-2 border-r border-gray-200">{applicant?.name || '-'}</td>
               <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">사번</th>
-              <td className="p-2">{user?.users_seq || '-'}</td>
+              <td className="p-2">{applicant?.users_seq || '-'}</td>
             </tr>
             <tr className="border-b border-gray-200">
               <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">부서</th>
-              <td className="p-2 border-r border-gray-200">{user?.dept_name || '-'}</td>
+              <td className="p-2 border-r border-gray-200">{applicant?.dept_name || '-'}</td>
               <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">직급</th>
-              <td className="p-2">{user?.rank_name || '-'}</td>
+              <td className="p-2">{applicant?.rank_name || '-'}</td>
             </tr>
             <tr>
               <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">신청일</th>

@@ -16,6 +16,8 @@ const GeneralForm = ({ data, onChange, mode, user }) => {
     onChange({ ...data, [field]: value });
   };
 
+  const applicant = isEditMode ? user : data;
+
   return (
     <div className="space-y-6">
       {/* 신청 정보 Section */}
@@ -28,15 +30,15 @@ const GeneralForm = ({ data, onChange, mode, user }) => {
           <tbody>
             <tr className="border-b border-gray-200">
               <th className="w-24 bg-gray-50 p-3 border-r border-gray-200 text-left font-bold">성명</th>
-              <td className="p-3 border-r border-gray-200">{user?.name || '-'}</td>
+              <td className="p-3 border-r border-gray-200">{applicant?.name || '-'}</td>
               <th className="w-24 bg-gray-50 p-3 border-r border-gray-200 text-left font-bold">사번</th>
-              <td className="p-3">{user?.users_seq || '-'}</td>
+              <td className="p-3">{applicant?.users_seq || '-'}</td>
             </tr>
             <tr className="border-b border-gray-200">
               <th className="w-24 bg-gray-50 p-3 border-r border-gray-200 text-left font-bold">부서</th>
-              <td className="p-3 border-r border-gray-200">{user?.dept_name || '-'}</td>
+              <td className="p-3 border-r border-gray-200">{applicant?.dept_name || '-'}</td>
               <th className="w-24 bg-gray-50 p-3 border-r border-gray-200 text-left font-bold">직급</th>
-              <td className="p-3">{user?.rank_name || '-'}</td>
+              <td className="p-3">{applicant?.rank_name || '-'}</td>
             </tr>
             <tr>
               <th className="w-24 bg-gray-50 p-3 border-r border-gray-200 text-left font-bold">신청일</th>
