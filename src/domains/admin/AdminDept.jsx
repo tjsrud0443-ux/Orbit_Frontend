@@ -73,6 +73,7 @@ const AdminDept = () => {
   };
 
   const getDeptMemberCount = (node) => {
+    if (node.deptName === '대표이사실') return 1; // 대표이사실은 항상 1명(대표)으로 고정
     const allSeqs = getAllChildDeptSeqs(node);
     return employees.filter(emp => allSeqs.includes(emp.deptSeq)).length;
   };
@@ -121,8 +122,8 @@ const AdminDept = () => {
       return;
     }
     if (formMode === 'CREATE_SUB' && !formData.parentDeptSeq) {
-        alert("상위 본부를 선택해주세요.");
-        return;
+      alert("상위 본부를 선택해주세요.");
+      return;
     }
     alert(`${formMode === 'EDIT' ? '수정' : '생성'}되었습니다. (서버 연동 시 실제 반영됩니다)`);
     handleCloseForm();
@@ -142,21 +143,25 @@ const AdminDept = () => {
   // --- 6. Table Row Renderer ---
   const renderRows = (node, level = 0) => {
     if (!node) return null;
+
     const isExpanded = expandedNodes.has(node.deptSeq);
     const hasChildren = node.children && node.children.length > 0;
     const memberCount = getDeptMemberCount(node);
+
+    // 최상위 루트 노드(본사)의 경우 표시 이름 보정
+    const displayName = level === 0 ? '(주)Lunex Soft (본사)' : node.deptName;
 
     return (
       <React.Fragment key={node.deptSeq}>
         <tr className="hover:bg-slate-50 transition-colors border-b border-slate-100 group">
           <td className="py-4 pl-6 pr-4">
             <div className="flex items-center" style={{ paddingLeft: `${level * 24}px` }}>
-              <div 
+              <div
                 className={`w-6 h-6 flex items-center justify-center cursor-pointer hover:bg-slate-100 rounded mr-2 ${!hasChildren && 'invisible'}`}
                 onClick={() => toggleNode(node.deptSeq)}
               >
-                <FontAwesomeIcon 
-                  icon={isExpanded ? faChevronDown : faChevronRight} 
+                <FontAwesomeIcon
+                  icon={isExpanded ? faChevronDown : faChevronRight}
                   className="text-[10px] text-slate-400"
                 />
               </div>
@@ -165,7 +170,7 @@ const AdminDept = () => {
                   <FontAwesomeIcon icon={level === 0 ? faBuilding : faLayerGroup} className="text-xs" />
                 </div>
                 <span className={`text-sm ${level === 0 ? 'font-bold text-slate-800' : 'font-medium text-slate-600'}`}>
-                  {node.deptName}
+                  {displayName}
                 </span>
               </div>
             </div>
@@ -175,26 +180,30 @@ const AdminDept = () => {
           </td>
           <td className="py-4 px-4">
             <div className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faUsers} className="text-slate-300 text-[10px]" />
-                <span className="text-sm font-bold text-slate-600">{memberCount}명</span>
+              <FontAwesomeIcon icon={faUsers} className="text-slate-300 text-[10px]" />
+              <span className="text-sm font-bold text-slate-600">{memberCount}명</span>
             </div>
           </td>
           <td className="py-4 pl-4 pr-6 text-right">
             <div className="flex justify-end gap-2">
-              <button 
-                onClick={() => openEdit(node)}
-                className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-[#3530B8] transition-all flex items-center justify-center cursor-pointer"
-                title="수정"
-              >
-                <FontAwesomeIcon icon={faEdit} className="text-xs" />
-              </button>
-              <button 
-                onClick={() => handleDelete(node)}
-                className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center cursor-pointer"
-                title="삭제"
-              >
-                <FontAwesomeIcon icon={faTrashAlt} className="text-xs" />
-              </button>
+              {(level !== 0 && node.deptName !== '대표이사실') && (
+                <>
+                  <button
+                    onClick={() => openEdit(node)}
+                    className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-[#3530B8] transition-all flex items-center justify-center cursor-pointer"
+                    title="수정"
+                  >
+                    <FontAwesomeIcon icon={faEdit} className="text-xs" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(node)}
+                    className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center cursor-pointer"
+                    title="삭제"
+                  >
+                    <FontAwesomeIcon icon={faTrashAlt} className="text-xs" />
+                  </button>
+                </>
+              )}
             </div>
           </td>
         </tr>
@@ -205,29 +214,29 @@ const AdminDept = () => {
 
   if (loading) return (
     <div className="flex-1 bg-white flex items-center justify-center h-screen">
-        <div className="text-slate-400 animate-pulse font-bold">조직 데이터를 불러오는 중...</div>
+      <div className="text-slate-400 animate-pulse font-bold">조직 데이터를 불러오는 중...</div>
     </div>
   );
 
   return (
     <div className="flex-1 bg-white flex flex-col h-screen overflow-hidden">
-      
+
       {/* Header Section */}
       <div className="p-8 lg:p-10 pb-4 flex items-end justify-between px-10">
         <div className="space-y-1.5">
           <h1 className="text-2xl font-bold text-[#1a1c3d] tracking-tight">부서 관리</h1>
           <p className="text-sm text-[#8a92a6] font-medium">그룹웨어 조직 체계와 부서 정보를 구성하고 관리합니다.</p>
         </div>
-        
+
         <div className="flex gap-3">
-          <button 
+          <button
             onClick={openCreateHq}
             className="px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm cursor-pointer"
           >
             <FontAwesomeIcon icon={faPlus} className="text-[#3530B8]" />
             본부 생성
           </button>
-          <button 
+          <button
             onClick={openCreateSub}
             className="px-4 py-2.5 bg-[#3530B8] text-white rounded-xl text-xs font-bold hover:bg-[#2a2594] transition-all flex items-center gap-2 shadow-lg shadow-indigo-100 cursor-pointer"
           >
@@ -239,7 +248,7 @@ const AdminDept = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex px-8 lg:px-10 pb-8 lg:pb-10 gap-6 overflow-hidden">
-        
+
         {/* Left: Department List Table */}
         <div className="flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full transition-all duration-500">
           <div className="overflow-y-auto custom-scrollbar flex-1">
@@ -253,7 +262,9 @@ const AdminDept = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {fullTree.root ? renderRows(fullTree.root) : (
+                {fullTree.root ? (
+                  renderRows(fullTree.root, 0)
+                ) : (
                   <tr>
                     <td colSpan="4" className="py-20 text-center text-slate-300 italic text-sm">등록된 부서 정보가 없습니다.</td>
                   </tr>
@@ -264,7 +275,7 @@ const AdminDept = () => {
         </div>
 
         {/* Right Panel: Side Panel */}
-        <aside 
+        <aside
           className={`bg-white border border-slate-200 rounded-2xl shadow-xl z-40 transition-all duration-500 ease-in-out flex flex-col overflow-hidden self-start
             ${formMode ? 'w-[320px] lg:w-[380px] opacity-100 translate-x-0' : 'w-0 opacity-0 translate-x-10 pointer-events-none'}
           `}
@@ -275,7 +286,7 @@ const AdminDept = () => {
             <h2 className="text-base font-bold text-slate-800">
               {panelTitle}
             </h2>
-            <button 
+            <button
               onClick={handleCloseForm}
               className="w-8 h-8 rounded-full hover:bg-white hover:shadow-sm text-slate-400 hover:text-slate-600 transition-all flex items-center justify-center cursor-pointer"
             >
@@ -288,14 +299,16 @@ const AdminDept = () => {
             {formMode === 'CREATE_SUB' && (
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">상위 본부 선택</label>
-                <select 
+                <select
                   className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20 focus:border-[#3530B8] transition-all cursor-pointer"
                   value={formData.parentDeptSeq || ''}
-                  onChange={(e) => setFormData({...formData, parentDeptSeq: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, parentDeptSeq: e.target.value })}
                 >
                   <option value="">본부를 선택하세요</option>
                   {Object.values(fullTree.nodeMap)
-                    .filter(node => node.parentDeptSeq === fullTree.root.deptSeq)
+                    .filter(node =>
+                      ['기술본부', '경영지원본부', '사업운영본부', '운영총괄본부'].includes(node.deptName)
+                    )
                     .map(dept => (
                       <option key={dept.deptSeq} value={dept.deptSeq}>{dept.deptName}</option>
                     ))
@@ -305,41 +318,51 @@ const AdminDept = () => {
             )}
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">
-                  {formMode === 'CREATE_HQ' ? '본부명' : '부서명'}
+                {formMode === 'CREATE_HQ' ? '본부명' : '부서명'}
               </label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="예: 개발본부, 인사팀"
                 className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20 focus:border-[#3530B8] transition-all"
                 value={formData.deptName}
-                onChange={(e) => setFormData({...formData, deptName: e.target.value})}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">부서 코드</label>
-              <input 
-                type="text" 
-                placeholder="예: DEPT-001"
-                className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20 focus:border-[#3530B8] transition-all font-mono"
-                value={formData.deptCode}
-                onChange={(e) => setFormData({...formData, deptCode: e.target.value})}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^ㄱ-ㅎㅏ-ㅣ가-힣]/g, ""); // 한글만 허용
+                  setFormData({ ...formData, deptName: val });
+                }}
               />
               <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-medium ml-1">
                 <FontAwesomeIcon icon={faInfoCircle} className="text-[#3530B8]/50" />
-                <span>영문, 숫자, '-' 만 입력 가능</span>
+                <span>한글만 입력 가능</span>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">부서 코드</label>
+              <input
+                type="text"
+                placeholder="예: DEPT"
+                className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20 focus:border-[#3530B8] transition-all font-mono"
+                value={formData.deptCode}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^a-zA-Z]/g, ""); // 영문만 허용
+                  setFormData({ ...formData, deptCode: val });
+                }}
+              />
+              <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-medium ml-1">
+                <FontAwesomeIcon icon={faInfoCircle} className="text-[#3530B8]/50" />
+                <span>영문만 입력 가능</span>
               </div>
             </div>
           </div>
 
           {/* Panel Footer */}
           <div className="p-6 bg-slate-50/50 border-t border-slate-100 flex gap-2 shrink-0 mt-auto">
-            <button 
+            <button
               onClick={handleCloseForm}
               className="flex-1 h-10 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-100 transition-all cursor-pointer"
             >
               취소
             </button>
-            <button 
+            <button
               onClick={handleSave}
               className="flex-[1.5] h-10 bg-[#3530B8] text-white rounded-xl text-xs font-bold hover:bg-[#2a2594] transition-all shadow-md shadow-indigo-100 cursor-pointer"
             >
