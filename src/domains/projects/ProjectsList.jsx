@@ -84,8 +84,8 @@ const ProjectsList = () => {
   return (
     <div className="flex flex-col h-full py-8 px-2 overflow-y-auto">
       <div className="mb-6 px-2">
-        <h1 className="text-xl md:text-2xl font-extrabold text-[#121331]">프로젝트 관리</h1>
-        <p className="text-xs md:text-sm text-[#8a92a6] mt-1">진행 중인 프로젝트와 참여 인원을 관리합니다.</p>
+        <h1 className="text-xl md:text-2xl font-bold text-[#121331]">프로젝트 관리</h1>
+        <p className="text-xs md:text-sm text-[#8a92a6] mt-1">진행 중인 프로젝트명을 클릭하여 칸반 보드에서 업무를 관리하세요.</p>
       </div>
 
       <div className="flex flex-col md:flex-row h-auto gap-6">
@@ -111,7 +111,7 @@ const ProjectsList = () => {
                     className="pl-12 pr-4 py-2.5 bg-[#f4f7fc] rounded-xl text-sm w-full outline-none" />
                 </div>
               </div>
-              <button onClick={() => setIsModalOpen(true)} className="bg-[#3a36db] text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-[#2a2594] whitespace-nowrap w-1/2 md:w-auto">
+              <button onClick={() => setIsModalOpen(true)} className="bg-[#3530B8] text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-[#2a2594] whitespace-nowrap w-1/2 md:w-auto">
                 <FontAwesomeIcon icon={faPlus} className="mr-2" /> 새 프로젝트
               </button>
             </div>
@@ -131,24 +131,30 @@ const ProjectsList = () => {
               <tbody>
                 {paginatedProjects.map(p => (
                   <tr key={p.id} className="border-b border-gray-100 hover:bg-[#f8fbff] transition-colors block md:table-row w-full mb-4 md:mb-0">
-                    <td onClick={() => navigate('/kanban')} className="py-4 px-2 block md:table-cell font-bold text-[#1a1c3d] text-base text-left cursor-pointer hover:text-[#3530B8] transition-colors">{p.title}</td>
-                    <td className="py-4 px-2 block md:table-cell text-sm text-gray-500 text-left">{p.period}</td>
-                    <td className="py-4 px-2 block md:table-cell text-left">
+                    <td className="py-2 px-2 block md:table-cell font-bold text-[#1a1c3d] text-base flex justify-between items-center md:items-start md:block">
+                      <span onClick={() => navigate('/kanban')} className="cursor-pointer hover:text-[#3530B8] text-sm">{p.title}</span>
+                      <button onClick={() => setSelectedProject(p)} className="md:hidden text-[10px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-2 py-1 rounded">상세보기</button>
+                    </td>
+                    <td className="py-2 px-2 block md:table-cell text-sm text-gray-500">{p.period}</td>
+                    <td className="py-2 px-2 block md:table-cell flex items-center gap-4">
                       <span className={`inline-block px-4 py-1.5 rounded-full text-[11px] font-bold ${p.status === '완료' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
                         {p.status}
                       </span>
-                    </td>
-                    <td className="py-4 px-2 block md:table-cell text-left">
-                      <div className="flex gap-2">
+                      <div className="flex gap-1 md:hidden">
                         {p.members.map((m, i) => (
-                          <div key={i} className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-[#3530B8] border border-white">
-                            {m.charAt(0)}
-                          </div>
+                          <div key={i} className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[9px] font-bold text-[#3530B8] border border-white">{m.charAt(0)}</div>
                         ))}
                       </div>
                     </td>
-                    <td className="py-4 px-2 block md:table-cell text-left">
-                      <button onClick={() => setSelectedProject(p)} className="text-[11px] font-bold text-[#3530B8] border border-[#3530B8] px-3 py-1.5 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all">
+                    <td className="hidden md:table-cell py-4 px-2">
+                      <div className="flex gap-2">
+                        {p.members.map((m, i) => (
+                          <div key={i} className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-[#3530B8] border border-white">{m.charAt(0)}</div>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="hidden md:table-cell py-4 px-2">
+                      <button onClick={() => setSelectedProject(p)} className="text-[11px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-3 py-1.5 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all">
                         상세보기
                       </button>
                     </td>
