@@ -1,6 +1,6 @@
 ﻿import React, { useState,useEffect } from 'react';
 import Pagination from '../../components/common/Pagination';
-import { getAllUsers, updateUsersInfo, updateUsersState } from './adminApi';
+import { getAllUsers, updateUsersInfo, updateUsersState, getDeptList, getRankList } from './adminApi';
 
 const AdminUsers = () => {
   // UI 확인용 하드코딩 더미 데이터
@@ -18,14 +18,9 @@ const AdminUsers = () => {
   const [isRankOpen, setIsRankOpen] = useState(false);
   const [isPermissionOpen, setIsPermissionOpen] = useState(false);
 
-  // 부서, 직급, 권한 리스트
-  const deptList = [
-    "기술본부 (TECH)", "경영지원본부 (MSD)", "사업운영본부 (BOD)", "운영총괄본부 (OPSHQ)",
-    "개발팀 (DEV)", "기획팀 (PM)", "디자인팀 (DS)",
-    "인사팀 (HR)", "총무팀 (GA)", "재무팀 (FN)", "IT팀 (IT)",
-    "마케팅팀 (MKT)", "고객지원팀 (CS)", "운영총괄팀 (OPS)"
-  ];
-  const rankList = ["사원", "대리", "과장", "차장", "부서장", "본부장"];
+  // 부서, 직급 리스트 (API로부터 가져옴)
+  const [deptList, setDeptList] = useState([]);
+  const [rankList, setRankList] = useState([]);
   const permissionList = ["USER", "ADMIN"];
 
   // 현재 선택된 탭 관리
@@ -47,10 +42,11 @@ const AdminUsers = () => {
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [editingId]);
 
-  // 직원 정보 출력
+  // 직원 정보 및 부서/직급 리스트 출력
   useEffect(() => {
-    getAllUsers().then(resp=>
-      setEmployees(resp.data));
+    getAllUsers().then(resp=> setEmployees(resp.data));
+    getDeptList().then(resp => setDeptList(resp.data));
+    getRankList().then(resp => setRankList(resp.data));
   }, []);
 
   // 상태별 인원수 계산
@@ -72,26 +68,47 @@ const AdminUsers = () => {
       name: selectedUser.name,
       dept_name: selectedUser.dept_name,
       rank_name: selectedUser.rank_name,
-      permission: selectedUser.id === 3 ? "ADMIN" : "USER"
+      dept_seq: selectedUser.dept_seq, 
+      rank_seq: selectedUser.rank_seq ,
+      role: selectedUser.role
     });
     setIsDetailEditing(true);
   };
 
   // 상세 정보 저장
   const handleDetailSave = () => {
-    updateUsersInfo(selectedUser.users_seq,editForm).then(()=>{
+       console.log("보내는 데이터:", {
+       users_seq: selectedUser.users_seq,
+       ...editForm
+     });
+
+    updateUsersInfo(selectedUser.users_seq, editForm).then(() => {
       setEmployees(prev => prev.map(emp => 
         emp.users_seq === selectedUser.users_seq ? 
-        { ...emp, 
-          name: editForm.name, dept_name: editForm.dept_name, 
-          rank_name: editForm.rank_name, role:editForm.role } : emp
+        { 
+          ...emp, 
+          name: editForm.name, 
+          dept_name: editForm.dept_name, 
+          rank_name: editForm.rank_name, 
+          dept_seq: editForm.dept_seq,
+          rank_seq: editForm.rank_seq,
+          role: editForm.role 
+        } : emp
       ));
       setSelectedUser(prev => ({
          ...prev, 
-         name: editForm.name, dept_name: editForm.dept_name,
-         rank_name: editForm.rank_name, role:editForm.role }));
-      })
-    setIsDetailEditing(false);
+         name: editForm.name, 
+         dept_name: editForm.dept_name,
+         rank_name: editForm.rank_name, 
+         dept_seq: editForm.dept_seq,
+         rank_seq: editForm.rank_seq,
+         role: editForm.role 
+      }));
+      setIsDetailEditing(false);
+    }).catch(err => {
+      console.error("수정 실패:", err);
+      alert("정보 수정 중 오류가 발생했습니다.");
+    });
   };
 
   // 상태 변경 핸들러
@@ -183,10 +200,10 @@ const AdminUsers = () => {
               <tbody className="divide-y divide-slate-100 sm:divide-slate-50/60 block sm:table-row-group">
                 {filteredEmployees.map((emp) => (
                   <tr 
-                    key={emp.id} 
+                    key={emp.users_seq} 
                     onClick={() => { setSelectedUser(emp); setIsDetailEditing(false); }}
                     className={`hover:bg-slate-50/40 transition-colors block sm:table-row py-4 sm:py-0 border-b border-slate-50 sm:border-none
-                       relative cursor-pointer ${selectedUser?.id === emp.id ? 'bg-[#F0F4FF] hover:bg-[#F0F4FF]' : ''}`}>
+                       relative cursor-pointer ${selectedUser?.users_seq === emp.users_seq ? 'bg-[#F0F4FF] hover:bg-[#F0F4FF]' : ''}`}>
                     
                     <td className="py-1 sm:py-4 pl-2 text-xs font-bold text-slate-400 font-mono block sm:table-cell sm:text-slate-700 sm:align-middle">
                       <span className="inline sm:hidden text-[0.625rem] font-medium text-slate-300 mr-1">사번</span>
@@ -213,9 +230,11 @@ const AdminUsers = () => {
                     </td>
                     <td className="py-1 sm:py-4 pl-1 sm:pl-0 text-left sm:text-center inline-block sm:table-cell sm:align-middle">
                       <span className={`inline-block px-2 py-0.5 rounded-md text-[0.625rem] font-bold ${
-                        emp.id === 3 ? 'bg-purple-50 text-purple-600 border border-purple-100' : 'bg-slate-50 text-slate-500 border border-slate-100'
+                        emp.role === 'ADMIN'
+                          ? 'bg-purple-50 text-purple-600 border border-purple-100'
+                          : 'bg-slate-50 text-slate-500 border border-slate-100'
                       }`}>
-                        {emp.id === 3 ? 'ADMIN' : 'USER'}
+                        {emp.role}
                       </span>
                     </td>
 
@@ -351,14 +370,14 @@ const AdminUsers = () => {
                             <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
                               {deptList.map((dept, idx) => (
                                 <div 
-                                  key={idx}
+                                  key={dept.dept_seq}
                                   onClick={() => { 
-                                    setEditForm(prev => ({ ...prev, dept_name: dept }));
+                                    setEditForm(prev => ({ ...prev, dept_name: dept.dept_name, dept_seq: dept.dept_seq }));
                                     setIsDeptOpen(false); 
                                   }}
                                   className="px-3 py-2 text-[0.625rem] hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-bold border-b border-gray-50 last:border-0"
                                 >
-                                  {dept}
+                                  {dept.dept_name}
                                 </div>
                               ))}
                             </div>
@@ -385,14 +404,14 @@ const AdminUsers = () => {
                             <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
                               {rankList.map((rank, idx) => (
                                 <div 
-                                  key={idx}
+                                  key={rank.rank_seq}
                                   onClick={() => { 
-                                    setEditForm(prev => ({ ...prev, rank_name: rank }));
+                                    setEditForm(prev => ({ ...prev, rank_name: rank.rank_name, rank_seq: rank.rank_seq }));
                                     setIsRankOpen(false); 
                                   }}
                                   className="px-3 py-2 text-[0.625rem] hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-bold border-b border-gray-50 last:border-0"
                                 >
-                                  {rank}
+                                  {rank.rank_name}
                                 </div>
                               ))}
                             </div>
@@ -410,7 +429,7 @@ const AdminUsers = () => {
                             onClick={() => { setIsPermissionOpen(!isPermissionOpen); setIsDeptOpen(false); setIsRankOpen(false); }}
                             className={`w-full px-3 py-1.5 bg-white border ${isPermissionOpen ? 'border-[#3530B8] ring-2 ring-[#3530B8]/5' : 'border-gray-200'} rounded-lg text-[0.6875rem] font-bold transition-all cursor-pointer flex justify-between items-center text-slate-700`}
                           >
-                            <span>{editForm.permission}</span>
+                            <span>{editForm.role}</span>
                             <svg className={`w-3 h-3 text-gray-400 transition-transform ${isPermissionOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
@@ -421,7 +440,7 @@ const AdminUsers = () => {
                                 <div 
                                   key={idx}
                                   onClick={() => { 
-                                    setEditForm(prev => ({ ...prev, permission: perm }));
+                                    setEditForm(prev => ({ ...prev, role: perm }));
                                     setIsPermissionOpen(false); 
                                   }}
                                   className="px-3 py-2 text-[0.625rem] hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-bold border-b border-gray-50 last:border-0"
@@ -434,9 +453,11 @@ const AdminUsers = () => {
                         </div>
                       ) : (
                         <span className={`inline-block px-2 py-0.5 rounded-md text-[0.625rem] font-bold ${
-                          selectedUser.id === 3 ? 'bg-purple-50 text-purple-600 border border-purple-100' : 'bg-slate-50 text-slate-500 border border-slate-100'
+                          selectedUser.role === 'ADMIN' 
+                            ? 'bg-purple-50 text-purple-600 border border-purple-100' 
+                            : 'bg-slate-50 text-slate-500 border border-slate-100'
                         }`}>
-                          {selectedUser.id === 3 ? 'ADMIN' : 'USER'}
+                          {selectedUser.role}
                         </span>
                       )}
                     </div>
