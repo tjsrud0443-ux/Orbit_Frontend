@@ -15,3 +15,10 @@ export const updateUsersState = (upUsersSeq, newStatus) => maxios.put("/admin/hr
     users_seq:upUsersSeq,
     status:newStatus
 });
+export const updateUsersInfo = (usersSeq, editForm) =>maxios.put("/admin/hr/updateUsersInfo",{
+    users_seq:usersSeq,
+    name:editForm.name,
+    dept_seq:editForm.dept_seq,
+    rank_seq: editForm.rank_seq,
+    role:editForm.role
+})

@@ -1,6 +1,6 @@
 ﻿import React, { useState,useEffect } from 'react';
 import Pagination from '../../components/common/Pagination';
-import { getAllUsers, updateUsersState } from './adminApi';
+import { getAllUsers, updateUsersInfo, updateUsersState } from './adminApi';
 
 const AdminUsers = () => {
   // UI 확인용 하드코딩 더미 데이터
@@ -20,19 +20,19 @@ const AdminUsers = () => {
 
   // 부서, 직급, 권한 리스트
   const deptList = [
-    "대표이사", "기술본부 (TECH)", "개발팀 (DEV)", "기획팀 (PM)", "디자인팀 (DS)",
-    "경영지원본부 (MSD)", "인사팀 (HR)", "총무팀 (GA)", "재무팀 (FN)", "IT팀 (IT)",
-    "사업운영본부 (BOD)", "마케팅팀 (MKT)", "고객지원팀 (CS)",
-    "운영총괄본부 (OPSHQ)", "운영총괄팀 (OPS)"
+    "기술본부 (TECH)", "경영지원본부 (MSD)", "사업운영본부 (BOD)", "운영총괄본부 (OPSHQ)",
+    "개발팀 (DEV)", "기획팀 (PM)", "디자인팀 (DS)",
+    "인사팀 (HR)", "총무팀 (GA)", "재무팀 (FN)", "IT팀 (IT)",
+    "마케팅팀 (MKT)", "고객지원팀 (CS)", "운영총괄팀 (OPS)"
   ];
-  const rankList = ["사원", "대리", "과장", "차장", "부서장", "본부장", "대표"];
+  const rankList = ["사원", "대리", "과장", "차장", "부서장", "본부장"];
   const permissionList = ["USER", "ADMIN"];
 
   // 현재 선택된 탭 관리
   const [activeTab, setActiveTab] = useState('전체');
 
   // 외부 클릭 시 수정 모드 및 드롭다운 해제
-  React.useEffect(() => {
+ useEffect(() => {
     const handleOutsideClick = (e) => {
       if (editingId !== null && !e.target.closest('.mobile-edit-btn')) {
         setEditingId(null);
@@ -79,25 +79,42 @@ const AdminUsers = () => {
 
   // 상세 정보 저장
   const handleDetailSave = () => {
-    setEmployees(prev => prev.map(emp => 
-      emp.id === selectedUser.id ? { ...emp, name: editForm.name, dept_name: editForm.dept_name, rank_name: editForm.rank_name } : emp
-    ));
-    setSelectedUser(prev => ({ ...prev, name: editForm.name, dept_name: editForm.dept_name, rank_name: editForm.rank_name }));
+    updateUsersInfo(selectedUser.users_seq,editForm).then(()=>{
+      setEmployees(prev => prev.map(emp => 
+        emp.users_seq === selectedUser.users_seq ? 
+        { ...emp, 
+          name: editForm.name, dept_name: editForm.dept_name, 
+          rank_name: editForm.rank_name, role:editForm.role } : emp
+      ));
+      setSelectedUser(prev => ({
+         ...prev, 
+         name: editForm.name, dept_name: editForm.dept_name,
+         rank_name: editForm.rank_name, role:editForm.role }));
+      })
     setIsDetailEditing(false);
   };
 
   // 상태 변경 핸들러
   const handleStatusChange = (e, upUsersSeq, newStatus) => {
     e.stopPropagation(); // 행 클릭 이벤트 방지
-    updateUsersState(upUsersSeq,newStatus).then(()=>{
+
+    // 서버로 보낼 상태값과 UI에 표시할 한글 상태값 매핑
+    const statusMap = {
+      'ACTIVE': '재직',
+      'INACTIVE': '휴직',
+      'REJECTED': '퇴사'
+    };
+    const koreanStatus = statusMap[newStatus] || newStatus;
+
+    updateUsersState(upUsersSeq, newStatus).then(() => {
       setEmployees(prev => prev.map(emp => 
-        emp.users_seq === upUsersSeq ? { ...emp, status: newStatus } : emp
+        emp.users_seq === upUsersSeq ? { ...emp, status: koreanStatus } : emp
       ));
       setEditingId(null); // 수정 완료 후 버튼 숨김
       if (selectedUser?.users_seq === upUsersSeq) {
-        setSelectedUser(prev => ({ ...prev, status: newStatus }));
+        setSelectedUser(prev => ({ ...prev, status: koreanStatus }));
       }
-    })
+    });
   };
 
   return (
@@ -171,30 +188,30 @@ const AdminUsers = () => {
                     className={`hover:bg-slate-50/40 transition-colors block sm:table-row py-4 sm:py-0 border-b border-slate-50 sm:border-none
                        relative cursor-pointer ${selectedUser?.id === emp.id ? 'bg-[#F0F4FF] hover:bg-[#F0F4FF]' : ''}`}>
                     
-                    <td className="py-1 sm:py-4 pl-2 text-xs font-bold text-slate-400 font-mono block sm:table-cell sm:text-slate-700">
+                    <td className="py-1 sm:py-4 pl-2 text-xs font-bold text-slate-400 font-mono block sm:table-cell sm:text-slate-700 sm:align-middle">
                       <span className="inline sm:hidden text-[0.625rem] font-medium text-slate-300 mr-1">사번</span>
                       {emp.users_seq}
                     </td>
 
                     {/* 이름, 아이디 (모바일에서 한 줄) */}
-                    <td className="pt-2 pb-1 sm:py-4 pl-4 sm:pl-0 text-sm sm:text-xs font-semibold sm:font-bold text-slate-800 sm:text-slate-700 inline-block sm:table-cell whitespace-nowrap">
+                    <td className="py-1 sm:py-4 pl-4 sm:pl-0 text-sm sm:text-xs font-semibold sm:font-bold text-slate-800 sm:text-slate-700 inline-block sm:table-cell whitespace-nowrap align-baseline sm:align-middle">
                       {emp.name}
                     </td>
-                    <td className="py-0.5 sm:py-4 pl-1 sm:pl-0 text-[10px] text-slate-400 font-mono inline-block sm:table-cell sm:text-left whitespace-nowrap">
+                    <td className="py-1 sm:py-4 pl-1 sm:pl-0 text-[10px] text-slate-400 font-mono inline-block sm:table-cell sm:text-left whitespace-nowrap align-baseline sm:align-middle">
                       {emp.id}
                     </td>
 
-                    <td className="py-0.5 sm:py-4 pl-4 sm:pl-0 text-xs text-slate-500 sm:text-slate-600 block sm:table-cell font-medium whitespace-nowrap">
+                    <td className="py-1 sm:py-4 pl-4 sm:pl-0 text-xs text-slate-500 sm:text-slate-600 block sm:table-cell font-medium whitespace-nowrap sm:align-middle">
                       <span className="inline sm:hidden text-slate-300 mr-1">부서:</span>
                       {emp.dept_name}
                     </td>
 
                     {/* 직급, 권한 (모바일에서 한 줄) */}
-                    <td className="py-0.5 sm:py-4 pl-4 sm:pl-0 text-xs text-slate-400 sm:text-slate-500 inline-block sm:table-cell">
+                    <td className="py-1 sm:py-4 pl-4 sm:pl-0 text-xs text-slate-400 sm:text-slate-500 inline-block sm:table-cell sm:align-middle">
                       <span className="inline sm:hidden text-slate-300 mr-1">직급:</span>
                       {emp.rank_name}
                     </td>
-                    <td className="py-1 sm:py-4 pl-1 sm:pl-0 text-left sm:text-center inline-block sm:table-cell">
+                    <td className="py-1 sm:py-4 pl-1 sm:pl-0 text-left sm:text-center inline-block sm:table-cell sm:align-middle">
                       <span className={`inline-block px-2 py-0.5 rounded-md text-[0.625rem] font-bold ${
                         emp.id === 3 ? 'bg-purple-50 text-purple-600 border border-purple-100' : 'bg-slate-50 text-slate-500 border border-slate-100'
                       }`}>
@@ -202,7 +219,7 @@ const AdminUsers = () => {
                       </span>
                     </td>
 
-                    <td className="py-1 sm:py-4 pl-4 sm:pl-0 text-left sm:text-center block sm:table-cell mobile-status-badge absolute right-4 top-8 sm:static">
+                    <td className="py-1 sm:py-4 pl-4 sm:pl-0 text-left sm:text-center block sm:table-cell mobile-status-badge absolute right-4 top-8 sm:static sm:align-middle">
                       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-center whitespace-nowrap ${
                         emp.status === '재직' ? 'bg-[#F0FDF4] text-[#10B981]' : 
                         emp.status === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' : 
@@ -212,7 +229,7 @@ const AdminUsers = () => {
                       </span>
                     </td>
 
-                    <td className="py-1 sm:py-4 pl-4 sm:pl-0 text-[0.6875rem] sm:text-xs text-slate-400 font-mono block sm:table-cell">
+                    <td className="py-1 sm:py-4 pl-4 sm:pl-0 text-[0.6875rem] sm:text-xs text-slate-400 font-mono block sm:table-cell sm:align-middle">
                       <span className="inline sm:hidden text-slate-300 mr-1">입사일:</span>
                       {emp.hire_date ? String(emp.hire_date).split(' ')[0] : ''}
                     </td>
@@ -320,7 +337,7 @@ const AdminUsers = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-500">부서</span>
                       {isDetailEditing ? (
-                        <div className="relative custom-dropdown w-48">
+                        <div className="relative custom-dropdown w-40">
                           <div 
                             onClick={() => { setIsDeptOpen(!isDeptOpen); setIsRankOpen(false); setIsPermissionOpen(false); }}
                             className={`w-full px-3 py-1.5 bg-white border ${isDeptOpen ? 'border-[#3530B8] ring-2 ring-[#3530B8]/5' : 'border-gray-200'} rounded-lg text-[0.6875rem] font-bold transition-all cursor-pointer flex justify-between items-center text-slate-700`}
@@ -354,7 +371,7 @@ const AdminUsers = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-500">직급</span>
                       {isDetailEditing ? (
-                        <div className="relative custom-dropdown w-48">
+                        <div className="relative custom-dropdown w-40">
                           <div 
                             onClick={() => { setIsRankOpen(!isRankOpen); setIsDeptOpen(false); setIsPermissionOpen(false); }}
                             className={`w-full px-3 py-1.5 bg-white border ${isRankOpen ? 'border-[#3530B8] ring-2 ring-[#3530B8]/5' : 'border-gray-200'} rounded-lg text-[0.6875rem] font-bold transition-all cursor-pointer flex justify-between items-center text-slate-700`}
@@ -388,7 +405,7 @@ const AdminUsers = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-500">권한</span>
                       {isDetailEditing ? (
-                        <div className="relative custom-dropdown w-48">
+                        <div className="relative custom-dropdown w-40">
                           <div 
                             onClick={() => { setIsPermissionOpen(!isPermissionOpen); setIsDeptOpen(false); setIsRankOpen(false); }}
                             className={`w-full px-3 py-1.5 bg-white border ${isPermissionOpen ? 'border-[#3530B8] ring-2 ring-[#3530B8]/5' : 'border-gray-200'} rounded-lg text-[0.6875rem] font-bold transition-all cursor-pointer flex justify-between items-center text-slate-700`}
