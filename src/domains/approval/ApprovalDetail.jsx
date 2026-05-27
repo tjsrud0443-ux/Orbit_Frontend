@@ -7,13 +7,12 @@ import VacationForm from './forms/VacationForm';
 import PaymentForm from './forms/PaymentForm';
 import GeneralForm from './forms/GeneralForm';
 import PurchaseForm from './forms/PurchaseForm';
-import { approvalApi, getAllEmployees } from './approvalApi';
 
 // 결재자 선택 모달 컴포넌트
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
   const { allEmployees } = useEmployeeStore();
-  if (!isOpen) return null;
   const [searchQuery, setSearchQuery] = useState('');
+  if (!isOpen) return null;
 
   const filtered = searchQuery 
     ? allEmployees.filter(emp => 
