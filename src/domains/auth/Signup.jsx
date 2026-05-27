@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Signup_pic from '../../assets/Signup_pic.png';
 import { duplCheck, signupRequest } from './authApi';
+import { IMAGES } from '../../images/images';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -254,7 +254,7 @@ const Signup = () => {
             </div>
             
             <div className="relative w-full flex items-center justify-center group transition-all duration-500">
-              <img src={Signup_pic} className="w-full h-auto transform transition-transform" alt="Signup Visual" />
+              <img src={IMAGES.SIGNUP_PIC} className="w-full h-auto transform transition-transform" alt="Signup Visual" />
             </div>
           </div>
         </div>
