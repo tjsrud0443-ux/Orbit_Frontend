@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faPlus,
@@ -24,6 +24,7 @@ const AdminDept = () => {
   const [loading, setLoading] = useState(true);
 
   // --- 2. UI States ---
+  const sidePanelRef = useRef(null); // Ref for outside click detection
   const [expandedNodes, setExpandedNodes] = useState(new Set());
   const [formMode, setFormMode] = useState(null); // 'CREATE_HQ', 'CREATE_SUB', 'EDIT'
   const [panelTitle, setPanelTitle] = useState(''); // Persist title during transition
@@ -59,6 +60,26 @@ const AdminDept = () => {
     if (formMode === 'CREATE_HQ') setPanelTitle('본부 생성');
     else if (formMode === 'CREATE_SUB') setPanelTitle('부서 생성');
     else if (formMode === 'EDIT') setPanelTitle('정보 수정');
+  }, [formMode]);
+
+  // Handle outside click to close panel
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Trigger buttons (HQ/Sub create, Edit) shouldn't trigger this immediately
+      // Using data attributes or specific classes for triggers is safer
+      const isTrigger = event.target.closest('.action-trigger');
+      
+      if (sidePanelRef.current && !sidePanelRef.current.contains(event.target) && !isTrigger) {
+        handleCloseForm();
+      }
+    };
+
+    if (formMode) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, [formMode]);
 
   // --- 4. Helper Logic ---
@@ -148,7 +169,6 @@ const AdminDept = () => {
     const hasChildren = node.children && node.children.length > 0;
     const memberCount = getDeptMemberCount(node);
 
-    // 최상위 루트 노드(본사)의 경우 표시 이름 보정
     const displayName = level === 0 ? '(주)Lunex Soft (본사)' : node.deptName;
 
     return (
@@ -190,14 +210,14 @@ const AdminDept = () => {
                 <>
                   <button
                     onClick={() => openEdit(node)}
-                    className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-[#3530B8] transition-all flex items-center justify-center cursor-pointer"
+                    className="action-trigger w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-[#3530B8] transition-all flex items-center justify-center cursor-pointer"
                     title="수정"
                   >
                     <FontAwesomeIcon icon={faEdit} className="text-xs" />
                   </button>
                   <button
                     onClick={() => handleDelete(node)}
-                    className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center cursor-pointer"
+                    className="action-trigger w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center cursor-pointer"
                     title="삭제"
                   >
                     <FontAwesomeIcon icon={faTrashAlt} className="text-xs" />
@@ -231,14 +251,14 @@ const AdminDept = () => {
         <div className="flex gap-3">
           <button
             onClick={openCreateHq}
-            className="px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm cursor-pointer"
+            className="action-trigger px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm cursor-pointer"
           >
             <FontAwesomeIcon icon={faPlus} className="text-[#3530B8]" />
             본부 생성
           </button>
           <button
             onClick={openCreateSub}
-            className="px-4 py-2.5 bg-[#3530B8] text-white rounded-xl text-xs font-bold hover:bg-[#2a2594] transition-all flex items-center gap-2 shadow-lg shadow-indigo-100 cursor-pointer"
+            className="action-trigger px-4 py-2.5 bg-[#3530B8] text-white rounded-xl text-xs font-bold hover:bg-[#2a2594] transition-all flex items-center gap-2 shadow-lg shadow-indigo-100 cursor-pointer"
           >
             <FontAwesomeIcon icon={faPlus} />
             부서 생성
@@ -276,8 +296,9 @@ const AdminDept = () => {
 
         {/* Right Panel: Side Panel */}
         <aside
+          ref={sidePanelRef}
           className={`bg-white border border-slate-200 rounded-2xl shadow-xl z-40 transition-all duration-500 ease-in-out flex flex-col overflow-hidden self-start
-            ${formMode ? 'w-[320px] lg:w-[380px] opacity-100 translate-x-0' : 'w-0 opacity-0 translate-x-10 pointer-events-none'}
+            ${formMode ? 'w-[320px] lg:w-[380px] opacity-100 translate-x-0 ml-0' : 'w-0 opacity-0 translate-x-10 ml-[-24px] pointer-events-none'}
           `}
           style={{ height: formMode ? 'auto' : '0', maxHeight: '70%', minHeight: formMode ? '400px' : '0' }}
         >
