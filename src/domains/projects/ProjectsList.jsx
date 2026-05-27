@@ -80,41 +80,41 @@ const ProjectsList = () => {
   };
 
   return (
-    <div className="flex flex-col h-full py-8 px-2">
+    <div className="flex flex-col h-full py-8 px-2 overflow-y-auto">
       <div className="mb-6 px-2">
         <h1 className="text-xl md:text-2xl font-extrabold text-[#121331]">프로젝트 관리</h1>
         <p className="text-xs md:text-sm text-[#8a92a6] mt-1">진행 중인 프로젝트와 참여 인원을 관리합니다.</p>
       </div>
 
-      <div className="flex h-full gap-6 overflow-hidden">
-        <div className={`bg-white rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-8 flex flex-col transition-all duration-300 ${selectedProject ? 'w-[65%]' : 'w-full'}`}>
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex bg-[#f4f7fc] p-1 rounded-2xl w-fit">
+      <div className="flex flex-col md:flex-row h-auto gap-6">
+        <div className={`bg-white rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-4 md:p-8 flex flex-col transition-all duration-300 ${selectedProject ? 'md:w-[65%] w-full' : 'w-full'}`}>
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+            <div className="flex bg-[#f4f7fc] p-1 rounded-2xl w-full md:w-fit overflow-x-auto">
               {['전체', '진행중', '완료'].map(tab => (
                 <button key={tab} onClick={() => { setFilter(tab === '진행중' ? '진행 중' : tab); setCurrentPage(1); }}
-                  className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${filter === tab || (tab === '진행중' && filter === '진행 중') ? 'bg-[#3530B8] text-white shadow-sm' : 'text-[#8a92a6]'}`}>
+                  className={`flex-1 md:flex-none px-6 py-2 rounded-xl text-sm font-bold transition-all ${filter === tab || (tab === '진행중' && filter === '진행 중') ? 'bg-[#3530B8] text-white shadow-sm' : 'text-[#8a92a6]'}`}>
                   {tab}
                 </button>
               ))}
             </div>
-            <div className="flex gap-2">
-              <select className="bg-[#f4f7fc] px-4 py-2.5 rounded-xl text-sm text-gray-600 outline-none" value={searchBy} onChange={e => setSearchBy(e.target.value)}>
+            <div className="flex gap-2 w-full md:w-auto items-center">
+              <select className="bg-[#f4f7fc] px-4 py-2.5 rounded-xl text-sm text-gray-600 outline-none flex-1 md:flex-none" value={searchBy} onChange={e => setSearchBy(e.target.value)}>
                 <option>프로젝트명</option><option>참여자</option>
               </select>
-              <div className="relative flex items-center">
+              <div className="relative flex items-center flex-1 md:flex-none">
                 <FontAwesomeIcon icon={faSearch} className="absolute left-4 text-[#8a92a6]" />
-                <input placeholder="검색어 입력" value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
-                  className="pl-12 pr-4 py-2.5 bg-[#f4f7fc] rounded-xl text-sm w-48 outline-none" />
+                <input placeholder="검색" value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
+                  className="pl-12 pr-4 py-2.5 bg-[#f4f7fc] rounded-xl text-sm w-full md:w-48 outline-none" />
               </div>
-              <button onClick={() => setIsModalOpen(true)} className="bg-[#3a36db] text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-[#2a2594]">
+              <button onClick={() => setIsModalOpen(true)} className="bg-[#3a36db] text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-[#2a2594] whitespace-nowrap">
                 <FontAwesomeIcon icon={faPlus} className="mr-2" /> 새 프로젝트
               </button>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-visible">
             <table className="w-full text-left border-collapse">
-              <thead>
+              <thead className="hidden md:table-header-group">
                 <tr className="text-[#8a92a6] text-sm border-b border-gray-100">
                   <th className="pb-4 font-medium px-2">프로젝트 정보</th>
                   <th className="pb-4 font-medium">참여자</th>
@@ -122,8 +122,8 @@ const ProjectsList = () => {
               </thead>
               <tbody>
                 {paginatedProjects.map(p => (
-                  <tr key={p.id} onClick={() => setSelectedProject(p)} className="border-b border-gray-50 hover:bg-[#f8fbff] cursor-pointer transition-colors group">
-                    <td className="py-6 px-2">
+                  <tr key={p.id} onClick={() => setSelectedProject(p)} className="border-b border-gray-50 hover:bg-[#f8fbff] cursor-pointer transition-colors block md:table-row w-full mb-4 md:mb-0">
+                    <td className="py-4 px-2 block md:table-cell">
                       <div className="font-bold text-[#1a1c3d] text-base">{p.title}</div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs text-gray-400">{p.period}</span>
@@ -132,7 +132,7 @@ const ProjectsList = () => {
                         </span>
                       </div>
                     </td>
-                    <td className="py-6">
+                    <td className="py-2 md:py-6 block md:table-cell">
                       <div className="flex items-center gap-2 p-2 bg-gray-50/50 rounded-xl w-fit border border-gray-100/50">
                         {p.members.map((m, i) => <div key={i} className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-[#3a36db] border border-white">{m.charAt(0)}</div>)}
                       </div>
@@ -152,8 +152,9 @@ const ProjectsList = () => {
           </div>
         </div>
 
+        {/* 데스크탑 뷰: 상세 정보 패널 */}
         {selectedProject && (
-          <div className="w-[35%] bg-white rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-10 transition-all duration-300 animate-in slide-in-from-right-8 fade-in flex flex-col">
+          <div className="hidden md:flex w-[35%] bg-white rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-10 transition-all duration-300 flex-col">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-xl font-bold text-[#1a1c3d]">프로젝트 상세</h2>
               <button onClick={() => setSelectedProject(null)}><FontAwesomeIcon icon={faTimes} /></button>
@@ -168,8 +169,28 @@ const ProjectsList = () => {
             <div className="flex flex-wrap gap-2 p-4 rounded-xl">{selectedProject.members.map((m, i) => <div key={i} className="px-3 py-1 border rounded-lg text-xs border border-[#edf2f9] shadow-sm">{m}</div>)}</div>
           </div>
         )}
+
+        {/* 모바일 뷰: 상세 정보 모달 */}
+        {selectedProject && (
+          <div className="md:hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm shadow-2xl">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-bold">프로젝트 상세</h2>
+                <button onClick={() => setSelectedProject(null)}><FontAwesomeIcon icon={faTimes} /></button>
+              </div>
+              <h3 className="text-md font-bold mb-1">{selectedProject.title}</h3>
+              <p className="text-xs text-gray-500 mb-4">{selectedProject.period}</p>
+              <h4 className="text-[10px] font-bold text-[#8a92a6] uppercase mb-2">내용</h4>
+              <p className="text-xs text-gray-700 mb-4 bg-[#f4f7fc] p-3 rounded-lg">{selectedProject.desc}</p>
+              <h4 className="text-[10px] font-bold text-[#8a92a6] uppercase mb-2">참여자</h4>
+              <div className="flex flex-wrap gap-2">{selectedProject.members.map((m, i) => <div key={i} className="px-2 py-1 border rounded-lg text-[10px] border-[#edf2f9] shadow-sm">{m}</div>)}</div>
+            </div>
+          </div>
+        )}
       </div>
 
+      {/* 모달 관련 생략 (isModalOpen) */}
+      {/* 새 프로젝트 생성 모달 */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-10 rounded-[2.5rem] w-[550px] shadow-2xl">
@@ -178,35 +199,18 @@ const ProjectsList = () => {
             <input className="w-full p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none" onChange={e => setNewProject({ ...newProject, title: e.target.value })} />
 
             <div className="flex gap-4 mb-4">
-              {/* 📅 1. 시작일 선택 영역 */}
               <div className="flex-1 relative">
                 <label className="block text-xs font-bold text-[#1a1c3d] mb-2">시작일 *</label>
-                <div
-                  onClick={() => { setIsStartCalendarOpen(!isStartCalendarOpen); setIsEndCalendarOpen(false); }}
-                  className="w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-sm"
-                >
+                <div onClick={() => { setIsStartCalendarOpen(!isStartCalendarOpen); setIsEndCalendarOpen(false); }} className="w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-sm">
                   {newProject.start || "날짜 선택"}
                 </div>
-
                 {isStartCalendarOpen && (
                   <Calendar
                     value={newProject.start}
-                    minDate={new Date().toISOString().split('T')[0]} // 오늘 날짜 기본 가이드
+                    minDate={new Date().toISOString().split('T')[0]}
                     onChange={(date) => {
-                      const todayStr = new Date().toISOString().split('T')[0];
-
-                      // 1-1. 선택한 시작일이 오늘보다 과거인지 체크
-                      if (date < todayStr) {
-                        alert('시작일은 오늘 이후의 날짜만 선택할 수 있습니다.');
-                        return;
-                      }
-
-                      // 1-2. 검증 통과 시 상태 반영 (종료일 꼬임 자동 보정)
-                      setNewProject(prev => ({
-                        ...prev,
-                        start: date,
-                        end: prev.end && prev.end < date ? date : prev.end
-                      }));
+                      if (date < new Date().toISOString().split('T')[0]) { alert('시작일은 오늘 이후의 날짜만 선택할 수 있습니다.'); return; }
+                      setNewProject(prev => ({ ...prev, start: date, end: prev.end && prev.end < date ? date : prev.end }));
                       setIsStartCalendarOpen(false);
                     }}
                     onClose={() => setIsStartCalendarOpen(false)}
@@ -214,28 +218,17 @@ const ProjectsList = () => {
                 )}
               </div>
 
-              {/* 📅 2. 종료일 선택 영역 */}
               <div className="flex-1 relative">
                 <label className="block text-xs font-bold text-[#1a1c3d] mb-2">종료일 *</label>
-                <div
-                  onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }}
-                  className="w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-sm"
-                >
+                <div onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }} className="w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-sm">
                   {newProject.end || "날짜 선택"}
                 </div>
-
                 {isEndCalendarOpen && (
                   <Calendar
                     value={newProject.end}
                     minDate={newProject.start || new Date().toISOString().split('T')[0]}
                     onChange={(date) => {
-                      // 2-1. 시작일이 지정되어 있는데, 선택한 종료일이 시작일보다 작다면 차단
-                      if (newProject.start && date < newProject.start) {
-                        alert('종료일은 시작일보다 이전일 수 없습니다.');
-                        return;
-                      }
-
-                      // 2-2. 검증 통과 시 정상 상태 변경 및 모달 닫기
+                      if (newProject.start && date < newProject.start) { alert('종료일은 시작일보다 이전일 수 없습니다.'); return; }
                       setNewProject(prev => ({ ...prev, end: date }));
                       setIsEndCalendarOpen(false);
                     }}
