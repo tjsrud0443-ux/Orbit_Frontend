@@ -7,7 +7,7 @@ import VacationForm from './forms/VacationForm';
 import PaymentForm from './forms/PaymentForm';
 import GeneralForm from './forms/GeneralForm';
 import PurchaseForm from './forms/PurchaseForm';
-import { submitVacation } from './approvalApi';
+import { submitVacation, submitPayment, submitGeneral, submitPurchase } from './approvalApi';
 
 // 결재자 선택 모달 컴포넌트
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
@@ -74,7 +74,7 @@ const ApprovalDetail = () => {
 
   const [mode, setMode] = useState('VIEW'); // EDIT or VIEW
   const [userRole, setUserRole] = useState('REFERRER'); // DRAFTER, APPROVER, REFERRER
-  const [docType, setDocType] = useState('VACATION');
+  const [doc_type, setDoc_type] = useState('VACATION');
   const [approvers, setApprovers] = useState([]);
   const [formData, setFormData] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -98,7 +98,7 @@ const ApprovalDetail = () => {
       setApprovers([]);
 
       if (isVacationPath) {
-        setDocType('VACATION');
+        setDoc_type('VACATION');
         setFormData({
           title: '',
           vacationType: '연차',
@@ -109,7 +109,7 @@ const ApprovalDetail = () => {
           referrers: []
         });
       } else if (isPaymentPath) {
-        setDocType('PAYMENT');
+        setDoc_type('PAYMENT');
         setFormData({
           title: '',
           expenditureDate: '',
@@ -119,7 +119,7 @@ const ApprovalDetail = () => {
           items: [{ id: 1, itemName: '', amount: 0, receipt: null, note: '' }]
         });
       } else if (isGeneralPath) {
-        setDocType('GENERAL');
+        setDoc_type('GENERAL');
         setFormData({
           title: '',
           requestDate: new Date().toLocaleDateString('sv-SE'),
@@ -127,7 +127,7 @@ const ApprovalDetail = () => {
           content: ''
         });
       } else if (isPurchasePath) {
-        setDocType('PURCHASE');
+        setDoc_type('PURCHASE');
         setFormData({
           title: '',
           purchaseRequestDate: '',
@@ -140,10 +140,10 @@ const ApprovalDetail = () => {
       }
     } else {
       // [조회 모드]
-      if (isVacationPath) setDocType('VACATION');
-      else if (isPaymentPath) setDocType('PAYMENT');
-      else if (isGeneralPath) setDocType('GENERAL');
-      else if (isPurchasePath) setDocType('PURCHASE');
+      if (isVacationPath) setDoc_type('VACATION');
+      else if (isPaymentPath) setDoc_type('PAYMENT');
+      else if (isGeneralPath) setDoc_type('GENERAL');
+      else if (isPurchasePath) setDoc_type('PURCHASE');
       
       fetchDocumentData(docId);
     }
@@ -154,7 +154,7 @@ const ApprovalDetail = () => {
   };
 
   // 버튼 액션
-  const handleAction = (actionType) => {
+  const handleAction = async (actionType) => {
     console.log(`Action: ${actionType}`, formData, approvers);
 
     if (actionType === 'TEMP_SAVE') {
@@ -170,40 +170,49 @@ const ApprovalDetail = () => {
       }
 
       try {
-        // formData에 섞여 있는 referrers(참조자 배열)와 순수 휴가 상세 내역(docData) 분리
+        // formData에 섞여 있는 referrers(참조자 배열) 추출
         const { referrers, ...docData } = formData;
 
-        // 각 테이블 DTO 구조에 대입하기 좋게 껍데기(Wrapper) 구조로 패킹
+        // 각 테이블 DTO 구조에 대입하기 좋게 조립
         const submitPayload = {
-          docType: docType,               // "VACATION"
-          users_id: user?.users_id,    // 공통 마스터 테이블용 기안자 ID
-        
-          // 결재 라인 테이블 DTO 배열 양식 맞추기
+          title: formData.title,
+          doc_type: doc_type,
+          users_id: user?.id,       // 기안자 ID
+          
+          // 결재자 리스트 (users_id 포함)
           approvers: approvers.map((app, index) => ({
-            users_id: app.users_id,
-            step_order: index + 1     // 오라클에 저장될 결재 순서 (1, 2, 3...)
+            users_id: app.id || app.users_id,
+            step_order: index + 1
           })),
 
-          // 참조자 테이블 DTO 배열 양식 맞추기
+          // 참조자 리스트 (users_id 포함)
           referrers: (referrers || []).map(ref => ({
-            users_id: ref.users_id
+            users_id: ref.id || ref.users_id
           })),
 
-          // 휴가 상세 테이블 DTO 양식과 1:1 매핑될 데이터
-          docData: docData
+          // 나머지 문서 데이터
+          docData: {
+            vac_type: formData.vacationType,
+            start_date: formData.startDate,
+            end_date: formData.endDate,
+            days: Number(formData.totalDays),
+            reason: formData.reason
+          }
         };
 
         console.log("🚀 오라클 백엔드로 전송할 최종 조립 데이터:", submitPayload);
 
         // 문서 타입별로 분리된 API 호출
         let response;
-        if (docType === 'VACATION') {
-          response = submitVacation(submitPayload);
-        } 
-        /* else if (docType === 'PURCHASE') {
-          response = submitPurchase(submitPayload);
-        } 
-        */
+        if (doc_type === 'VACATION') {
+          response = await submitVacation(submitPayload);
+        } else if (doc_type === 'PAYMENT') {
+          response = await submitPayment(submitPayload);
+        } else if (doc_type === 'GENERAL') {
+          response = await submitGeneral(submitPayload);
+        } else if (doc_type === 'PURCHASE') {
+          response = await submitPurchase(submitPayload);
+        }
 
         // maxios 통신 성공 시
         if (response && (response.status === 200 || response.status === 201 || response.data)) {
@@ -244,7 +253,7 @@ const ApprovalDetail = () => {
       user: user,
     };
 
-    switch (docType) {
+    switch (doc_type) {
       case 'VACATION':
         return <VacationForm {...props} />;
       case 'PAYMENT':
@@ -259,7 +268,7 @@ const ApprovalDetail = () => {
   };
 
   const getTitle = () => {
-    switch (docType) {
+    switch (doc_type) {
       case 'VACATION': return '휴가 신청서';
       case 'PAYMENT': return '지출 결의서';
       case 'GENERAL': return '일반 품의서';
