@@ -1,31 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Calendar from '../../../components/common/Calendar';
+import ReferrerSelector from '../components/ReferrerSelector';
 
 const VacationForm = ({ data, onChange, mode, user }) => {
   const isEditMode = mode === 'EDIT';
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleDateString('sv-SE');
   
   const [isStartCalendarOpen, setIsStartCalendarOpen] = useState(false);
   const [isEndCalendarOpen, setIsEndCalendarOpen] = useState(false);
-  
-  // 참조자 검색 관련 상태
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showResults, setShowResults] = useState(false);
-  
-  // 임시 직원 데이터 (실제 서비스에서는 API로 연동 권장)
-  const mockEmployees = [
-    { id: 1, name: '김철수', dept_name: '개발본부', rank_name: '팀장' },
-    { id: 2, name: '이영희', dept_name: '인사팀', rank_name: '과장' },
-    { id: 3, name: '박지민', dept_name: '경영지원팀', rank_name: '대리' },
-    { id: 4, name: '최유진', dept_name: '마케팅팀', rank_name: '본부장' },
-    { id: 5, name: '한소희', dept_name: '디자인팀', rank_name: '사원' },
-  ];
-
-  const filteredEmployees = searchQuery 
-    ? mockEmployees.filter(emp => 
-        emp.name.includes(searchQuery) || emp.dept_name.includes(searchQuery)
-      ) 
-    : [];
 
   const handleFieldChange = (field, value) => {
     if (!onChange) return;
@@ -67,23 +49,6 @@ const VacationForm = ({ data, onChange, mode, user }) => {
     ));
 
     onChange(updatedData);
-  };
-
-  const handleAddReferrer = (emp) => {
-    const currentReferrers = data.referrers || [];
-    if (currentReferrers.some(r => r.id === emp.id)) {
-      alert('이미 추가된 참조자입니다.');
-      return;
-    }
-    onChange({ ...data, referrers: [...currentReferrers, emp] });
-    setSearchQuery('');
-    setShowResults(false);
-  };
-
-  const handleRemoveReferrer = (idx) => {
-    const newReferrers = [...(data.referrers || [])];
-    newReferrers.splice(idx, 1);
-    onChange({ ...data, referrers: newReferrers });
   };
 
   return (
@@ -216,76 +181,11 @@ const VacationForm = ({ data, onChange, mode, user }) => {
       </div>
 
       {/* Referrer Selection Section */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <div className="w-1 h-3.5 bg-[#3530B8] rounded-full"></div>
-          <h2 className="text-xs font-bold text-gray-800">참조자 선택</h2>
-        </div>
-        <div className="border border-gray-200 rounded-xl p-4 bg-gray-50/30">
-          {isEditMode ? (
-            <div className="space-y-3">
-              <div className="relative">
-                <input 
-                  type="text" 
-                  placeholder="이름/부서로 검색하여 참조자를 추가하세요"
-                  className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:border-[#3530B8] transition-all"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setShowResults(true);
-                  }}
-                  onFocus={() => setShowResults(true)}
-                />
-                
-                {/* Search Results Dropdown */}
-                {showResults && searchQuery && (
-                  <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-48 overflow-y-auto">
-                    {filteredEmployees.length > 0 ? (
-                      filteredEmployees.map(emp => (
-                        <div 
-                          key={emp.id} 
-                          onClick={() => handleAddReferrer(emp)}
-                          className="p-3 hover:bg-[#F0F4FF] cursor-pointer flex justify-between items-center border-b border-gray-50 last:border-0"
-                        >
-                          <div className="flex flex-col">
-                            <span className="text-xs font-bold text-gray-700">{emp.name}</span>
-                            <span className="text-[10px] text-gray-400">{emp.dept_name}</span>
-                          </div>
-                          <span className="text-[10px] font-bold text-[#3530B8] bg-[#F0F4FF] px-2 py-0.5 rounded-full">{emp.rank_name}</span>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="p-4 text-center text-xs text-gray-400">검색 결과가 없습니다.</div>
-                    )}
-                  </div>
-                )}
-                {showResults && searchQuery && <div className="fixed inset-0 z-10" onClick={() => setShowResults(false)}></div>}
-              </div>
-              
-              <div className="flex flex-wrap gap-2">
-                {data.referrers?.map((ref, idx) => (
-                  <div key={idx} className="flex items-center gap-1.5 bg-white border border-gray-200 px-3 py-1 rounded-full text-[10px] font-bold text-gray-700 shadow-sm animate-in zoom-in-95">
-                    <span>{ref.name} ({ref.dept_name})</span>
-                    <button onClick={() => handleRemoveReferrer(idx)} className="text-gray-400 hover:text-red-500 transition-colors">✕</button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {data.referrers && data.referrers.length > 0 ? (
-                data.referrers.map((ref, idx) => (
-                  <div key={idx} className="bg-white border border-gray-100 px-3 py-1 rounded-full text-[10px] font-medium text-gray-600">
-                    {ref.name} ({ref.dept_name} {ref.rank_name})
-                  </div>
-                ))
-              ) : (
-                <span className="text-xs text-gray-400 italic">지정된 참조자가 없습니다.</span>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+      <ReferrerSelector 
+        value={data.referrers} 
+        onChange={(val) => onChange({ ...data, referrers: val })} 
+        isEditMode={isEditMode} 
+      />
     </div>
   );
 };

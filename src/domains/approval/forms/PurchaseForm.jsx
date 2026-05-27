@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Calendar from '../../../components/common/Calendar';
+import ReferrerSelector from '../components/ReferrerSelector';
 
 const PurchaseForm = ({ data, onChange, mode, user }) => {
   const isEditMode = mode === 'EDIT';
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleDateString('sv-SE');
 
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
@@ -330,6 +331,13 @@ const PurchaseForm = ({ data, onChange, mode, user }) => {
           )}
         </div>
       </div>
+
+      {/* Referrer Selection Section */}
+      <ReferrerSelector 
+        value={data.referrers} 
+        onChange={(val) => onChange({ ...data, referrers: val })} 
+        isEditMode={isEditMode} 
+      />
     </div>
   );
 };

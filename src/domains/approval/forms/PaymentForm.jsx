@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Calendar from '../../../components/common/Calendar';
+import ReferrerSelector from '../components/ReferrerSelector';
 
 const PaymentForm = ({ data, onChange, mode, user }) => {
   const isEditMode = mode === 'EDIT';
@@ -268,6 +269,13 @@ const PaymentForm = ({ data, onChange, mode, user }) => {
           </table>
         </div>
       </div>
+
+      {/* Referrer Selection Section */}
+      <ReferrerSelector 
+        value={data.referrers} 
+        onChange={(val) => onChange({ ...data, referrers: val })} 
+        isEditMode={isEditMode} 
+      />
     </div>
   );
 };
