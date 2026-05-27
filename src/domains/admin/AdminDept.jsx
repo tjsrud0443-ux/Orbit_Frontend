@@ -242,23 +242,23 @@ const AdminDept = () => {
     <div className="flex-1 bg-white flex flex-col h-screen overflow-hidden">
 
       {/* Header Section */}
-      <div className="p-8 lg:p-10 pb-4 flex items-end justify-between px-10">
+      <div className="p-8 lg:p-10 pb-4 px-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
         <div className="space-y-1.5">
           <h1 className="text-2xl font-bold text-[#1a1c3d] tracking-tight">부서 관리</h1>
           <p className="text-sm text-[#8a92a6] font-medium">그룹웨어 조직 체계와 부서 정보를 구성하고 관리합니다.</p>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex justify-end gap-3 shrink-0">
           <button
             onClick={openCreateHq}
-            className="action-trigger px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm cursor-pointer"
+            className="action-trigger px-3 sm:px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-[11px] sm:text-xs font-bold hover:bg-slate-50 transition-all flex items-center gap-1.5 sm:gap-2 shadow-sm cursor-pointer whitespace-nowrap flex-shrink-0"
           >
             <FontAwesomeIcon icon={faPlus} className="text-[#3530B8]" />
             본부 생성
           </button>
           <button
             onClick={openCreateSub}
-            className="action-trigger px-4 py-2.5 bg-[#3530B8] text-white rounded-xl text-xs font-bold hover:bg-[#2a2594] transition-all flex items-center gap-2 shadow-lg shadow-indigo-100 cursor-pointer"
+            className="action-trigger px-3 sm:px-4 py-2.5 bg-[#3530B8] text-white rounded-xl text-[11px] sm:text-xs font-bold hover:bg-[#2a2594] transition-all flex items-center gap-1.5 sm:gap-2 shadow-lg shadow-indigo-100 cursor-pointer whitespace-nowrap flex-shrink-0"
           >
             <FontAwesomeIcon icon={faPlus} />
             부서 생성
