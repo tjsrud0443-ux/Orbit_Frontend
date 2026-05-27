@@ -1,124 +1,136 @@
 import React, { useState, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faSearch, faTimes, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
-// Mock Data
+const MOCK_EMPLOYEES = [
+  { id: 1, name: '김철수', dept: '개발팀' },
+  { id: 2, name: '이영희', dept: '인사팀' },
+  { id: 3, name: '박지성', dept: '디자인팀' },
+  { id: 4, name: '최민수', dept: '영업팀' },
+];
+
 const INITIAL_PROJECTS = [
-  { id: 1, title: 'Orbit 그룹웨어 고도화', period: '2026.05.01 ~ 2026.08.31', status: '진행 중', members: ['A', 'B', 'C', 'D'], desc: '그룹웨어의 전반적인 고도화 작업 및 UI 개선' },
-  { id: 2, title: '사내 AI 챗봇 구축', period: '2026.04.10 ~ 2026.06.30', status: '진행 중', members: ['E', 'F'], desc: '사내 업무 자동화를 위한 AI 챗봇 개발' },
-  { id: 3, title: '연차 시스템 개선', period: '2026.03.01 ~ 2026.04.30', status: '완료', members: ['A', 'B'], desc: '연차 신청 프로세스 최적화' },
+  { id: 1, title: 'Orbit 그룹웨어 고도화', period: '2026.05.01 ~ 2026.08.31', status: '진행 중', members: ['김철수', '이영희'], desc: '그룹웨어의 전반적인 고도화 작업 및 UI 개선' },
+  { id: 2, title: '사내 AI 챗봇 구축', period: '2026.04.10 ~ 2026.06.30', status: '진행 중', members: ['박지성'], desc: '사내 업무 자동화를 위한 AI 챗봇 개발' },
+  { id: 3, title: '연차 시스템 개선', period: '2026.03.01 ~ 2026.04.30', status: '완료', members: ['김철수', '박지성', '최민수'], desc: '연차 신청 프로세스 최적화' },
+  { id: 4, title: '마케팅 대시보드', period: '2026.06.01 ~ 2026.09.30', status: '진행 중', members: ['이영희'], desc: '마케팅 데이터 시각화' },
 ];
 
 const ProjectsList = () => {
   const [filter, setFilter] = useState('전체');
   const [search, setSearch] = useState('');
+  const [searchBy, setSearchBy] = useState('프로젝트명');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 3;
+
   const [projects, setProjects] = useState(INITIAL_PROJECTS);
   const [selectedProject, setSelectedProject] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newProject, setNewProject] = useState({ title: '', start: '', end: '' });
+  const [newProject, setNewProject] = useState({ title: '', desc: '', start: '', end: '', members: [] });
+  const [empSearch, setEmpSearch] = useState('');
+  const [showEmpDropdown, setShowEmpDropdown] = useState(false);
 
   const filteredProjects = useMemo(() => {
-    return projects.filter(p => 
-      (filter === '전체' || p.status === filter) &&
-      (p.title.includes(search))
-    );
-  }, [filter, search, projects]);
+    return projects.filter(p => {
+      const matchesFilter = filter === '전체' || p.status === filter;
+      const matchesSearch = searchBy === '프로젝트명' 
+        ? p.title.includes(search)
+        : p.members.some(m => m.includes(search));
+      return matchesFilter && matchesSearch;
+    });
+  }, [filter, search, searchBy, projects]);
+
+  const paginatedProjects = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredProjects.slice(start, start + itemsPerPage);
+  }, [filteredProjects, currentPage]);
+
+  const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
 
   const handleCreate = () => {
+    if (!newProject.title || newProject.members.length === 0) return alert('필수 항목을 모두 입력해주세요.');
     const newEntry = {
       id: Date.now(),
       title: newProject.title,
       period: `${newProject.start} ~ ${newProject.end}`,
       status: '진행 중',
-      members: ['U'],
-      desc: '신규 프로젝트'
+      members: newProject.members.map(m => m.name),
+      desc: newProject.desc
     };
     setProjects([...projects, newEntry]);
-    alert('캘린더에 일정이 성공적으로 추가되었습니다.');
+    alert('개인 캘린더에 일정이 성공적으로 추가되었습니다.');
     setIsModalOpen(false);
-    setNewProject({ title: '', start: '', end: '' });
+    setNewProject({ title: '', desc: '', start: '', end: '', members: [] });
+  };
+
+  const addMember = (emp) => {
+    if (!newProject.members.find(m => m.id === emp.id)) {
+      setNewProject({ ...newProject, members: [...newProject.members, emp] });
+    }
+    setEmpSearch('');
+    setShowEmpDropdown(false);
+  };
+
+  const removeMember = (id) => {
+    setNewProject({ ...newProject, members: newProject.members.filter(m => m.id !== id) });
   };
 
   return (
-    <div className="flex flex-col h-full py-8 px-6 bg-[#FFFFFF]">
-      {/* Page Title Area */}
-      <div className="mb-6">
-        <h1 className="text-xl md:text-2xl font-bold text-[#121331]">프로젝트 관리</h1>
+    <div className="flex flex-col h-full py-8 px-2">
+      <div className="mb-6 px-2">
+        <h1 className="text-xl md:text-2xl font-extrabold text-[#121331]">프로젝트 관리</h1>
         <p className="text-xs md:text-sm text-[#8a92a6] mt-1">진행 중인 프로젝트와 참여 인원을 관리합니다.</p>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex flex-1 gap-6 overflow-hidden items-stretch">
-        
-        {/* 1. Left Project List Card */}
+      <div className="flex h-full gap-6 overflow-hidden">
         <div className={`bg-white rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-8 flex flex-col transition-all duration-300 ${selectedProject ? 'w-[65%]' : 'w-full'}`}>
-          {/* Header Control */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex bg-[#f4f7fc] p-1 rounded-2xl w-fit">
               {['전체', '진행중', '완료'].map(tab => (
-                <button key={tab} onClick={() => setFilter(tab === '진행중' ? '진행 중' : tab)} 
-                    className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${filter === tab || (tab === '진행중' && filter === '진행 중') ? 'bg-[#3530B8] text-white shadow-sm' : 'text-[#8a92a6]'}`}>
-                    {tab}
-                  </button>
+                <button key={tab} onClick={() => {setFilter(tab === '진행중' ? '진행 중' : tab); setCurrentPage(1);}} 
+                  className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${filter === tab || (tab === '진행중' && filter === '진행 중') ? 'bg-[#3530B8] text-white shadow-sm' : 'text-[#8a92a6]'}`}>
+                  {tab}
+                </button>
               ))}
             </div>
-            
-            <div className="flex gap-3">
+            <div className="flex gap-2">
+              <select className="bg-[#f4f7fc] px-4 py-2.5 rounded-xl text-sm text-gray-600 outline-none" value={searchBy} onChange={e => setSearchBy(e.target.value)}>
+                <option>프로젝트명</option><option>참여자</option>
+              </select>
               <div className="relative flex items-center">
                 <FontAwesomeIcon icon={faSearch} className="absolute left-4 text-[#8a92a6]" />
-                <input 
-                  placeholder="검색" 
-                  value={search} 
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-12 pr-4 py-2.5 bg-[#f4f7fc] rounded-xl text-sm w-48 outline-none" 
-                />
+                <input placeholder="검색어 입력" value={search} onChange={e => {setSearch(e.target.value); setCurrentPage(1);}}
+                  className="pl-12 pr-4 py-2.5 bg-[#f4f7fc] rounded-xl text-sm w-48 outline-none" />
               </div>
-              <button 
-                onClick={() => setIsModalOpen(true)} 
-                className="bg-[#3530B8] text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-[#2a2594] transition-all"
-              >
+              <button onClick={() => setIsModalOpen(true)} className="bg-[#3a36db] text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-[#2a2594]">
                 <FontAwesomeIcon icon={faPlus} className="mr-2" /> 새 프로젝트
               </button>
             </div>
           </div>
 
-          {/* Table */}
           <div className="flex-1 overflow-y-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="text-[#8a92a6] text-sm border-b border-gray-100">
-                  <th className="pb-4 font-medium px-2">프로젝트명</th>
-                  <th className="pb-4 font-medium">기간</th>
-                  <th className="pb-4 font-medium">진행상황</th>
-                  <th className="pb-4 font-medium text-center">참여자</th>
+                  <th className="pb-4 font-medium px-2">프로젝트 정보</th>
+                  <th className="pb-4 font-medium">참여자</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredProjects.map(p => (
-                  <tr 
-                    key={p.id} 
-                    onClick={() => setSelectedProject(p)} 
-                    className="border-b border-gray-50 hover:bg-[#f8fbff] cursor-pointer transition-colors group"
-                  >
-                    <td className="py-6 font-bold text-sm text-[#1a1c3d] px-2">{p.title}</td>
-                    <td className="py-6 text-sm text-gray-500">{p.period}</td>
-                    <td className="py-6">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${p.status === '완료' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
-                        {p.status}
-                      </span>
+                {paginatedProjects.map(p => (
+                  <tr key={p.id} onClick={() => setSelectedProject(p)} className="border-b border-gray-50 hover:bg-[#f8fbff] cursor-pointer transition-colors group">
+                    <td className="py-6 px-2">
+                      <div className="font-bold text-[#1a1c3d] text-base">{p.title}</div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-gray-400">{p.period}</span>
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${p.status === '완료' ? 'bg-gray-100 text-gray-500' : 'bg-green-100 text-green-600'}`}>
+                          {p.status}
+                        </span>
+                      </div>
                     </td>
                     <td className="py-6">
-                      <div className="flex justify-center -space-x-3">
-                        {p.members.slice(0, 3).map((m, i) => (
-                          <div key={i} className="w-8 h-8 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-[#3a36db]">
-                            {m}
-                          </div>
-                        ))}
-                        {p.members.length > 3 && (
-                          <div className="w-8 h-8 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center text-[10px] font-bold">
-                            +{p.members.length - 3}
-                          </div>
-                        )}
+                      <div className="flex items-center gap-2 p-2 bg-gray-50/50 rounded-xl w-fit border border-gray-100/50">
+                        {p.members.map((m, i) => <div key={i} className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-[#3a36db] border border-white">{m.charAt(0)}</div>)}
                       </div>
                     </td>
                   </tr>
@@ -126,74 +138,82 @@ const ProjectsList = () => {
               </tbody>
             </table>
           </div>
-        </div> {/* 💡 [교정 완료] Left Card 닫는 div가 정상 누락 해결됨 */}
+{/* Pagination */}
+<div className="flex justify-center gap-2 mt-4">
+  <button 
+    disabled={currentPage === 1} 
+    onClick={() => setCurrentPage(c => c - 1)} 
+    className={`px-3 py-1 rounded-lg transition-all ${currentPage === 1 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}
+  >
+    <FontAwesomeIcon icon={faChevronLeft}/>
+  </button>
+  {Array.from({length: totalPages}).map((_, i) => (
+    <button 
+      key={i} 
+      onClick={() => setCurrentPage(i + 1)} 
+      className={`px-3 py-1 rounded-lg transition-all ${currentPage === i + 1 ? 'bg-[#3530B8] text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+    >
+      {i+1}
+    </button>
+  ))}
+  <button 
+    disabled={currentPage === totalPages} 
+    onClick={() => setCurrentPage(c => c + 1)} 
+    className={`px-3 py-1 rounded-lg transition-all ${currentPage === totalPages ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}
+  >
+    <FontAwesomeIcon icon={faChevronRight}/>
+  </button>
+</div>
+        </div>
 
-        {/* 2. Right Detail Panel Card */}
         {selectedProject && (
           <div className="w-[35%] bg-white rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-10 transition-all duration-300 animate-in slide-in-from-right-8 fade-in flex flex-col">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-xl font-bold text-[#1a1c3d]">프로젝트 상세</h2>
-              <button onClick={() => setSelectedProject(null)} className="text-[#8a92a6] hover:text-[#1a1c3d]">
-                <FontAwesomeIcon icon={faTimes}/>
-              </button>
+              <button onClick={() => setSelectedProject(null)}><FontAwesomeIcon icon={faTimes}/></button>
             </div>
-            <h3 className="text-lg font-bold text-[#1a1c3d] mb-2">{selectedProject.title}</h3>
-            <p className="text-sm text-gray-400 mb-8">{selectedProject.period}</p>
+            <h3 className="text-lg font-bold mb-2">{selectedProject.title}</h3>
+            <p className="text-sm text-gray-500 mb-8">{selectedProject.period}</p>
             <div className="bg-[#f4f7fc] p-6 rounded-2xl mb-8">
-              <h4 className="text-xs font-bold text-[#8a92a6] uppercase mb-3">상세 내용</h4>
-              <p className="text-sm text-gray-700 leading-relaxed">{selectedProject.desc}</p>
+              <h4 className="text-xs font-bold text-[#8a92a6] uppercase mb-3">내용</h4>
+              <p className="text-sm text-gray-700">{selectedProject.desc}</p>
             </div>
             <h4 className="text-xs font-bold text-[#8a92a6] uppercase mb-4">참여자</h4>
-            <div className="flex flex-wrap gap-2 overflow-y-auto flex-1 content-start custom-scrollbar">
-              {selectedProject.members.map((m, i) => (
-                <div key={i} className="px-4 py-2 bg-white border border-[#edf2f9] rounded-xl flex items-center gap-2 h-fit">
-                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-[#3a36db]">
-                    {m}
-                  </div>
-                  <span className="text-sm font-medium">{m} 사원</span>
-                </div>
-              ))}
-            </div>
+            <div className="flex flex-wrap gap-2">{selectedProject.members.map((m, i) => <div key={i} className="px-3 py-1 border rounded-lg text-xs">{m}</div>)}</div>
           </div>
         )}
       </div>
 
-      {/* 3. Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-in fade-in duration-200">
-          <div className="bg-white p-10 rounded-[2.5rem] w-[500px] shadow-2xl animate-in zoom-in-95 duration-200">
-            <h2 className="text-2xl font-bold mb-8 text-[#121331]">새 프로젝트 생성</h2>
-            <input 
-              placeholder="프로젝트명" 
-              className="w-full p-4 bg-[#f4f7fc] rounded-2xl mb-4 outline-none focus:ring-2 focus:ring-[#3a36db]/20 transition-all" 
-              onChange={e => setNewProject({...newProject, title: e.target.value})} 
-            />
-            <div className="flex gap-4 mb-8">
-              <input 
-                type="date" 
-                className="flex-1 p-4 bg-[#f4f7fc] rounded-2xl outline-none text-gray-600 text-sm" 
-                onChange={e => setNewProject({...newProject, start: e.target.value})} 
-              />
-              <input 
-                type="date" 
-                className="flex-1 p-4 bg-[#f4f7fc] rounded-2xl outline-none text-gray-600 text-sm" 
-                onChange={e => setNewProject({...newProject, end: e.target.value})} 
-              />
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white p-10 rounded-[2.5rem] w-[550px] shadow-2xl">
+            <h2 className="text-2xl font-bold mb-8">새 프로젝트 생성</h2>
+            <label className="block text-xs font-bold text-[#1a1c3d] mb-2">프로젝트명 *</label>
+            <input className="w-full p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none" onChange={e => setNewProject({...newProject, title: e.target.value})} />
+            <div className="flex gap-4 mb-4">
+              <div className="flex-1"><label className="block text-xs font-bold text-[#1a1c3d] mb-2">시작일 *</label><input type="date" className="w-full p-4 bg-[#f4f7fc] rounded-xl outline-none" onChange={e => setNewProject({...newProject, start: e.target.value})} /></div>
+              <div className="flex-1"><label className="block text-xs font-bold text-[#1a1c3d] mb-2">종료일 *</label><input type="date" className="w-full p-4 bg-[#f4f7fc] rounded-xl outline-none" onChange={e => setNewProject({...newProject, end: e.target.value})} /></div>
             </div>
-            <div className="flex justify-end gap-3">
-              <button 
-                onClick={() => setIsModalOpen(false)} 
-                className="px-8 py-3 bg-gray-100 text-gray-500 rounded-2xl font-bold text-sm hover:bg-gray-200 transition-all"
-              >
-                취소
-              </button>
-              <button 
-                onClick={handleCreate} 
-                className="px-8 py-3 bg-[#3a36db] text-white rounded-2xl font-bold text-sm hover:bg-[#2a2594] transition-all"
-              >
-                등록
-              </button>
+            <label className="block text-xs font-bold text-[#1a1c3d] mb-2">프로젝트 내용</label>
+            <textarea rows={3} className="w-full p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none" onChange={e => setNewProject({...newProject, desc: e.target.value})} />
+
+            <label className="block text-xs font-bold text-[#1a1c3d] mb-2">참여자 추가 *</label>
+            <div className="relative mb-2">
+              <input value={empSearch} onChange={e => {setEmpSearch(e.target.value); setShowEmpDropdown(true);}} className="w-full p-4 bg-[#f4f7fc] rounded-xl outline-none" />
+              {showEmpDropdown && empSearch && (
+                <div className="absolute top-full left-0 w-full bg-white border border-[#edf2f9] rounded-xl shadow-lg mt-1 z-50 overflow-hidden">
+                  {MOCK_EMPLOYEES.filter(e => e.name.includes(empSearch)).map(e => (
+                    <div key={e.id} onClick={() => addMember(e)} className="p-3 hover:bg-[#f4f7fc] cursor-pointer text-sm">{e.name}</div>
+                  ))}
+                </div>
+              )}
             </div>
+            <div className="flex flex-wrap gap-2 mb-8">
+              {newProject.members.map(m => (
+                <div key={m.id} className="px-3 py-1 bg-[#3a36db]/10 text-[#3a36db] rounded-full text-xs font-bold flex items-center gap-2">{m.name} <FontAwesomeIcon icon={faTimes} className="cursor-pointer" onClick={() => removeMember(m.id)} /></div>
+              ))}
+            </div>
+            <div className="flex justify-end gap-3"><button onClick={() => setIsModalOpen(false)} className="px-8 py-3 bg-gray-100 rounded-xl font-bold text-sm">취소</button><button onClick={handleCreate} className="px-8 py-3 bg-[#3a36db] text-white rounded-xl font-bold text-sm">등록</button></div>
           </div>
         </div>
       )}
