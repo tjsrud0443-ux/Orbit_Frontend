@@ -60,11 +60,11 @@ const VacationForm = ({ data, onChange, mode, user }) => {
       return diff > 0 ? diff : 0;
     };
 
-    updatedData.totalDays = calculateDays(
+    updatedData.totalDays = Math.max(0, calculateDays(
       updatedData.vacationType || '연차', 
       updatedData.startDate, 
       updatedData.endDate
-    );
+    ));
 
     onChange(updatedData);
   };

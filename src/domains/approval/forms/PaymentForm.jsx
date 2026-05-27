@@ -203,8 +203,9 @@ const PaymentForm = ({ data, onChange, mode, user }) => {
                     {isEditMode ? (
                       <input 
                         type="number"
+                        min="0"
                         value={item.amount || ''}
-                        onChange={(e) => handleItemChange(index, 'amount', e.target.value)}
+                        onChange={(e) => handleItemChange(index, 'amount', Math.max(0, Number(e.target.value)))}
                         className="w-full p-1 bg-white border border-gray-300 rounded outline-none focus:border-[#3530B8] text-right"
                       />
                     ) : (
