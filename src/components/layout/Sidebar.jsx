@@ -1,8 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import OrbitLogo from '../../assets/Orbit_Logo.png';
-import OrbitTitle from '../../assets/Orbit_title.png';
 import {
   faHouse, faFolderOpen, faCalendar,
   faFileLines, faComments
@@ -14,6 +12,8 @@ import {
   faFileShield, faCommentDots
 } from '@fortawesome/free-solid-svg-icons';
 import useAuthStore from '../../store/authStore';
+import { IMAGES } from '../../images/images';
+
 
 // 직원 사이드바
 const generalMenuItems = [
@@ -159,8 +159,8 @@ const Sidebar = ({ isOpen, onClose, user }) => {
 
           <div className="relative flex items-center justify-between mb-1 py-2 pl-1">
             <div className="flex items-center gap-2">
-              <img src={OrbitLogo} alt="Orbit Logo" className="w-12 h-12 object-contain" />
-              <img src={OrbitTitle} alt="Orbit" className="h-6 object-contain mt-1" />
+              <img src={IMAGES.ORBTI_LOGO} alt="Orbit Logo" className="w-12 h-12 object-contain" />
+              <img src={IMAGES.ORBTI_TITLE} alt="Orbit" className="h-6 object-contain mt-1" />
             </div>
             {isAdminMode && (
               <span className="text-[10px] bg-red-50 text-red-600 font-bold px-2 py-0.5 rounded border border-red-200 mr-1">
