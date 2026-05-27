@@ -1,4 +1,5 @@
-﻿import { maxios } from "../../api/axiosConfig";
+﻿import { makeStyles } from "@mui/material";
+import { maxios } from "../../api/axiosConfig";
 
 export const getAllRequest = (page, status, searchTerm) => maxios.get("/admin/hr/allRequest", {params: {cPage: page, status: status, searchTerm: searchTerm}});
 export const getUserInfo = (seq) => maxios.get(`/admin/hr/${seq}`);
@@ -10,3 +11,7 @@ export const getHrInfo = (id) => maxios.get("/admin/hr/getHrInfo", {params: {id:
 
 /*직원 관리 */
 export const getAllUsers = () => maxios.get("/admin/hr/getAllUsers");
+export const updateUsersState = (upUsersSeq, newStatus) => maxios.put("/admin/hr/updateUsersState",{
+    users_seq:upUsersSeq,
+    status:newStatus
+});
