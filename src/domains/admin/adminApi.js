@@ -7,3 +7,6 @@ export const getRankList = () => maxios.get("/admin/hr/getRankList");
 export const approveUserSignup = (approvalData) => maxios.post("/admin/hr/userSignup", approvalData);
 export const rejectUserSignup = (seq) => maxios.put(`/admin/hr/rejectSignup?signup_seq=${seq}`);
 export const getHrInfo = (id) => maxios.get("/admin/hr/getHrInfo", {params: {id: id}});
+
+/*직원 관리 */
+export const getAllUsers = () => maxios.get("/admin/hr/getAllUsers");

@@ -1,20 +1,10 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useState,useEffect } from 'react';
 import Pagination from '../../components/common/Pagination';
+import { getAllUsers } from './adminApi';
 
 const AdminUsers = () => {
   // UI 확인용 하드코딩 더미 데이터
-  const [employees, setEmployees] = useState([
-    { id: 1, name: "제임스", username: "james123", phone: "010-1111-1111", joinDate: "2026-05-25", status: "재직", role: "개발팀", avatar: "https://via.placeholder.com/40" },
-    { id: 2, name: "참새", username: "bird1", phone: "010-1222-2111", joinDate: "2026-05-25", status: "휴직", role: "기획팀", avatar: "https://via.placeholder.com/40" },
-    { id: 3, name: "경지민", username: "jiminbabo", phone: "010-1234-9876", joinDate: "2026-05-25", status: "재직", role: "개발팀", avatar: "https://via.placeholder.com/40" },
-    { id: 4, name: "제시카", username: "jessica1", phone: "010-9999-9999", joinDate: "2026-05-25", status: "재직", role: "디자인팀", avatar: "https://via.placeholder.com/40" },
-    { id: 5, name: "전지훈", username: "user015", phone: "010-5566-7788", joinDate: "2026-05-24", status: "퇴사", role: "인사팀", avatar: "https://via.placeholder.com/40" },
-    { id: 6, name: "배수진", username: "user014", phone: "010-4455-6677", joinDate: "2026-05-24", status: "재직", role: "마케팅팀", avatar: "https://via.placeholder.com/40" },
-    { id: 7, name: "홍길동", username: "hong123", phone: "010-7777-7777", joinDate: "2026-05-23", status: "재직", role: "영업팀", avatar: "https://via.placeholder.com/40" },
-    { id: 8, name: "김철수", username: "kim123", phone: "010-8888-8888", joinDate: "2026-05-22", status: "휴직", role: "지원팀", avatar: "https://via.placeholder.com/40" },
-    { id: 9, name: "이영희", username: "lee123", phone: "010-9999-9999", joinDate: "2026-05-21", status: "재직", role: "법무팀", avatar: "https://via.placeholder.com/40" },
-    { id: 10, name: "박민수", username: "park123", phone: "010-0000-0000", joinDate: "2026-05-20", status: "퇴사", role: "전략팀", avatar: "https://via.placeholder.com/40" },
-  ]);
+  const [employees, setEmployees] = useState([]);
 
   // 현재 수정 중인 직원 ID 관리
   const [editingId, setEditingId] = useState(null);
@@ -26,8 +16,8 @@ const AdminUsers = () => {
   // 현재 선택된 탭 관리
   const [activeTab, setActiveTab] = useState('전체');
 
-  // 외부 클릭 시 수정 모드 해제
-  React.useEffect(() => {
+  // 상태 선택 : 외부 클릭 시 수정 모드 해제
+  useEffect(() => {
     const handleOutsideClick = (e) => {
       if (editingId !== null && !e.target.closest('.mobile-edit-btn')) {
         setEditingId(null);
@@ -36,6 +26,12 @@ const AdminUsers = () => {
     document.addEventListener('mousedown', handleOutsideClick);
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [editingId]);
+
+  // 직원 정보 출력
+  useEffect(() => {
+    getAllUsers().then(resp=>
+      setEmployees(resp.data));
+  }, []);
 
   // 상태별 인원수 계산
   const counts = {
@@ -158,24 +154,13 @@ const AdminUsers = () => {
                       {emp.id}
                     </td>
 
-                    {/* 이름, 아이디, 상태 (모바일에서 한 줄) */}
-                    <div className="flex items-center justify-between sm:contents pr-4">
-                      <div className="flex items-baseline gap-1 sm:contents">
-                        <td className="pt-2 pb-1 sm:py-4 pl-4 sm:pl-0 text-sm sm:text-xs font-extrabold sm:font-bold text-slate-800 sm:text-slate-700 block sm:table-cell">
-                          {emp.name}
-                        </td>
-                        <td className="py-0.5 sm:py-4 pl-4 sm:pl-0 text-[10px] text-slate-400 font-mono block sm:table-cell sm:text-left">
-                          {emp.username}
-                        </td>
-                      </div>
-                      <td className="py-1 sm:py-4 pl-4 sm:pl-0 text-left sm:text-center block sm:table-cell mobile-status-badge">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-center whitespace-nowrap ${
-                          emp.status === '재직' ? 'bg-[#F0FDF4] text-[#10B981]' : 
-                          emp.status === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' : 
-                          'bg-[#FFF0F0] text-[#FF4D4F]'
-                        }`}>
-                          {emp.status}
-                        </span>
+                    {/* 이름, 아이디 (모바일에서 한 줄) */}
+                    <div className="flex items-baseline gap-1 sm:contents">
+                      <td className="pt-2 pb-1 sm:py-4 pl-4 sm:pl-0 text-sm sm:text-xs font-extrabold sm:font-bold text-slate-800 sm:text-slate-700 block sm:table-cell">
+                        {emp.name}
+                      </td>
+                      <td className="py-0.5 sm:py-4 pl-0 sm:pl-0 text-[10px] text-slate-400 font-mono block sm:table-cell sm:text-left">
+                        {emp.username}
                       </td>
                     </div>
 
@@ -190,7 +175,7 @@ const AdminUsers = () => {
                         <span className="inline sm:hidden text-slate-300 mr-1">직급:</span>
                         팀원
                       </td>
-                      <td className="py-1 sm:py-4 pl-4 sm:pl-0 text-left sm:text-center block sm:table-cell">
+                      <td className="py-1 sm:py-4 pl-0 sm:pl-0 text-left sm:text-center block sm:table-cell">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-[0.625rem] font-bold ${
                           emp.id === 3 ? 'bg-purple-50 text-purple-600 border border-purple-100' : 'bg-slate-50 text-slate-500 border border-slate-100'
                         }`}>
@@ -198,6 +183,16 @@ const AdminUsers = () => {
                         </span>
                       </td>
                     </div>
+
+                    <td className="py-1 sm:py-4 pl-4 sm:pl-0 text-left sm:text-center block sm:table-cell mobile-status-badge absolute right-4 top-8 sm:static">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-center whitespace-nowrap ${
+                        emp.status === '재직' ? 'bg-[#F0FDF4] text-[#10B981]' : 
+                        emp.status === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' : 
+                        'bg-[#FFF0F0] text-[#FF4D4F]'
+                      }`}>
+                        {emp.status}
+                      </span>
+                    </td>
 
                     <td className="py-1 sm:py-4 pl-4 sm:pl-0 text-[0.6875rem] sm:text-xs text-slate-400 font-mono block sm:table-cell">
                       <span className="inline sm:hidden text-slate-300 mr-1">입사일:</span>
