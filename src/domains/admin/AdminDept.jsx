@@ -26,6 +26,7 @@ const AdminDept = () => {
   // --- 2. UI States ---
   const [expandedNodes, setExpandedNodes] = useState(new Set());
   const [formMode, setFormMode] = useState(null); // 'CREATE_HQ', 'CREATE_SUB', 'EDIT'
+  const [panelTitle, setPanelTitle] = useState(''); // Persist title during transition
   const [selectedNode, setSelectedNode] = useState(null);
   const [formData, setFormData] = useState({
     deptName: '',
@@ -52,6 +53,13 @@ const AdminDept = () => {
         setLoading(false);
       });
   }, []);
+
+  // Update panel title based on mode (don't clear immediately on close)
+  useEffect(() => {
+    if (formMode === 'CREATE_HQ') setPanelTitle('본부 생성');
+    else if (formMode === 'CREATE_SUB') setPanelTitle('부서 생성');
+    else if (formMode === 'EDIT') setPanelTitle('정보 수정');
+  }, [formMode]);
 
   // --- 4. Helper Logic ---
   const getAllChildDeptSeqs = (node) => {
@@ -196,13 +204,13 @@ const AdminDept = () => {
   };
 
   if (loading) return (
-    <div className="flex-1 bg-[#F8FAFC] flex items-center justify-center h-screen">
+    <div className="flex-1 bg-white flex items-center justify-center h-screen">
         <div className="text-slate-400 animate-pulse font-bold">조직 데이터를 불러오는 중...</div>
     </div>
   );
 
   return (
-    <div className="flex-1 bg-[#F8FAFC] flex flex-col h-screen overflow-hidden">
+    <div className="flex-1 bg-white flex flex-col h-screen overflow-hidden">
       
       {/* Header Section */}
       <div className="p-8 lg:p-10 pb-4 flex items-end justify-between px-10">
@@ -265,9 +273,7 @@ const AdminDept = () => {
           {/* Panel Header */}
           <div className="h-16 px-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
             <h2 className="text-base font-bold text-slate-800">
-              {formMode === 'CREATE_HQ' ? '본부 생성' : 
-               formMode === 'CREATE_SUB' ? '부서 생성' : 
-               '정보 수정'}
+              {panelTitle}
             </h2>
             <button 
               onClick={handleCloseForm}
