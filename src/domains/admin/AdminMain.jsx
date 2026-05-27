@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -150,6 +151,8 @@ const ChartCard = ({ title, children, extra }) => (
 // --- [Main Dashboard Component] ---
 
 const AdminMain = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="flex-1 bg-white min-h-screen p-8 lg:p-12 overflow-y-auto">
       <div className="max-w-7xl mx-auto space-y-10">
@@ -241,14 +244,17 @@ const AdminMain = () => {
           <ChartCard 
             title="AI 미답변 질문 (최근)"
             extra={
-              <button className="text-[#3a36db] text-xs font-bold flex items-center gap-1 hover:underline group">
+              <button 
+                onClick={() => navigate('/adminQna')}
+                className="text-[#3a36db] text-xs font-bold flex items-center gap-1 hover:underline group cursor-pointer"
+              >
                 더보기 <FontAwesomeIcon icon={faChevronRight} className="text-[10px] group-hover:translate-x-1 transition-transform" />
               </button>
             }
           >
             <div className="divide-y divide-gray-100">
               {RECENT_QUESTIONS.map((q) => (
-                <div key={q.id} className="flex items-center justify-between py-4 px-2 hover:bg-[#f4f7fc] rounded-xl transition-colors cursor-pointer group">
+                <div key={q.id} className="flex items-center justify-between py-4 px-2">
                   <span className="text-[#1a1c3d] text-sm font-bold truncate pr-4">
                     {q.text}
                   </span>
