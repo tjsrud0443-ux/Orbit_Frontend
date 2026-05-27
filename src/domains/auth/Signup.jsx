@@ -70,9 +70,7 @@ const Signup = () => {
   };
 
   const handleDuplCheck = () => {
-    console.log(formData.id)
     duplCheck(formData.id).then(resp => {
-      console.log(resp.data)
       if (!formData.id) {
         setErrors(prev => ({ ...prev, id: '아이디를 입력해주세요.' }));
         return;
