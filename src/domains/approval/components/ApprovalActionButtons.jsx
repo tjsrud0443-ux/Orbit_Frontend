@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 const ApprovalActionButtons = ({ userRole, mode, onAction, approvers }) => {
   const navigate = useNavigate();
 
-  // 상신 취소 가능 여부 확인: 기안자이면서 VIEW 모드이고, 첫 번째 결재자가 '대기' 상태인 경우
-  const canCancelSubmit = userRole === 'DRAFTER' && mode === 'VIEW' && approvers?.[0]?.status === '대기';
+  // 상신 취소 가능 여부 확인: 기안자이면서 VIEW 모드이고, 첫 번째 결재자가 '진행 중' 상태인 경우
+  const canCancelSubmit = userRole === 'DRAFTER' && mode === 'VIEW' && approvers?.[0]?.status === 'IN_PROGRESS';
 
   // DRAFTER(기안자): 닫기, 임시저장, 결재상신
   const renderDrafterButtons = () => (

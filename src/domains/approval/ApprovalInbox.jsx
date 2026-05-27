@@ -14,17 +14,17 @@ import Pagination from '../../components/common/Pagination';
 // --- Dummy Data ---
 // typeKey는 ApprovalDetail.jsx의 URL 파라미터 및 경로 인식 로직에 맞춤
 const PENDING_DOCUMENTS = [
-  { id: 1, title: '2024년 상반기 사무용품 구매 신청', type: '구매신청서', typeKey: 'purchase', drafter: '김철수 대리', date: '2024-05-20', status: '진행 중' },
+  { id: 1, title: '2024년 상반기 사무용품 구매 신청', type: '구매신청서', typeKey: 'purchase', drafter: '김철수 대리', date: '2024-05-20', status: '결재 대기' },
   { id: 2, title: '연차 휴가 신청서 (6/1 ~ 6/3)', type: '휴가신청서', typeKey: 'vacation', drafter: '이영희 사원', date: '2024-05-22', status: '결재 대기' },
   { id: 3, title: '영업부 외부 미팅 비용 정산', type: '지출결의서', typeKey: 'payment', drafter: '박지민 과장', date: '2024-05-23', status: '결재 대기' },
-  { id: 4, title: '신규 프로젝트 추진 기안문', type: '일반기안서', typeKey: 'general', drafter: '최동현 차장', date: '2024-05-24', status: '결재 대기' },
+  { id: 4, title: '신규 프로젝트 추진 기안문', type: '일반품의서', typeKey: 'general', drafter: '최동현 차장', date: '2024-05-24', status: '결재 대기' },
   { id: 5, title: '출장 보고서 및 비용 정산', type: '지출결의서', typeKey: 'payment', drafter: '정수빈 사원', date: '2024-05-25', status: '결재 대기' },
 ];
 
 const COMPLETED_DOCUMENTS = [
   { id: 101, title: '개발팀 신규 서버 도입 건', type: '구매신청서', typeKey: 'purchase', drafter: '강하늘 과장', date: '2024-05-10', status: '결재 완료' },
   { id: 102, title: '재택근무 신청 (5/15)', type: '휴가신청서', typeKey: 'vacation', drafter: '오진우 대리', date: '2024-05-12', status: '반려' },
-  { id: 103, title: '마케팅 협력업체 계약 검토', type: '일반기안서', typeKey: 'general', drafter: '한소희 대리', date: '2024-05-15', status: '결재 완료' },
+  { id: 103, title: '마케팅 협력업체 계약 검토', type: '일반품의서', typeKey: 'general', drafter: '한소희 대리', date: '2024-05-15', status: '결재 완료' },
 ];
 
 // --- Sub Components ---
@@ -33,8 +33,7 @@ const StatusBadge = ({ status }) => {
   const styles = {
     '결재 대기': 'bg-[#FFF9F0] text-[#FF9800] border-[#FFF9F0]',
     '결재 완료': 'bg-[#F0FDF4] text-[#10B981] border-[#F0FDF4]',
-    '반려': 'bg-[#FFF0F0] text-[#FF4D4F] border-[#FFF0F0]',
-    '진행 중': 'bg-blue-50 text-blue-600 border-blue-50',
+    '반려': 'bg-[#FFF0F0] text-[#FF4D4F] border-[#FFF0F0]'
   };
 
   return (
@@ -153,7 +152,7 @@ const ApprovalInbox = () => {
               className="px-3 py-1.5 text-xs bg-slate-50 border-none rounded-lg focus:ring-0 text-slate-600 font-medium cursor-pointer outline-none"
             >
               <option>전체 문서</option>
-              <option>일반기안서</option>
+              <option>일반품의서</option>
               <option>지출결의서</option>
               <option>휴가신청서</option>
               <option>구매신청서</option>

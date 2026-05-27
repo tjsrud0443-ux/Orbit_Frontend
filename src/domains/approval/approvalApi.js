@@ -1,3 +1,7 @@
 ﻿import { maxios } from "../../api/axiosConfig";
 
 export const getAllEmployees = () => maxios.get("/approval/all");
+export const submitVacation = (payload) => maxios.post("/approval/submit/vacation", payload);
+export const submitPurchase = (payload) => maxios.post("/approval/submit/purchase", payload);
+export const submitPayment = (payload) => maxios.post("/approval/submit/payment", payload);
+export const submitGeneral = (payload) => maxios.post("/approval/submit/general", payload);

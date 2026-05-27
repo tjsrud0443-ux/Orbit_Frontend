@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import useEmployeeStore from '../../../store/useEmployeeStore';
+import useUserStore from '../../../store/userStore';
 
 const ReferrerSelector = ({ value = [], onChange, isEditMode }) => {
   const { allEmployees } = useEmployeeStore();
+  const { user } = useUserStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
   const inputRef = useRef(null);
@@ -34,9 +36,11 @@ const ReferrerSelector = ({ value = [], onChange, isEditMode }) => {
     };
   }, [showResults, updateDropdownPos]);
 
-  // 검색 쿼리에 따른 필터링
+  // 검색 쿼리에 따른 필터링 (기안자 제외)
   const filteredEmployees = searchQuery 
     ? allEmployees.filter(emp => {
+        if (emp.users_seq === user?.users_seq) return false;
+        
         const name = emp?.name || '';
         const deptName = emp?.dept_name || '';
         return name.includes(searchQuery) || deptName.includes(searchQuery);
