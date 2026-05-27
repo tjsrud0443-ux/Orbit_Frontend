@@ -261,7 +261,7 @@ const ProjectsList = () => {
             </div>
             <div className="flex flex-wrap gap-2 mb-8">
               {newProject.members.map(m => (
-                <div key={m.id} className="px-3 py-1 bg-[#3a36db]/10 text-[#3a36db] rounded-full text-xs font-bold flex items-center gap-2">{m.name} <FontAwesomeIcon icon={faTimes} className="cursor-pointer" onClick={() => removeMember(m.id)} /></div>
+                <div key={m.id} className="px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2 border border-[#3a36db]/20">{m.name} <FontAwesomeIcon icon={faTimes} className="cursor-pointer" onClick={() => removeMember(m.id)} /></div>
               ))}
             </div>
             <div className="flex justify-end gap-3">
