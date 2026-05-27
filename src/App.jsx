@@ -22,6 +22,7 @@ import ApprovalInbox from './domains/approval/ApprovalInbox';
 import ApprovalCc from './domains/approval/ApprovalCc';
 import ApprovalTemp from './domains/approval/ApprovalTemp';
 import ProjectsList from './domains/projects/ProjectsList';
+import Kanban from './domains/projects/kanban';
 import DocumentsList from './domains/documents/DocumentsList';
 import MinutesList from './domains/meetingMinutes/MinutesList';
 import MinutesDetail from './domains/meetingMinutes/MinutesDetail';
@@ -62,6 +63,7 @@ function App() {
           <Route path="/approval/detail/:type/:docSeq" element={<ApprovalDetail />} />
 
           <Route path="/projects" element={<ProjectsList />} />
+          <Route path="/kanban" element={<Kanban />} />
           <Route path="/documents" element={<DocumentsList />} />
           <Route path="/calendar" element={<Calendar />} />
 
