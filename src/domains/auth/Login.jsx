@@ -11,6 +11,12 @@ const Login = () => {
   const [loginError, setLoginError] = useState("");
   const loginSuccess = useAuthStore(state => state.login);
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleLogin();
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setLogin(prev => ({ ...prev, [name]: value }))
@@ -70,15 +76,15 @@ const Login = () => {
             <div className="space-y-1 md:space-y-2">
               <label className="text-xs md:text-sm font-bold text-gray-600 ml-1">ID</label>
               <input
-                type="text"
-                name="id"
-                value={login.id}
-                onChange={handleChange}
-                placeholder="아이디를 입력하세요"
-                className={`w-full px-4 py-2 md:py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3530B8] focus:border-transparent transition-all placeholder:text-gray-300"
+              type="text"
+              name="id"
+              value={login.id}
+              onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              placeholder="아이디를 입력하세요"
+              className={`w-full px-4 py-2 md:py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3530B8] focus:border-transparent transition-all placeholder:text-gray-300"
               ${error.id ? `border-red-400 bg-red-50` : `border-gray-200 focus:border-blue-400`}`}
-              />
-              {error.id && <p className="text-red-500 text-sm ml-1 mt-1">ID를 입력해 주세요.</p>}
+              />              {error.id && <p className="text-red-500 text-sm ml-1 mt-1">ID를 입력해 주세요.</p>}
             </div>
 
             {/* Password Input */}
@@ -89,6 +95,7 @@ const Login = () => {
                 name="pw"
                 value={login.pw}
                 onChange={handleChange}
+                onKeyDown={handleKeyDown}
                 placeholder="비밀번호를 입력하세요"
                 className={`w-full px-4 py-2 md:py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3530B8] focus:border-transparent transition-all placeholder:text-gray-300"
                 ${error.pw ? `border-red-400 bg-red-50` : `border-gray-200 focus:border-blue-400`}  `}
