@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Calendar from '../../../components/common/Calendar';
+import ReferrerSelector from '../components/ReferrerSelector';
 
 const PurchaseForm = ({ data, onChange, mode, user }) => {
   const isEditMode = mode === 'EDIT';
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleDateString('sv-SE');
 
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
@@ -19,6 +20,13 @@ const PurchaseForm = ({ data, onChange, mode, user }) => {
 
   const handleFieldChange = (field, value) => {
     if (!onChange) return;
+
+    // 구매 요청일 선택 시 오늘 이전 날짜는 선택 불가
+    if (field === 'purchaseRequestDate' && value < today) {
+      alert('구매 요청일은 오늘 이후여야 합니다.');
+      return;
+    }
+
     onChange({ ...data, [field]: value });
   };
 
@@ -206,8 +214,8 @@ const PurchaseForm = ({ data, onChange, mode, user }) => {
                         <input 
                           type="number"
                           value={item.quantity || ''}
-                          min="1"
-                          onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                          min="0"
+                          onChange={(e) => handleItemChange(index, 'quantity', Math.max(0, Number(e.target.value)))}
                           className="w-full p-1 bg-white border border-gray-300 rounded outline-none focus:border-[#3530B8] text-center"
                         />
                       ) : (
@@ -219,7 +227,8 @@ const PurchaseForm = ({ data, onChange, mode, user }) => {
                         <input 
                           type="number"
                           value={item.unitPrice || ''}
-                          onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)}
+                          min="0"
+                          onChange={(e) => handleItemChange(index, 'unitPrice', Math.max(0, Number(e.target.value)))}
                           className="w-full p-1 bg-white border border-gray-300 rounded outline-none focus:border-[#3530B8] text-right"
                         />
                       ) : (
@@ -322,6 +331,13 @@ const PurchaseForm = ({ data, onChange, mode, user }) => {
           )}
         </div>
       </div>
+
+      {/* Referrer Selection Section */}
+      <ReferrerSelector 
+        value={data.referrers} 
+        onChange={(val) => onChange({ ...data, referrers: val })} 
+        isEditMode={isEditMode} 
+      />
     </div>
   );
 };

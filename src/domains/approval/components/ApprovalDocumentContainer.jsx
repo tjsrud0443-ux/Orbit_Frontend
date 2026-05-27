@@ -42,6 +42,7 @@ const ApprovalDocumentContainer = ({
             userRole={userRole} 
             mode={mode} 
             onAction={onAction} 
+            approvers={approvers}
           />
         </div>
       </div>

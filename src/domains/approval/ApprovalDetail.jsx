@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import useUserStore from '../../store/userStore';
+import useEmployeeStore from '../../store/useEmployeeStore';
 import ApprovalDocumentContainer from './components/ApprovalDocumentContainer';
 import VacationForm from './forms/VacationForm';
 import PaymentForm from './forms/PaymentForm';
@@ -9,22 +10,15 @@ import PurchaseForm from './forms/PurchaseForm';
 
 // 결재자 선택 모달 컴포넌트
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
-  if (!isOpen) return null;
+  const { allEmployees } = useEmployeeStore();
   const [searchQuery, setSearchQuery] = useState('');
-  
-  const mockEmployees = [
-    { id: 1, name: '김철수', dept_name: '개발본부', rank_name: '팀장' },
-    { id: 2, name: '이영희', dept_name: '인사팀', rank_name: '과장' },
-    { id: 3, name: '박지민', dept_name: '경영지원팀', rank_name: '대리' },
-    { id: 4, name: '최유진', dept_name: '마케팅팀', rank_name: '본부장' },
-    { id: 5, name: '한소희', dept_name: '디자인팀', rank_name: '사원' },
-  ];
+  if (!isOpen) return null;
 
   const filtered = searchQuery 
-    ? mockEmployees.filter(emp => 
+    ? allEmployees.filter(emp => 
         emp.name.includes(searchQuery) || emp.dept_name.includes(searchQuery)
       ) 
-    : mockEmployees;
+    : allEmployees;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] animate-in fade-in duration-200">
@@ -67,6 +61,7 @@ const ApprovalDetail = () => {
   const { docId } = useParams();
   const location = useLocation();
   const { user } = useUserStore();
+  const { fetchEmployees } = useEmployeeStore();
 
   // 1. 상태 관리
   const [mode, setMode] = useState('VIEW'); // EDIT or VIEW
@@ -75,6 +70,11 @@ const ApprovalDetail = () => {
   const [approvers, setApprovers] = useState([]);
   const [formData, setFormData] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 초기 사원 목록 로드
+  useEffect(() => {
+    fetchEmployees();
+  }, [fetchEmployees]);
 
   // 2. 권한 및 데이터 초기화 (사용자 요구사항 반영)
   useEffect(() => {
@@ -103,7 +103,7 @@ const ApprovalDetail = () => {
         setDocType('PAYMENT');
         setFormData({
           expenditureDate: '',
-          requestDate: new Date().toISOString().split('T')[0],
+          requestDate: new Date().toLocaleDateString('sv-SE'),
           purpose: '',
           accountInfo: '',
           items: [{ id: 1, itemName: '', amount: 0, receipt: null, note: '' }]
@@ -111,7 +111,7 @@ const ApprovalDetail = () => {
       } else if (isGeneralPath) {
         setDocType('GENERAL');
         setFormData({
-          requestDate: new Date().toISOString().split('T')[0],
+          requestDate: new Date().toLocaleDateString('sv-SE'),
           purpose: '',
           content: ''
         });
@@ -119,7 +119,7 @@ const ApprovalDetail = () => {
         setDocType('PURCHASE');
         setFormData({
           purchaseRequestDate: '',
-          requestDate: new Date().toISOString().split('T')[0],
+          requestDate: new Date().toLocaleDateString('sv-SE'),
           purchasePurpose: '',
           supplier: '',
           items: [{ id: 1, itemName: '', quantity: 1, unitPrice: 0, note: '' }],
@@ -155,7 +155,7 @@ const ApprovalDetail = () => {
       alert('이미 추가된 결재자입니다.');
       return;
     }
-    setApprovers(prev => [...prev, { ...selectedUser, status: '대기' }]);
+    setApprovers(prev => [...prev, { ...selectedUser, status: 'WAITING' }]);
     setIsModalOpen(false);
   };
 
@@ -169,7 +169,7 @@ const ApprovalDetail = () => {
       data: formData,
       onChange: setFormData,
       mode: mode,
-      user: user
+      user: user,
     };
 
     switch (docType) {
@@ -201,7 +201,7 @@ const ApprovalDetail = () => {
       <EmployeeSelectionModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        onSelect={handleSelectApprover} 
+        onSelect={handleSelectApprover}
       />
       <ApprovalDocumentContainer
         title={getTitle()}
