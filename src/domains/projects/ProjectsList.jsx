@@ -97,16 +97,20 @@ const ProjectsList = () => {
                 </button>
               ))}
             </div>
-            <div className="flex gap-2 w-full md:w-auto items-center">
-              <select className="bg-[#f4f7fc] px-4 py-2.5 rounded-xl text-sm text-gray-600 outline-none flex-1 md:flex-none" value={searchBy} onChange={e => setSearchBy(e.target.value)}>
-                <option>프로젝트명</option><option>참여자</option>
-              </select>
-              <div className="relative flex items-center flex-1 md:flex-none">
-                <FontAwesomeIcon icon={faSearch} className="absolute left-4 text-[#8a92a6]" />
-                <input placeholder="검색" value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
-                  className="pl-12 pr-4 py-2.5 bg-[#f4f7fc] rounded-xl text-sm w-full md:w-48 outline-none" />
+
+            {/* 데스크탑: 나란히 / 모바일: 우측 정렬 후 버튼 아래로 */}
+            <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto items-end md:items-center">
+              <div className="flex gap-2 w-full md:w-auto justify-end">
+                <select className="bg-[#f4f7fc] px-4 py-2.5 rounded-xl text-sm text-gray-600 outline-none w-1/3 md:w-auto" value={searchBy} onChange={e => setSearchBy(e.target.value)}>
+                  <option>프로젝트명</option><option>참여자</option>
+                </select>
+                <div className="relative flex items-center w-2/3 md:w-48">
+                  <FontAwesomeIcon icon={faSearch} className="absolute left-4 text-[#8a92a6]" />
+                  <input placeholder="검색" value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
+                    className="pl-12 pr-4 py-2.5 bg-[#f4f7fc] rounded-xl text-sm w-full outline-none" />
+                </div>
               </div>
-              <button onClick={() => setIsModalOpen(true)} className="bg-[#3a36db] text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-[#2a2594] whitespace-nowrap">
+              <button onClick={() => setIsModalOpen(true)} className="bg-[#3a36db] text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-[#2a2594] whitespace-nowrap w-1/2 md:w-auto">
                 <FontAwesomeIcon icon={faPlus} className="mr-2" /> 새 프로젝트
               </button>
             </div>
