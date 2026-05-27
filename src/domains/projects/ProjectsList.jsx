@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faSearch, faTimes, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import Calendar from '../../components/common/Calendar';
 
 const MOCK_EMPLOYEES = [
   { id: 1, name: '김철수', dept: '개발팀' },
@@ -26,14 +27,17 @@ const ProjectsList = () => {
   const [projects, setProjects] = useState(INITIAL_PROJECTS);
   const [selectedProject, setSelectedProject] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
   const [newProject, setNewProject] = useState({ title: '', desc: '', start: '', end: '', members: [] });
   const [empSearch, setEmpSearch] = useState('');
   const [showEmpDropdown, setShowEmpDropdown] = useState(false);
+  const [isStartCalendarOpen, setIsStartCalendarOpen] = useState(false);
+  const [isEndCalendarOpen, setIsEndCalendarOpen] = useState(false);
 
   const filteredProjects = useMemo(() => {
     return projects.filter(p => {
       const matchesFilter = filter === '전체' || p.status === filter;
-      const matchesSearch = searchBy === '프로젝트명' 
+      const matchesSearch = searchBy === '프로젝트명'
         ? p.title.includes(search)
         : p.members.some(m => m.includes(search));
       return matchesFilter && matchesSearch;
@@ -87,7 +91,7 @@ const ProjectsList = () => {
           <div className="flex items-center justify-between mb-8">
             <div className="flex bg-[#f4f7fc] p-1 rounded-2xl w-fit">
               {['전체', '진행중', '완료'].map(tab => (
-                <button key={tab} onClick={() => {setFilter(tab === '진행중' ? '진행 중' : tab); setCurrentPage(1);}} 
+                <button key={tab} onClick={() => { setFilter(tab === '진행중' ? '진행 중' : tab); setCurrentPage(1); }}
                   className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${filter === tab || (tab === '진행중' && filter === '진행 중') ? 'bg-[#3530B8] text-white shadow-sm' : 'text-[#8a92a6]'}`}>
                   {tab}
                 </button>
@@ -99,7 +103,7 @@ const ProjectsList = () => {
               </select>
               <div className="relative flex items-center">
                 <FontAwesomeIcon icon={faSearch} className="absolute left-4 text-[#8a92a6]" />
-                <input placeholder="검색어 입력" value={search} onChange={e => {setSearch(e.target.value); setCurrentPage(1);}}
+                <input placeholder="검색어 입력" value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
                   className="pl-12 pr-4 py-2.5 bg-[#f4f7fc] rounded-xl text-sm w-48 outline-none" />
               </div>
               <button onClick={() => setIsModalOpen(true)} className="bg-[#3a36db] text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-[#2a2594]">
@@ -123,7 +127,7 @@ const ProjectsList = () => {
                       <div className="font-bold text-[#1a1c3d] text-base">{p.title}</div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs text-gray-400">{p.period}</span>
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${p.status === '완료' ? 'bg-gray-100 text-gray-500' : 'bg-green-100 text-green-600'}`}>
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${p.status === '완료' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
                           {p.status}
                         </span>
                       </div>
@@ -138,39 +142,21 @@ const ProjectsList = () => {
               </tbody>
             </table>
           </div>
-{/* Pagination */}
-<div className="flex justify-center gap-2 mt-4">
-  <button 
-    disabled={currentPage === 1} 
-    onClick={() => setCurrentPage(c => c - 1)} 
-    className={`px-3 py-1 rounded-lg transition-all ${currentPage === 1 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}
-  >
-    <FontAwesomeIcon icon={faChevronLeft}/>
-  </button>
-  {Array.from({length: totalPages}).map((_, i) => (
-    <button 
-      key={i} 
-      onClick={() => setCurrentPage(i + 1)} 
-      className={`px-3 py-1 rounded-lg transition-all ${currentPage === i + 1 ? 'bg-[#3530B8] text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
-    >
-      {i+1}
-    </button>
-  ))}
-  <button 
-    disabled={currentPage === totalPages} 
-    onClick={() => setCurrentPage(c => c + 1)} 
-    className={`px-3 py-1 rounded-lg transition-all ${currentPage === totalPages ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}
-  >
-    <FontAwesomeIcon icon={faChevronRight}/>
-  </button>
-</div>
+
+          <div className="flex justify-center gap-2 mt-4">
+            <button disabled={currentPage === 1} onClick={() => setCurrentPage(c => c - 1)} className={`px-3 py-1 rounded-lg transition-all ${currentPage === 1 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}><FontAwesomeIcon icon={faChevronLeft} /></button>
+            {Array.from({ length: totalPages }).map((_, i) => (
+              <button key={i} onClick={() => setCurrentPage(i + 1)} className={`px-3 py-1 rounded-lg transition-all ${currentPage === i + 1 ? 'bg-[#3530B8] text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>{i + 1}</button>
+            ))}
+            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(c => c + 1)} className={`px-3 py-1 rounded-lg transition-all ${currentPage === totalPages ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}><FontAwesomeIcon icon={faChevronRight} /></button>
+          </div>
         </div>
 
         {selectedProject && (
           <div className="w-[35%] bg-white rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-10 transition-all duration-300 animate-in slide-in-from-right-8 fade-in flex flex-col">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-xl font-bold text-[#1a1c3d]">프로젝트 상세</h2>
-              <button onClick={() => setSelectedProject(null)}><FontAwesomeIcon icon={faTimes}/></button>
+              <button onClick={() => setSelectedProject(null)}><FontAwesomeIcon icon={faTimes} /></button>
             </div>
             <h3 className="text-lg font-bold mb-2">{selectedProject.title}</h3>
             <p className="text-sm text-gray-500 mb-8">{selectedProject.period}</p>
@@ -179,7 +165,7 @@ const ProjectsList = () => {
               <p className="text-sm text-gray-700">{selectedProject.desc}</p>
             </div>
             <h4 className="text-xs font-bold text-[#8a92a6] uppercase mb-4">참여자</h4>
-            <div className="flex flex-wrap gap-2">{selectedProject.members.map((m, i) => <div key={i} className="px-3 py-1 border rounded-lg text-xs">{m}</div>)}</div>
+            <div className="flex flex-wrap gap-2 p-4 rounded-xl">{selectedProject.members.map((m, i) => <div key={i} className="px-3 py-1 border rounded-lg text-xs border border-[#edf2f9] shadow-sm">{m}</div>)}</div>
           </div>
         )}
       </div>
@@ -189,17 +175,82 @@ const ProjectsList = () => {
           <div className="bg-white p-10 rounded-[2.5rem] w-[550px] shadow-2xl">
             <h2 className="text-2xl font-bold mb-8">새 프로젝트 생성</h2>
             <label className="block text-xs font-bold text-[#1a1c3d] mb-2">프로젝트명 *</label>
-            <input className="w-full p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none" onChange={e => setNewProject({...newProject, title: e.target.value})} />
+            <input className="w-full p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none" onChange={e => setNewProject({ ...newProject, title: e.target.value })} />
+
             <div className="flex gap-4 mb-4">
-              <div className="flex-1"><label className="block text-xs font-bold text-[#1a1c3d] mb-2">시작일 *</label><input type="date" className="w-full p-4 bg-[#f4f7fc] rounded-xl outline-none" onChange={e => setNewProject({...newProject, start: e.target.value})} /></div>
-              <div className="flex-1"><label className="block text-xs font-bold text-[#1a1c3d] mb-2">종료일 *</label><input type="date" className="w-full p-4 bg-[#f4f7fc] rounded-xl outline-none" onChange={e => setNewProject({...newProject, end: e.target.value})} /></div>
+              {/* 📅 1. 시작일 선택 영역 */}
+              <div className="flex-1 relative">
+                <label className="block text-xs font-bold text-[#1a1c3d] mb-2">시작일 *</label>
+                <div
+                  onClick={() => { setIsStartCalendarOpen(!isStartCalendarOpen); setIsEndCalendarOpen(false); }}
+                  className="w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-sm"
+                >
+                  {newProject.start || "날짜 선택"}
+                </div>
+
+                {isStartCalendarOpen && (
+                  <Calendar
+                    value={newProject.start}
+                    minDate={new Date().toISOString().split('T')[0]} // 오늘 날짜 기본 가이드
+                    onChange={(date) => {
+                      const todayStr = new Date().toISOString().split('T')[0];
+
+                      // 1-1. 선택한 시작일이 오늘보다 과거인지 체크
+                      if (date < todayStr) {
+                        alert('시작일은 오늘 이후의 날짜만 선택할 수 있습니다.');
+                        return;
+                      }
+
+                      // 1-2. 검증 통과 시 상태 반영 (종료일 꼬임 자동 보정)
+                      setNewProject(prev => ({
+                        ...prev,
+                        start: date,
+                        end: prev.end && prev.end < date ? date : prev.end
+                      }));
+                      setIsStartCalendarOpen(false);
+                    }}
+                    onClose={() => setIsStartCalendarOpen(false)}
+                  />
+                )}
+              </div>
+
+              {/* 📅 2. 종료일 선택 영역 */}
+              <div className="flex-1 relative">
+                <label className="block text-xs font-bold text-[#1a1c3d] mb-2">종료일 *</label>
+                <div
+                  onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }}
+                  className="w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-sm"
+                >
+                  {newProject.end || "날짜 선택"}
+                </div>
+
+                {isEndCalendarOpen && (
+                  <Calendar
+                    value={newProject.end}
+                    minDate={newProject.start || new Date().toISOString().split('T')[0]}
+                    onChange={(date) => {
+                      // 2-1. 시작일이 지정되어 있는데, 선택한 종료일이 시작일보다 작다면 차단
+                      if (newProject.start && date < newProject.start) {
+                        alert('종료일은 시작일보다 이전일 수 없습니다.');
+                        return;
+                      }
+
+                      // 2-2. 검증 통과 시 정상 상태 변경 및 모달 닫기
+                      setNewProject(prev => ({ ...prev, end: date }));
+                      setIsEndCalendarOpen(false);
+                    }}
+                    onClose={() => setIsEndCalendarOpen(false)}
+                  />
+                )}
+              </div>
             </div>
+
             <label className="block text-xs font-bold text-[#1a1c3d] mb-2">프로젝트 내용</label>
-            <textarea rows={3} className="w-full p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none" onChange={e => setNewProject({...newProject, desc: e.target.value})} />
+            <textarea rows={3} className="w-full p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none" onChange={e => setNewProject({ ...newProject, desc: e.target.value })} />
 
             <label className="block text-xs font-bold text-[#1a1c3d] mb-2">참여자 추가 *</label>
             <div className="relative mb-2">
-              <input value={empSearch} onChange={e => {setEmpSearch(e.target.value); setShowEmpDropdown(true);}} className="w-full p-4 bg-[#f4f7fc] rounded-xl outline-none" />
+              <input value={empSearch} onChange={e => { setEmpSearch(e.target.value); setShowEmpDropdown(true); }} className="w-full p-4 bg-[#f4f7fc] rounded-xl outline-none" />
               {showEmpDropdown && empSearch && (
                 <div className="absolute top-full left-0 w-full bg-white border border-[#edf2f9] rounded-xl shadow-lg mt-1 z-50 overflow-hidden">
                   {MOCK_EMPLOYEES.filter(e => e.name.includes(empSearch)).map(e => (
@@ -213,7 +264,10 @@ const ProjectsList = () => {
                 <div key={m.id} className="px-3 py-1 bg-[#3a36db]/10 text-[#3a36db] rounded-full text-xs font-bold flex items-center gap-2">{m.name} <FontAwesomeIcon icon={faTimes} className="cursor-pointer" onClick={() => removeMember(m.id)} /></div>
               ))}
             </div>
-            <div className="flex justify-end gap-3"><button onClick={() => setIsModalOpen(false)} className="px-8 py-3 bg-gray-100 rounded-xl font-bold text-sm">취소</button><button onClick={handleCreate} className="px-8 py-3 bg-[#3a36db] text-white rounded-xl font-bold text-sm">등록</button></div>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setIsModalOpen(false)} className="px-8 py-3 bg-gray-100 rounded-xl font-bold text-sm">취소</button>
+              <button onClick={handleCreate} className="px-8 py-3 bg-[#3a36db] text-white rounded-xl font-bold text-sm">등록</button>
+            </div>
           </div>
         </div>
       )}
