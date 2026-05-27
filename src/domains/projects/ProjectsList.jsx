@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faSearch, faTimes, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
@@ -18,6 +19,7 @@ const INITIAL_PROJECTS = [
 ];
 
 const ProjectsList = () => {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState('전체');
   const [search, setSearch] = useState('');
   const [searchBy, setSearchBy] = useState('프로젝트명');
@@ -98,7 +100,6 @@ const ProjectsList = () => {
               ))}
             </div>
 
-            {/* 데스크탑: 나란히 / 모바일: 우측 정렬 후 버튼 아래로 */}
             <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto items-end md:items-center">
               <div className="flex gap-2 w-full md:w-auto justify-end">
                 <select className="bg-[#f4f7fc] px-4 py-2.5 rounded-xl text-sm text-gray-600 outline-none w-1/3 md:w-auto" value={searchBy} onChange={e => setSearchBy(e.target.value)}>
@@ -120,26 +121,36 @@ const ProjectsList = () => {
             <table className="w-full text-left border-collapse">
               <thead className="hidden md:table-header-group">
                 <tr className="text-[#8a92a6] text-sm border-b border-gray-100">
-                  <th className="pb-4 font-medium px-2">프로젝트 정보</th>
-                  <th className="pb-4 font-medium">참여자</th>
+                  <th className="pb-4 font-medium px-2 text-left">프로젝트명</th>
+                  <th className="pb-4 font-medium px-2 text-left">기간</th>
+                  <th className="pb-4 font-medium px-2 text-left">진행상황</th>
+                  <th className="pb-4 font-medium px-2 text-left">참여자</th>
+                  <th className="pb-4 font-medium px-2 text-left">상세보기</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedProjects.map(p => (
-                  <tr key={p.id} onClick={() => setSelectedProject(p)} className="border-b border-gray-50 hover:bg-[#f8fbff] cursor-pointer transition-colors block md:table-row w-full mb-4 md:mb-0">
-                    <td className="py-4 px-2 block md:table-cell">
-                      <div className="font-bold text-[#1a1c3d] text-base">{p.title}</div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-gray-400">{p.period}</span>
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${p.status === '완료' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
-                          {p.status}
-                        </span>
+                  <tr key={p.id} className="border-b border-gray-100 hover:bg-[#f8fbff] transition-colors block md:table-row w-full mb-4 md:mb-0">
+                    <td onClick={() => navigate('/kanban')} className="py-4 px-2 block md:table-cell font-bold text-[#1a1c3d] text-base text-left cursor-pointer hover:text-[#3530B8] transition-colors">{p.title}</td>
+                    <td className="py-4 px-2 block md:table-cell text-sm text-gray-500 text-left">{p.period}</td>
+                    <td className="py-4 px-2 block md:table-cell text-left">
+                      <span className={`inline-block px-4 py-1.5 rounded-full text-[11px] font-bold ${p.status === '완료' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
+                        {p.status}
+                      </span>
+                    </td>
+                    <td className="py-4 px-2 block md:table-cell text-left">
+                      <div className="flex gap-2">
+                        {p.members.map((m, i) => (
+                          <div key={i} className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-[#3530B8] border border-white">
+                            {m.charAt(0)}
+                          </div>
+                        ))}
                       </div>
                     </td>
-                    <td className="py-2 md:py-6 block md:table-cell">
-                      <div className="flex items-center gap-2 p-2 bg-gray-50/50 rounded-xl w-fit border border-gray-100/50">
-                        {p.members.map((m, i) => <div key={i} className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-[#3a36db] border border-white">{m.charAt(0)}</div>)}
-                      </div>
+                    <td className="py-4 px-2 block md:table-cell text-left">
+                      <button onClick={() => setSelectedProject(p)} className="text-[11px] font-bold text-[#3530B8] border border-[#3530B8] px-3 py-1.5 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all">
+                        상세보기
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -193,8 +204,6 @@ const ProjectsList = () => {
         )}
       </div>
 
-      {/* 모달 관련 생략 (isModalOpen) */}
-      {/* 새 프로젝트 생성 모달 */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-10 rounded-[2.5rem] w-[550px] shadow-2xl">
