@@ -208,7 +208,7 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
             ))}
             {displayData.length === 0 && (
               <tr>
-                <td colSpan="7" className="py-10 text-center text-gray-400 text-[0.8125rem] font-bold italic">해당 문서가 없습니다.</td>
+                <td colSpan="7" className="py-10 text-center text-gray-400 text-[0.7rem] font-bold">해당 문서가 없습니다.</td>
               </tr>
             )}
           </tbody>
