@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import ReferrerSelector from '../components/ReferrerSelector';
 
 const GeneralForm = ({ data, onChange, mode, user }) => {
   const isEditMode = mode === 'EDIT';
@@ -84,6 +85,13 @@ const GeneralForm = ({ data, onChange, mode, user }) => {
           </div>
         )}
       </div>
+
+      {/* Referrer Selection Section */}
+      <ReferrerSelector 
+        value={data.referrers} 
+        onChange={(val) => onChange({ ...data, referrers: val })} 
+        isEditMode={isEditMode} 
+      />
     </div>
   );
 };

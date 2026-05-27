@@ -8,19 +8,19 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, user }) => {
     if (hasRejectionBefore) return '';
 
     switch (approver.status) {
-      case '완료': return '결재 완료';
-      case '반려': return '반려';
-      case '진행': return '진행 중';
-      case '대기': return '결재 대기';
+      case 'APPROVED': return '결재 완료';
+      case 'REJECTED': return '반려';
+      case 'IN_PROGRESS': return '진행 중';
+      case 'WAITING': return '결재 대기';
       default: return approver.status || '결재 대기';
     }
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case '완료': return 'text-green-300';
-      case '반려': return 'text-red-300';
-      case '진행': return 'text-amber-300';
+      case 'APPROVED': return 'text-[#10B981]';
+      case 'REJECTED': return 'text-[#FF4D4F]';
+      case 'IN_PROGRESS': return 'text-blue-600';
       default: return 'text-white/50';
     }
   };
