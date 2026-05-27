@@ -347,13 +347,13 @@ const AdminDept = () => {
                 className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20 focus:border-[#3530B8] transition-all"
                 value={formData.deptName}
                 onChange={(e) => {
-                  const val = e.target.value.replace(/[^ㄱ-ㅎㅏ-ㅣ가-힣]/g, ""); // 한글만 허용
+                  const val = e.target.value.replace(/[^ㄱ-ㅎㅏ-ㅣ가-힣]{3,30}/g, ""); // 한글만 허용
                   setFormData({ ...formData, deptName: val });
                 }}
               />
               <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-medium ml-1">
                 <FontAwesomeIcon icon={faInfoCircle} className="text-[#3530B8]/50" />
-                <span>한글만 입력 가능</span>
+                <span>한글만 입력 가능 (최소 3글자 ~ 최대 30글자)</span>
               </div>
             </div>
             <div className="space-y-1.5">
@@ -364,13 +364,13 @@ const AdminDept = () => {
                 className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20 focus:border-[#3530B8] transition-all font-mono"
                 value={formData.deptCode}
                 onChange={(e) => {
-                  const val = e.target.value.replace(/[^a-zA-Z]/g, ""); // 영문만 허용
+                  const val = e.target.value.replace(/[^A-Z]{2,20}/g, ""); // 영문(대문자)만 허용
                   setFormData({ ...formData, deptCode: val });
                 }}
               />
               <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-medium ml-1">
                 <FontAwesomeIcon icon={faInfoCircle} className="text-[#3530B8]/50" />
-                <span>영문만 입력 가능</span>
+                <span>영문(대문자)만 입력 가능 (최소 2글자 ~ 최대 20글자) </span>
               </div>
             </div>
           </div>
