@@ -9,6 +9,7 @@ import {
   faTimes,
   faPaperclip
 } from '@fortawesome/free-solid-svg-icons';
+import { IMAGES } from '../../images/images';
 
 const AiChat = () => {
   // --- 1. States ---
@@ -93,7 +94,7 @@ const AiChat = () => {
         <div className="mt-auto pt-6">
             <div className="bg-white p-4 rounded-xl shadow-sm border border-[#edf2f9]">
                 <img 
-                  src="/src/assets/AiChat.png" 
+                  src={IMAGES.AI_CHAT}
                   alt="AI 검색 안내" 
                   className="w-full h-auto"
                 />

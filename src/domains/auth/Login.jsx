@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import Login_logo from '../../assets/Login_logo.png'
 import useAuthStore from '../../store/authStore';
 import { loginRequest } from './authApi';
+import { IMAGES } from '../../images/images';
 
 const Login = () => {
   const navi = useNavigate();
@@ -57,7 +57,7 @@ const Login = () => {
               <div className="w-full h-px bg-[#3530B8] rotate-45 absolute"></div>
               <div className="w-full h-px bg-[#3530B8] -rotate-45 absolute"></div>
             </div>
-            <div className="text-[#3530B8] font-medium"><img src={Login_logo} className="max-h-full" /></div>
+            <div className="text-[#3530B8] font-medium"><img src={IMAGES.LOGIN_LOGO} className="max-h-full" /></div>
           </div>
         </div>
 
