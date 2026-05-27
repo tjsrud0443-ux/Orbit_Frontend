@@ -5,6 +5,7 @@ import ApprovalDocumentContainer from './components/ApprovalDocumentContainer';
 import VacationForm from './forms/VacationForm';
 import PaymentForm from './forms/PaymentForm';
 import GeneralForm from './forms/GeneralForm';
+import PurchaseForm from './forms/PurchaseForm';
 
 // 결재자 선택 모달 컴포넌트
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
@@ -80,6 +81,7 @@ const ApprovalDetail = () => {
     const isPaymentPath = location.pathname.includes('payment');
     const isVacationPath = location.pathname.includes('vacation');
     const isGeneralPath = location.pathname.includes('general');
+    const isPurchasePath = location.pathname.includes('purchase');
 
     if (!docId) {
       // [신규 작성 모드]
@@ -113,12 +115,23 @@ const ApprovalDetail = () => {
           purpose: '',
           content: ''
         });
+      } else if (isPurchasePath) {
+        setDocType('PURCHASE');
+        setFormData({
+          purchaseRequestDate: '',
+          requestDate: new Date().toISOString().split('T')[0],
+          purchasePurpose: '',
+          supplier: '',
+          items: [{ id: 1, itemName: '', quantity: 1, unitPrice: 0, note: '' }],
+          attachments: []
+        });
       }
     } else {
       // [조회 모드]
       if (isVacationPath) setDocType('VACATION');
       else if (isPaymentPath) setDocType('PAYMENT');
       else if (isGeneralPath) setDocType('GENERAL');
+      else if (isPurchasePath) setDocType('PURCHASE');
       
       fetchDocumentData(docId);
     }
@@ -166,6 +179,8 @@ const ApprovalDetail = () => {
         return <PaymentForm {...props} />;
       case 'GENERAL':
         return <GeneralForm {...props} />;
+      case 'PURCHASE':
+        return <PurchaseForm {...props} />;
       default:
         return <div>알 수 없는 문서 형식입니다.</div>;
     }
@@ -176,6 +191,7 @@ const ApprovalDetail = () => {
       case 'VACATION': return '휴가 신청서';
       case 'PAYMENT': return '지출 결의서';
       case 'GENERAL': return '일반 품의서';
+      case 'PURCHASE': return '구매 신청서';
       default: return '전자결재';
     }
   };
