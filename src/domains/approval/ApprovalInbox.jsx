@@ -38,16 +38,21 @@ const StatusBadge = ({ status }) => {
   };
 
   return (
-    <span className={`px-2 py-0.5 md:px-2.5 md:py-1 rounded-full text-[10px] md:text-xs font-semibold border ${styles[status] || 'bg-gray-50 text-gray-600'}`}>
+    <span className={`px-2 py-0.5 md:px-2.5 md:py-1 rounded-full text-[10px] md:text-xs font-semibold border whitespace-nowrap ${styles[status] || 'bg-gray-50 text-gray-600'}`}>
       {status}
     </span>
   );
 };
 
-const DocumentTable = ({ title, data, onDetailClick }) => {
+const DocumentTable = ({ title, data, onDetailClick, showPagination = true }) => {
   const [page, setPage] = useState(1);
   const itemsPerPage = 5;
   const count = Math.ceil(data.length / itemsPerPage);
+
+  // 페이지네이션 비활성화 시 전체 데이터 표시, 활성화 시 슬라이싱
+  const displayData = showPagination 
+    ? data.slice((page - 1) * itemsPerPage, page * itemsPerPage)
+    : data;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-3">
@@ -55,23 +60,23 @@ const DocumentTable = ({ title, data, onDetailClick }) => {
         <h3 className="text-base md:text-lg font-bold text-slate-800">{title}</h3>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[800px] md:min-w-full text-left border-collapse md:table-fixed">
+        <table className="w-full min-w-[900px] md:min-w-full text-left border-collapse md:table-fixed">
           <thead>
             <tr className="bg-slate-50 text-slate-500 text-[10px] md:text-xs uppercase tracking-wider">
-              <th className="pl-4 md:pl-6 pr-3 py-3 font-bold w-[35%]">제목</th>
-              <th className="px-3 py-3 font-bold w-[18%]">문서 종류</th>
-              <th className="px-3 py-3 font-bold w-[15%]">기안자</th>
-              <th className="px-3 py-3 font-bold w-[14%] text-center">기안일</th>
-              <th className="px-3 py-3 font-bold text-center w-[10%]">결재 상태</th>
-              <th className="px-3 py-3 font-bold text-center w-[8%]">작업</th>
+              <th className="pl-4 md:pl-6 pr-3 py-3 font-bold w-[35%] whitespace-nowrap">제목</th>
+              <th className="px-3 py-3 font-bold w-[18%] whitespace-nowrap">문서 종류</th>
+              <th className="px-3 py-3 font-bold w-[15%] whitespace-nowrap">기안자</th>
+              <th className="px-3 py-3 font-bold w-[14%] text-center whitespace-nowrap">기안일</th>
+              <th className="px-3 py-3 font-bold text-center w-[10%] whitespace-nowrap">결재 상태</th>
+              <th className="px-3 py-3 font-bold text-center w-[8%] whitespace-nowrap">상세보기</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {data.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((doc) => (
+            {displayData.map((doc) => (
               <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors">
-                <td className="pl-4 md:pl-6 pr-3 py-4 text-[12px] md:text-sm font-semibold text-slate-800 truncate">{doc.title}</td>
-                <td className="px-3 py-4 text-[12px] md:text-sm text-slate-600 truncate">{doc.type}</td>
-                <td className="px-3 py-4 text-[12px] md:text-sm text-slate-600 truncate">
+                <td className="pl-4 md:pl-6 pr-3 py-4 text-[12px] md:text-sm font-semibold text-slate-800 truncate whitespace-nowrap">{doc.title}</td>
+                <td className="px-3 py-4 text-[12px] md:text-sm text-slate-600 truncate whitespace-nowrap">{doc.type}</td>
+                <td className="px-3 py-4 text-[12px] md:text-sm text-slate-600 truncate whitespace-nowrap">
                   <div className="flex items-center gap-2 overflow-hidden">
                     <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 rounded-full bg-slate-200 flex items-center justify-center text-[9px] md:text-[10px]">
                       <FontAwesomeIcon icon={faUser} className="text-slate-400" />
@@ -79,11 +84,11 @@ const DocumentTable = ({ title, data, onDetailClick }) => {
                     <span className="truncate">{doc.drafter}</span>
                   </div>
                 </td>
-                <td className="px-3 py-4 text-[12px] md:text-sm text-slate-500 text-center truncate">{doc.date}</td>
-                <td className="px-3 py-4 text-center">
+                <td className="px-3 py-4 text-[12px] md:text-sm text-slate-500 text-center truncate whitespace-nowrap">{doc.date}</td>
+                <td className="px-3 py-4 text-center whitespace-nowrap">
                   <StatusBadge status={doc.status} />
                 </td>
-                <td className="px-3 py-4 text-center">
+                <td className="px-3 py-4 text-center whitespace-nowrap">
                   <button 
                     onClick={() => onDetailClick(doc)}
                     className="px-2 py-1 md:px-3 md:py-1.5 text-[10px] md:text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors border border-indigo-100 whitespace-nowrap"
@@ -93,12 +98,19 @@ const DocumentTable = ({ title, data, onDetailClick }) => {
                 </td>
               </tr>
             ))}
+            {displayData.length === 0 && (
+              <tr>
+                <td colSpan="6" className="py-10 text-center text-slate-400 text-xs">해당 문서가 없습니다.</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
-      <div className="py-2 scale-95 origin-center">
-        <Pagination count={count} page={page} onChange={(_, value) => setPage(value)} />
-      </div>
+      {showPagination && (
+        <div className="py-2 scale-95 origin-center">
+          <Pagination count={count} page={page} onChange={(_, value) => setPage(value)} />
+        </div>
+      )}
     </div>
   );
 };
@@ -169,6 +181,7 @@ const ApprovalInbox = () => {
             title="결재 대기중" 
             data={filterDocuments(PENDING_DOCUMENTS)} 
             onDetailClick={handleOpenDetail} 
+            showPagination={false}
           />
           <DocumentTable 
             title="결재 완료" 
