@@ -222,7 +222,7 @@ const Signup = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFF] flex items-center justify-center p-4 md:p-8">
-      <div className="w-[90%] max-w-[1400px] min-h-[85vh] bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col md:flex-row relative border border-[#F0F4FF]">
+      <div className="w-[90%] max-w-[87.5rem] min-h-[85vh] bg-white rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row relative border border-[#F0F4FF]">
         
         {/* Mobile Top Navigation */}
         <div className="md:hidden flex items-center p-6 bg-white z-10">
@@ -487,7 +487,7 @@ const Signup = () => {
       {isPostcodeOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
           
-          <div className="relative bg-white w-full max-w-[500px] h-[500px] rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="relative bg-white w-full max-w-[31.25rem] h-[31.25rem] rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
             
             {/* 닫기 버튼 */}
             <button
@@ -510,14 +510,14 @@ const Signup = () => {
 
       <style dangerouslySetInnerHTML={{ __html: `
         .custom-scrollbar::-webkit-scrollbar {
-          width: 5px;
+          width: 0.3125rem;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
           background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
           background: #E5E7EB;
-          border-radius: 10px;
+          border-radius: 0.625rem;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: #D1D5DB;

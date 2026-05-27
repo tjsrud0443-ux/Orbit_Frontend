@@ -2,6 +2,7 @@
 import Pagination from '../../components/common/Pagination';
 import { approveUserSignup, getAllRequest, getDeptList, getHrInfo, getRankList, getUserInfo, rejectUserSignup } from './adminApi';
 import useAuthStore from '../../store/authStore';
+import Calendar from '../../components/common/Calendar';
 
 const AdminSignup = () => {
   const [activeTab, setActiveTab] = useState('전체');
@@ -24,7 +25,6 @@ const AdminSignup = () => {
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [isRejectSuccess, setIsRejectSuccess] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [viewDate, setViewDate] = useState(new Date());
 
   const token = useAuthStore(state => state.token);
 
@@ -32,17 +32,17 @@ const AdminSignup = () => {
     '전체': 'TOTAL',
     '승인 대기': 'PENDING',
     '승인 완료': 'APPROVED',
-    '거절': 'REJECTED'
+    '반려': 'REJECTED'
   };
 
   const tabKeyMap = {
     '전체': 'TOTAL',
     '승인 대기': 'PENDING',
     '승인 완료': 'APPROVED',
-    '거절': 'REJECTED'
+    '반려': 'REJECTED'
   };
 
-  const tabs = ['전체', '승인 대기', '승인 완료', '거절'];
+  const tabs = ['전체', '승인 대기', '승인 완료', '반려'];
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
@@ -145,22 +145,13 @@ const AdminSignup = () => {
     });
   };
 
-  const days = ['일', '월', '화', '수', '목', '금', '토'];
-  const calendarYear = viewDate.getFullYear();
-  const calendarMonth = viewDate.getMonth();
-  const firstDay = new Date(calendarYear, calendarMonth, 1).getDay();
-  const lastDate = new Date(calendarYear, calendarMonth + 1, 0).getDate();
-  const calendarDays = [];
-  for (let i = 0; i < firstDay; i++) calendarDays.push(null);
-  for (let i = 1; i <= lastDate; i++) calendarDays.push(i);
-
   return (
     <div className={`h-full flex flex-col ${selectedUser ? 'p-0 md:p-8' : 'p-6 md:p-8'} font-sans overflow-hidden bg-[#FFFFFF]`}>
       
       {/* Rejection Confirmation Modal */}
       {isRejectModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-sm rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="bg-white w-full max-w-sm rounded-[2rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
             {!isRejectSuccess ? (
               <>
                 <div className="p-8 text-center">
@@ -207,8 +198,8 @@ const AdminSignup = () => {
       {/* Header Section - Fixed height */}
       <div className={`mb-6 flex-shrink-0 ${selectedUser ? 'hidden md:block' : 'block'}`}>
         <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">회원가입 관리</h1>
-        <p className="text-[11px] md:text-sm text-gray-500 whitespace-nowrap">
-          신규 회원가입 신청 내역을 확인하고 승인, 거절할 수 있습니다.
+        <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">
+          신규 회원가입 신청 내역을 확인하고 승인, 반려할 수 있습니다.
         </p>
       </div>
 
@@ -219,7 +210,7 @@ const AdminSignup = () => {
             <button
               key={tab}
               onClick={() => handleTabClick(tab)}
-              className={`px-2.5 md:px-4 py-2 rounded-xl text-[11px] md:text-sm font-bold transition-all whitespace-nowrap flex-shrink-0 ${
+              className={`px-2.5 md:px-4 py-2 rounded-xl text-[0.6875rem] md:text-sm font-bold transition-all whitespace-nowrap flex-shrink-0 ${
                 activeTab === tab
                   ? 'bg-[#3530B8] text-white shadow-md'
                   : 'text-gray-500 hover:text-[#3530B8] hover:bg-[#F0F4FF]'
@@ -252,8 +243,8 @@ const AdminSignup = () => {
       <div className="flex-1 flex gap-6 min-h-0 overflow-hidden">
         
         {/* List Section */}
-        <div className={`flex flex-col bg-white rounded-[32px] border border-[#F0F4FF] shadow-sm overflow-hidden transition-all duration-500 min-h-0 ${selectedUser ? 'hidden md:flex md:flex-[0.6]' : 'flex-1'}`}>
-          <div className="hidden md:grid grid-cols-6 px-6 py-4 border-b border-gray-50 text-[11px] font-bold text-gray-400 uppercase tracking-wider flex-shrink-0">
+        <div className={`flex flex-col bg-white rounded-[2rem] border border-[#F0F4FF] shadow-sm overflow-hidden transition-all duration-500 min-h-0 ${selectedUser ? 'hidden md:flex md:flex-[0.6]' : 'flex-1'}`}>
+          <div className="hidden md:grid grid-cols-6 px-6 py-4 border-b border-gray-50 text-[0.6875rem] font-bold text-gray-400 uppercase tracking-wider flex-shrink-0">
             <div className="text-center">프로필</div>
             <div>이름</div>
             <div>아이디</div>
@@ -288,19 +279,19 @@ const AdminSignup = () => {
 
                 {/* PC ONLY: Columns 2, 3, 4, 5 */}
                 <div className="hidden md:block text-xs font-bold text-gray-700 truncate">{info.name}</div>
-                <div className="hidden md:block text-[11px] text-gray-500 truncate">{info.id}</div>
-                <div className="hidden md:block text-[11px] text-gray-500 font-medium truncate">{info.phone}</div>
-                <div className="hidden md:block text-[11px] text-gray-400 truncate">{info.signup_at.split(" ")[0]}</div>
+                <div className="hidden md:block text-[0.6875rem] text-gray-500 truncate">{info.id}</div>
+                <div className="hidden md:block text-[0.6875rem] text-gray-500 font-medium truncate">{info.phone}</div>
+                <div className="hidden md:block text-[0.6875rem] text-gray-400 truncate">{info.signup_at.split(" ")[0]}</div>
 
                 {/* MOBILE ONLY: Middle Info Section */}
                 <div className="flex-1 min-w-0 md:hidden">
                   <div className="flex items-baseline gap-2">
                     <div className="text-xs font-bold text-gray-700 truncate">{info.name}</div>
-                    <div className="text-[10px] text-gray-500 truncate">{info.id}</div>
+                    <div className="text-[0.625rem] text-gray-500 truncate">{info.id}</div>
                   </div>
                   <div className="flex flex-col mt-0.5">
-                    <div className="text-[10px] text-gray-500 font-medium">{info.phone}</div>
-                    <div className="text-[10px] text-gray-400 mt-0.5">{info.signup_at.split(" ")[0]}</div>
+                    <div className="text-[0.625rem] text-gray-500 font-medium">{info.phone}</div>
+                    <div className="text-[0.625rem] text-gray-400 mt-0.5">{info.signup_at.split(" ")[0]}</div>
                   </div>
                 </div>
 
@@ -308,12 +299,12 @@ const AdminSignup = () => {
                 <div className="flex-shrink-0 ml-3 md:ml-0 md:flex md:justify-center">
                   { 
                     info.status === "PENDING" ?
-                    <span className="px-2.5 py-0.5 bg-[#FFF9F0] text-[#FF9800] text-[10px] font-bold rounded-full text-center whitespace-nowrap">승인 대기</span>
+                    <span className="px-2.5 py-0.5 bg-[#FFF9F0] text-[#FF9800] text-[0.625rem] font-bold rounded-full text-center whitespace-nowrap">승인 대기</span>
                     :
                     info.status === "APPROVED" ?
-                    <span className="px-2.5 py-0.5 bg-[#F0FDF4] text-[#10B981] text-[10px] font-bold rounded-full text-center whitespace-nowrap">승인 완료</span>
+                    <span className="px-2.5 py-0.5 bg-[#F0FDF4] text-[#10B981] text-[0.625rem] font-bold rounded-full text-center whitespace-nowrap">승인 완료</span>
                     :
-                    <span className="px-2.5 py-0.5 bg-[#FFF0F0] text-[#FF4D4F] text-[10px] font-bold rounded-full text-center whitespace-nowrap">거절</span>
+                    <span className="px-2.5 py-0.5 bg-[#FFF0F0] text-[#FF4D4F] text-[0.625rem] font-bold rounded-full text-center whitespace-nowrap">반려</span>
                   }
                 </div>
               </div>
@@ -333,7 +324,7 @@ const AdminSignup = () => {
 
         {/* Detail View Section */}
         {selectedUser && (
-          <div className={`flex flex-col bg-white rounded-none md:rounded-[32px] border-0 md:border border-[#F0F4FF] shadow-sm overflow-hidden min-h-0 animate-in slide-in-from-right duration-500 ${selectedUser ? 'flex-1 md:flex-[0.4]' : 'hidden'}`}>
+          <div className={`flex flex-col bg-white rounded-none md:rounded-[2rem] border-0 md:border border-[#F0F4FF] shadow-sm overflow-hidden min-h-0 animate-in slide-in-from-right duration-500 ${selectedUser ? 'flex-1 md:flex-[0.4]' : 'hidden'}`}>
              <div className="p-6 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
                 <h2 className="text-lg font-bold text-gray-900">신청 정보 상세</h2>
                 <button onClick={() => setSelectedUser(null)} className="text-gray-300 hover:text-gray-500 transition-colors">
@@ -401,7 +392,7 @@ const AdminSignup = () => {
                       ) : (
                         <>
                           <div className="relative">
-                            <label className="block text-[11px] font-bold text-gray-600 mb-1 ml-1">부서 배정</label>
+                            <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1 ml-1">부서 배정</label>
                             <div 
                               onClick={() => { setIsDeptOpen(!isDeptOpen); setIsRankOpen(false); }}
                               className={`w-full px-4 py-2.5 bg-white border ${errors.dept ? 'border-red-500' : isDeptOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-200'} rounded-xl text-xs font-medium transition-all cursor-pointer flex justify-between items-center`}
@@ -409,7 +400,7 @@ const AdminSignup = () => {
                               <span className={selectedDept.dept_seq === null ? 'text-gray-400' : 'text-gray-800'}>{selectedDept.dept_name}</span>
                               <svg className={`w-4 h-4 text-gray-400 transition-transform ${isDeptOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                             </div>
-                            {errors.dept && <p className="text-red-500 text-[10px] mt-1 ml-1 font-medium">{errors.dept}</p>}
+                            {errors.dept && <p className="text-red-500 text-[0.625rem] mt-1 ml-1 font-medium">{errors.dept}</p>}
                             {isDeptOpen && (
                               <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-32 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
                                 {deptList.map((dept) => (
@@ -431,7 +422,7 @@ const AdminSignup = () => {
                           </div>
 
                           <div className="relative">
-                            <label className="block text-[11px] font-bold text-gray-600 mb-1 ml-1">직급 설정</label>
+                            <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1 ml-1">직급 설정</label>
                             <div 
                               onClick={() => { setIsRankOpen(!isRankOpen); setIsDeptOpen(false); }}
                               className={`w-full px-4 py-2.5 bg-white border ${errors.rank ? 'border-red-500' : isRankOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-200'} rounded-xl text-xs font-medium transition-all cursor-pointer flex justify-between items-center`}
@@ -439,7 +430,7 @@ const AdminSignup = () => {
                               <span className={selectedRank.rank_seq === null ? 'text-gray-400' : 'text-gray-800'}>{selectedRank.rank_name}</span>
                               <svg className={`w-4 h-4 text-gray-400 transition-transform ${isRankOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                             </div>
-                            {errors.rank && <p className="text-red-500 text-[10px] mt-1 ml-1 font-medium">{errors.rank}</p>}
+                            {errors.rank && <p className="text-red-500 text-[0.625rem] mt-1 ml-1 font-medium">{errors.rank}</p>}
                             {isRankOpen && (
                               <div className="absolute z-10 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-32 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
                                 {rankList
@@ -462,7 +453,7 @@ const AdminSignup = () => {
                           </div>
 
                           <div className="relative">
-                            <label className="block text-[11px] font-bold text-gray-600 mb-1 ml-1">입사일자</label>
+                            <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1 ml-1">입사일자</label>
                             <div 
                               onClick={() => { setIsCalendarOpen(!isCalendarOpen); setIsDeptOpen(false); setIsRankOpen(false); }}
                               className={`w-full px-4 py-2.5 bg-white border ${errors.hireDate ? 'border-red-500' : isCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-200'} rounded-xl text-xs font-medium transition-all cursor-pointer flex justify-between items-center`}
@@ -470,40 +461,17 @@ const AdminSignup = () => {
                               <span className={!hireDate ? 'text-gray-400' : 'text-gray-800'}>{hireDate || '입사일자를 선택하세요'}</span>
                               <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                             </div>
-                            {errors.hireDate && <p className="text-red-500 text-[10px] mt-1 ml-1 font-medium">{errors.hireDate}</p>}
+                            {errors.hireDate && <p className="text-red-500 text-[0.625rem] mt-1 ml-1 font-medium">{errors.hireDate}</p>}
                             
                             {isCalendarOpen && (
-                              <div className="absolute z-30 w-full bottom-full mb-1 bg-white border border-gray-100 rounded-2xl shadow-2xl p-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
-                                <div className="flex items-center justify-between mb-4 px-1">
-                                  <button onClick={(e) => { e.stopPropagation(); setViewDate(new Date(calendarYear, calendarMonth - 1, 1)); }} className="p-1 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-[#3530B8] transition-colors">&lt;</button>
-                                  <div className="text-xs font-bold text-gray-900">{calendarYear}년 {calendarMonth + 1}월</div>
-                                  <button onClick={(e) => { e.stopPropagation(); setViewDate(new Date(calendarYear, calendarMonth + 1, 1)); }} className="p-1 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-[#3530B8] transition-colors">&gt;</button>
-                                </div>
-                                <div className="grid grid-cols-7 gap-1 mb-2">
-                                  {days.map(d => <div key={d} className="text-[10px] font-bold text-gray-400 text-center py-1">{d}</div>)}
-                                </div>
-                                <div className="grid grid-cols-7 gap-1">
-                                  {calendarDays.map((d, i) => (
-                                    <div 
-                                      key={i}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        if(!d) return;
-                                        const dateStr = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                                        setHireDate(dateStr);
-                                        setIsCalendarOpen(false);
-                                        setErrors(prev => ({ ...prev, hireDate: '' }));
-                                      }}
-                                      className={`text-[10px] font-medium text-center py-2 rounded-lg transition-all cursor-pointer
-                                        ${!d ? 'invisible' : 'hover:bg-[#F0F4FF] hover:text-[#3530B8] text-gray-600'}
-                                        ${hireDate === `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}` ? 'bg-[#3530B8] text-white' : ''}
-                                      `}
-                                    >
-                                      {d}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
+                              <Calendar
+                                value={hireDate}
+                                onChange={(dateStr) => {
+                                  setHireDate(dateStr);
+                                  setErrors(prev => ({ ...prev, hireDate: '' }));
+                                }}
+                                onClose={() => setIsCalendarOpen(false)}
+                              />
                             )}
                           </div>
                         </>
@@ -536,9 +504,9 @@ const AdminSignup = () => {
       <style dangerouslySetInnerHTML={{ __html: `
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 0.25rem; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 0.625rem; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
       `}} />
     </div>

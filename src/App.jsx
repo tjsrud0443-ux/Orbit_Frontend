@@ -33,6 +33,8 @@ import BoardDetail from './domains/board/BoardDetail';
 import AiChat from './domains/aiChat/AiChat';
 import MyPage from './domains/mypage/MyPage';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import ApprovalDetail from './domains/approval/ApprovalDetail';
+
 
 function App() {
   return (
@@ -54,6 +56,10 @@ function App() {
           <Route path="/approvalInbox" element={<ApprovalInbox />} />
           <Route path="/approvalCc" element={<ApprovalCc />} />
           <Route path="/approvalTemp" element={<ApprovalTemp />} />
+
+          {/* 리팩토링된 통합 결재 상세/작성 페이지 */}
+          <Route path="/approval/write/:type" element={<ApprovalDetail />} />
+          <Route path="/approval/detail/:type/:docId" element={<ApprovalDetail />} />
 
           <Route path="/projects" element={<ProjectsList />} />
           <Route path="/documents" element={<DocumentsList />} />
