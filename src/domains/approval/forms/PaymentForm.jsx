@@ -67,7 +67,7 @@ const PaymentForm = ({ data, onChange, mode, user }) => {
           <tbody>
             <tr className="border-b border-gray-200">
               <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">성명</th>
-              <td className="p-2 border-r border-gray-200">{user?.name || '-'}</td>
+              <td className="p-2 w-125 border-r border-gray-200">{user?.name || '-'}</td>
               <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">사번</th>
               <td className="p-2">{user?.users_seq || '-'}</td>
             </tr>
@@ -81,7 +81,7 @@ const PaymentForm = ({ data, onChange, mode, user }) => {
               <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">지출일</th>
               <td className="p-2 border-r border-gray-200">
                 {isEditMode ? (
-                  <div className="relative w-full">
+                  <div className="relative w-65">
                     <input 
                       type="text" 
                       readOnly 

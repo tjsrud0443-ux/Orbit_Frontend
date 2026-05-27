@@ -130,7 +130,7 @@ const ApprovalHome = () => {
   ];
 
   return (
-    <div className="p-4 md:p-8 font-sans bg-white min-h-screen overflow-hidden relative">
+    <div className="p-4 md:p-6 font-sans bg-white overflow-hidden relative">
       
       {/* Draft Selection Modal */}
       {isDraftModalOpen && (
@@ -179,7 +179,7 @@ const ApprovalHome = () => {
         </div>
       )}
 
-      <div className="max-w-[100rem] mx-auto flex flex-col gap-8">
+      <div className="max-w-[100rem] mx-auto flex flex-col gap-6">
         
         {/* Header Section */}
         <div className="flex-shrink-0 px-2">
@@ -246,7 +246,7 @@ const ApprovalHome = () => {
         </div>
 
         {/* Recent Documents Area */}
-        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex-1 h-[28.75rem] mb-4 flex flex-col">
+        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex-1 h-[28.5rem] flex flex-col">
           <div className="p-6 px-10 border-b border-gray-50 flex items-center justify-between bg-gray-50/30 flex-shrink-0">
             <h2 className="text-lg font-bold text-gray-900">최근 문서 목록</h2>
             <button 
