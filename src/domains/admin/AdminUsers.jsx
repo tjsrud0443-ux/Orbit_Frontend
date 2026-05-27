@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import Pagination from '../../components/common/Pagination';
 
 const AdminUsers = () => {
@@ -128,14 +128,14 @@ const AdminUsers = () => {
         
         {/* 좌측 테이블 카드 */}
         <div className={`flex flex-col bg-white border border-slate-100 rounded-[32px] 
-          shadow-sm overflow-hidden transition-all duration-500 min-h-0 ${selectedUser ? 'hidden md:flex md:flex-[0.6]' : 'flex-1'}`}>
+          shadow-sm overflow-hidden transition-all duration-500 min-h-0 ${selectedUser ? 'hidden md:flex md:flex-[0.7]' : 'flex-1'}`}>
           <div className="flex-1 overflow-y-auto custom-scrollbar p-6 pt-0">
             <table className="w-full text-left border-collapse block sm:table mt-6">
               <thead className="sticky top-0 bg-white z-10">
                 <tr className="border-b border-slate-100 hidden sm:table-row">
                   <th className="pb-4 pl-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">사번</th>
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">이름</th>
-                  <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">이메일</th>
+                  <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">아이디</th>
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">부서</th>
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">직급</th>
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-24">권한</th>
@@ -152,44 +152,58 @@ const AdminUsers = () => {
                     onClick={() => { setSelectedUser(emp); setIsDetailEditing(false); }}
                     className={`hover:bg-slate-50/40 transition-colors block sm:table-row py-4 sm:py-0 border-b border-slate-50 sm:border-none
                        relative cursor-pointer ${selectedUser?.id === emp.id ? 'bg-[#F0F4FF] hover:bg-[#F0F4FF]' : ''}`}>
+                    
                     <td className="py-1 sm:py-4 pl-4 text-xs font-bold text-slate-400 font-mono block sm:table-cell sm:text-slate-700">
                       <span className="inline sm:hidden text-[0.625rem] font-medium text-slate-300 mr-1">사번</span>
                       {emp.id}
                     </td>
-                    <td className="pt-2 pb-1 sm:py-4 pl-4 sm:pl-0 text-sm sm:text-xs font-extrabold sm:font-bold text-slate-800 sm:text-slate-700 block sm:table-cell">
-                      {emp.name}
-                    </td>
-                    <td className="py-0.5 sm:py-4 pl-4 sm:pl-0 text-xs text-slate-400 font-mono block sm:table-cell">
-                      {emp.username}@company.com
-                    </td>
+
+                    {/* 이름, 아이디, 상태 (모바일에서 한 줄) */}
+                    <div className="flex items-center justify-between sm:contents pr-4">
+                      <div className="flex items-baseline gap-1 sm:contents">
+                        <td className="pt-2 pb-1 sm:py-4 pl-4 sm:pl-0 text-sm sm:text-xs font-extrabold sm:font-bold text-slate-800 sm:text-slate-700 block sm:table-cell">
+                          {emp.name}
+                        </td>
+                        <td className="py-0.5 sm:py-4 pl-4 sm:pl-0 text-[10px] text-slate-400 font-mono block sm:table-cell sm:text-left">
+                          {emp.username}
+                        </td>
+                      </div>
+                      <td className="py-1 sm:py-4 pl-4 sm:pl-0 text-left sm:text-center block sm:table-cell mobile-status-badge">
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-center whitespace-nowrap ${
+                          emp.status === '재직' ? 'bg-[#F0FDF4] text-[#10B981]' : 
+                          emp.status === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' : 
+                          'bg-[#FFF0F0] text-[#FF4D4F]'
+                        }`}>
+                          {emp.status}
+                        </span>
+                      </td>
+                    </div>
+
                     <td className="py-0.5 sm:py-4 pl-4 sm:pl-0 text-xs text-slate-500 sm:text-slate-600 block sm:table-cell font-medium">
                       <span className="inline sm:hidden text-slate-300 mr-1">부서:</span>
                       {emp.role}
                     </td>
-                    <td className="py-0.5 sm:py-4 pl-4 sm:pl-0 text-xs text-slate-400 sm:text-slate-500 block sm:table-cell">
-                      <span className="inline sm:hidden text-slate-300 mr-1">직급:</span>
-                      팀원
-                    </td>
-                    <td className="py-1 sm:py-4 pl-4 sm:pl-0 text-left sm:text-center block sm:table-cell">
-                      <span className={`inline-block px-2 py-0.5 rounded-full text-[0.625rem] font-bold ${
-                        emp.id === 3 ? 'bg-purple-50 text-purple-600 border border-purple-100' : 'bg-slate-50 text-slate-500 border border-slate-100'
-                      }`}>
-                        {emp.id === 3 ? 'ADMIN' : 'USER'}
-                      </span>
-                    </td>
-                    <td className="py-1 sm:py-4 pl-4 sm:pl-0 text-left sm:text-center block sm:table-cell mobile-status-badge">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-center whitespace-nowrap ${
-                        emp.status === '재직' ? 'bg-[#F0FDF4] text-[#10B981]' : 
-                        emp.status === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' : 
-                        'bg-[#FFF0F0] text-[#FF4D4F]'
-                      }`}>
-                        {emp.status}
-                      </span>
-                    </td>
+
+                    {/* 직급, 권한 (모바일에서 한 줄) */}
+                    <div className="flex items-center gap-1 sm:contents">
+                      <td className="py-0.5 sm:py-4 pl-4 sm:pl-0 text-xs text-slate-400 sm:text-slate-500 block sm:table-cell">
+                        <span className="inline sm:hidden text-slate-300 mr-1">직급:</span>
+                        팀원
+                      </td>
+                      <td className="py-1 sm:py-4 pl-4 sm:pl-0 text-left sm:text-center block sm:table-cell">
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-[0.625rem] font-bold ${
+                          emp.id === 3 ? 'bg-purple-50 text-purple-600 border border-purple-100' : 'bg-slate-50 text-slate-500 border border-slate-100'
+                        }`}>
+                          {emp.id === 3 ? 'ADMIN' : 'USER'}
+                        </span>
+                      </td>
+                    </div>
+
                     <td className="py-1 sm:py-4 pl-4 sm:pl-0 text-[0.6875rem] sm:text-xs text-slate-400 font-mono block sm:table-cell">
                       <span className="inline sm:hidden text-slate-300 mr-1">입사일:</span>
                       {emp.joinDate}
                     </td>
+
                     <td className="pt-2 pb-1 sm:py-4 pl-4 sm:pl-0 text-left sm:text-center block sm:table-cell mobile-edit-btn">
                       {editingId === emp.id ? (
                         <div className="flex gap-1 justify-center">
@@ -238,7 +252,7 @@ const AdminUsers = () => {
         {/* 우측 상세정보 카드 */}
         {selectedUser && (
           <div className={`flex flex-col bg-white rounded-none md:rounded-[32px] 
-          border-0 md:border border-slate-100 shadow-sm overflow-hidden min-h-0 animate-in slide-in-from-right duration-500 ${selectedUser ? 'flex-1 md:flex-[0.4]' : 'hidden'}`}>
+          border-0 md:border border-slate-100 shadow-sm overflow-hidden min-h-0 animate-in slide-in-from-right duration-500 ${selectedUser ? 'flex-1 md:flex-[0.3]' : 'hidden'}`}>
             <div className="p-6 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
               <h2 className="text-lg font-bold text-slate-900">직원 상세 정보</h2>
               <button onClick={() => { setSelectedUser(null); setIsDetailEditing(false); }} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400">
