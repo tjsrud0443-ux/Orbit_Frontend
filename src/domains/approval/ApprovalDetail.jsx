@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import useUserStore from '../../store/userStore';
 import useEmployeeStore from '../../store/useEmployeeStore';
 import ApprovalDocumentContainer from './components/ApprovalDocumentContainer';
@@ -7,6 +7,7 @@ import VacationForm from './forms/VacationForm';
 import PaymentForm from './forms/PaymentForm';
 import GeneralForm from './forms/GeneralForm';
 import PurchaseForm from './forms/PurchaseForm';
+import { submitVacation } from './approvalApi';
 
 // 결재자 선택 모달 컴포넌트
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
@@ -71,20 +72,19 @@ const ApprovalDetail = () => {
   const { user } = useUserStore();
   const { fetchEmployees } = useEmployeeStore();
 
-  // 1. 상태 관리
   const [mode, setMode] = useState('VIEW'); // EDIT or VIEW
   const [userRole, setUserRole] = useState('REFERRER'); // DRAFTER, APPROVER, REFERRER
-  const [docType, setDocType] = useState('VACATION'); // VACATION, PURCHASE, etc.
+  const [docType, setDocType] = useState('VACATION');
   const [approvers, setApprovers] = useState([]);
   const [formData, setFormData] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 초기 사원 목록 로드
+  const navigate = useNavigate();
+
   useEffect(() => {
     fetchEmployees();
   }, [fetchEmployees]);
 
-  // 2. 권한 및 데이터 초기화 (사용자 요구사항 반영)
   useEffect(() => {
     const isPaymentPath = location.pathname.includes('payment');
     const isVacationPath = location.pathname.includes('vacation');
@@ -92,7 +92,7 @@ const ApprovalDetail = () => {
     const isPurchasePath = location.pathname.includes('purchase');
 
     if (!docId) {
-      // [신규 작성 모드]
+      // [작성 모드]
       setUserRole('DRAFTER');
       setMode('EDIT');
       setApprovers([]);
@@ -100,6 +100,7 @@ const ApprovalDetail = () => {
       if (isVacationPath) {
         setDocType('VACATION');
         setFormData({
+          title: '',
           vacationType: '연차',
           startDate: '',
           endDate: '',
@@ -110,6 +111,7 @@ const ApprovalDetail = () => {
       } else if (isPaymentPath) {
         setDocType('PAYMENT');
         setFormData({
+          title: '',
           expenditureDate: '',
           requestDate: new Date().toLocaleDateString('sv-SE'),
           purpose: '',
@@ -119,6 +121,7 @@ const ApprovalDetail = () => {
       } else if (isGeneralPath) {
         setDocType('GENERAL');
         setFormData({
+          title: '',
           requestDate: new Date().toLocaleDateString('sv-SE'),
           purpose: '',
           content: ''
@@ -126,6 +129,7 @@ const ApprovalDetail = () => {
       } else if (isPurchasePath) {
         setDocType('PURCHASE');
         setFormData({
+          title: '',
           purchaseRequestDate: '',
           requestDate: new Date().toLocaleDateString('sv-SE'),
           purchasePurpose: '',
@@ -149,9 +153,69 @@ const ApprovalDetail = () => {
     setMode('VIEW');
   };
 
-  // 3. 비즈니스 로직 핸들러
+  // 버튼 액션
   const handleAction = (actionType) => {
     console.log(`Action: ${actionType}`, formData, approvers);
+
+    if (actionType === 'TEMP_SAVE') {
+      // 임시저장 처리
+      return;
+    }
+
+    // [결재 상신 버튼을 누른 경우]
+    if (actionType === 'SUBMIT') {
+      if (!approvers || approvers.length === 0) {
+        alert('최소 한 명 이상의 결재자를 추가해야 합니다.');
+        return;
+      }
+
+      try {
+        // formData에 섞여 있는 referrers(참조자 배열)와 순수 휴가 상세 내역(docData) 분리
+        const { referrers, ...docData } = formData;
+
+        // 각 테이블 DTO 구조에 대입하기 좋게 껍데기(Wrapper) 구조로 패킹
+        const submitPayload = {
+          docType: docType,               // "VACATION"
+          users_id: user?.users_id,    // 공통 마스터 테이블용 기안자 ID
+        
+          // 결재 라인 테이블 DTO 배열 양식 맞추기
+          approvers: approvers.map((app, index) => ({
+            users_id: app.users_id,
+            step_order: index + 1     // 오라클에 저장될 결재 순서 (1, 2, 3...)
+          })),
+
+          // 참조자 테이블 DTO 배열 양식 맞추기
+          referrers: (referrers || []).map(ref => ({
+            users_id: ref.users_id
+          })),
+
+          // 휴가 상세 테이블 DTO 양식과 1:1 매핑될 데이터
+          docData: docData
+        };
+
+        console.log("🚀 오라클 백엔드로 전송할 최종 조립 데이터:", submitPayload);
+
+        // 문서 타입별로 분리된 API 호출
+        let response;
+        if (docType === 'VACATION') {
+          response = submitVacation(submitPayload);
+        } 
+        /* else if (docType === 'PURCHASE') {
+          response = submitPurchase(submitPayload);
+        } 
+        */
+
+        // maxios 통신 성공 시
+        if (response && (response.status === 200 || response.status === 201 || response.data)) {
+          alert('결재 문서가 성공적으로 상신되었습니다.');
+          navigate('/approval');
+        }
+
+      } catch (error) {
+        console.error('결재 상신 중 에러 발생:', error);
+        alert('결재 상신 중 오류가 발생했습니다.');
+      }
+    }
   };
 
   const handleAddApprover = () => {

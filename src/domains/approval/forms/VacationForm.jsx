@@ -55,6 +55,27 @@ const VacationForm = ({ data, onChange, mode, user }) => {
 
   return (
     <div className="space-y-5">
+      {/* 제목 Section */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="w-1 h-3.5 bg-[#3530B8] rounded-full"></div>
+          <h2 className="text-xs font-bold text-gray-800">제목</h2>
+        </div>
+        {isEditMode ? (
+          <input 
+            type="text"
+            value={data.title || ''}
+            onChange={(e) => handleFieldChange('title', e.target.value)}
+            placeholder="제목을 입력하세요"
+            className="w-full p-2.5 text-xs bg-white border border-gray-200 rounded-xl outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 transition-all"
+          />
+        ) : (
+          <div className="w-full p-2.5 text-xs bg-gray-50 border border-gray-100 rounded-xl">
+            {data.title || '-'}
+          </div>
+        )}
+      </div>
+
       {/* Applicant Info Section */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
