@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import useUserStore from '../../store/userStore';
 import useEmployeeStore from '../../store/useEmployeeStore';
 import ApprovalDocumentContainer from './components/ApprovalDocumentContainer';
@@ -7,18 +7,27 @@ import VacationForm from './forms/VacationForm';
 import PaymentForm from './forms/PaymentForm';
 import GeneralForm from './forms/GeneralForm';
 import PurchaseForm from './forms/PurchaseForm';
+import { submitVacation, submitPayment, submitGeneral, submitPurchase } from './approvalApi';
 
 // 결재자 선택 모달 컴포넌트
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
   const { allEmployees } = useEmployeeStore();
+  const { user } = useUserStore();
   const [searchQuery, setSearchQuery] = useState('');
   if (!isOpen) return null;
 
+  // 1. 직급 필터링 (부서장, 본부장, 대표) 및 기안자 제외
+  const allowedRanks = ['부서장', '본부장', '대표'];
+  const baseFiltered = allEmployees.filter(emp => 
+    allowedRanks.includes(emp.rank_name) && emp.users_seq !== user?.users_seq
+  );
+
+  // 2. 검색어 필터링
   const filtered = searchQuery 
-    ? allEmployees.filter(emp => 
+    ? baseFiltered.filter(emp => 
         emp.name.includes(searchQuery) || emp.dept_name.includes(searchQuery)
       ) 
-    : allEmployees;
+    : baseFiltered;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] animate-in fade-in duration-200">
@@ -63,20 +72,19 @@ const ApprovalDetail = () => {
   const { user } = useUserStore();
   const { fetchEmployees } = useEmployeeStore();
 
-  // 1. 상태 관리
   const [mode, setMode] = useState('VIEW'); // EDIT or VIEW
   const [userRole, setUserRole] = useState('REFERRER'); // DRAFTER, APPROVER, REFERRER
-  const [docType, setDocType] = useState('VACATION'); // VACATION, PURCHASE, etc.
+  const [doc_type, setDoc_type] = useState('VACATION');
   const [approvers, setApprovers] = useState([]);
   const [formData, setFormData] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 초기 사원 목록 로드
+  const navigate = useNavigate();
+
   useEffect(() => {
     fetchEmployees();
   }, [fetchEmployees]);
 
-  // 2. 권한 및 데이터 초기화 (사용자 요구사항 반영)
   useEffect(() => {
     const isPaymentPath = location.pathname.includes('payment');
     const isVacationPath = location.pathname.includes('vacation');
@@ -84,14 +92,15 @@ const ApprovalDetail = () => {
     const isPurchasePath = location.pathname.includes('purchase');
 
     if (!docId) {
-      // [신규 작성 모드]
+      // [작성 모드]
       setUserRole('DRAFTER');
       setMode('EDIT');
       setApprovers([]);
 
       if (isVacationPath) {
-        setDocType('VACATION');
+        setDoc_type('VACATION');
         setFormData({
+          title: '',
           vacationType: '연차',
           startDate: '',
           endDate: '',
@@ -100,8 +109,9 @@ const ApprovalDetail = () => {
           referrers: []
         });
       } else if (isPaymentPath) {
-        setDocType('PAYMENT');
+        setDoc_type('PAYMENT');
         setFormData({
+          title: '',
           expenditureDate: '',
           requestDate: new Date().toLocaleDateString('sv-SE'),
           purpose: '',
@@ -109,15 +119,17 @@ const ApprovalDetail = () => {
           items: [{ id: 1, itemName: '', amount: 0, receipt: null, note: '' }]
         });
       } else if (isGeneralPath) {
-        setDocType('GENERAL');
+        setDoc_type('GENERAL');
         setFormData({
+          title: '',
           requestDate: new Date().toLocaleDateString('sv-SE'),
           purpose: '',
           content: ''
         });
       } else if (isPurchasePath) {
-        setDocType('PURCHASE');
+        setDoc_type('PURCHASE');
         setFormData({
+          title: '',
           purchaseRequestDate: '',
           requestDate: new Date().toLocaleDateString('sv-SE'),
           purchasePurpose: '',
@@ -128,10 +140,10 @@ const ApprovalDetail = () => {
       }
     } else {
       // [조회 모드]
-      if (isVacationPath) setDocType('VACATION');
-      else if (isPaymentPath) setDocType('PAYMENT');
-      else if (isGeneralPath) setDocType('GENERAL');
-      else if (isPurchasePath) setDocType('PURCHASE');
+      if (isVacationPath) setDoc_type('VACATION');
+      else if (isPaymentPath) setDoc_type('PAYMENT');
+      else if (isGeneralPath) setDoc_type('GENERAL');
+      else if (isPurchasePath) setDoc_type('PURCHASE');
       
       fetchDocumentData(docId);
     }
@@ -141,9 +153,78 @@ const ApprovalDetail = () => {
     setMode('VIEW');
   };
 
-  // 3. 비즈니스 로직 핸들러
-  const handleAction = (actionType) => {
+  // 버튼 액션
+  const handleAction = async (actionType) => {
     console.log(`Action: ${actionType}`, formData, approvers);
+
+    if (actionType === 'TEMP_SAVE') {
+      // 임시저장 처리
+      return;
+    }
+
+    // [결재 상신 버튼을 누른 경우]
+    if (actionType === 'SUBMIT') {
+      if (!approvers || approvers.length === 0) {
+        alert('최소 한 명 이상의 결재자를 추가해야 합니다.');
+        return;
+      }
+
+      try {
+        // formData에 섞여 있는 referrers(참조자 배열) 추출
+        const { referrers, ...docData } = formData;
+
+        // 각 테이블 DTO 구조에 대입하기 좋게 조립
+        const submitPayload = {
+          title: formData.title,
+          doc_type: doc_type,
+          users_id: user?.id,       // 기안자 ID
+          
+          // 결재자 리스트 (users_id 포함)
+          approvers: approvers.map((app, index) => ({
+            users_id: app.id || app.users_id,
+            step_order: index + 1
+          })),
+
+          // 참조자 리스트 (users_id 포함)
+          referrers: (referrers || []).map(ref => ({
+            users_id: ref.id || ref.users_id
+          })),
+
+          // 나머지 문서 데이터
+          docData: {
+            vac_type: formData.vacationType,
+            start_date: formData.startDate,
+            end_date: formData.endDate,
+            days: Number(formData.totalDays),
+            reason: formData.reason
+          }
+        };
+
+        console.log("🚀 오라클 백엔드로 전송할 최종 조립 데이터:", submitPayload);
+
+        // 문서 타입별로 분리된 API 호출
+        let response;
+        if (doc_type === 'VACATION') {
+          response = await submitVacation(submitPayload);
+        } else if (doc_type === 'PAYMENT') {
+          response = await submitPayment(submitPayload);
+        } else if (doc_type === 'GENERAL') {
+          response = await submitGeneral(submitPayload);
+        } else if (doc_type === 'PURCHASE') {
+          response = await submitPurchase(submitPayload);
+        }
+
+        // maxios 통신 성공 시
+        if (response && (response.status === 200 || response.status === 201 || response.data)) {
+          alert('결재 문서가 성공적으로 상신되었습니다.');
+          navigate('/approval');
+        }
+
+      } catch (error) {
+        console.error('결재 상신 중 에러 발생:', error);
+        alert('결재 상신 중 오류가 발생했습니다.');
+      }
+    }
   };
 
   const handleAddApprover = () => {
@@ -172,7 +253,7 @@ const ApprovalDetail = () => {
       user: user,
     };
 
-    switch (docType) {
+    switch (doc_type) {
       case 'VACATION':
         return <VacationForm {...props} />;
       case 'PAYMENT':
@@ -187,7 +268,7 @@ const ApprovalDetail = () => {
   };
 
   const getTitle = () => {
-    switch (docType) {
+    switch (doc_type) {
       case 'VACATION': return '휴가 신청서';
       case 'PAYMENT': return '지출 결의서';
       case 'GENERAL': return '일반 품의서';
