@@ -353,7 +353,7 @@ const Kanban = () => {
               <div>
                 <input
                   className="w-full text-2xl font-black text-[#1a1c3d] border-none p-0 focus:ring-0 outline-none placeholder:font-semibold"
-                  placeholder="무엇을 해야 하나요?"
+                  placeholder="제목을 입력하세요."
                   value={newGlobalTask.title}
                   onChange={e => setNewGlobalTask({ ...newGlobalTask, title: e.target.value })}
                 />
@@ -387,7 +387,7 @@ const Kanban = () => {
                         <div
                           key={s}
                           onClick={() => { setNewGlobalTask({ ...newGlobalTask, status: s }); setOpenDropdown(null); }}
-                          className="px-6 py-4 text-sm font-bold text-slate-700 hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors"
+                          className="px-6 py-4 text-xs font-bold text-slate-700 hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors"
                         >
                           {s}
                         </div>
@@ -410,7 +410,7 @@ const Kanban = () => {
                         <div
                           key={p}
                           onClick={() => { setNewGlobalTask({ ...newGlobalTask, priority: p }); setOpenDropdown(null); }}
-                          className="px-6 py-4 text-sm font-bold text-[#9CA3AF] hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors"
+                          className="px-6 py-4 text-sm font-bold text-slate-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors"
                         >
                           {p}
                         </div>
@@ -426,7 +426,7 @@ const Kanban = () => {
                   <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">시작일</p>
                   <div
                     onClick={() => setOpenCalendar(openCalendar === 'start' ? null : 'start')}
-                    className="text-sm font-bold text-slate-800 bg-slate-50 px-3 py-1.5 rounded-lg flex justify-between items-center cursor-pointer h-[32px]"
+                    className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${newGlobalTask.startDate ? 'text-black' : 'text-[#9CA3AF]'}`}
                   >
                     {newGlobalTask.startDate || "날짜 선택"}
                     <FontAwesomeIcon icon={faCalendarAlt} className="text-slate-400 text-[10px]" />
@@ -451,7 +451,7 @@ const Kanban = () => {
                   <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">마감일</p>
                   <div
                     onClick={() => setOpenCalendar(openCalendar === 'end' ? null : 'end')}
-                    className="text-sm font-bold text-slate-800 bg-slate-50 px-3 py-1.5 rounded-lg cursor-pointer flex justify-between items-center min-w-[150px] h-[32px]"
+                    className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${newGlobalTask.endDate ? 'text-black' : 'text-[#9CA3AF]'}`}
                   >
                     {newGlobalTask.endDate || "날짜 선택"}
                     <FontAwesomeIcon icon={faCalendarAlt} className="text-slate-400 text-[10px]" />
@@ -478,7 +478,7 @@ const Kanban = () => {
                 <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">상세 내용</p>
                 <textarea
                   rows={3}
-                  className="w-full bg-slate-50/50 border-none rounded-2xl p-4 text-sm leading-relaxed text-slate-600 outline-none resize-none font-medium"
+                  className="w-full bg-slate-50/50 border-none rounded-2xl p-4 text-base leading-relaxed text-slate-600 outline-none resize-none font-medium"
                   placeholder="상세한 설명을 적어주세요..."
                   value={newGlobalTask.desc}
                   onChange={e => setNewGlobalTask({ ...newGlobalTask, desc: e.target.value })}
