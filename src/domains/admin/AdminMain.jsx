@@ -198,7 +198,15 @@ const AdminMain = () => {
                 plugins: { legend: { display: false } },
                 scales: {
                   y: { beginAtZero: true, grid: { color: '#f5f6fa' }, border: { display: false } },
-                  x: { grid: { display: false }, border: { display: false } }
+                  x: { 
+                    grid: { display: false }, 
+                    border: { display: false },
+                    ticks: {
+                      maxRotation: 45,
+                      minRotation: 45,
+                      autoSkip: false
+                    }
+                  }
                 }
               }}
             />
@@ -252,7 +260,15 @@ const AdminMain = () => {
                 },
                 scales: {
                   y: { beginAtZero: true, grid: { color: '#f5f6fa' }, border: { display: false } },
-                  x: { grid: { display: false }, border: { display: false } }
+                  x: { 
+                    grid: { display: false }, 
+                    border: { display: false },
+                    ticks: {
+                      maxRotation: 45,
+                      minRotation: 45,
+                      autoSkip: false
+                    }
+                  }
                 }
               }}
             />
