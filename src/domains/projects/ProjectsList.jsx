@@ -95,7 +95,7 @@ const ProjectsList = () => {
             <div className="flex bg-[#f4f7fc] p-1 rounded-2xl w-full md:w-fit overflow-x-auto">
               {['전체', '진행중', '완료'].map(tab => (
                 <button key={tab} onClick={() => { setFilter(tab === '진행중' ? '진행 중' : tab); setCurrentPage(1); }}
-                  className={`flex-1 md:flex-none px-6 py-2 rounded-xl text-sm font-bold transition-all ${filter === tab || (tab === '진행중' && filter === '진행 중') ? 'bg-[#3530B8] text-white shadow-sm' : 'text-[#8a92a6]'}`}>
+                  className={`flex-1 md:flex-none px-6 py-2 rounded-xl text-sm font-bold transition-all ${filter === tab || (tab === '진행중' && filter === '진행 중') ? 'bg-[#3530B8] text-white shadow-sm' : 'text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>
                   {tab}
                 </button>
               ))}
