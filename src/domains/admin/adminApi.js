@@ -10,15 +10,14 @@ export const rejectUserSignup = (seq) => maxios.put(`/admin/hr/rejectSignup?sign
 export const getHrInfo = (id) => maxios.get("/admin/hr/getHrInfo", {params: {id: id}});
 
 /*직원 관리 */
-export const getAllUsers = () => maxios.get("/admin/hr/getAllUsers");
+export const getAllUsers = (page, keyword, status) => maxios.get("/admin/hr/getAllUsers",{
+    params:{page:page, keyword:keyword, status:status}
+});
 export const updateUsersState = (upUsersSeq, newStatus) => maxios.put("/admin/hr/updateUsersState",{
     users_seq:upUsersSeq,
     status:newStatus
 });
 export const updateUsersInfo = (usersSeq, editForm) =>maxios.put("/admin/hr/updateUsersInfo",{
     users_seq:usersSeq,
-    name:editForm.name,
-    deptSeq:editForm.dept_seq,
-    rankSeq: editForm.rank_seq,
-    role:editForm.role
+    ...editForm
 })
