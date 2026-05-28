@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faSearch, faTimes, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
 
 const MOCK_EMPLOYEES = [
@@ -23,6 +23,7 @@ const ProjectsList = () => {
   const [filter, setFilter] = useState('전체');
   const [search, setSearch] = useState('');
   const [searchBy, setSearchBy] = useState('프로젝트명');
+  const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3;
 
@@ -94,7 +95,7 @@ const ProjectsList = () => {
             <div className="flex bg-[#f4f7fc] p-1 rounded-2xl w-full md:w-fit overflow-x-auto">
               {['전체', '진행중', '완료'].map(tab => (
                 <button key={tab} onClick={() => { setFilter(tab === '진행중' ? '진행 중' : tab); setCurrentPage(1); }}
-                  className={`flex-1 md:flex-none px-6 py-2 rounded-xl text-sm font-bold transition-all ${filter === tab || (tab === '진행중' && filter === '진행 중') ? 'bg-[#3530B8] text-white shadow-sm' : 'text-[#8a92a6]'}`}>
+                  className={`flex-1 md:flex-none px-6 py-2 rounded-xl text-sm font-bold transition-all ${filter === tab || (tab === '진행중' && filter === '진행 중') ? 'bg-[#3530B8] text-white shadow-sm' : 'text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>
                   {tab}
                 </button>
               ))}
@@ -102,16 +103,31 @@ const ProjectsList = () => {
 
             <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto items-end md:items-center">
               <div className="flex gap-2 w-full md:w-auto justify-end">
-                <select className="bg-[#f4f7fc] px-4 py-2.5 rounded-xl text-sm text-gray-600 outline-none w-1/3 md:w-auto" value={searchBy} onChange={e => setSearchBy(e.target.value)}>
-                  <option>프로젝트명</option><option>참여자</option>
-                </select>
+                <div className="relative w-1/3 md:w-auto">
+                  <div className="bg-[#f4f7fc] px-4 py-2.5 rounded-xl text-xs text-gray-600 outline-none cursor-pointer flex items-center justify-between gap-3" 
+                    onClick={() => setIsSearchDropdownOpen(!isSearchDropdownOpen)}>
+                    {searchBy}
+                    <FontAwesomeIcon icon={faChevronDown} className="text-[10px]" />
+                  </div>
+                  {isSearchDropdownOpen && (
+                    <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-lg z-50 overflow-hidden border-none">
+                      {['프로젝트명', '참여자'].map(option => (
+                        <div key={option} 
+                          className="px-4 py-2.5 text-xs text-gray-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors"
+                          onClick={() => { setSearchBy(option); setIsSearchDropdownOpen(false); }}>
+                          {option}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <div className="relative flex items-center w-2/3 md:w-48">
                   <FontAwesomeIcon icon={faSearch} className="absolute left-4 text-[#8a92a6]" />
                   <input placeholder="검색" value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
                     className="pl-12 pr-4 py-2.5 bg-[#f4f7fc] rounded-xl text-sm w-full outline-none" />
                 </div>
               </div>
-              <button onClick={() => setIsModalOpen(true)} className="bg-[#3530B8] text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-[#2a2594] whitespace-nowrap w-1/2 md:w-auto">
+              <button onClick={() => setIsModalOpen(true)} className="bg-[#3530B8] text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-[#2a2594] whitespace-nowrap w-fit md:w-auto">
                 <FontAwesomeIcon icon={faPlus} className="mr-2" /> 새 프로젝트
               </button>
             </div>
@@ -165,11 +181,11 @@ const ProjectsList = () => {
           </div>
 
           <div className="flex justify-center gap-2 mt-4">
-            <button disabled={currentPage === 1} onClick={() => setCurrentPage(c => c - 1)} className={`px-3 py-1 rounded-lg transition-all ${currentPage === 1 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}><FontAwesomeIcon icon={faChevronLeft} /></button>
+            <button disabled={currentPage === 1} onClick={() => setCurrentPage(c => c - 1)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${currentPage === 1 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}><FontAwesomeIcon icon={faChevronLeft} /></button>
             {Array.from({ length: totalPages }).map((_, i) => (
-              <button key={i} onClick={() => setCurrentPage(i + 1)} className={`px-3 py-1 rounded-lg transition-all ${currentPage === i + 1 ? 'bg-[#3530B8] text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>{i + 1}</button>
+              <button key={i} onClick={() => setCurrentPage(i + 1)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${currentPage === i + 1 ? 'bg-[#3530B8] text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>{i + 1}</button>
             ))}
-            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(c => c + 1)} className={`px-3 py-1 rounded-lg transition-all ${currentPage === totalPages ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}><FontAwesomeIcon icon={faChevronRight} /></button>
+            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(c => c + 1)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${currentPage === totalPages ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}><FontAwesomeIcon icon={faChevronRight} /></button>
           </div>
         </div>
 
@@ -215,16 +231,16 @@ const ProjectsList = () => {
           <div className="bg-white p-10 rounded-[2.5rem] w-[550px] shadow-2xl">
             <h2 className="text-2xl font-bold mb-8">새 프로젝트 생성</h2>
             <label className="block text-xs font-bold text-[#1a1c3d] mb-2">프로젝트명 *</label>
-            <input className="w-full p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none" onChange={e => setNewProject({ ...newProject, title: e.target.value })} />
+            <input className="w-full p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none text-xs" onChange={e => setNewProject({ ...newProject, title: e.target.value })} />
 
             <div className="flex gap-4 mb-4">
               <div className="flex-1 relative">
                 <label className="block text-xs font-bold text-[#1a1c3d] mb-2">시작일 *</label>
-                <div onClick={() => { setIsStartCalendarOpen(!isStartCalendarOpen); setIsEndCalendarOpen(false); }} className="w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-sm">
+                <div onClick={() => { setIsStartCalendarOpen(!isStartCalendarOpen); setIsEndCalendarOpen(false); }} className={`w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-xs ${newProject.start ? 'text-black' : 'text-[#9CA3AF]'}`}>
                   {newProject.start || "날짜 선택"}
                 </div>
                 {isStartCalendarOpen && (
-                  <Calendar
+                  <Calendar 
                     value={newProject.start}
                     minDate={new Date().toISOString().split('T')[0]}
                     onChange={(date) => {
@@ -239,7 +255,7 @@ const ProjectsList = () => {
 
               <div className="flex-1 relative">
                 <label className="block text-xs font-bold text-[#1a1c3d] mb-2">종료일 *</label>
-                <div onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }} className="w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-sm">
+                <div onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }} className={`w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-xs ${newProject.end ? 'text-black' : 'text-[#9CA3AF]'}`}>
                   {newProject.end || "날짜 선택"}
                 </div>
                 {isEndCalendarOpen && (
@@ -258,15 +274,15 @@ const ProjectsList = () => {
             </div>
 
             <label className="block text-xs font-bold text-[#1a1c3d] mb-2">프로젝트 내용</label>
-            <textarea rows={3} className="w-full p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none" onChange={e => setNewProject({ ...newProject, desc: e.target.value })} />
+            <textarea rows={3} className="w-full text-xs p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none" onChange={e => setNewProject({ ...newProject, desc: e.target.value })} />
 
             <label className="block text-xs font-bold text-[#1a1c3d] mb-2">참여자 추가 *</label>
             <div className="relative mb-2">
-              <input value={empSearch} onChange={e => { setEmpSearch(e.target.value); setShowEmpDropdown(true); }} className="w-full p-4 bg-[#f4f7fc] rounded-xl outline-none" />
+              <input value={empSearch} onChange={e => { setEmpSearch(e.target.value); setShowEmpDropdown(true); }} className="w-full p-4 bg-[#f4f7fc] rounded-xl outline-none text-xs" placeholder="이름으로 검색하여 참여자를 추가하세요."/>
               {showEmpDropdown && empSearch && (
                 <div className="absolute top-full left-0 w-full bg-white border border-[#edf2f9] rounded-xl shadow-lg mt-1 z-50 overflow-hidden">
                   {MOCK_EMPLOYEES.filter(e => e.name.includes(empSearch)).map(e => (
-                    <div key={e.id} onClick={() => addMember(e)} className="p-3 hover:bg-[#f4f7fc] cursor-pointer text-sm">{e.name}</div>
+                    <div key={e.id} onClick={() => addMember(e)} className="p-3 hover:bg-[#f4f7fc] cursor-pointer text-xs">{e.name}</div>
                   ))}
                 </div>
               )}
@@ -277,7 +293,7 @@ const ProjectsList = () => {
               ))}
             </div>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setIsModalOpen(false)} className="px-8 py-3 bg-gray-100 rounded-xl font-bold text-sm">취소</button>
+              <button onClick={() => { setIsModalOpen(false); setNewProject({ title: '', desc: '', start: '', end: '', members: [] }); }} className="px-8 py-3 bg-gray-100 rounded-xl font-bold text-sm">취소</button>
               <button onClick={handleCreate} className="px-8 py-3 bg-[#3a36db] text-white rounded-xl font-bold text-sm">등록</button>
             </div>
           </div>
