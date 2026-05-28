@@ -127,7 +127,7 @@ const ProjectsList = () => {
                     className="pl-12 pr-4 py-2.5 bg-[#f4f7fc] rounded-xl text-sm w-full outline-none" />
                 </div>
               </div>
-              <button onClick={() => setIsModalOpen(true)} className="bg-[#3530B8] text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-[#2a2594] whitespace-nowrap w-1/2 md:w-auto">
+              <button onClick={() => setIsModalOpen(true)} className="bg-[#3530B8] text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-[#2a2594] whitespace-nowrap w-fit md:w-auto">
                 <FontAwesomeIcon icon={faPlus} className="mr-2" /> 새 프로젝트
               </button>
             </div>
