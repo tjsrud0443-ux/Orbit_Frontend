@@ -8,6 +8,19 @@ const INITIAL_TASKS = [
   { id: 1, title: '디자인 시스템 가이드 작성', assignee: '나 (관리자)', startDate: '2026-05-28', endDate: '2026-06-05', status: 'TODO', priority: 'High', desc: '그룹웨어 디자인 시스템 문서화 및 가이드 배포' },
   { id: 2, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
   { id: 3, title: 'API 문서 정비', assignee: '나 (관리자)', startDate: '2026-05-30', endDate: '2026-06-15', status: 'DONE', priority: 'Low', desc: 'Swagger 문서 최신화 및 예외 처리 가이드 추가' },
+  { id: 4, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+  { id: 5, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+  { id: 6, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+  { id: 7, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+  { id: 8, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+  { id: 9, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+  { id: 10, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+  { id: 11, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+  { id: 12, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+  { id: 13, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+  { id: 14, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+  { id: 15, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+
 ];
 
 const PROJECT_MEMBERS = [
@@ -26,8 +39,9 @@ const Kanban = () => {
   // 외부 클릭 감지를 위한 Ref
   const inlineFormRef = useRef(null);
 
-  // 캘린더 오픈 상태
+  // 캘린더 및 드롭다운 오픈 상태
   const [openCalendar, setOpenCalendar] = useState(null); // 'start' | 'end' | 'detailEnd' | 'inlineStart-...' | 'inlineEnd-...'
+  const [openDropdown, setOpenDropdown] = useState(null); // 'globalStatus' | 'globalPriority' | 'inlinePriority-...' | 'detailStatus'
 
   // 신규 Task 생성을 위한 폼 상태
   const [newGlobalTask, setNewGlobalTask] = useState({
@@ -43,6 +57,7 @@ const Kanban = () => {
       if (inlineFormRef.current && !inlineFormRef.current.contains(event.target)) {
         setInlineForm({ status: null, title: '', assignee: '나 (관리자)', priority: 'Medium', startDate: new Date().toISOString().split('T')[0], endDate: '' });
         setOpenCalendar(null);
+        setOpenDropdown(null);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -116,7 +131,7 @@ const Kanban = () => {
     <div className="flex flex-col h-full bg-white overflow-hidden">
       {/* 1. 상단 프로젝트 헤더 */}
       <header className="flex justify-between items-center px-10 py-8 bg-white border-b border-slate-100 shrink-0">
-        <h1 className="text-2xl font-black text-[#1a1c3d] tracking-tight">Orbit 그룹웨어 고도화</h1>
+        <h1 className="text-2xl font-black font-bold text-[#1a1c3d] tracking-tight">Orbit 그룹웨어 고도화</h1>
         <div className="flex items-center gap-6">
           <div className="flex -space-x-3">
             {PROJECT_MEMBERS.map(m => (
@@ -139,16 +154,16 @@ const Kanban = () => {
 
       {/* 2. 칸반 보드 영역 */}
       <main className="flex-1 overflow-x-auto p-10 custom-scrollbar flex justify-center bg-white">
-        <div className="flex gap-[25px] h-full min-w-fit max-w-full justify-center">
+        <div className="flex gap-[100px] h-full min-w-fit max-w-full justify-center">
           {['TODO', 'DOING', 'DONE'].map(status => {
             const columnTasks = tasks.filter(t => t.status === status);
             const dotColor = status === 'TODO' ? 'text-[#3530B8]' : status === 'DOING' ? 'text-amber-500' : 'text-emerald-500';
             const columnBg = status === 'TODO' ? 'bg-[#F1F5F9]' : status === 'DOING' ? 'bg-[#FFF7ED]' : status === 'DONE' ? 'bg-[#F0FDF4]' : 'bg-white';
 
             return (
-              <div 
-                key={status} 
-                className={`flex-1 max-w-[380px] min-w-[320px] rounded-none p-6 flex flex-col ${columnBg} border border-slate-200/60 transition-all duration-300`}
+              <div
+                key={status}
+                className={`flex-1 max-w-[440px] min-w-[380px] rounded-none p-6 flex flex-col ${columnBg} border border-slate-200/60 transition-all duration-300`}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => onDrop(e, status)}
               >
@@ -156,13 +171,13 @@ const Kanban = () => {
                   <div className="flex items-center gap-2.5">
                     <FontAwesomeIcon icon={faCircle} className={`text-[8px] ${dotColor}`} />
                     <h2 className="text-base font-black text-[#1a1c3d]">{status}</h2>
-                    <span className="bg-white px-2 py-0.5 rounded-lg text-[11px] font-bold text-slate-400 border border-slate-100 shadow-sm">
+                    <span className="bg-white px-2 py-0.5 rounded-lg text-[15px] font-bold text-slate-400 border border-slate-100 shadow-sm">
                       {columnTasks.length}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar pr-1">
+                <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar pr-3">
                   {columnTasks.map(task => (
                     <div
                       key={task.id}
@@ -171,19 +186,19 @@ const Kanban = () => {
                       onClick={() => setDetailModalTask(task)}
                       className="group bg-white rounded-2xl p-5 shadow-sm border border-slate-100/80 hover:shadow-xl hover:shadow-indigo-50/50 hover:border-indigo-100 transition-all cursor-pointer"
                     >
-                      <h3 className="font-bold text-sm text-[#1a1c3d] mb-4 leading-relaxed group-hover:text-[#3530B8] transition-colors">{task.title}</h3>
-                      <div className="flex items-center justify-between">
+                      <h3 className="font-bold text-base text-[#1a1c3d] mb-4 leading-relaxed group-hover:text-[#3530B8] transition-colors">{task.title}</h3>
+                      <div className="flex items-end justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] overflow-hidden border border-white">
+                          <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] overflow-hidden border border-white shrink-0">
                             <img src={`https://i.pravatar.cc/150?u=${task.assignee}`} alt="" className="w-full h-full object-cover" />
                           </div>
-                          <span className="text-[11px] font-bold text-slate-500">{task.assignee}</span>
+                          <span className="text-sm font-bold text-slate-500 leading-none">{task.assignee}</span>
                         </div>
-                        <div className="flex flex-col items-end gap-1">
-                          <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${getPriorityStyle(task.priority)}`}>
+                        <div className="flex flex-col items-end gap-2">
+                          <span className={`text-sm font-black px-2 py-0.5 rounded-full ${getPriorityStyle(task.priority)} leading-none`}>
                             {task.priority}
                           </span>
-                          <span className="text-[10px] font-medium text-slate-400 font-mono tracking-tight">{formatDate(task.endDate)}</span>
+                          <span className="text-xs font-medium text-slate-400 font-mono tracking-tight leading-none">{formatDate(task.endDate)}</span>
                         </div>
                       </div>
                     </div>
@@ -202,21 +217,34 @@ const Kanban = () => {
                         <div className="bg-slate-50 rounded-lg p-2 text-[10px] font-bold text-slate-400 flex items-center gap-1.5 border border-transparent">
                           <FontAwesomeIcon icon={faUser} className="text-[9px]" /> {inlineForm.assignee}
                         </div>
-                        <select 
-                          className="bg-slate-50 rounded-lg p-2 text-[11px] outline-none border-none text-slate-600 font-bold"
-                          value={inlineForm.priority}
-                          onChange={(e) => setInlineForm({...inlineForm, priority: e.target.value})}
-                        >
-                          <option value="High">High</option>
-                          <option value="Medium">Medium</option>
-                          <option value="Low">Low</option>
-                        </select>
+                        <div className="relative">
+                          <div
+                            onClick={() => setOpenDropdown(openDropdown === `inlinePriority-${status}` ? null : `inlinePriority-${status}`)}
+                            className="bg-slate-50 rounded-lg p-2 text-[11px] font-bold text-slate-600 flex justify-between items-center cursor-pointer border border-transparent"
+                          >
+                            {inlineForm.priority}
+                            <FontAwesomeIcon icon={faChevronDown} className="text-[9px] text-slate-400" />
+                          </div>
+                          {openDropdown === `inlinePriority-${status}` && (
+                            <div className="absolute top-full left-0 z-[120] mt-1 w-full bg-white border border-slate-100 rounded-lg shadow-lg overflow-hidden">
+                              {['High', 'Medium', 'Low'].map(p => (
+                                <div
+                                  key={p}
+                                  onClick={() => { setInlineForm({ ...inlineForm, priority: p }); setOpenDropdown(null); }}
+                                  className="px-3 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                >
+                                  {p}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       {/* 인라인 시작일/마감일 선택 */}
                       <div className="grid grid-cols-2 gap-2">
                         <div className="relative">
-                          <div 
+                          <div
                             onClick={() => setOpenCalendar(openCalendar === `inlineStart-${status}` ? null : `inlineStart-${status}`)}
                             className="bg-slate-50 rounded-lg p-2 text-[10px] font-bold text-slate-600 flex justify-between items-center cursor-pointer"
                           >
@@ -227,13 +255,19 @@ const Kanban = () => {
                             <div className="absolute top-full left-0 z-[120] mt-1 w-[240px] transform origin-top-left scale-90">
                               <Calendar 
                                 value={inlineForm.startDate} 
-                                onChange={(date) => { setInlineForm({...inlineForm, startDate: date}); setOpenCalendar(null); }}
+                                minDate={new Date().toISOString().split('T')[0]}
+                                onChange={(date) => {
+                                  const today = new Date().toISOString().split('T')[0];
+                                  if (date < today) { alert('시작일은 오늘 이후의 날짜만 선택할 수 있습니다.'); return; }
+                                  setInlineForm(prev => ({ ...prev, startDate: date, endDate: prev.endDate && prev.endDate < date ? date : prev.endDate }));
+                                  setOpenCalendar(null);
+                                }}
                                 onClose={() => setOpenCalendar(null)}
                               />
                             </div>
                           )}
-                        </div>
-                        <div className="relative">
+                          </div>
+                          <div className="relative">
                           <div 
                             onClick={() => setOpenCalendar(openCalendar === `inlineEnd-${status}` ? null : `inlineEnd-${status}`)}
                             className="bg-slate-50 rounded-lg p-2 text-[10px] font-bold text-slate-600 flex justify-between items-center cursor-pointer"
@@ -245,12 +279,17 @@ const Kanban = () => {
                             <div className="absolute top-full right-0 z-[120] mt-1 w-[240px] transform origin-top-right scale-90">
                               <Calendar 
                                 value={inlineForm.endDate} 
-                                onChange={(date) => { setInlineForm({...inlineForm, endDate: date}); setOpenCalendar(null); }}
+                                minDate={inlineForm.startDate || new Date().toISOString().split('T')[0]}
+                                onChange={(date) => {
+                                  if (inlineForm.startDate && date < inlineForm.startDate) { alert('종료일은 시작일보다 이전일 수 없습니다.'); return; }
+                                  setInlineForm(prev => ({ ...prev, endDate: date }));
+                                  setOpenCalendar(null);
+                                }}
                                 onClose={() => setOpenCalendar(null)}
                               />
                             </div>
                           )}
-                        </div>
+                          </div>
                       </div>
 
                       <div className="flex gap-2">
@@ -305,29 +344,51 @@ const Kanban = () => {
 
               {/* 3. 상태 / 우선순위 (한 줄) */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
+                <div className="space-y-2 relative">
                   <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">상태</label>
-                  <select 
-                    className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm outline-none cursor-pointer font-bold text-slate-700"
-                    value={newGlobalTask.status}
-                    onChange={e => setNewGlobalTask({...newGlobalTask, status: e.target.value})}
+                  <div
+                    onClick={() => setOpenDropdown(openDropdown === 'globalStatus' ? null : 'globalStatus')}
+                    className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold text-slate-700 flex justify-between items-center cursor-pointer"
                   >
-                    <option value="TODO">TODO</option>
-                    <option value="DOING">DOING</option>
-                    <option value="DONE">DONE</option>
-                  </select>
+                    {newGlobalTask.status}
+                    <FontAwesomeIcon icon={faChevronDown} className="text-slate-400 text-xs" />
+                  </div>
+                  {openDropdown === 'globalStatus' && (
+                    <div className="absolute top-full left-0 z-[110] mt-2 w-full bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                      {['TODO', 'DOING', 'DONE'].map(s => (
+                        <div
+                          key={s}
+                          onClick={() => { setNewGlobalTask({ ...newGlobalTask, status: s }); setOpenDropdown(null); }}
+                          className="px-6 py-4 text-sm font-bold text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors"
+                        >
+                          {s}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 relative">
                   <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">우선순위</label>
-                  <select 
-                    className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm outline-none cursor-pointer font-bold text-slate-700"
-                    value={newGlobalTask.priority}
-                    onChange={e => setNewGlobalTask({...newGlobalTask, priority: e.target.value})}
+                  <div
+                    onClick={() => setOpenDropdown(openDropdown === 'globalPriority' ? null : 'globalPriority')}
+                    className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold text-slate-700 flex justify-between items-center cursor-pointer"
                   >
-                    <option value="High">High</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Low">Low</option>
-                  </select>
+                    {newGlobalTask.priority}
+                    <FontAwesomeIcon icon={faChevronDown} className="text-slate-400 text-xs" />
+                  </div>
+                  {openDropdown === 'globalPriority' && (
+                    <div className="absolute top-full left-0 z-[110] mt-2 w-full bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                      {['High', 'Medium', 'Low'].map(p => (
+                        <div
+                          key={p}
+                          onClick={() => { setNewGlobalTask({ ...newGlobalTask, priority: p }); setOpenDropdown(null); }}
+                          className="px-6 py-4 text-sm font-bold text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors"
+                        >
+                          {p}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -335,7 +396,7 @@ const Kanban = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2 relative">
                   <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">시작일</label>
-                  <div 
+                  <div
                     onClick={() => setOpenCalendar(openCalendar === 'start' ? null : 'start')}
                     className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold text-slate-800 flex justify-between items-center cursor-pointer min-w-[150px]"
                   >
@@ -344,9 +405,15 @@ const Kanban = () => {
                   </div>
                   {openCalendar === 'start' && (
                     <div className="absolute top-full left-0 z-[110] mt-2 w-[280px]">
-                      <Calendar 
-                        value={newGlobalTask.startDate} 
-                        onChange={(date) => { setNewGlobalTask({...newGlobalTask, startDate: date}); setOpenCalendar(null); }}
+                      <Calendar
+                        value={newGlobalTask.startDate}
+                        minDate={new Date().toISOString().split('T')[0]}
+                        onChange={(date) => {
+                          const today = new Date().toISOString().split('T')[0];
+                          if (date < today) { alert('시작일은 오늘 이후의 날짜만 선택할 수 있습니다.'); return; }
+                          setNewGlobalTask(prev => ({ ...prev, startDate: date, endDate: prev.endDate && prev.endDate < date ? date : prev.endDate }));
+                          setOpenCalendar(null);
+                        }}
                         onClose={() => setOpenCalendar(null)}
                       />
                     </div>
@@ -354,7 +421,7 @@ const Kanban = () => {
                 </div>
                 <div className="space-y-2 relative">
                   <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">마감일</label>
-                  <div 
+                  <div
                     onClick={() => setOpenCalendar(openCalendar === 'end' ? null : 'end')}
                     className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold text-slate-800 flex justify-between items-center cursor-pointer min-w-[150px]"
                   >
@@ -363,9 +430,14 @@ const Kanban = () => {
                   </div>
                   {openCalendar === 'end' && (
                     <div className="absolute top-full right-0 z-[110] mt-2 w-[280px]">
-                      <Calendar 
-                        value={newGlobalTask.endDate} 
-                        onChange={(date) => { setNewGlobalTask({...newGlobalTask, endDate: date}); setOpenCalendar(null); }}
+                      <Calendar
+                        value={newGlobalTask.endDate}
+                        minDate={newGlobalTask.startDate || new Date().toISOString().split('T')[0]}
+                        onChange={(date) => {
+                          if (newGlobalTask.startDate && date < newGlobalTask.startDate) { alert('종료일은 시작일보다 이전일 수 없습니다.'); return; }
+                          setNewGlobalTask(prev => ({ ...prev, endDate: date }));
+                          setOpenCalendar(null);
+                        }}
                         onClose={() => setOpenCalendar(null)}
                       />
                     </div>
@@ -407,10 +479,10 @@ const Kanban = () => {
 
             <div className="space-y-8">
               <div>
-                <input 
+                <input
                   className="w-full text-2xl font-black text-[#1a1c3d] border-none p-0 focus:ring-0 outline-none"
                   value={detailModalTask.title}
-                  onChange={e => setDetailModalTask({...detailModalTask, title: e.target.value})}
+                  onChange={e => setDetailModalTask({ ...detailModalTask, title: e.target.value })}
                 />
               </div>
 
@@ -424,17 +496,28 @@ const Kanban = () => {
                     <span className="text-sm font-bold text-slate-600">{detailModalTask.assignee}</span>
                   </div>
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 relative">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">현재 상태</p>
-                  <select 
-                    className="text-sm font-bold text-[#3530B8] bg-transparent border-none p-0 outline-none cursor-pointer focus:ring-0"
-                    value={detailModalTask.status}
-                    onChange={e => setDetailModalTask({...detailModalTask, status: e.target.value})}
+                  <div
+                    onClick={() => setOpenDropdown(openDropdown === 'detailStatus' ? null : 'detailStatus')}
+                    className="text-sm font-bold text-[#3530B8] bg-transparent border-none p-0 outline-none cursor-pointer flex items-center gap-1.5"
                   >
-                    <option value="TODO">TODO</option>
-                    <option value="DOING">DOING</option>
-                    <option value="DONE">DONE</option>
-                  </select>
+                    {detailModalTask.status}
+                    <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-400" />
+                  </div>
+                  {openDropdown === 'detailStatus' && (
+                    <div className="absolute top-full left-0 z-[110] mt-1 w-32 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                      {['TODO', 'DOING', 'DONE'].map(s => (
+                        <div
+                          key={s}
+                          onClick={() => { setDetailModalTask({ ...detailModalTask, status: s }); setOpenDropdown(null); }}
+                          className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer transition-colors"
+                        >
+                          {s}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -445,7 +528,7 @@ const Kanban = () => {
                 </div>
                 <div className="space-y-2 relative">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">마감일</p>
-                  <div 
+                  <div
                     onClick={() => setOpenCalendar(openCalendar === 'detailEnd' ? null : 'detailEnd')}
                     className="text-sm font-bold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg cursor-pointer flex justify-between items-center min-w-[150px]"
                   >
@@ -454,9 +537,14 @@ const Kanban = () => {
                   </div>
                   {openCalendar === 'detailEnd' && (
                     <div className="absolute top-full right-0 z-[110] mt-2 w-[280px]">
-                      <Calendar 
-                        value={detailModalTask.endDate} 
-                        onChange={(date) => { setDetailModalTask({...detailModalTask, endDate: date}); setOpenCalendar(null); }}
+                      <Calendar
+                        value={detailModalTask.endDate}
+                        minDate={detailModalTask.startDate}
+                        onChange={(date) => {
+                          if (detailModalTask.startDate && date < detailModalTask.startDate) { alert('종료일은 시작일보다 이전일 수 없습니다.'); return; }
+                          setDetailModalTask(prev => ({ ...prev, endDate: date }));
+                          setOpenCalendar(null);
+                        }}
                         onClose={() => setOpenCalendar(null)}
                       />
                     </div>
@@ -466,11 +554,11 @@ const Kanban = () => {
 
               <div className="space-y-2">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">상세 내용</p>
-                <textarea 
-                  rows={4} 
+                <textarea
+                  rows={4}
                   className="w-full bg-slate-50/50 border-none rounded-2xl p-5 text-sm leading-relaxed text-slate-600 outline-none resize-none"
                   value={detailModalTask.desc}
-                  onChange={e => setDetailModalTask({...detailModalTask, desc: e.target.value})}
+                  onChange={e => setDetailModalTask({ ...detailModalTask, desc: e.target.value })}
                 />
               </div>
             </div>
