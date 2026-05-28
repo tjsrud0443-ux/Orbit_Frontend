@@ -266,7 +266,7 @@ const ProjectsList = () => {
               {showEmpDropdown && empSearch && (
                 <div className="absolute top-full left-0 w-full bg-white border border-[#edf2f9] rounded-xl shadow-lg mt-1 z-50 overflow-hidden">
                   {MOCK_EMPLOYEES.filter(e => e.name.includes(empSearch)).map(e => (
-                    <div key={e.id} onClick={() => addMember(e)} className="p-3 hover:bg-[#f4f7fc] cursor-pointer text-sm">{e.name}</div>
+                    <div key={e.id} onClick={() => addMember(e)} className="p-3 hover:bg-[#f4f7fc] cursor-pointer text-xs">{e.name}</div>
                   ))}
                 </div>
               )}
@@ -277,7 +277,7 @@ const ProjectsList = () => {
               ))}
             </div>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setIsModalOpen(false)} className="px-8 py-3 bg-gray-100 rounded-xl font-bold text-sm">취소</button>
+              <button onClick={() => { setIsModalOpen(false); setNewProject({ title: '', desc: '', start: '', end: '', members: [] }); }} className="px-8 py-3 bg-gray-100 rounded-xl font-bold text-sm">취소</button>
               <button onClick={handleCreate} className="px-8 py-3 bg-[#3a36db] text-white rounded-xl font-bold text-sm">등록</button>
             </div>
           </div>
