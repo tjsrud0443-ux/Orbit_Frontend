@@ -220,9 +220,9 @@ const Kanban = () => {
                         <div className="relative">
                           <div
                             onClick={() => setOpenDropdown(openDropdown === `inlinePriority-${status}` ? null : `inlinePriority-${status}`)}
-                            className="bg-slate-50 rounded-lg p-2 text-sm font-bold text-slate-600 flex justify-between items-center cursor-pointer border border-transparent"
+                            className="bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer border border-transparent text-slate-500"
                           >
-                            {inlineForm.priority}
+                            {inlineForm.priority || "우선순위"}
                             <FontAwesomeIcon icon={faChevronDown} className="text-sm text-slate-400" />
                           </div>
                           {openDropdown === `inlinePriority-${status}` && (
@@ -231,7 +231,7 @@ const Kanban = () => {
                                 <div
                                   key={p}
                                   onClick={() => { setInlineForm({ ...inlineForm, priority: p }); setOpenDropdown(null); }}
-                                  className="px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                  className="px-3 py-2 text-sm text-slate-400 font-bold hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer"
                                 >
                                   {p}
                                 </div>
@@ -246,7 +246,7 @@ const Kanban = () => {
                         <div className="relative">
                           <div
                             onClick={() => setOpenCalendar(openCalendar === `inlineStart-${status}` ? null : `inlineStart-${status}`)}
-                            className="bg-slate-50 rounded-lg p-2 text-sm font-bold text-slate-600 flex justify-between items-center cursor-pointer"
+                            className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${inlineForm.startDate ? 'text-black' : 'text-[#9CA3AF]'}`}
                           >
                             {inlineForm.startDate || "시작일"}
                             <FontAwesomeIcon icon={faCalendarAlt} className="text-sm text-slate-400" />
@@ -270,7 +270,7 @@ const Kanban = () => {
                           <div className="relative">
                           <div 
                             onClick={() => setOpenCalendar(openCalendar === `inlineEnd-${status}` ? null : `inlineEnd-${status}`)}
-                            className="bg-slate-50 rounded-lg p-2 text-sm font-bold text-slate-600 flex justify-between items-center cursor-pointer"
+                            className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${inlineForm.endDate ? 'text-black' : 'text-[#9CA3AF]'}`}
                           >
                             {inlineForm.endDate || "마감일"}
                             <FontAwesomeIcon icon={faCalendarAlt} className="text-sm text-slate-400" />
@@ -300,7 +300,7 @@ const Kanban = () => {
                   ) : (
                     <button
                       onClick={() => setInlineForm({ ...inlineForm, status })}
-                      className="w-full py-4 border-2 border-dashed border-slate-200/50 rounded-2xl text-slate-300 hover:text-[#3530B8] hover:border-[#3530B8]/30 hover:bg-white transition-all flex items-center justify-center gap-2 group"
+                      className="w-full py-4 border-2 border-dashed border-slate-400/50 rounded-2xl text-slate-500 hover:text-[#3530B8] hover:border-[#3530B8]/30 hover:bg-white transition-all flex items-center justify-center gap-2 group"
                     >
                       <FontAwesomeIcon icon={faPlus} className="text-xs group-hover:scale-110 transition-transform" />
                       <span className="text-xs font-bold">Task 추가</span>
@@ -382,7 +382,7 @@ const Kanban = () => {
                         <div
                           key={p}
                           onClick={() => { setNewGlobalTask({ ...newGlobalTask, priority: p }); setOpenDropdown(null); }}
-                          className="px-6 py-4 text-sm font-bold text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors"
+                          className="px-6 py-4 text-sm font-bold text-[#9CA3AF] hover:bg-slate-50 cursor-pointer transition-colors"
                         >
                           {p}
                         </div>
@@ -472,7 +472,7 @@ const Kanban = () => {
           <div className="bg-white w-full max-w-[500px] rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in slide-in-from-bottom-8 duration-300">
             <div className="flex justify-between items-center mb-8">
               <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${getPriorityStyle(detailModalTask.priority)}`}>
-                {detailModalTask.priority} Priority
+                {detailModalTask.priority}
               </span>
               <button onClick={() => setDetailModalTask(null)} className="text-slate-400 hover:text-slate-600"><FontAwesomeIcon icon={faTimes} /></button>
             </div>
@@ -488,7 +488,7 @@ const Kanban = () => {
 
               <div className="grid grid-cols-2 gap-8 py-6 border-y border-slate-50">
                 <div className="space-y-1.5">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">담당자</p>
+                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">담당자</p>
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-full bg-indigo-50 flex items-center justify-center text-[10px] text-[#3530B8] font-bold border border-white">
                       {detailModalTask.assignee.charAt(0)}
@@ -497,7 +497,7 @@ const Kanban = () => {
                   </div>
                 </div>
                 <div className="space-y-1.5 relative">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">현재 상태</p>
+                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">현재 상태</p>
                   <div
                     onClick={() => setOpenDropdown(openDropdown === 'detailStatus' ? null : 'detailStatus')}
                     className="text-sm font-bold text-[#3530B8] bg-transparent border-none p-0 outline-none cursor-pointer flex items-center gap-1.5"
@@ -511,7 +511,7 @@ const Kanban = () => {
                         <div
                           key={s}
                           onClick={() => { setDetailModalTask({ ...detailModalTask, status: s }); setOpenDropdown(null); }}
-                          className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer transition-colors"
+                          className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] transition-colors"
                         >
                           {s}
                         </div>
@@ -523,11 +523,11 @@ const Kanban = () => {
 
               <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-1.5">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">시작일</p>
+                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">시작일</p>
                   <p className="text-sm font-bold text-slate-500 font-mono">{detailModalTask.startDate}</p>
                 </div>
                 <div className="space-y-2 relative">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">마감일</p>
+                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">마감일</p>
                   <div
                     onClick={() => setOpenCalendar(openCalendar === 'detailEnd' ? null : 'detailEnd')}
                     className="text-sm font-bold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg cursor-pointer flex justify-between items-center min-w-[150px]"
@@ -553,7 +553,7 @@ const Kanban = () => {
               </div>
 
               <div className="space-y-2">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">상세 내용</p>
+                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">상세 내용</p>
                 <textarea
                   rows={4}
                   className="w-full bg-slate-50/50 border-none rounded-2xl p-5 text-sm leading-relaxed text-slate-600 outline-none resize-none"
