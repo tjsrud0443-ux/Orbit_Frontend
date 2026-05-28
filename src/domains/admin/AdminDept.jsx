@@ -265,7 +265,7 @@ const AdminDept = () => {
                     {Object.values(fullTree.nodeMap).filter(node => ['기술본부', '경영지원본부', '사업운영본부', '운영총괄본부'].includes(node.deptName)).map(dept => (
                       <div 
                         key={dept.deptSeq}
-                        className="px-4 py-3 text-xs text-slate-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors"
+                        className="px-4 py-3 text-xs text-slate-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
                         onClick={() => {
                           setFormData({ ...formData, parentDeptSeq: dept.deptSeq });
                           setIsDropdownOpen(false);
