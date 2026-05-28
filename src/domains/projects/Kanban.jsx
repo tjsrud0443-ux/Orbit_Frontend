@@ -62,10 +62,16 @@ const Kanban = () => {
   // 외부 클릭 감지 로직
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // 1. 인라인 폼 외부 클릭 시 초기화
       if (inlineFormRef.current && !inlineFormRef.current.contains(event.target)) {
         setInlineForm({ status: null, title: '', assignee: '나 (관리자)', priority: 'Medium', startDate: new Date().toISOString().split('T')[0], endDate: '' });
-        setOpenCalendar(null);
+      }
+
+      // 2. 드롭다운/캘린더 외부 클릭 시 닫기 처리
+      // 드롭다운이나 캘린더 컨테이너(.relative) 외부를 클릭했을 때만 닫히도록 함
+      if (!event.target.closest('.relative')) {
         setOpenDropdown(null);
+        setOpenCalendar(null);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
