@@ -209,21 +209,21 @@ const Kanban = () => {
                       <input
                         autoFocus
                         placeholder="Task 제목"
-                        className="w-full text-sm font-bold outline-none placeholder:text-slate-300"
+                        className="w-full text-base font-bold outline-none placeholder:text-slate-300"
                         value={inlineForm.title}
                         onChange={(e) => setInlineForm({ ...inlineForm, title: e.target.value })}
                       />
                       <div className="grid grid-cols-2 gap-2">
-                        <div className="bg-slate-50 rounded-lg p-2 text-[10px] font-bold text-slate-400 flex items-center gap-1.5 border border-transparent">
-                          <FontAwesomeIcon icon={faUser} className="text-[9px]" /> {inlineForm.assignee}
+                        <div className="bg-slate-50 rounded-lg p-2 text-sm font-bold text-slate-400 flex items-center gap-1.5 border border-transparent">
+                          <FontAwesomeIcon icon={faUser} className="text-sm" /> {inlineForm.assignee}
                         </div>
                         <div className="relative">
                           <div
                             onClick={() => setOpenDropdown(openDropdown === `inlinePriority-${status}` ? null : `inlinePriority-${status}`)}
-                            className="bg-slate-50 rounded-lg p-2 text-[11px] font-bold text-slate-600 flex justify-between items-center cursor-pointer border border-transparent"
+                            className="bg-slate-50 rounded-lg p-2 text-sm font-bold text-slate-600 flex justify-between items-center cursor-pointer border border-transparent"
                           >
                             {inlineForm.priority}
-                            <FontAwesomeIcon icon={faChevronDown} className="text-[9px] text-slate-400" />
+                            <FontAwesomeIcon icon={faChevronDown} className="text-sm text-slate-400" />
                           </div>
                           {openDropdown === `inlinePriority-${status}` && (
                             <div className="absolute top-full left-0 z-[120] mt-1 w-full bg-white border border-slate-100 rounded-lg shadow-lg overflow-hidden">
@@ -231,7 +231,7 @@ const Kanban = () => {
                                 <div
                                   key={p}
                                   onClick={() => { setInlineForm({ ...inlineForm, priority: p }); setOpenDropdown(null); }}
-                                  className="px-3 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                  className="px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
                                 >
                                   {p}
                                 </div>
@@ -246,10 +246,10 @@ const Kanban = () => {
                         <div className="relative">
                           <div
                             onClick={() => setOpenCalendar(openCalendar === `inlineStart-${status}` ? null : `inlineStart-${status}`)}
-                            className="bg-slate-50 rounded-lg p-2 text-[10px] font-bold text-slate-600 flex justify-between items-center cursor-pointer"
+                            className="bg-slate-50 rounded-lg p-2 text-sm font-bold text-slate-600 flex justify-between items-center cursor-pointer"
                           >
                             {inlineForm.startDate || "시작일"}
-                            <FontAwesomeIcon icon={faCalendarAlt} className="text-[9px] text-slate-400" />
+                            <FontAwesomeIcon icon={faCalendarAlt} className="text-sm text-slate-400" />
                           </div>
                           {openCalendar === `inlineStart-${status}` && (
                             <div className="absolute top-full left-0 z-[120] mt-1 w-[240px] transform origin-top-left scale-90">
@@ -270,10 +270,10 @@ const Kanban = () => {
                           <div className="relative">
                           <div 
                             onClick={() => setOpenCalendar(openCalendar === `inlineEnd-${status}` ? null : `inlineEnd-${status}`)}
-                            className="bg-slate-50 rounded-lg p-2 text-[10px] font-bold text-slate-600 flex justify-between items-center cursor-pointer"
+                            className="bg-slate-50 rounded-lg p-2 text-sm font-bold text-slate-600 flex justify-between items-center cursor-pointer"
                           >
                             {inlineForm.endDate || "마감일"}
-                            <FontAwesomeIcon icon={faCalendarAlt} className="text-[9px] text-slate-400" />
+                            <FontAwesomeIcon icon={faCalendarAlt} className="text-sm text-slate-400" />
                           </div>
                           {openCalendar === `inlineEnd-${status}` && (
                             <div className="absolute top-full right-0 z-[120] mt-1 w-[240px] transform origin-top-right scale-90">
