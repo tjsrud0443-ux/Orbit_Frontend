@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faSearch, faTimes, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
 
 const MOCK_EMPLOYEES = [
@@ -23,6 +23,7 @@ const ProjectsList = () => {
   const [filter, setFilter] = useState('전체');
   const [search, setSearch] = useState('');
   const [searchBy, setSearchBy] = useState('프로젝트명');
+  const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3;
 
@@ -102,9 +103,24 @@ const ProjectsList = () => {
 
             <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto items-end md:items-center">
               <div className="flex gap-2 w-full md:w-auto justify-end">
-                <select className="bg-[#f4f7fc] px-4 py-2.5 rounded-xl text-sm text-gray-600 outline-none w-1/3 md:w-auto" value={searchBy} onChange={e => setSearchBy(e.target.value)}>
-                  <option>프로젝트명</option><option>참여자</option>
-                </select>
+                <div className="relative w-1/3 md:w-auto">
+                  <div className="bg-[#f4f7fc] px-4 py-2.5 rounded-xl text-xs text-gray-600 outline-none cursor-pointer flex items-center justify-between gap-3" 
+                    onClick={() => setIsSearchDropdownOpen(!isSearchDropdownOpen)}>
+                    {searchBy}
+                    <FontAwesomeIcon icon={faChevronDown} className="text-[10px]" />
+                  </div>
+                  {isSearchDropdownOpen && (
+                    <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-lg z-50 overflow-hidden border-none">
+                      {['프로젝트명', '참여자'].map(option => (
+                        <div key={option} 
+                          className="px-4 py-2.5 text-xs text-gray-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors"
+                          onClick={() => { setSearchBy(option); setIsSearchDropdownOpen(false); }}>
+                          {option}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <div className="relative flex items-center w-2/3 md:w-48">
                   <FontAwesomeIcon icon={faSearch} className="absolute left-4 text-[#8a92a6]" />
                   <input placeholder="검색" value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
