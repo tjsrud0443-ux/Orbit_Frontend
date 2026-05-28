@@ -22,6 +22,7 @@ const AdminDept = () => {
   });
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // 드롭다운 상태 추가
 
   // --- 2. UI States ---
   const sidePanelRef = useRef(null); 
@@ -250,12 +251,31 @@ const AdminDept = () => {
           </div>
           <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
             {formMode === 'CREATE_SUB' && (
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 relative">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">상위 본부 선택</label>
-                <select className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20 focus:border-[#3530B8] transition-all cursor-pointer" value={formData.parentDeptSeq || ''} onChange={(e) => setFormData({ ...formData, parentDeptSeq: e.target.value })}>
-                  <option value="">본부를 선택하세요</option>
-                  {Object.values(fullTree.nodeMap).filter(node => ['기술본부', '경영지원본부', '사업운영본부', '운영총괄본부'].includes(node.deptName)).map(dept => <option key={dept.deptSeq} value={dept.deptSeq}>{dept.deptName}</option>)}
-                </select>
+                <div 
+                  className="w-full h-10 px-3 bg-white border border-slate-200 rounded-xl text-xs text-gray-500 flex items-center justify-between cursor-pointer transition-all hover:border-[#3530B8]"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                >
+                  {formData.parentDeptSeq ? Object.values(fullTree.nodeMap).find(n => n.deptSeq == formData.parentDeptSeq)?.deptName : "본부를 선택하세요"}
+                  <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-400" />
+                </div>
+                {isDropdownOpen && (
+                  <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.15)] z-50 overflow-hidden border border-slate-100">
+                    {Object.values(fullTree.nodeMap).filter(node => ['기술본부', '경영지원본부', '사업운영본부', '운영총괄본부'].includes(node.deptName)).map(dept => (
+                      <div 
+                        key={dept.deptSeq}
+                        className="px-4 py-3 text-xs text-slate-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors"
+                        onClick={() => {
+                          setFormData({ ...formData, parentDeptSeq: dept.deptSeq });
+                          setIsDropdownOpen(false);
+                        }}
+                      >
+                        {dept.deptName}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
             <div className="space-y-1.5">
