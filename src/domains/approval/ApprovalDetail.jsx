@@ -166,28 +166,52 @@ const ApprovalDetail = () => {
 
       // 필수 항목 검증
       const isFormValid = () => {
-        if (!formData.title?.trim()) return false;
+        const today = new Date().toLocaleDateString('sv-SE');
+        if (!formData.title?.trim() || formData.title.length > 50) return false;
         
         if (doc_type === 'VACATION') {
-          if (!formData.start_date) return false;
-          if (formData.vac_type === '연차' && !formData.end_date) return false;
-          if (!formData.reason?.trim()) return false;
+          if (!formData.start_date || formData.start_date < today) return false;
+          if (formData.vac_type === '연차') {
+            if (!formData.end_date || formData.end_date < formData.start_date) return false;
+          }
+          if (!formData.reason?.trim() || formData.reason.length > 300) return false;
         } else if (doc_type === 'PAYMENT') {
-          if (!formData.pay_date) return false;
-          if (!formData.pay_reason?.trim()) return false;
-          if (!formData.account_info?.trim()) return false;
+          const payDate = formData.pay_date || formData.expenditureDate;
+          const payReason = formData.pay_reason || formData.purpose;
+          const accountInfo = formData.account_info || formData.accountInfo;
+
+          if (!payDate) return false;
+          if (!payReason?.trim() || payReason.length > 300) return false;
+          if (!accountInfo?.trim() || accountInfo.length > 30) return false;
           if (!formData.items || formData.items.length === 0) return false;
-          return formData.items.every(item => item.item_name?.trim() && item.amount > 0 && item.receipt_url);
+          
+          return formData.items.every(item => {
+            const itemName = item.item_name || item.itemName;
+            const amount = item.amount;
+            const receipt = item.receipt_url || item.receipt;
+            const note = item.note;
+            
+            return (
+              itemName?.trim() && itemName.length <= 30 &&
+              amount > 0 && 
+              receipt &&
+              (!note || note.length <= 100)
+            );
+          });
         } else if (doc_type === 'GENERAL') {
-          if (!formData.purpose?.trim()) return false;
-          if (!formData.content?.trim()) return false;
+          if (!formData.purpose?.trim() || formData.purpose.length > 300) return false;
+          if (!formData.content?.trim() || formData.content.length > 1000) return false;
         } else if (doc_type === 'PURCHASE') {
-          if (!formData.purchase_date) return false;
-          if (!formData.purpose?.trim()) return false;
-          if (!formData.vendor?.trim()) return false;
+          if (!formData.purchase_date || formData.purchase_date < today) return false;
+          if (!formData.purpose?.trim() || formData.purpose.length > 300) return false;
+          if (!formData.vendor?.trim() || formData.vendor.length > 50) return false;
           if (!formData.items || formData.items.length === 0) return false;
           if (!formData.attachments || formData.attachments.length === 0) return false;
-          return formData.items.every(item => item.item_name?.trim() && item.ea > 0 && item.unit_price > 0);
+          return formData.items.every(item => 
+            item.item_name?.trim() && item.item_name.length <= 50 &&
+            item.ea > 0 && 
+            item.unit_price > 0
+          );
         }
         return true;
       };

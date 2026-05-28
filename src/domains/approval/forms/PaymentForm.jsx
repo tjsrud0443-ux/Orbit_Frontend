@@ -309,7 +309,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
             <tbody>
               {data.items?.map((item, index) => (
                 <tr key={index} className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50/50 transition-colors">
-                  <td className="p-2 border-r border-gray-200 text-center">{item.id}</td>
+                  <td className="p-2 border-r border-gray-200 text-center">{index + 1}</td>
                   <td className="p-2 border-r border-gray-200">
                     {isEditMode ? (
                       <div>

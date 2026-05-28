@@ -338,7 +338,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
                 const itemTotal = (Number(item.ea) || 0) * (Number(item.unit_price) || 0);
                 return (
                   <tr key={index} className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50/50 transition-colors">
-                    <td className="p-2 border-r border-gray-200 text-center">{item.item_order}</td>
+                    <td className="p-2 border-r border-gray-200 text-center">{index + 1}</td>
                     <td className="p-2 border-r border-gray-200">
                       {isEditMode ? (
                         <div>
