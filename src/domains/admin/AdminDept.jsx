@@ -13,6 +13,7 @@ import {
   faInfoCircle
 } from '@fortawesome/free-solid-svg-icons';
 import { getGroup } from '../departments/departmentsApi';
+import { addDept } from './adminApi';
 
 const AdminDept = () => {
   // --- 1. Data States ---
@@ -25,15 +26,15 @@ const AdminDept = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); // 드롭다운 상태 추가
 
   // --- 2. UI States ---
-  const sidePanelRef = useRef(null); 
+  const sidePanelRef = useRef(null);
   const [expandedNodes, setExpandedNodes] = useState(new Set());
-  const [formMode, setFormMode] = useState(null); 
-  const [panelTitle, setPanelTitle] = useState(''); 
+  const [formMode, setFormMode] = useState(null);
+  const [panelTitle, setPanelTitle] = useState('');
   const [selectedNode, setSelectedNode] = useState(null);
   const [formData, setFormData] = useState({
-    deptName: '',
-    deptCode: '',
-    parentDeptSeq: ''
+    dept_name: '',
+    dept_code: '',
+    parent_dept_seq: ''
   });
 
   useEffect(() => {
@@ -87,7 +88,7 @@ const AdminDept = () => {
   };
 
   const getDeptMemberCount = (node) => {
-    if (node.deptName === '대표이사실') return 1; 
+    if (node.deptName === '대표이사실') return 1;
     const allSeqs = getAllChildDeptSeqs(node);
     return employees.filter(emp => allSeqs.includes(emp.deptSeq)).length;
   };
@@ -104,13 +105,13 @@ const AdminDept = () => {
 
   const openCreateHq = () => {
     setFormMode('CREATE_HQ');
-    setFormData({ deptName: '', deptCode: '', parentDeptSeq: null });
+    setFormData({ dept_name: '', dept_code: '', parent_dept_seq: 2 });
     setSelectedNode(null);
   };
 
   const openCreateSub = () => {
     setFormMode('CREATE_SUB');
-    setFormData({ deptName: '', deptCode: '', parentDeptSeq: '' });
+    setFormData({ dept_name: '', dept_code: '', parent_dept_seq: null });
     setSelectedNode(null);
   };
 
@@ -118,9 +119,9 @@ const AdminDept = () => {
     setFormMode('EDIT');
     setSelectedNode(node);
     setFormData({
-      deptName: node.deptName,
-      deptCode: node.deptCode,
-      parentDeptSeq: node.parentDeptSeq
+      dept_name: node.deptName,
+      dept_code: node.deptCode,
+      parent_dept_seq: node.parentDeptSeq
     });
   };
 
@@ -130,13 +131,21 @@ const AdminDept = () => {
   };
 
   const handleSave = () => {
-    if (!formData.deptName || !formData.deptCode) {
+    if (!formData.dept_name || !formData.dept_code) {
       alert("부서명과 부서 코드를 입력해주세요.");
       return;
     }
-    if (formMode === 'CREATE_SUB' && !formData.parentDeptSeq) {
+    if (formMode === 'CREATE_SUB' && !formData.parent_dept_seq) {
       alert("상위 본부를 선택해주세요.");
       return;
+    }
+
+    if (formMode === 'EDIT') {
+      console.log("수정모드")
+    } else {
+      addDept(formData).then(resp => {
+        console.log("본부 생성 완료");
+      })
     }
     alert(`${formMode === 'EDIT' ? '수정' : '생성'}되었습니다.`);
     handleCloseForm();
@@ -253,21 +262,21 @@ const AdminDept = () => {
             {formMode === 'CREATE_SUB' && (
               <div className="space-y-1.5 relative">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">상위 본부 선택</label>
-                <div 
+                <div
                   className="w-full h-10 px-3 bg-white border border-slate-200 rounded-xl text-xs text-gray-500 flex items-center justify-between cursor-pointer transition-all hover:border-[#3530B8]"
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 >
-                  {formData.parentDeptSeq ? Object.values(fullTree.nodeMap).find(n => n.deptSeq == formData.parentDeptSeq)?.deptName : "본부를 선택하세요"}
+                  {formData.parent_dept_seq ? Object.values(fullTree.nodeMap).find(n => n.deptSeq == formData.parent_dept_seq)?.deptName : "본부를 선택하세요"}
                   <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-400" />
                 </div>
                 {isDropdownOpen && (
                   <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.15)] z-50 overflow-hidden border border-slate-100">
                     {Object.values(fullTree.nodeMap).filter(node => ['기술본부', '경영지원본부', '사업운영본부', '운영총괄본부'].includes(node.deptName)).map(dept => (
-                      <div 
+                      <div
                         key={dept.deptSeq}
                         className="px-4 py-3 text-xs text-slate-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
                         onClick={() => {
-                          setFormData({ ...formData, parentDeptSeq: dept.deptSeq });
+                          setFormData({ ...formData, parent_dept_seq: dept.deptSeq });
                           setIsDropdownOpen(false);
                         }}
                       >
@@ -280,18 +289,18 @@ const AdminDept = () => {
             )}
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">{formMode === 'CREATE_HQ' ? '본부명' : '부서명'}</label>
-              <input type="text" placeholder="예: 개발본부, 인사팀" maxLength={30} className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20 focus:border-[#3530B8] transition-all" value={formData.deptName} onChange={(e) => setFormData({ ...formData, deptName: e.target.value.replace(/[^ㄱ-ㅎㅏ-ㅣ가-힣]{3,30}/g, "") })} />
+              <input type="text" placeholder="예: 개발본부, 인사팀" maxLength={30} className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20 focus:border-[#3530B8] transition-all" value={formData.dept_name} onChange={(e) => setFormData({ ...formData, dept_name: e.target.value.replace(/[^ㄱ-ㅎㅏ-ㅣ가-힣]{3,30}/g, "") })} />
               <div className="flex items-center justify-between gap-1.5 text-[9px] text-slate-400 font-medium ml-1">
-                 <div className="flex items-center gap-1.5"><FontAwesomeIcon icon={faInfoCircle} className="text-[#3530B8]/50" /> <span>한글만 입력 가능</span></div>
-                 <span>{formData.deptName.length}/30</span>
+                <div className="flex items-center gap-1.5"><FontAwesomeIcon icon={faInfoCircle} className="text-[#3530B8]/50" /> <span>한글만 입력 가능</span></div>
+                <span>{formData.dept_name.length}/30</span>
               </div>
             </div>
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">부서 코드</label>
-              <input type="text" placeholder="예: DEPT" maxLength={20} className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20 focus:border-[#3530B8] transition-all font-mono" value={formData.deptCode} onChange={(e) => setFormData({ ...formData, deptCode: e.target.value.replace(/[^A-Z]{2,20}/g, "") })} />
+              <input type="text" placeholder="예: DEPT" maxLength={20} className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20 focus:border-[#3530B8] transition-all font-mono" value={formData.dept_code} onChange={(e) => setFormData({ ...formData, dept_code: e.target.value.replace(/[^A-Z]{2,20}/g, "") })} />
               <div className="flex items-center justify-between gap-1.5 text-[9px] text-slate-400 font-medium ml-1">
-                 <div className="flex items-center gap-1.5"><FontAwesomeIcon icon={faInfoCircle} className="text-[#3530B8]/50" /> <span>영문(대문자)만 입력 가능</span></div>
-                 <span>{formData.deptCode.length}/20</span>
+                <div className="flex items-center gap-1.5"><FontAwesomeIcon icon={faInfoCircle} className="text-[#3530B8]/50" /> <span>영문(대문자)만 입력 가능</span></div>
+                <span>{formData.dept_code.length}/20</span>
               </div>
             </div>
           </div>
