@@ -179,7 +179,7 @@ const AiChat = () => {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60]">
           <div className="bg-white p-8 rounded-2xl w-[350px] shadow-2xl">
             <h3 className="font-bold text-lg mb-4 text-center">정말 삭제하시겠습니까?</h3>
-            <p className="text-sm text-gray-500 mb-6 text-center">"{deleteTarget.title}" 대화가 영구적으로 삭제됩니다.</p>
+            <p className="text-sm text-gray-500 mb-6 text-center">"{deleteTarget.title}" 대화가<br/>영구적으로 삭제됩니다.</p>
             <div className="flex gap-2">
               <button onClick={() => setDeleteTarget(null)} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-slate-100 hover:bg-slate-200 transition-all">취소</button>
               <button onClick={handleDelete} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-red-600 hover:bg-red-700 text-white transition-all">삭제</button>
