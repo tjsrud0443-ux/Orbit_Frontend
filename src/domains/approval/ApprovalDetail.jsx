@@ -153,6 +153,8 @@ const ApprovalDetail = () => {
     setMode('VIEW');
   };
 
+  const [isSubmitClicked, setIsSubmitClicked] = useState(false);
+
   // 버튼 액션
   const handleAction = async (actionType) => {
     console.log(`Action: ${actionType}`, formData, approvers);
@@ -164,6 +166,41 @@ const ApprovalDetail = () => {
 
     // [결재 상신 버튼을 누른 경우]
     if (actionType === 'SUBMIT') {
+      setIsSubmitClicked(true);
+
+      // 필수 항목 검증
+      const isFormValid = () => {
+        if (!formData.title?.trim()) return false;
+        
+        if (doc_type === 'VACATION') {
+          if (!formData.startDate) return false;
+          if (formData.vacationType === '연차' && !formData.endDate) return false;
+          if (!formData.reason?.trim()) return false;
+        } else if (doc_type === 'PAYMENT') {
+          if (!formData.expenditureDate) return false;
+          if (!formData.purpose?.trim()) return false;
+          if (!formData.accountInfo?.trim()) return false;
+          if (!formData.items || formData.items.length === 0) return false;
+          return formData.items.every(item => item.itemName?.trim() && item.amount > 0 && item.receipt);
+        } else if (doc_type === 'GENERAL') {
+          if (!formData.purpose?.trim()) return false;
+          if (!formData.content?.trim()) return false;
+        } else if (doc_type === 'PURCHASE') {
+          if (!formData.purchaseRequestDate) return false;
+          if (!formData.purchasePurpose?.trim()) return false;
+          if (!formData.supplier?.trim()) return false;
+          if (!formData.items || formData.items.length === 0) return false;
+          if (!formData.attachments || formData.attachments.length === 0) return false;
+          return formData.items.every(item => item.itemName?.trim() && item.quantity > 0 && item.unitPrice > 0);
+        }
+        return true;
+      };
+
+      if (!isFormValid()) {
+        // alert 대신 빨간 테두리 표시를 위해 상태 유지 (각 폼에서 isSubmitClicked를 활용)
+        return;
+      }
+
       if (!approvers || approvers.length === 0) {
         alert('최소 한 명 이상의 결재자를 추가해야 합니다.');
         return;
@@ -251,6 +288,7 @@ const ApprovalDetail = () => {
       onChange: setFormData,
       mode: mode,
       user: user,
+      isSubmitClicked: isSubmitClicked
     };
 
     switch (doc_type) {

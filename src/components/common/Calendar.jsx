@@ -28,6 +28,10 @@ const Calendar = ({ value, onChange, onClose }) => {
     e.stopPropagation();
     if (!day) return;
     
+    const date = new Date(calendarYear, calendarMonth, day);
+    const dayOfWeek = date.getDay(); // 0: Sunday, 6: Saturday
+    if (dayOfWeek === 0 || dayOfWeek === 6) return;
+    
     const dateStr = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     onChange(dateStr);
     onClose();
@@ -65,13 +69,20 @@ const Calendar = ({ value, onChange, onClose }) => {
         {calendarDays.map((d, i) => {
           const currentFormatted = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
           const isSelected = value === currentFormatted;
+          
+          let isWeekend = false;
+          if (d) {
+            const date = new Date(calendarYear, calendarMonth, d);
+            const dayOfWeek = date.getDay();
+            isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+          }
 
           return (
             <div 
               key={i}
-              onClick={(e) => handleDateSelect(e, d)}
-              className={`text-[0.625rem] font-medium text-center py-1 rounded-lg transition-all cursor-pointer
-                ${!d ? 'invisible' : 'hover:bg-[#F0F4FF] hover:text-[#3530B8] text-gray-600'}
+              onClick={(e) => !isWeekend && handleDateSelect(e, d)}
+              className={`text-[0.625rem] font-medium text-center py-1 rounded-lg transition-all
+                ${!d ? 'invisible' : isWeekend ? 'text-gray-300 cursor-not-allowed opacity-50' : 'hover:bg-[#F0F4FF] hover:text-[#3530B8] text-gray-600 cursor-pointer'}
                 ${isSelected ? 'bg-[#3530B8] text-white' : ''}
               `}
             >

@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import Calendar from '../../../components/common/Calendar';
 import ReferrerSelector from '../components/ReferrerSelector';
 
-const PaymentForm = ({ data, onChange, mode, user }) => {
+const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
   const isEditMode = mode === 'EDIT';
   const today = new Date().toISOString().split('T')[0];
 
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [errors, setErrors] = useState({});
 
   // 초기 데이터 설정 (items가 없을 경우 기본 1행 추가)
   useEffect(() => {
@@ -18,14 +19,75 @@ const PaymentForm = ({ data, onChange, mode, user }) => {
     }
   }, []);
 
+  useEffect(() => {
+    if (isSubmitClicked) {
+      const newErrors = {};
+      newErrors.title = validateField('title', data.title);
+      newErrors.expenditureDate = validateField('expenditureDate', data.expenditureDate);
+      newErrors.purpose = validateField('purpose', data.purpose);
+      newErrors.accountInfo = validateField('accountInfo', data.accountInfo);
+      
+      const itemErrors = {};
+      data.items?.forEach((item, index) => {
+        if (!item.itemName?.trim()) itemErrors[`${index}-itemName`] = '품목명을 입력해주세요.';
+        else if (item.itemName.length > 30) itemErrors[`${index}-itemName`] = '글자 수 초과 (30자 이하)';
+        
+        if (!item.amount || item.amount <= 0) itemErrors[`${index}-amount`] = '금액을 입력해주세요.';
+        if (!item.receipt) itemErrors[`${index}-receipt`] = '영수증을 첨부해주세요.';
+        
+        if (item.note && item.note.length > 100) itemErrors[`${index}-note`] = '글자 수 초과 (100자 이하)';
+      });
+      newErrors.items = itemErrors;
+      
+      setErrors(newErrors);
+    }
+  }, [isSubmitClicked]);
+
+  const validateField = (field, value) => {
+    let error = '';
+    if (!value && field !== 'items') {
+      if (field === 'title') error = '제목을 입력해주세요.';
+      if (field === 'expenditureDate') error = '지출일을 선택해주세요.';
+      if (field === 'purpose') error = '지출 목적을 입력해주세요.';
+      if (field === 'accountInfo') error = '계좌 정보를 입력해주세요.';
+    }
+
+    if (value) {
+      if (field === 'title' && value.length > 50) error = '글자 수 초과 (50자 이하)';
+      if (field === 'purpose' && value.length > 300) error = '글자 수 초과 (300자 이하)';
+      if (field === 'accountInfo' && value.length > 30) error = '글자 수 초과 (30자 이하)';
+    }
+
+    return error;
+  };
+
   const handleFieldChange = (field, value) => {
     if (!onChange) return;
+    const error = validateField(field, value);
+    setErrors(prev => ({ ...prev, [field]: error }));
     onChange({ ...data, [field]: value });
   };
 
   const handleItemChange = (index, field, value) => {
     const newItems = [...(data.items || [])];
     newItems[index] = { ...newItems[index], [field]: value };
+    
+    // 개별 아이템 필드 검증 (itemName, amount는 필수)
+    const itemErrors = { ...(errors.items || {}) };
+    if (!value && (field === 'itemName' || field === 'amount')) {
+      itemErrors[`${index}-${field}`] = field === 'itemName' ? '품목명을 입력해주세요.' : '금액을 입력해주세요.';
+    } else {
+      if (field === 'itemName' && value.length > 30) {
+        itemErrors[`${index}-itemName`] = '글자 수 초과 (30자 이하)';
+      } else if (field === 'note' && value.length > 100) {
+        itemErrors[`${index}-note`] = '글자 수 초과 (100자 이하)';
+      } else {
+        delete itemErrors[`${index}-${field}`];
+        if (field === 'note') delete itemErrors[`${index}-note`]; // 명시적으로 note 에러 삭제
+      }
+    }
+    
+    setErrors(prev => ({ ...prev, items: itemErrors }));
     handleFieldChange('items', newItems);
   };
 
@@ -42,12 +104,25 @@ const PaymentForm = ({ data, onChange, mode, user }) => {
   const handleRemoveRow = (index) => {
     const currentItems = [...(data.items || [])];
     if (currentItems.length <= 1) {
-      alert('최소 한 개의 항목은 있어야 합니다.');
+      setErrors(prev => ({ ...prev, itemMin: '최소 한 개의 항목은 있어야 합니다.' }));
+      setTimeout(() => setErrors(prev => ({ ...prev, itemMin: '' })), 3000);
       return;
     }
     currentItems.splice(index, 1);
     // No. 재정렬
     const reorderedItems = currentItems.map((item, idx) => ({ ...item, id: idx + 1 }));
+    
+    // 에러 상태도 같이 업데이트
+    const itemErrors = { ...(errors.items || {}) };
+    const newItemErrors = {};
+    Object.keys(itemErrors).forEach(key => {
+      const [idx, field] = key.split('-');
+      const numericIdx = parseInt(idx);
+      if (numericIdx < index) newItemErrors[key] = itemErrors[key];
+      else if (numericIdx > index) newItemErrors[`${numericIdx - 1}-${field}`] = itemErrors[key];
+    });
+    
+    setErrors(prev => ({ ...prev, items: newItemErrors }));
     handleFieldChange('items', reorderedItems);
   };
 
@@ -67,13 +142,17 @@ const PaymentForm = ({ data, onChange, mode, user }) => {
           <h2 className="text-xs font-bold text-gray-800">제목</h2>
         </div>
         {isEditMode ? (
-          <input 
-            type="text"
-            value={data.title || ''}
-            onChange={(e) => handleFieldChange('title', e.target.value)}
-            placeholder="제목을 입력하세요"
-            className="w-full p-2.5 text-xs bg-white border border-gray-200 rounded-xl outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 transition-all"
-          />
+          <div>
+            <input 
+              type="text"
+              value={data.title || ''}
+              onChange={(e) => handleFieldChange('title', e.target.value)}
+              placeholder="제목을 입력하세요 (50자 이하)"
+              maxLength={50}
+              className={`w-full p-2.5 text-xs bg-white border ${errors.title ? 'border-red-500' : 'border-gray-200'} rounded-xl outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 transition-all`}
+            />
+            {errors.title && <p className="mt-1 text-[10px] text-red-500">{errors.title}</p>}
+          </div>
         ) : (
           <div className="w-full p-2.5 text-xs bg-gray-50 border border-gray-100 rounded-xl">
             {data.title || '-'}
@@ -106,25 +185,32 @@ const PaymentForm = ({ data, onChange, mode, user }) => {
               <td className="p-2 border-r border-gray-200">
                 {isEditMode ? (
                   <div className="relative w-65">
-                    <input 
-                      type="text" 
-                      readOnly 
-                      value={data.expenditureDate || ''} 
-                      onClick={() => setIsCalendarOpen(!isCalendarOpen)} 
-                      placeholder="지출일 선택" 
-                      className={`w-full p-2 border ${isCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-xl outline-none cursor-pointer text-xs transition-all pr-10`}
-                    />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    {isCalendarOpen && (
-                      <Calendar 
-                        value={data.expenditureDate} 
-                        onChange={(d) => { handleFieldChange('expenditureDate', d); setIsCalendarOpen(false); }} 
-                        onClose={() => setIsCalendarOpen(false)}
+                    <div className="relative h-[34px]">
+                      <input 
+                        type="text" 
+                        readOnly 
+                        value={data.expenditureDate || ''} 
+                        onClick={() => setIsCalendarOpen(!isCalendarOpen)} 
+                        placeholder="지출일 선택" 
+                        className={`w-full h-full p-2 border ${errors.expenditureDate ? 'border-red-500' : isCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-xl outline-none cursor-pointer text-xs transition-all pr-10`}
                       />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      {isCalendarOpen && (
+                        <Calendar 
+                          value={data.expenditureDate} 
+                          onChange={(d) => { handleFieldChange('expenditureDate', d); setIsCalendarOpen(false); }} 
+                          onClose={() => setIsCalendarOpen(false)}
+                        />
+                      )}
+                    </div>
+                    {errors.expenditureDate && (
+                      <p className="absolute left-0 top-full mt-3 text-[10px] text-red-500 whitespace-nowrap">
+                        {errors.expenditureDate}
+                      </p>
                     )}
                   </div>
                 ) : (
@@ -136,6 +222,8 @@ const PaymentForm = ({ data, onChange, mode, user }) => {
             </tr>
           </tbody>
         </table>
+        {/* 지출일 에러를 위한 여백 확보 (인라인 모드일 때만) */}
+        {isEditMode && errors.expenditureDate && <div className="h-4"></div>}
       </div>
 
       {/* 지출 목적 및 계좌 정보 Section */}
@@ -146,12 +234,16 @@ const PaymentForm = ({ data, onChange, mode, user }) => {
             <h2 className="text-xs font-bold text-gray-800">지출 목적</h2>
           </div>
           {isEditMode ? (
-            <textarea 
-              value={data.purpose || ''}
-              onChange={(e) => handleFieldChange('purpose', e.target.value)}
-              placeholder="지출 목적을 입력하세요"
-              className="w-full h-20 p-2 text-xs bg-white border border-gray-200 rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all"
-            ></textarea>
+            <div>
+              <textarea 
+                value={data.purpose || ''}
+                onChange={(e) => handleFieldChange('purpose', e.target.value)}
+                placeholder="지출 목적을 입력하세요 (300자 이하)"
+                maxLength={300}
+                className={`w-full h-20 p-2 text-xs bg-white border ${errors.purpose ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all`}
+              ></textarea>
+              {errors.purpose && <p className="mt-1 text-[10px] text-red-500">{errors.purpose}</p>}
+            </div>
           ) : (
             <div className="w-full h-20 p-2 text-xs bg-gray-50 border border-gray-100 rounded-lg whitespace-pre-wrap overflow-y-auto">
               {data.purpose || '-'}
@@ -164,12 +256,16 @@ const PaymentForm = ({ data, onChange, mode, user }) => {
             <h2 className="text-xs font-bold text-gray-800">계좌 정보</h2>
           </div>
           {isEditMode ? (
-            <textarea 
-              value={data.accountInfo || ''}
-              onChange={(e) => handleFieldChange('accountInfo', e.target.value)}
-              placeholder="은행명 / 계좌번호 / 예금주"
-              className="w-full h-20 p-2 text-xs bg-white border border-gray-200 rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all"
-            ></textarea>
+            <div>
+              <textarea 
+                value={data.accountInfo || ''}
+                onChange={(e) => handleFieldChange('accountInfo', e.target.value)}
+                placeholder="은행명 / 계좌번호 / 예금주 (30자 이하)"
+                maxLength={30}
+                className={`w-full h-20 p-2 text-xs bg-white border ${errors.accountInfo ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all`}
+              ></textarea>
+              {errors.accountInfo && <p className="mt-1 text-[10px] text-red-500">{errors.accountInfo}</p>}
+            </div>
           ) : (
             <div className="w-full h-20 p-2 text-xs bg-gray-50 border border-gray-100 rounded-lg whitespace-pre-wrap overflow-y-auto">
               {data.accountInfo || '-'}
@@ -186,12 +282,15 @@ const PaymentForm = ({ data, onChange, mode, user }) => {
             <h2 className="text-xs font-bold text-gray-800">지출 항목</h2>
           </div>
           {isEditMode && (
-            <button 
-              onClick={handleAddRow}
-              className="px-3 py-1 bg-[#3530B8] text-white text-[10px] font-bold rounded-full hover:bg-[#2a2696] transition-colors"
-            >
-              + 항목 추가
-            </button>
+            <div className="flex flex-col items-end gap-1">
+              <button 
+                onClick={handleAddRow}
+                className="px-3 py-1 bg-[#3530B8] text-white text-[10px] font-bold rounded-full hover:bg-[#2a2696] transition-colors"
+              >
+                + 항목 추가
+              </button>
+              {errors.itemMin && <p className="text-[9px] text-red-500 animate-pulse">{errors.itemMin}</p>}
+            </div>
           )}
         </div>
         
@@ -213,25 +312,32 @@ const PaymentForm = ({ data, onChange, mode, user }) => {
                   <td className="p-2 border-r border-gray-200 text-center">{item.id}</td>
                   <td className="p-2 border-r border-gray-200">
                     {isEditMode ? (
-                      <input 
-                        type="text"
-                        value={item.itemName || ''}
-                        onChange={(e) => handleItemChange(index, 'itemName', e.target.value)}
-                        className="w-full p-1 bg-white border border-gray-300 rounded outline-none focus:border-[#3530B8]"
-                      />
+                      <div>
+                        <input 
+                          type="text"
+                          value={item.itemName || ''}
+                          onChange={(e) => handleItemChange(index, 'itemName', e.target.value)}
+                          maxLength={30}
+                          className={`w-full p-1 bg-white border ${errors.items?.[`${index}-itemName`] ? 'border-red-500' : 'border-gray-300'} rounded outline-none focus:border-[#3530B8]`}
+                        />
+                        {errors.items?.[`${index}-itemName`] && <p className="text-[9px] text-red-500 mt-0.5">{errors.items[`${index}-itemName`]}</p>}
+                      </div>
                     ) : (
                       <span>{item.itemName || '-'}</span>
                     )}
                   </td>
                   <td className="p-2 border-r border-gray-200">
                     {isEditMode ? (
-                      <input 
-                        type="number"
-                        min="0"
-                        value={item.amount || ''}
-                        onChange={(e) => handleItemChange(index, 'amount', Math.max(0, Number(e.target.value)))}
-                        className="w-full p-1 bg-white border border-gray-300 rounded outline-none focus:border-[#3530B8] text-right"
-                      />
+                      <div>
+                        <input 
+                          type="number"
+                          min="0"
+                          value={item.amount || ''}
+                          onChange={(e) => handleItemChange(index, 'amount', Math.max(0, Number(e.target.value)))}
+                          className={`w-full p-1 bg-white border ${errors.items?.[`${index}-amount`] ? 'border-red-500' : 'border-gray-300'} rounded outline-none focus:border-[#3530B8] text-right`}
+                        />
+                        {errors.items?.[`${index}-amount`] && <p className="text-[9px] text-red-500 mt-0.5">{errors.items[`${index}-amount`]}</p>}
+                      </div>
                     ) : (
                       <div className="text-right">{(Number(item.amount) || 0).toLocaleString()}</div>
                     )}
@@ -239,15 +345,23 @@ const PaymentForm = ({ data, onChange, mode, user }) => {
                   <td className="p-2 border-r border-gray-200 text-center">
                     {isEditMode ? (
                       <div className="flex flex-col items-center gap-1">
-                        <label className="cursor-pointer bg-white border border-gray-300 px-2 py-1 rounded text-[10px] hover:bg-gray-50">
+                        <label className={`cursor-pointer bg-white border ${errors.items?.[`${index}-receipt`] ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded text-[10px] hover:bg-gray-50`}>
                           파일 선택
                           <input 
                             type="file" 
                             className="hidden" 
-                            onChange={(e) => handleItemChange(index, 'receipt', e.target.files[0])}
+                            onChange={(e) => {
+                              handleItemChange(index, 'receipt', e.target.files[0]);
+                              const itemErrors = { ...(errors.items || {}) };
+                              delete itemErrors[`${index}-receipt`];
+                              setErrors(prev => ({ ...prev, items: itemErrors }));
+                            }}
                           />
                         </label>
                         {item.receipt && <span className="text-[9px] text-gray-500 truncate max-w-[80px]">{item.receipt.name}</span>}
+                        {errors.items?.[`${index}-receipt`] && !item.receipt && (
+                          <p className="text-[8px] text-red-500 mt-0.5 whitespace-nowrap">{errors.items[`${index}-receipt`]}</p>
+                        )}
                       </div>
                     ) : (
                       <span className="text-[10px] text-[#3530B8] cursor-pointer hover:underline">
@@ -257,12 +371,16 @@ const PaymentForm = ({ data, onChange, mode, user }) => {
                   </td>
                   <td className="p-2 border-r border-gray-200">
                     {isEditMode ? (
-                      <input 
-                        type="text"
-                        value={item.note || ''}
-                        onChange={(e) => handleItemChange(index, 'note', e.target.value)}
-                        className="w-full p-1 bg-white border border-gray-300 rounded outline-none focus:border-[#3530B8]"
-                      />
+                      <div>
+                        <input 
+                          type="text"
+                          value={item.note || ''}
+                          onChange={(e) => handleItemChange(index, 'note', e.target.value)}
+                          maxLength={100}
+                          className={`w-full p-1 bg-white border ${errors.items?.[`${index}-note`] ? 'border-red-500' : 'border-gray-300'} rounded outline-none focus:border-[#3530B8]`}
+                        />
+                        {errors.items?.[`${index}-note`] && <p className="text-[9px] text-red-500 mt-0.5">{errors.items[`${index}-note`]}</p>}
+                      </div>
                     ) : (
                       <span>{item.note || '-'}</span>
                     )}
