@@ -13,7 +13,7 @@ import {
   faInfoCircle
 } from '@fortawesome/free-solid-svg-icons';
 import { getGroup } from '../departments/departmentsApi';
-import { addDept } from './adminApi';
+import { addDept, addTeam } from './adminApi';
 
 const AdminDept = () => {
   // --- 1. Data States ---
@@ -142,6 +142,10 @@ const AdminDept = () => {
 
     if (formMode === 'EDIT') {
       console.log("수정모드")
+    } else if (formMode === 'CREATE_SUB') {
+      addTeam(formData).then(resp => {
+        console.log("부서 생성 완료")
+      })
     } else {
       addDept(formData).then(resp => {
         console.log("본부 생성 완료");
@@ -271,7 +275,7 @@ const AdminDept = () => {
                 </div>
                 {isDropdownOpen && (
                   <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.15)] z-50 overflow-hidden border border-slate-100">
-                    {Object.values(fullTree.nodeMap).filter(node => ['기술본부', '경영지원본부', '사업운영본부', '운영총괄본부'].includes(node.deptName)).map(dept => (
+                    {Object.values(fullTree.nodeMap).filter(node => node.parentDeptSeq === 2).map(dept => (
                       <div
                         key={dept.deptSeq}
                         className="px-4 py-3 text-xs text-slate-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
