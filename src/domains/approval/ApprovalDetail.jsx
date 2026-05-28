@@ -217,6 +217,8 @@ const ApprovalDetail = () => {
               days: isHalfVacation ? 0.5 : Number(formData.days)
             }
           : restOfData;
+
+          console.log(restOfData);
         
         // 각 테이블 DTO 구조에 대입하기 좋게 조립
         const submitPayload = {
@@ -236,8 +238,10 @@ const ApprovalDetail = () => {
           })),
 
           // 나머지 문서 데이터
-          docData: finalDocData
+          ...finalDocData
         };
+
+          console.log(finalDocData);
 
         // 문서 타입별로 분리된 API 호출
         let response;
