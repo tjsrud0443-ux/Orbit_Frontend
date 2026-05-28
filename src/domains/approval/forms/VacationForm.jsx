@@ -8,6 +8,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
   
   const [isStartCalendarOpen, setIsStartCalendarOpen] = useState(false);
   const [isEndCalendarOpen, setIsEndCalendarOpen] = useState(false);
+  const [isTypeOpen, setIsTypeOpen] = useState(false);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -163,15 +164,31 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
               <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">연차 종류</th>
               <td className="p-2">
                 {isEditMode ? (
-                  <select 
-                    value={data.vacationType || '연차'}
-                    onChange={(e) => handleFieldChange('vacationType', e.target.value)}
-                    className="w-full p-1 bg-white border border-gray-300 rounded outline-none focus:border-[#3530B8]"
-                  >
-                    <option value="연차">연차</option>
-                    <option value="오전반차">오전반차</option>
-                    <option value="오후반차">오후반차</option>
-                  </select>
+                  <div className="relative w-full">
+                    <div 
+                      onClick={() => setIsTypeOpen(!isTypeOpen)}
+                      className={`w-full px-3 py-1.5 bg-white border ${isTypeOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-200'} rounded-lg text-xs font-medium transition-all cursor-pointer flex justify-between items-center`}
+                    >
+                      <span className="text-gray-800">{data.vacationType || '연차'}</span>
+                      <svg className={`w-3.5 h-3.5 text-gray-400 transition-transform ${isTypeOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                    </div>
+                    {isTypeOpen && (
+                      <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-32 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-200">
+                        {['연차', '오전반차', '오후반차'].map((type) => (
+                          <div 
+                            key={type}
+                            onClick={() => { 
+                              handleFieldChange('vacationType', type); 
+                              setIsTypeOpen(false); 
+                            }}
+                            className="px-4 py-2.5 text-xs hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-medium border-b border-gray-50 last:border-0 transition-colors"
+                          >
+                            {type}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <span>{data.vacationType}</span>
                 )}
