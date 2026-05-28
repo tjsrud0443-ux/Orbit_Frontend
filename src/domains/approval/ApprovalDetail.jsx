@@ -176,23 +176,23 @@ const ApprovalDetail = () => {
           }
           if (!formData.reason?.trim() || formData.reason.length > 300) return false;
         } else if (doc_type === 'PAYMENT') {
-          const payDate = formData.pay_date || formData.expenditureDate;
-          const payReason = formData.pay_reason || formData.purpose;
-          const accountInfo = formData.account_info || formData.accountInfo;
+          const pay_date = formData.pay_date;
+          const pay_reason = formData.pay_reason;
+          const account_info = formData.account_info;
 
-          if (!payDate) return false;
-          if (!payReason?.trim() || payReason.length > 300) return false;
-          if (!accountInfo?.trim() || accountInfo.length > 30) return false;
+          if (!pay_date) return false;
+          if (!pay_reason?.trim() || pay_reason.length > 300) return false;
+          if (!account_info?.trim() || account_info.length > 30) return false;
           if (!formData.items || formData.items.length === 0) return false;
           
           return formData.items.every(item => {
-            const itemName = item.item_name || item.itemName;
+            const item_name = item.item_name;
             const amount = item.amount;
             const receipt = item.receipt_url || item.receipt;
             const note = item.note;
             
             return (
-              itemName?.trim() && itemName.length <= 30 &&
+              item_name?.trim() && item_name.length <= 30 &&
               amount > 0 && 
               receipt &&
               (!note || note.length <= 100)
