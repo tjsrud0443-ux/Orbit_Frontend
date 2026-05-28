@@ -248,7 +248,22 @@ const ApprovalDetail = () => {
         } else if (doc_type === 'GENERAL') {
           response = await submitGeneral(submitPayload);
         } else if (doc_type === 'PURCHASE') {
-          response = await submitPurchase(submitPayload);
+          // 💡 변경 요청 사항 적용: Multipart/Form-Data 형식으로 변환
+          const formDataObj = new FormData();
+          
+          // 1. JSON 데이터를 Blob으로 변환하여 "dto" 키로 append
+          formDataObj.append("dto", new Blob([JSON.stringify(submitPayload)], { type: "application/json" }));
+          
+          // 2. 첨부파일들을 "files" 키로 각각 append
+          if (formData.attachments && formData.attachments.length > 0) {
+            formData.attachments.forEach(file => {
+              if (file instanceof File) {
+                formDataObj.append("files", file);
+              }
+            });
+          }
+
+          response = await submitPurchase(formDataObj);
         }
 
         // maxios 통신 성공 시

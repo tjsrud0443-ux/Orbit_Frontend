@@ -2,6 +2,10 @@
 
 export const getAllEmployees = () => maxios.get("/approval/all");
 export const submitVacation = (payload) => maxios.post("/approval/submit/vacation", payload);
-export const submitPurchase = (payload) => maxios.post("/approval/submit/purchase", payload);
+export const submitPurchase = (formData) => maxios.post("/approval/submit/purchase", formData, {
+    headers: {
+        "Content-Type": "multipart/form-data"
+    }
+});
 export const submitPayment = (payload) => maxios.post("/approval/submit/payment", payload);
 export const submitGeneral = (payload) => maxios.post("/approval/submit/general", payload);
