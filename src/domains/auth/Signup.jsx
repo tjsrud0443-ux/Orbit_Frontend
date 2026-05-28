@@ -78,6 +78,7 @@ const Signup = () => {
       if (resp.data === true) {
         setErrors(prev => ({ ...prev, id: '이미 사용 중인 아이디입니다.' }));
         setIsIdChecked(false);
+        setErrors((prev) => ({ ...prev, idCheck: '' }));
       } else {
         setIsIdChecked(true);
         setErrors((prev) => ({ ...prev, idCheck: '' }));
