@@ -46,10 +46,9 @@ const BRAND_COLORS = {
   greyBlue: '#8a92a6',
   border: '#edf2f9',
   bg: '#f4f7fc',
-  donut: ['#3a36db', '#6366f1', '#818cf8', '#a5b4fc', '#c7d2fe'],
-  lineExit: '#1e293b',
+  donut: ['#4338CA', '#6366F1', '#818CF8', '#A5B4FC', ],
+  lineExit: '#fc0000',
 };
-
 // 상단 KPI 데이터
 const KPI_DATA = [
   { id: 1, title: '전체 직원 수', value: '128명', icon: faUsers, iconColor: 'text-[#3530B8]', bgColor: 'bg-[#F0F4FF]' },
@@ -61,11 +60,11 @@ const KPI_DATA = [
 
 // 차트 데이터: 부서별 직원 수 (Bar)
 const DEPT_EMPLOYEE_DATA = {
-  labels: ['개발부', '영업부', '경영지원부', '디자인부', '인사부', '마케팅부'],
+  labels: ['개발팀', '기획팀', '디자인팀', '인사팀', '총무팀', '재무팀', 'IT팀', '마케팅팀', '고객지원팀', '운영총괄팀'],
   datasets: [
     {
       label: '직원 수',
-      data: [35, 28, 20, 18, 15, 12],
+      data: [4, 4, 1, 3, 1, 2, 2, 2, 2, 1],
       backgroundColor: BRAND_COLORS.main,
       borderRadius: 8,
       barThickness: 32,
@@ -75,10 +74,10 @@ const DEPT_EMPLOYEE_DATA = {
 
 // 차트 데이터: 부서별 연차 사용 현황 (Donut)
 const ANNUAL_LEAVE_DATA = {
-  labels: ['영업부', '경영지원부', '디자인부', '기타', '개발부'],
+  labels: ['기술본부', '경영지원본부', '사업운영본부', '운영총괄본부'],
   datasets: [
     {
-      data: [32, 24, 18, 14, 12],
+      data: [12, 9, 5, 2],
       backgroundColor: BRAND_COLORS.donut,
       borderWidth: 0,
       hoverOffset: 4,
@@ -94,10 +93,10 @@ const ENTRY_EXIT_TREND_DATA = {
       label: '입사자',
       data: [5, 12, 4, 3, 4, 7],
       borderColor: BRAND_COLORS.main,
-      backgroundColor: 'rgba(58, 54, 219, 0.1)',
-      fill: true,
-      tension: 0, // 뾰족하게 변경 (기존 0.4)
-      pointRadius: 4,
+      backgroundColor: 'transparent',
+      fill: false,
+      tension: 0,
+      pointRadius: 3,
       pointBackgroundColor: BRAND_COLORS.main,
     },
     {
@@ -105,9 +104,9 @@ const ENTRY_EXIT_TREND_DATA = {
       data: [1, 2, 4, 1, 3, 2],
       borderColor: BRAND_COLORS.lineExit,
       backgroundColor: 'transparent',
-      borderDash: [5, 5],
-      tension: 0, // 뾰족하게 변경 (기존 0.4)
-      pointRadius: 4,
+      fill: false,
+      tension: 0,
+      pointRadius: 3,
       pointBackgroundColor: BRAND_COLORS.lineExit,
     },
   ],
@@ -152,11 +151,26 @@ const ChartCard = ({ title, children, extra }) => (
 
 const AdminMain = () => {
   const navigate = useNavigate();
+  const barRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      if (barRef.current) {
+        const chart = barRef.current;
+        const isMobile = window.innerWidth < 768;
+        chart.data.datasets[0].barThickness = isMobile ? 16 : 32;
+        chart.update();
+      }
+    };
+    handleResize(); // Initial check
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <div className="flex-1 bg-white min-h-screen p-8 lg:p-12 overflow-y-auto">
       <div className="max-w-7xl mx-auto space-y-10">
-        
+
         {/* 1. 타이틀 영역 */}
         <div className="flex flex-col gap-1.5 px-1">
           <h1 className="text-3xl font-extrabold text-[#1a1c3d]">관리자 대시보드</h1>
@@ -175,8 +189,9 @@ const AdminMain = () => {
         {/* 3. 중간 차트 영역 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <ChartCard title="부서별 직원 수 현황">
-            <Bar 
-              data={DEPT_EMPLOYEE_DATA} 
+            <Bar
+              ref={barRef}
+              data={DEPT_EMPLOYEE_DATA}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
@@ -191,21 +206,22 @@ const AdminMain = () => {
           <ChartCard title="부서별 연차 사용 현황">
             <div className="flex flex-col sm:flex-row items-center justify-between h-full gap-16 lg:gap-20 pl-4 sm:pl-8 md:pl-12">
               <div className="w-full max-w-[200px] h-[200px]">
-                <Doughnut 
-                  data={ANNUAL_LEAVE_DATA} 
+                <Doughnut
+                  data={ANNUAL_LEAVE_DATA}
                   options={{
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: '60%', 
+                    cutout: '50%',
+                    spacing: 3,
                     plugins: { legend: { display: false } }
-                  }} 
+                  }}
                 />
               </div>
               <div className="flex-1 w-full space-y-2">
                 {ANNUAL_LEAVE_DATA.labels.map((label, idx) => (
                   <div key={label} className="flex items-center gap-3 group">
-                    <div 
-                      className="w-2.5 h-2.5 rounded-full flex-shrink-0" 
+                    <div
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                       style={{ backgroundColor: ANNUAL_LEAVE_DATA.datasets[0].backgroundColor[idx] }}
                     />
                     <div className="flex items-baseline gap-2">
@@ -222,17 +238,17 @@ const AdminMain = () => {
         {/* 4. 하단 상세 현황 영역 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <ChartCard title="입/퇴사자 현황">
-            <Line 
-              data={ENTRY_EXIT_TREND_DATA} 
+            <Line
+              data={ENTRY_EXIT_TREND_DATA}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { 
-                  legend: { 
-                    position: 'top', 
+                plugins: {
+                  legend: {
+                    position: 'top',
                     align: 'end',
-                    labels: { boxWidth: 8, usePointStyle: true, font: { size: 12, weight: 'bold' } } 
-                  } 
+                    labels: { boxWidth: 5, boxHeight: 5, pointStyle: 'circle', pointStyleWidth: 6, usePointStyle: true, font: { size: 12, weight: 'bold' } }
+                  }
                 },
                 scales: {
                   y: { beginAtZero: true, grid: { color: '#f5f6fa' }, border: { display: false } },
@@ -241,10 +257,10 @@ const AdminMain = () => {
               }}
             />
           </ChartCard>
-          <ChartCard 
+          <ChartCard
             title="AI 미답변 질문 (최근)"
             extra={
-              <button 
+              <button
                 onClick={() => navigate('/adminQna')}
                 className="text-[#3a36db] text-xs font-bold flex items-center gap-1 hover:underline group cursor-pointer"
               >
