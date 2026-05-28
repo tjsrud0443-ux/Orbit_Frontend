@@ -215,16 +215,16 @@ const ProjectsList = () => {
           <div className="bg-white p-10 rounded-[2.5rem] w-[550px] shadow-2xl">
             <h2 className="text-2xl font-bold mb-8">새 프로젝트 생성</h2>
             <label className="block text-xs font-bold text-[#1a1c3d] mb-2">프로젝트명 *</label>
-            <input className="w-full p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none" onChange={e => setNewProject({ ...newProject, title: e.target.value })} />
+            <input className="w-full p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none text-xs" onChange={e => setNewProject({ ...newProject, title: e.target.value })} />
 
             <div className="flex gap-4 mb-4">
               <div className="flex-1 relative">
                 <label className="block text-xs font-bold text-[#1a1c3d] mb-2">시작일 *</label>
-                <div onClick={() => { setIsStartCalendarOpen(!isStartCalendarOpen); setIsEndCalendarOpen(false); }} className="w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-sm">
+                <div onClick={() => { setIsStartCalendarOpen(!isStartCalendarOpen); setIsEndCalendarOpen(false); }} className={`w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-xs ${newProject.start ? 'text-black' : 'text-[#9CA3AF]'}`}>
                   {newProject.start || "날짜 선택"}
                 </div>
                 {isStartCalendarOpen && (
-                  <Calendar
+                  <Calendar 
                     value={newProject.start}
                     minDate={new Date().toISOString().split('T')[0]}
                     onChange={(date) => {
@@ -239,7 +239,7 @@ const ProjectsList = () => {
 
               <div className="flex-1 relative">
                 <label className="block text-xs font-bold text-[#1a1c3d] mb-2">종료일 *</label>
-                <div onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }} className="w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-sm">
+                <div onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }} className={`w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-xs ${newProject.end ? 'text-black' : 'text-[#9CA3AF]'}`}>
                   {newProject.end || "날짜 선택"}
                 </div>
                 {isEndCalendarOpen && (
@@ -258,11 +258,11 @@ const ProjectsList = () => {
             </div>
 
             <label className="block text-xs font-bold text-[#1a1c3d] mb-2">프로젝트 내용</label>
-            <textarea rows={3} className="w-full p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none" onChange={e => setNewProject({ ...newProject, desc: e.target.value })} />
+            <textarea rows={3} className="w-full text-xs p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none" onChange={e => setNewProject({ ...newProject, desc: e.target.value })} />
 
             <label className="block text-xs font-bold text-[#1a1c3d] mb-2">참여자 추가 *</label>
             <div className="relative mb-2">
-              <input value={empSearch} onChange={e => { setEmpSearch(e.target.value); setShowEmpDropdown(true); }} className="w-full p-4 bg-[#f4f7fc] rounded-xl outline-none" />
+              <input value={empSearch} onChange={e => { setEmpSearch(e.target.value); setShowEmpDropdown(true); }} className="w-full p-4 bg-[#f4f7fc] rounded-xl outline-none text-xs" placeholder="이름으로 검색하여 참여자를 추가하세요."/>
               {showEmpDropdown && empSearch && (
                 <div className="absolute top-full left-0 w-full bg-white border border-[#edf2f9] rounded-xl shadow-lg mt-1 z-50 overflow-hidden">
                   {MOCK_EMPLOYEES.filter(e => e.name.includes(empSearch)).map(e => (
