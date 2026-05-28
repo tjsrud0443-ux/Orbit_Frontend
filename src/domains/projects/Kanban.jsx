@@ -35,6 +35,7 @@ const Kanban = () => {
   const [tasks, setTasks] = useState(INITIAL_TASKS);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [detailModalTask, setDetailModalTask] = useState(null);
+  const [activeTab, setActiveTab] = useState('TODO'); // 모바일 탭 상태
 
   // 외부 클릭 감지를 위한 Ref
   const inlineFormRef = useRef(null);
@@ -109,6 +110,9 @@ const Kanban = () => {
     }
   };
 
+  // 우선순위 가중치 (정렬용)
+  const priorityWeight = { 'High': 3, 'Medium': 2, 'Low': 1 };
+
   // 핸들러: 전역 생성
   const handleGlobalCreate = () => {
     if (!newGlobalTask.title) return alert('제목을 입력해주세요.');
@@ -125,6 +129,7 @@ const Kanban = () => {
   // 핸들러: 인라인 생성
   const handleInlineCreate = (status) => {
     if (!inlineForm.title) return alert('제목을 입력해주세요.');
+    if (!inlineForm.endDate) return alert('마감일을 선택해주세요.');
     const task = {
       id: Date.now(),
       title: inlineForm.title,
@@ -132,7 +137,7 @@ const Kanban = () => {
       priority: inlineForm.priority,
       status: status,
       startDate: inlineForm.startDate,
-      endDate: inlineForm.endDate || new Date().toISOString().split('T')[0],
+      endDate: inlineForm.endDate,
       desc: ''
     };
     setTasks([...tasks, task]);
@@ -147,189 +152,371 @@ const Kanban = () => {
 
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
-      {/* 1. 상단 프로젝트 헤더 */}
-      <header className="flex justify-between items-center px-10 py-8 bg-white border-b border-slate-100 shrink-0">
-        <h1 className="text-2xl font-black font-bold text-[#1a1c3d] tracking-tight">Orbit 그룹웨어 고도화</h1>
-        <div className="flex items-center gap-6">
-          <div className="flex -space-x-3">
-            {PROJECT_MEMBERS.map(m => (
-              <div key={m.id} className="w-9 h-9 rounded-full border-2 border-white overflow-hidden shadow-sm hover:z-10 transition-all cursor-pointer">
+      {/* 1. 데스크탑 뷰 (기존 코드 유지) */}
+      <div className="hidden lg:flex flex-col h-full overflow-hidden">
+        {/* 1. 상단 프로젝트 헤더 */}
+        <header className="flex justify-between items-center px-10 py-8 bg-white border-b border-slate-100 shrink-0">
+          <h1 className="text-2xl font-black text-[#1a1c3d] tracking-tight">Orbit 그룹웨어 고도화</h1>
+          <div className="flex items-center gap-6">
+            <div className="flex -space-x-3">
+              {PROJECT_MEMBERS.map(m => (
+                <div key={m.id} className="w-9 h-9 rounded-full border-2 border-white overflow-hidden shadow-sm hover:z-10 transition-all cursor-pointer">
+                  <img src={m.avatar} alt={m.name} className="w-full h-full object-cover" />
+                </div>
+              ))}
+              <div className="w-9 h-9 rounded-full border-2 border-white bg-slate-50 flex items-center justify-center text-[10px] font-bold text-slate-400 shadow-sm cursor-pointer">
+                +2
+              </div>
+            </div>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-[#3530B8] text-white px-6 py-3 rounded-2xl font-bold text-sm hover:bg-[#2a2594] transition-all shadow-lg shadow-indigo-100 flex items-center gap-2"
+            >
+              <FontAwesomeIcon icon={faPlus} /> Task 생성
+            </button>
+          </div>
+        </header>
+
+        {/* 2. 칸반 보드 영역 */}
+        <main className="flex-1 overflow-x-auto p-10 custom-scrollbar flex justify-center bg-white">
+          <div className="flex gap-[100px] h-full min-w-fit max-w-full justify-center">
+            {['TODO', 'DOING', 'DONE'].map(status => {
+              const columnTasks = tasks
+                .filter(t => t.status === status)
+                .sort((a, b) => priorityWeight[b.priority] - priorityWeight[a.priority]);
+              const dotColor = status === 'TODO' ? 'text-[#3530B8]' : status === 'DOING' ? 'text-amber-500' : 'text-emerald-500';
+              const columnBg = status === 'TODO' ? 'bg-[#F1F5F9]' : status === 'DOING' ? 'bg-[#FFF7ED]' : status === 'DONE' ? 'bg-[#F0FDF4]' : 'bg-white';
+
+              return (
+                <div
+                  key={status}
+                  className={`flex-1 max-w-[440px] min-w-[380px] rounded-none p-6 flex flex-col ${columnBg} border border-slate-200/60 transition-all duration-300`}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => onDrop(e, status)}
+                >
+                  <div className="flex items-center justify-between mb-6 px-2">
+                    <div className="flex items-center gap-2.5">
+                      <FontAwesomeIcon icon={faCircle} className={`text-[8px] ${dotColor}`} />
+                      <h2 className="text-base font-black text-[#1a1c3d]">{status}</h2>
+                      <span className="bg-white px-2 py-0.5 rounded-lg text-[15px] font-bold text-slate-400 border border-slate-100 shadow-sm">
+                        {columnTasks.length}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar pr-3">
+                    {columnTasks.map(task => (
+                      <div
+                        key={task.id}
+                        draggable
+                        onDragStart={(e) => onDragStart(e, task)}
+                        onClick={() => setDetailModalTask(task)}
+                        className="group bg-white rounded-2xl p-5 shadow-sm border border-slate-100/80 hover:shadow-xl hover:shadow-indigo-50/50 hover:border-indigo-100 transition-all cursor-pointer"
+                      >
+                        <h3 className="font-bold text-base text-[#1a1c3d] mb-4 leading-relaxed group-hover:text-[#3530B8] transition-colors">{task.title}</h3>
+                        <div className="flex items-end justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] overflow-hidden border border-white shrink-0">
+                              <img src={`https://i.pravatar.cc/150?u=${task.assignee}`} alt="" className="w-full h-full object-cover" />
+                            </div>
+                            <span className="text-sm font-bold text-slate-500 leading-none">{task.assignee}</span>
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
+                            <span className={`text-sm font-black px-2 py-0.5 rounded-full ${getPriorityStyle(task.priority)} leading-none`}>
+                              {task.priority}
+                            </span>
+                            <span className="text-xs font-medium text-slate-400 font-mono tracking-tight leading-none">{formatDate(task.endDate)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                    {inlineForm.status === status ? (
+                      <div ref={inlineFormRef} className="bg-white rounded-2xl p-5 shadow-xl border-2 border-[#3530B8]/20 space-y-4 animate-in fade-in zoom-in duration-200">
+                        <input
+                          autoFocus
+                          placeholder="Task 제목"
+                          className="w-full text-base font-bold outline-none placeholder:text-slate-300"
+                          value={inlineForm.title}
+                          onChange={(e) => setInlineForm({ ...inlineForm, title: e.target.value })}
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="bg-slate-50 rounded-lg p-2 text-sm font-bold text-slate-400 flex items-center gap-1.5 border border-transparent">
+                            <FontAwesomeIcon icon={faUser} className="text-sm" /> {inlineForm.assignee}
+                          </div>
+                          <div className="relative">
+                            <div
+                              onClick={() => setOpenDropdown(openDropdown === `inlinePriority-${status}` ? null : `inlinePriority-${status}`)}
+                              className="bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer border border-transparent text-slate-500"
+                            >
+                              {inlineForm.priority || "우선순위"}
+                              <FontAwesomeIcon icon={faChevronDown} className="text-sm text-slate-400" />
+                            </div>
+                            {openDropdown === `inlinePriority-${status}` && (
+                              <div className="absolute top-full left-0 z-[120] mt-1 w-full bg-white border border-slate-100 rounded-lg shadow-lg overflow-hidden">
+                                {['High', 'Medium', 'Low'].map(p => (
+                                  <div
+                                    key={p}
+                                    onClick={() => { setInlineForm({ ...inlineForm, priority: p }); setOpenDropdown(null); }}
+                                    className="px-3 py-2 text-sm text-slate-400 font-bold hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer"
+                                  >
+                                    {p}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 인라인 시작일/마감일 선택 */}
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="relative">
+                            <div
+                              onClick={() => setOpenCalendar(openCalendar === `inlineStart-${status}` ? null : `inlineStart-${status}`)}
+                              className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${inlineForm.startDate ? 'text-black' : 'text-[#9CA3AF]'}`}
+                            >
+                              {inlineForm.startDate || "시작일"}
+                              <FontAwesomeIcon icon={faCalendarAlt} className="text-sm text-slate-400" />
+                            </div>
+                            {openCalendar === `inlineStart-${status}` && (
+                              <div className="absolute top-full left-0 z-[120] mt-1 w-[240px] transform origin-top-left scale-90">
+                                <Calendar 
+                                  value={inlineForm.startDate} 
+                                  minDate={new Date().toISOString().split('T')[0]}
+                                  onChange={(date) => {
+                                    const today = new Date().toISOString().split('T')[0];
+                                    if (date < today) { alert('시작일은 오늘 이후의 날짜만 선택할 수 있습니다.'); return; }
+                                    setInlineForm(prev => ({ ...prev, startDate: date, endDate: prev.endDate && prev.endDate < date ? date : prev.endDate }));
+                                    setOpenCalendar(null);
+                                  }}
+                                  onClose={() => setOpenCalendar(null)}
+                                />
+                              </div>
+                            )}
+                            </div>
+                            <div className="relative">
+                            <div 
+                              onClick={() => setOpenCalendar(openCalendar === `inlineEnd-${status}` ? null : `inlineEnd-${status}`)}
+                              className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${inlineForm.endDate ? 'text-black' : 'text-[#9CA3AF]'}`}
+                            >
+                              {inlineForm.endDate || "마감일"}
+                              <FontAwesomeIcon icon={faCalendarAlt} className="text-sm text-slate-400" />
+                            </div>
+                            {openCalendar === `inlineEnd-${status}` && (
+                              <div className="absolute top-full right-0 z-[120] mt-1 w-[240px] transform origin-top-right scale-90">
+                                <Calendar 
+                                  value={inlineForm.endDate} 
+                                  minDate={inlineForm.startDate || new Date().toISOString().split('T')[0]}
+                                  onChange={(date) => {
+                                    if (inlineForm.startDate && date < inlineForm.startDate) { alert('종료일은 시작일보다 이전일 수 없습니다.'); return; }
+                                    setInlineForm(prev => ({ ...prev, endDate: date }));
+                                    setOpenCalendar(null);
+                                  }}
+                                  onClose={() => setOpenCalendar(null)}
+                                />
+                              </div>
+                            )}
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <button onClick={() => handleInlineCreate(status)} className="flex-1 bg-[#3530B8] text-white py-2 rounded-xl text-xs font-bold">추가</button>
+                          <button onClick={() => setInlineForm({ status: null, title: '', assignee: '나 (관리자)', priority: 'Medium', startDate: new Date().toISOString().split('T')[0], endDate: '' })} className="flex-1 bg-slate-100 text-slate-400 py-2 rounded-xl text-xs font-bold">취소</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setInlineForm({ ...inlineForm, status })}
+                        className="w-full py-4 border-2 border-dashed border-slate-400/50 rounded-2xl text-slate-500 hover:text-[#3530B8] hover:border-[#3530B8]/30 hover:bg-white transition-all flex items-center justify-center gap-2 group"
+                      >
+                        <FontAwesomeIcon icon={faPlus} className="text-xs group-hover:scale-110 transition-transform" />
+                        <span className="text-xs font-bold">Task 추가</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </main>
+      </div>
+
+      {/* 2. 모바일 뷰 (신규 구현) */}
+      <div className="flex lg:hidden flex-col h-full bg-white overflow-hidden px-6 py-8">
+        {/* 타이틀 */}
+        <h1 className="text-xl font-black text-[#1a1c3d] mb-6">Orbit 그룹웨어 고도화</h1>
+        
+        {/* 참여자 & Task 생성 버튼 */}
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex -space-x-2">
+            {PROJECT_MEMBERS.slice(0, 4).map(m => (
+              <div key={m.id} className="w-8 h-8 rounded-full border-2 border-white overflow-hidden shadow-sm">
                 <img src={m.avatar} alt={m.name} className="w-full h-full object-cover" />
               </div>
             ))}
-            <div className="w-9 h-9 rounded-full border-2 border-white bg-slate-50 flex items-center justify-center text-[10px] font-bold text-slate-400 shadow-sm cursor-pointer">
+            <div className="w-8 h-8 rounded-full border-2 border-white bg-slate-50 flex items-center justify-center text-[9px] font-bold text-slate-400 shadow-sm">
               +2
             </div>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-[#3530B8] text-white px-6 py-3 rounded-2xl font-bold text-sm hover:bg-[#2a2594] transition-all shadow-lg shadow-indigo-100 flex items-center gap-2"
+            className="bg-[#3530B8] text-white px-4 py-2 rounded-xl font-bold text-xs hover:bg-[#2a2594] transition-all shadow-md flex items-center gap-1.5"
           >
             <FontAwesomeIcon icon={faPlus} /> Task 생성
           </button>
         </div>
-      </header>
 
-      {/* 2. 칸반 보드 영역 */}
-      <main className="flex-1 overflow-x-auto p-10 custom-scrollbar flex justify-center bg-white">
-        <div className="flex gap-[100px] h-full min-w-fit max-w-full justify-center">
-          {['TODO', 'DOING', 'DONE'].map(status => {
-            const columnTasks = tasks.filter(t => t.status === status);
-            const dotColor = status === 'TODO' ? 'text-[#3530B8]' : status === 'DOING' ? 'text-amber-500' : 'text-emerald-500';
-            const columnBg = status === 'TODO' ? 'bg-[#F1F5F9]' : status === 'DOING' ? 'bg-[#FFF7ED]' : status === 'DONE' ? 'bg-[#F0FDF4]' : 'bg-white';
+        {/* TODO, DOING, DONE (탭) */}
+        <div className="flex bg-slate-50 p-1 rounded-2xl mb-6">
+          {['TODO', 'DOING', 'DONE'].map(status => (
+            <button
+              key={status}
+              onClick={() => setActiveTab(status)}
+              className={`flex-1 py-2.5 text-xs font-black rounded-xl transition-all duration-300 cursor-pointer ${
+                activeTab === status 
+                  ? 'bg-[#3530B8] text-white shadow-md' 
+                  : 'text-slate-400 hover:bg-[#F0F4FF] hover:text-[#3530B8]'
+              }`}
+            >
+              {status} <span className={`ml-1 ${activeTab === status ? 'text-white/60' : 'opacity-50'}`}>{tasks.filter(t => t.status === status).length}</span>
+            </button>
+          ))}
+        </div>
 
-            return (
-              <div
-                key={status}
-                className={`flex-1 max-w-[440px] min-w-[380px] rounded-none p-6 flex flex-col ${columnBg} border border-slate-200/60 transition-all duration-300`}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => onDrop(e, status)}
-              >
-                <div className="flex items-center justify-between mb-6 px-2">
-                  <div className="flex items-center gap-2.5">
-                    <FontAwesomeIcon icon={faCircle} className={`text-[8px] ${dotColor}`} />
-                    <h2 className="text-base font-black text-[#1a1c3d]">{status}</h2>
-                    <span className="bg-white px-2 py-0.5 rounded-lg text-[15px] font-bold text-slate-400 border border-slate-100 shadow-sm">
-                      {columnTasks.length}
-                    </span>
+        {/* Task 리스트 & Task 추가 버튼 */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pb-10">
+          {tasks
+            .filter(t => t.status === activeTab)
+            .sort((a, b) => priorityWeight[b.priority] - priorityWeight[a.priority])
+            .map(task => (
+            <div
+              key={task.id}
+              onClick={() => setDetailModalTask(task)}
+              className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 active:scale-[0.98] transition-all"
+            >
+              <h3 className="font-bold text-sm text-[#1a1c3d] mb-4 leading-relaxed">{task.title}</h3>
+              <div className="flex items-end justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] overflow-hidden border border-white shrink-0">
+                    <img src={`https://i.pravatar.cc/150?u=${task.assignee}`} alt="" className="w-full h-full object-cover" />
                   </div>
+                  <span className="text-xs font-bold text-slate-500 leading-none">{task.assignee}</span>
                 </div>
+                <div className="flex flex-col items-end gap-1.5">
+                  <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${getPriorityStyle(task.priority)} leading-none`}>
+                    {task.priority}
+                  </span>
+                  <span className="text-[10px] font-medium text-slate-400 font-mono tracking-tight leading-none">{formatDate(task.endDate)}</span>
+                </div>
+              </div>
+            </div>
+          ))}
 
-                <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar pr-3">
-                  {columnTasks.map(task => (
-                    <div
-                      key={task.id}
-                      draggable
-                      onDragStart={(e) => onDragStart(e, task)}
-                      onClick={() => setDetailModalTask(task)}
-                      className="group bg-white rounded-2xl p-5 shadow-sm border border-slate-100/80 hover:shadow-xl hover:shadow-indigo-50/50 hover:border-indigo-100 transition-all cursor-pointer"
-                    >
-                      <h3 className="font-bold text-base text-[#1a1c3d] mb-4 leading-relaxed group-hover:text-[#3530B8] transition-colors">{task.title}</h3>
-                      <div className="flex items-end justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] overflow-hidden border border-white shrink-0">
-                            <img src={`https://i.pravatar.cc/150?u=${task.assignee}`} alt="" className="w-full h-full object-cover" />
-                          </div>
-                          <span className="text-sm font-bold text-slate-500 leading-none">{task.assignee}</span>
+          {/* 인라인 추가 (모바일용 - 데스크탑과 동일한 로직 적용) */}
+          {inlineForm.status === activeTab ? (
+            <div ref={inlineFormRef} className="bg-white rounded-2xl p-5 shadow-xl border-2 border-[#3530B8]/20 space-y-4 animate-in fade-in zoom-in duration-200">
+              <input
+                autoFocus
+                placeholder="Task 제목"
+                className="w-full text-base font-bold outline-none placeholder:text-slate-300"
+                value={inlineForm.title}
+                onChange={(e) => setInlineForm({ ...inlineForm, title: e.target.value })}
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-slate-50 rounded-lg p-2 text-sm font-bold text-slate-400 flex items-center gap-1.5 border border-transparent">
+                  <FontAwesomeIcon icon={faUser} className="text-sm" /> {inlineForm.assignee}
+                </div>
+                <div className="relative">
+                  <div
+                    onClick={() => setOpenDropdown(openDropdown === `inlinePriority-${activeTab}` ? null : `inlinePriority-${activeTab}`)}
+                    className="bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer border border-transparent text-slate-500"
+                  >
+                    {inlineForm.priority || "우선순위"}
+                    <FontAwesomeIcon icon={faChevronDown} className="text-sm text-slate-400" />
+                  </div>
+                  {openDropdown === `inlinePriority-${activeTab}` && (
+                    <div className="absolute top-full left-0 z-[120] mt-1 w-full bg-white border border-slate-100 rounded-lg shadow-lg overflow-hidden">
+                      {['High', 'Medium', 'Low'].map(p => (
+                        <div
+                          key={p}
+                          onClick={() => { setInlineForm({ ...inlineForm, priority: p }); setOpenDropdown(null); }}
+                          className="px-3 py-2 text-sm text-slate-400 font-bold hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer"
+                        >
+                          {p}
                         </div>
-                        <div className="flex flex-col items-end gap-2">
-                          <span className={`text-sm font-black px-2 py-0.5 rounded-full ${getPriorityStyle(task.priority)} leading-none`}>
-                            {task.priority}
-                          </span>
-                          <span className="text-xs font-medium text-slate-400 font-mono tracking-tight leading-none">{formatDate(task.endDate)}</span>
-                        </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-
-                  {inlineForm.status === status ? (
-                    <div ref={inlineFormRef} className="bg-white rounded-2xl p-5 shadow-xl border-2 border-[#3530B8]/20 space-y-4 animate-in fade-in zoom-in duration-200">
-                      <input
-                        autoFocus
-                        placeholder="Task 제목"
-                        className="w-full text-base font-bold outline-none placeholder:text-slate-300"
-                        value={inlineForm.title}
-                        onChange={(e) => setInlineForm({ ...inlineForm, title: e.target.value })}
-                      />
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="bg-slate-50 rounded-lg p-2 text-sm font-bold text-slate-400 flex items-center gap-1.5 border border-transparent">
-                          <FontAwesomeIcon icon={faUser} className="text-sm" /> {inlineForm.assignee}
-                        </div>
-                        <div className="relative">
-                          <div
-                            onClick={() => setOpenDropdown(openDropdown === `inlinePriority-${status}` ? null : `inlinePriority-${status}`)}
-                            className="bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer border border-transparent text-slate-500"
-                          >
-                            {inlineForm.priority || "우선순위"}
-                            <FontAwesomeIcon icon={faChevronDown} className="text-sm text-slate-400" />
-                          </div>
-                          {openDropdown === `inlinePriority-${status}` && (
-                            <div className="absolute top-full left-0 z-[120] mt-1 w-full bg-white border border-slate-100 rounded-lg shadow-lg overflow-hidden">
-                              {['High', 'Medium', 'Low'].map(p => (
-                                <div
-                                  key={p}
-                                  onClick={() => { setInlineForm({ ...inlineForm, priority: p }); setOpenDropdown(null); }}
-                                  className="px-3 py-2 text-sm text-slate-400 font-bold hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer"
-                                >
-                                  {p}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* 인라인 시작일/마감일 선택 */}
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="relative">
-                          <div
-                            onClick={() => setOpenCalendar(openCalendar === `inlineStart-${status}` ? null : `inlineStart-${status}`)}
-                            className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${inlineForm.startDate ? 'text-black' : 'text-[#9CA3AF]'}`}
-                          >
-                            {inlineForm.startDate || "시작일"}
-                            <FontAwesomeIcon icon={faCalendarAlt} className="text-sm text-slate-400" />
-                          </div>
-                          {openCalendar === `inlineStart-${status}` && (
-                            <div className="absolute top-full left-0 z-[120] mt-1 w-[240px] transform origin-top-left scale-90">
-                              <Calendar 
-                                value={inlineForm.startDate} 
-                                minDate={new Date().toISOString().split('T')[0]}
-                                onChange={(date) => {
-                                  const today = new Date().toISOString().split('T')[0];
-                                  if (date < today) { alert('시작일은 오늘 이후의 날짜만 선택할 수 있습니다.'); return; }
-                                  setInlineForm(prev => ({ ...prev, startDate: date, endDate: prev.endDate && prev.endDate < date ? date : prev.endDate }));
-                                  setOpenCalendar(null);
-                                }}
-                                onClose={() => setOpenCalendar(null)}
-                              />
-                            </div>
-                          )}
-                          </div>
-                          <div className="relative">
-                          <div 
-                            onClick={() => setOpenCalendar(openCalendar === `inlineEnd-${status}` ? null : `inlineEnd-${status}`)}
-                            className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${inlineForm.endDate ? 'text-black' : 'text-[#9CA3AF]'}`}
-                          >
-                            {inlineForm.endDate || "마감일"}
-                            <FontAwesomeIcon icon={faCalendarAlt} className="text-sm text-slate-400" />
-                          </div>
-                          {openCalendar === `inlineEnd-${status}` && (
-                            <div className="absolute top-full right-0 z-[120] mt-1 w-[240px] transform origin-top-right scale-90">
-                              <Calendar 
-                                value={inlineForm.endDate} 
-                                minDate={inlineForm.startDate || new Date().toISOString().split('T')[0]}
-                                onChange={(date) => {
-                                  if (inlineForm.startDate && date < inlineForm.startDate) { alert('종료일은 시작일보다 이전일 수 없습니다.'); return; }
-                                  setInlineForm(prev => ({ ...prev, endDate: date }));
-                                  setOpenCalendar(null);
-                                }}
-                                onClose={() => setOpenCalendar(null)}
-                              />
-                            </div>
-                          )}
-                          </div>
-                      </div>
-
-                      <div className="flex gap-2">
-                        <button onClick={() => handleInlineCreate(status)} className="flex-1 bg-[#3530B8] text-white py-2 rounded-xl text-xs font-bold">추가</button>
-                        <button onClick={() => setInlineForm({ status: null, title: '', assignee: '나 (관리자)', priority: 'Medium', startDate: new Date().toISOString().split('T')[0], endDate: '' })} className="flex-1 bg-slate-100 text-slate-400 py-2 rounded-xl text-xs font-bold">취소</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setInlineForm({ ...inlineForm, status })}
-                      className="w-full py-4 border-2 border-dashed border-slate-400/50 rounded-2xl text-slate-500 hover:text-[#3530B8] hover:border-[#3530B8]/30 hover:bg-white transition-all flex items-center justify-center gap-2 group"
-                    >
-                      <FontAwesomeIcon icon={faPlus} className="text-xs group-hover:scale-110 transition-transform" />
-                      <span className="text-xs font-bold">Task 추가</span>
-                    </button>
                   )}
                 </div>
               </div>
-            );
-          })}
+
+              {/* 인라인 시작일/마감일 선택 */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="relative">
+                  <div
+                    onClick={() => setOpenCalendar(openCalendar === `inlineStart-${activeTab}` ? null : `inlineStart-${activeTab}`)}
+                    className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${inlineForm.startDate ? 'text-black' : 'text-[#9CA3AF]'}`}
+                  >
+                    {inlineForm.startDate || "시작일"}
+                    <FontAwesomeIcon icon={faCalendarAlt} className="text-sm text-slate-400" />
+                  </div>
+                  {openCalendar === `inlineStart-${activeTab}` && (
+                    <div className="absolute top-full left-0 z-[120] mt-1 w-[240px] transform origin-top-left scale-90">
+                      <Calendar 
+                        value={inlineForm.startDate} 
+                        minDate={new Date().toISOString().split('T')[0]}
+                        onChange={(date) => {
+                          const today = new Date().toISOString().split('T')[0];
+                          if (date < today) { alert('시작일은 오늘 이후의 날짜만 선택할 수 있습니다.'); return; }
+                          setInlineForm(prev => ({ ...prev, startDate: date, endDate: prev.endDate && prev.endDate < date ? date : prev.endDate }));
+                          setOpenCalendar(null);
+                        }}
+                        onClose={() => setOpenCalendar(null)}
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="relative">
+                  <div 
+                    onClick={() => setOpenCalendar(openCalendar === `inlineEnd-${activeTab}` ? null : `inlineEnd-${activeTab}`)}
+                    className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${inlineForm.endDate ? 'text-black' : 'text-[#9CA3AF]'}`}
+                  >
+                    {inlineForm.endDate || "마감일"}
+                    <FontAwesomeIcon icon={faCalendarAlt} className="text-sm text-slate-400" />
+                  </div>
+                  {openCalendar === `inlineEnd-${activeTab}` && (
+                    <div className="absolute top-full right-0 z-[120] mt-1 w-[240px] transform origin-top-right scale-90">
+                      <Calendar 
+                        value={inlineForm.endDate} 
+                        minDate={inlineForm.startDate || new Date().toISOString().split('T')[0]}
+                        onChange={(date) => {
+                          if (inlineForm.startDate && date < inlineForm.startDate) { alert('종료일은 시작일보다 이전일 수 없습니다.'); return; }
+                          setInlineForm(prev => ({ ...prev, endDate: date }));
+                          setOpenCalendar(null);
+                        }}
+                        onClose={() => setOpenCalendar(null)}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <button onClick={() => handleInlineCreate(activeTab)} className="flex-1 bg-[#3530B8] text-white py-2 rounded-xl text-xs font-bold">추가</button>
+                <button onClick={() => setInlineForm({ status: null, title: '', assignee: '나 (관리자)', priority: 'Medium', startDate: new Date().toISOString().split('T')[0], endDate: '' })} className="flex-1 bg-slate-100 text-slate-400 py-2 rounded-xl text-xs font-bold">취소</button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setInlineForm({ ...inlineForm, status: activeTab })}
+              className="w-full py-4 border-2 border-dashed border-slate-300/50 rounded-2xl text-slate-400 flex items-center justify-center gap-2 group active:bg-slate-50 transition-all cursor-pointer"
+            >
+              <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
+              <span className="text-xs font-bold">Task 추가</span>
+            </button>
+          )}
         </div>
-      </main>
+      </div>
 
       {/* 3. 상단 'Task 생성' 팝업 모달 */}
       {isModalOpen && (
