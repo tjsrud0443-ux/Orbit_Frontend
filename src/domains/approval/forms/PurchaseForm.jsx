@@ -12,7 +12,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
   // 초기 데이터 설정
   useEffect(() => {
     if (!data.items || data.items.length === 0) {
-      handleFieldChange('items', [{ id: 1, itemName: '', quantity: 1, unitPrice: 0, note: '' }]);
+      handleFieldChange('items', [{ item_order: 1, item_name: '', ea: 1, unit_price: 0, note: '' }]);
     }
     if (!data.requestDate) {
       handleFieldChange('requestDate', today);
@@ -23,18 +23,18 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
     if (isSubmitClicked) {
       const newErrors = {};
       newErrors.title = validateField('title', data.title);
-      newErrors.purchaseRequestDate = validateField('purchaseRequestDate', data.purchaseRequestDate);
-      newErrors.purchasePurpose = validateField('purchasePurpose', data.purchasePurpose);
-      newErrors.supplier = validateField('supplier', data.supplier);
+      newErrors.purchase_date = validateField('purchase_date', data.purchase_date);
+      newErrors.purpose = validateField('purpose', data.purpose);
+      newErrors.vendor = validateField('vendor', data.vendor);
       newErrors.attachments = (!data.attachments || data.attachments.length === 0) ? '파일을 첨부해주세요.' : '';
       
       const itemErrors = {};
       data.items?.forEach((item, index) => {
-        if (!item.itemName?.trim()) itemErrors[`${index}-itemName`] = '품목명을 입력해주세요.';
-        else if (item.itemName.length > 50) itemErrors[`${index}-itemName`] = '글자 수 초과 (50자 이하)';
+        if (!item.item_name?.trim()) itemErrors[`${index}-item_name`] = '품목명을 입력해주세요.';
+        else if (item.item_name.length > 50) itemErrors[`${index}-item_name`] = '글자 수 초과 (50자 이하)';
         
-        if (!item.quantity || item.quantity <= 0) itemErrors[`${index}-quantity`] = '수량을 입력해주세요.';
-        if (!item.unitPrice || item.unitPrice <= 0) itemErrors[`${index}-unitPrice`] = '단가를 입력해주세요.';
+        if (!item.ea || item.ea <= 0) itemErrors[`${index}-ea`] = '수량을 입력해주세요.';
+        if (!item.unit_price || item.unit_price <= 0) itemErrors[`${index}-unit_price`] = '단가를 입력해주세요.';
       });
       newErrors.items = itemErrors;
       
@@ -46,18 +46,18 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
     let error = '';
     if (!value && field !== 'items' && field !== 'attachments') {
       if (field === 'title') error = '제목을 입력해주세요.';
-      if (field === 'purchaseRequestDate') error = '구매 요청일을 선택해주세요.';
-      if (field === 'purchasePurpose') error = '구매 목적을 입력해주세요.';
-      if (field === 'supplier') error = '구매처를 입력해주세요.';
+      if (field === 'purchase_date') error = '구매 요청일을 선택해주세요.';
+      if (field === 'purpose') error = '구매 목적을 입력해주세요.';
+      if (field === 'vendor') error = '구매처를 입력해주세요.';
     }
 
     if (value) {
       if (field === 'title' && value.length > 50) error = '글자 수 초과 (50자 이하)';
-      if (field === 'purchasePurpose' && value.length > 300) error = '글자 수 초과 (300자 이하)';
-      if (field === 'supplier' && value.length > 50) error = '글자 수 초과 (50자 이하)';
+      if (field === 'purpose' && value.length > 300) error = '글자 수 초과 (300자 이하)';
+      if (field === 'vendor' && value.length > 50) error = '글자 수 초과 (50자 이하)';
     }
 
-    if (field === 'purchaseRequestDate' && value && value < today) {
+    if (field === 'purchase_date' && value && value < today) {
       error = '구매 요청일은 오늘 이후여야 합니다.';
     }
 
@@ -75,15 +75,19 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
     const newItems = [...(data.items || [])];
     newItems[index] = { ...newItems[index], [field]: value };
     
+    const ea = Number(newItems[index].ea) || 0;
+    const unit_price = Number(newItems[index].unit_price) || 0;
+    newItems[index].total_price = ea * unit_price;
+
     // 개별 아이템 필드 검증
     const itemErrors = { ...(errors.items || {}) };
-    if (!value && (field === 'itemName' || field === 'quantity' || field === 'unitPrice')) {
-      if (field === 'itemName') itemErrors[`${index}-itemName`] = '품목명을 입력해주세요.';
-      if (field === 'quantity') itemErrors[`${index}-quantity`] = '수량을 입력해주세요.';
-      if (field === 'unitPrice') itemErrors[`${index}-unitPrice`] = '단가를 입력해주세요.';
+    if (!value && (field === 'item_name' || field === 'ea' || field === 'unit_price')) {
+      if (field === 'item_name') itemErrors[`${index}-item_name`] = '품목명을 입력해주세요.';
+      if (field === 'ea') itemErrors[`${index}-ea`] = '수량을 입력해주세요.';
+      if (field === 'unit_price') itemErrors[`${index}-unit_price`] = '단가를 입력해주세요.';
     } else {
-      if (field === 'itemName' && value.length > 50) {
-        itemErrors[`${index}-itemName`] = '글자 수 초과 (50자 이하)';
+      if (field === 'item_name' && value.length > 50) {
+        itemErrors[`${index}-item_name`] = '글자 수 초과 (50자 이하)';
       } else {
         delete itemErrors[`${index}-${field}`];
       }
@@ -91,14 +95,36 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
     
     setErrors(prev => ({ ...prev, items: itemErrors }));
     handleFieldChange('items', newItems);
+    const total_amount = newItems.reduce((sum, item) => sum + (item.total_price || 0), 0);
+    onChange({ 
+      ...data, 
+      items: newItems,
+      total_amount: total_amount
+    });
+  };
+
+  const handleRemoveAttachment = (idx) => {
+    const targetFile = data.attachments[idx];
+    
+    if (targetFile.attachment_seq) {
+      const deletedSeqs = data.deletedAttachmentSeqs || [];
+      handleFieldChange('deletedAttachmentSeqs', [...deletedSeqs, targetFile.attachment_seq]);
+    }
+
+    const filteredFiles = data.attachments.filter((_, i) => i !== idx);
+    handleFieldChange('attachments', filteredFiles);
+    
+    if (filteredFiles.length === 0) {
+      setErrors(prev => ({ ...prev, attachments: '파일을 첨부해주세요.' }));
+    }
   };
 
   const handleAddRow = () => {
     const currentItems = data.items || [];
-    const nextId = currentItems.length > 0 ? Math.max(...currentItems.map(i => i.id)) + 1 : 1;
+    const nextOrder = currentItems.length > 0 ? Math.max(...currentItems.map(i => i.id)) + 1 : 1;
     const newItems = [
       ...currentItems,
-      { id: nextId, itemName: '', quantity: 1, unitPrice: 0, note: '' }
+      { item_order: nextOrder, item_name: '', ea: 1, unit_price: 0, note: '' }
     ];
     handleFieldChange('items', newItems);
   };
@@ -111,7 +137,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
       return;
     }
     currentItems.splice(index, 1);
-    const reorderedItems = currentItems.map((item, idx) => ({ ...item, id: idx + 1 }));
+    const reorderedItems = currentItems.map((item, idx) => ({ ...item, item_order: idx + 1 }));
     
     // 에러 상태 업데이트
     const itemErrors = { ...(errors.items || {}) };
@@ -129,7 +155,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
 
   const calculateTotal = () => {
     const items = data.items || [];
-    return items.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.unitPrice) || 0), 0);
+    return items.reduce((sum, item) => sum + (Number(item.ea) * Number(item.unit_price) || 0), 0);
   };
 
   const applicant = isEditMode ? user : data;
@@ -190,10 +216,10 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
                       <input 
                         type="text" 
                         readOnly 
-                        value={data.purchaseRequestDate || ''} 
+                        value={data.purchase_date || ''} 
                         onClick={() => setIsCalendarOpen(!isCalendarOpen)} 
                         placeholder="요청일 선택" 
-                        className={`w-full h-full p-2 border ${errors.purchaseRequestDate ? 'border-red-500' : isCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-lg outline-none cursor-pointer text-[11px] transition-all pr-10`}
+                        className={`w-full h-full p-2 border ${errors.purchase_date ? 'border-red-500' : isCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-lg outline-none cursor-pointer text-[11px] transition-all pr-10`}
                       />
                       <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -202,28 +228,28 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
                       </div>
                       {isCalendarOpen && (
                         <Calendar 
-                          value={data.purchaseRequestDate} 
-                          onChange={(d) => { handleFieldChange('purchaseRequestDate', d); setIsCalendarOpen(false); }} 
+                          value={data.purchase_date} 
+                          onChange={(d) => { handleFieldChange('purchase_date', d); setIsCalendarOpen(false); }} 
                           onClose={() => setIsCalendarOpen(false)}
                         />
                       )}
                     </div>
-                    {errors.purchaseRequestDate && (
+                    {errors.purchase_date && (
                       <p className="absolute left-0 top-full mt-3 text-[10px] text-red-500 whitespace-nowrap">
-                        {errors.purchaseRequestDate}
+                        {errors.purchase_date}
                       </p>
                     )}
                   </div>
                 ) : (
-                  <span>{data.purchaseRequestDate || '-'}</span>
+                  <span>{data.purchase_date || '-'}</span>
                 )}
               </td>
               <th className="w-24 bg-gray-50 p-2.5 border-r border-gray-200 text-left font-bold">신청일</th>
-              <td className="p-2.5">{data.requestDate || today}</td>
+              <td className="p-2.5">{today}</td>
             </tr>
           </tbody>
         </table>
-        {isEditMode && errors.purchaseRequestDate && <div className="h-4"></div>}
+        {isEditMode && errors.purchase_date && <div className="h-4"></div>}
       </div>
 
       {/* 구매 목적 및 구매처 Section */}
@@ -236,17 +262,17 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
           {isEditMode ? (
             <div>
               <textarea 
-                value={data.purchasePurpose || ''}
-                onChange={(e) => handleFieldChange('purchasePurpose', e.target.value)}
+                value={data.purpose || ''}
+                onChange={(e) => handleFieldChange('purpose', e.target.value)}
                 placeholder="구매 목적을 입력하세요 (300자 이하)"
                 maxLength={300}
-                className={`w-full h-20 p-3 text-xs bg-white border ${errors.purchasePurpose ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all`}
+                className={`w-full h-20 p-3 text-xs bg-white border ${errors.purpose ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all`}
               ></textarea>
-              {errors.purchasePurpose && <p className="mt-1 text-[10px] text-red-500">{errors.purchasePurpose}</p>}
+              {errors.purpose && <p className="mt-1 text-[10px] text-red-500">{errors.purpose}</p>}
             </div>
           ) : (
             <div className="w-full h-20 p-3 text-xs bg-gray-50 border border-gray-100 rounded-lg whitespace-pre-wrap overflow-y-auto">
-              {data.purchasePurpose || '-'}
+              {data.purpose || '-'}
             </div>
           )}
         </div>
@@ -258,17 +284,17 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
           {isEditMode ? (
             <div>
               <textarea 
-                value={data.supplier || ''}
-                onChange={(e) => handleFieldChange('supplier', e.target.value)}
+                value={data.vendor || ''}
+                onChange={(e) => handleFieldChange('vendor', e.target.value)}
                 placeholder="구매처 정보를 입력하세요 (50자 이하)"
                 maxLength={50}
-                className={`w-full h-20 p-3 text-xs bg-white border ${errors.supplier ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all`}
+                className={`w-full h-20 p-3 text-xs bg-white border ${errors.vendor ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all`}
               ></textarea>
-              {errors.supplier && <p className="mt-1 text-[10px] text-red-500">{errors.supplier}</p>}
+              {errors.vendor && <p className="mt-1 text-[10px] text-red-500">{errors.vendor}</p>}
             </div>
           ) : (
             <div className="w-full h-20 p-3 text-xs bg-gray-50 border border-gray-100 rounded-lg whitespace-pre-wrap overflow-y-auto">
-              {data.supplier || '-'}
+              {data.vendor || '-'}
             </div>
           )}
         </div>
@@ -309,24 +335,24 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
             </thead>
             <tbody>
               {data.items?.map((item, index) => {
-                const itemTotal = (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0);
+                const itemTotal = (Number(item.ea) || 0) * (Number(item.unit_price) || 0);
                 return (
                   <tr key={index} className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50/50 transition-colors">
-                    <td className="p-2 border-r border-gray-200 text-center">{item.id}</td>
+                    <td className="p-2 border-r border-gray-200 text-center">{item.item_order}</td>
                     <td className="p-2 border-r border-gray-200">
                       {isEditMode ? (
                         <div>
                           <input 
                             type="text"
-                            value={item.itemName || ''}
-                            onChange={(e) => handleItemChange(index, 'itemName', e.target.value)}
+                            value={item.item_name || ''}
+                            onChange={(e) => handleItemChange(index, 'item_name', e.target.value)}
                             maxLength={50}
-                            className={`w-full p-1 bg-white border ${errors.items?.[`${index}-itemName`] ? 'border-red-500' : 'border-gray-300'} rounded outline-none focus:border-[#3530B8]`}
+                            className={`w-full p-1 bg-white border ${errors.items?.[`${index}-item_name`] ? 'border-red-500' : 'border-gray-300'} rounded outline-none focus:border-[#3530B8]`}
                           />
-                          {errors.items?.[`${index}-itemName`] && <p className="text-[9px] text-red-500 mt-0.5">{errors.items[`${index}-itemName`]}</p>}
+                          {errors.items?.[`${index}-item_name`] && <p className="text-[9px] text-red-500 mt-0.5">{errors.items[`${index}-item_name`]}</p>}
                         </div>
                       ) : (
-                        <span>{item.itemName || '-'}</span>
+                        <span>{item.item_name || '-'}</span>
                       )}
                     </td>
                     <td className="p-2 border-r border-gray-200">
@@ -334,15 +360,15 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
                         <div>
                           <input 
                             type="number"
-                            value={item.quantity || ''}
+                            value={item.ea || ''}
                             min="0"
-                            onChange={(e) => handleItemChange(index, 'quantity', Math.max(0, Number(e.target.value)))}
-                            className={`w-full p-1 bg-white border ${errors.items?.[`${index}-quantity`] ? 'border-red-500' : 'border-gray-300'} rounded outline-none focus:border-[#3530B8] text-center`}
+                            onChange={(e) => handleItemChange(index, 'ea', Math.max(0, Number(e.target.value)))}
+                            className={`w-full p-1 bg-white border ${errors.items?.[`${index}-ea`] ? 'border-red-500' : 'border-gray-300'} rounded outline-none focus:border-[#3530B8] text-center`}
                           />
-                          {errors.items?.[`${index}-quantity`] && <p className="text-[9px] text-red-500 mt-0.5">{errors.items[`${index}-quantity`]}</p>}
+                          {errors.items?.[`${index}-ea`] && <p className="text-[9px] text-red-500 mt-0.5">{errors.items[`${index}-ea`]}</p>}
                         </div>
                       ) : (
-                        <div className="text-center">{item.quantity}</div>
+                        <div className="text-center">{item.ea}</div>
                       )}
                     </td>
                     <td className="p-2 border-r border-gray-200">
@@ -350,15 +376,15 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
                         <div>
                           <input 
                             type="number"
-                            value={item.unitPrice || ''}
+                            value={item.unit_price || ''}
                             min="0"
-                            onChange={(e) => handleItemChange(index, 'unitPrice', Math.max(0, Number(e.target.value)))}
-                            className={`w-full p-1 bg-white border ${errors.items?.[`${index}-unitPrice`] ? 'border-red-500' : 'border-gray-300'} rounded outline-none focus:border-[#3530B8] text-right`}
+                            onChange={(e) => handleItemChange(index, 'unit_price', Math.max(0, Number(e.target.value)))}
+                            className={`w-full p-1 bg-white border ${errors.items?.[`${index}-unit_price`] ? 'border-red-500' : 'border-gray-300'} rounded outline-none focus:border-[#3530B8] text-right`}
                           />
-                          {errors.items?.[`${index}-unitPrice`] && <p className="text-[9px] text-red-500 mt-0.5">{errors.items[`${index}-unitPrice`]}</p>}
+                          {errors.items?.[`${index}-unit_price`] && <p className="text-[9px] text-red-500 mt-0.5">{errors.items[`${index}-unit_price`]}</p>}
                         </div>
                       ) : (
-                        <div className="text-right">{(Number(item.unitPrice) || 0).toLocaleString()}</div>
+                        <div className="text-right">{(Number(item.unit_price) || 0).toLocaleString()}</div>
                       )}
                     </td>
                     <td className="p-2 border-r border-gray-200 text-right bg-gray-50/30">
@@ -436,15 +462,15 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
               {data.attachments && data.attachments.length > 0 ? (
                 data.attachments.map((file, idx) => (
                   <div key={idx} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-100 text-[10px] text-gray-600 shadow-sm">
-                    <span className="truncate max-w-[150px]">{file.name}</span>
+                    <span className="truncate max-w-[150px]">{file.oriname || file.name}</span>
                     <button 
-                      onClick={() => handleFieldChange('attachments', data.attachments.filter((_, i) => i !== idx))}
+                      onClick={() => handleRemoveAttachment(idx)}
                       className="text-gray-400 hover:text-red-500 transition-colors"
                     >✕</button>
                   </div>
                 ))
               ) : (
-                <p className="text-xs text-gray-400 italic">선택된 파일이 없습니다.</p>
+                <p className="text-xs text-gray-400">선택된 파일이 없습니다.</p>
               )}
             </div>
           ) : (
@@ -455,11 +481,20 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                     </svg>
-                    <span>{typeof file === 'string' ? file : file.name}</span>
+                    {/* <span>{typeof file === 'string' ? file : file.oriname}</span> */}
+                    {/* 💡 변경: 상세조회(isEditMode가 아닐 때) 시 다운로드 링크 연동 및 파일명 출력 */}
+                    <a 
+                      href={file.fileUrl || `/api/download/${file.sysname}`} // 실제 파일 다운로드나 GCS URL이 있다면 매핑
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="hover:underline"
+                    >
+                      {file.oriname || file.name || (typeof file === 'string' ? file : '')}
+                    </a>
                   </div>
                 ))
               ) : (
-                <p className="text-xs text-gray-400 italic">첨부된 파일이 없습니다.</p>
+                <p className="text-xs text-gray-400">첨부된 파일이 없습니다.</p>
               )}
             </div>
           )}

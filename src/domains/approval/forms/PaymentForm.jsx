@@ -4,7 +4,7 @@ import ReferrerSelector from '../components/ReferrerSelector';
 
 const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
   const isEditMode = mode === 'EDIT';
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleDateString('sv-SE');
 
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [errors, setErrors] = useState({});

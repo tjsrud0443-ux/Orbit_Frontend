@@ -15,9 +15,9 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
     if (isSubmitClicked) {
       const newErrors = {};
       newErrors.title = validateField('title', data.title, data);
-      newErrors.startDate = validateField('startDate', data.startDate, data);
-      if (data.vacationType === '연차') {
-        newErrors.endDate = validateField('endDate', data.endDate, data);
+      newErrors.start_date = validateField('start_date', data.start_date, data);
+      if (data.vac_type === '연차') {
+        newErrors.end_date = validateField('end_date', data.end_date, data);
       }
       newErrors.reason = validateField('reason', data.reason, data);
       setErrors(newErrors);
@@ -26,9 +26,9 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
 
   const validateField = (field, value, currentData) => {
     let error = '';
-    if (!value && field !== 'endDate') {
+    if (!value && field !== 'end_date') {
       if (field === 'title') error = '제목을 입력해주세요.';
-      if (field === 'startDate') error = '시작 날짜를 선택해주세요.';
+      if (field === 'start_date') error = '시작 날짜를 선택해주세요.';
       if (field === 'reason') error = '신청 사유를 입력해주세요.';
     }
 
@@ -37,14 +37,14 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
       if (field === 'reason' && value.length > 300) error = '글자 수 초과 (300자 이하)';
     }
 
-    if (field === 'startDate' && value && value < today) {
+    if (field === 'start_date' && value && value < today) {
       error = '시작 날짜는 오늘 이후여야 합니다.';
     }
 
-    if (field === 'endDate') {
-      if (currentData.vacationType === '연차' && !value) {
+    if (field === 'end_date') {
+      if (currentData.vac_type === '연차' && !value) {
         error = '종료 날짜를 선택해주세요.';
-      } else if (value && currentData.startDate && value < currentData.startDate) {
+      } else if (value && currentData.start_date && value < currentData.start_date) {
         error = '종료 날짜는 시작 날짜 이후여야 합니다.';
       }
     }
@@ -52,17 +52,17 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
     return error;
   };
 
-  const handleFieldChange = (field, value) => {
+  const handleFieldChange = (key, value) => {
     if (!onChange) return;
 
-    let updatedData = { ...data, [field]: value };
-    const error = validateField(field, value, updatedData);
-    setErrors(prev => ({ ...prev, [field]: error }));
+    let updatedData = { ...data, [key]: value };
+    const error = validateField(key, value, updatedData);
+    setErrors(prev => ({ ...prev, [key]: error }));
 
-    if (field === 'startDate') {
-      if (data.endDate && value > data.endDate) {
-        updatedData.endDate = '';
-        setErrors(prev => ({ ...prev, endDate: '종료 날짜를 선택해주세요.' }));
+    if (key === 'start_date') {
+      if (data.end_date && value > data.end_date) {
+        updatedData.end_date = '';
+        setErrors(prev => ({ ...prev, end_date: '종료 날짜를 선택해주세요.' }));
       }
     }
 
@@ -86,10 +86,10 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
       return count;
     };
 
-    updatedData.totalDays = Math.max(0, calculateDays(
-      updatedData.vacationType || '연차', 
-      updatedData.startDate, 
-      updatedData.endDate
+    updatedData.days = Math.max(0, calculateDays(
+      updatedData.vac_type || '연차', 
+      updatedData.start_date, 
+      updatedData.end_date
     ));
 
     onChange(updatedData);
@@ -169,7 +169,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
                       onClick={() => setIsTypeOpen(!isTypeOpen)}
                       className={`w-full px-3 py-1.5 bg-white border ${isTypeOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-200'} rounded-lg text-xs font-medium transition-all cursor-pointer flex justify-between items-center`}
                     >
-                      <span className="text-gray-800">{data.vacationType || '연차'}</span>
+                      <span className="text-gray-800">{data.vac_type || '연차'}</span>
                       <svg className={`w-3.5 h-3.5 text-gray-400 transition-transform ${isTypeOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                     </div>
                     {isTypeOpen && (
@@ -178,7 +178,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
                           <div 
                             key={type}
                             onClick={() => { 
-                              handleFieldChange('vacationType', type); 
+                              handleFieldChange('vac_type', type); 
                               setIsTypeOpen(false); 
                             }}
                             className="px-4 py-2.5 text-xs hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-medium border-b border-gray-50 last:border-0 transition-colors"
@@ -190,7 +190,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
                     )}
                   </div>
                 ) : (
-                  <span>{data.vacationType}</span>
+                  <span>{data.vac_type}</span>
                 )}
               </td>
             </tr>
@@ -204,35 +204,35 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
                         <input 
                           type="text" 
                           readOnly 
-                          value={data.startDate || ''} 
+                          value={data.start_date || ''} 
                           onClick={() => { setIsStartCalendarOpen(!isStartCalendarOpen); setIsEndCalendarOpen(false); }} 
                           placeholder="시작일" 
-                          className={`w-full p-2 border ${errors.startDate ? 'border-red-500' : isStartCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-xl outline-none cursor-pointer text-xs transition-all`}
+                          className={`w-full p-2 border ${errors.start_date ? 'border-red-500' : isStartCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-xl outline-none cursor-pointer text-xs transition-all`}
                         />
                         {isStartCalendarOpen && (
                           <Calendar 
-                            value={data.startDate} 
-                            onChange={(d) => { handleFieldChange('startDate', d); setIsStartCalendarOpen(false); }} 
+                            value={data.start_date} 
+                            onChange={(d) => { handleFieldChange('start_date', d); setIsStartCalendarOpen(false); }} 
                             onClose={() => setIsStartCalendarOpen(false)}
                           />
                         )}
                       </div>
-                      {data.vacationType === '연차' && (
+                      {data.vac_type === '연차' && (
                         <>
                           <span className="px-1">~</span>
                           <div className="relative w-50">
                             <input 
                               type="text" 
                               readOnly 
-                              value={data.endDate || ''} 
+                              value={data.end_date || ''} 
                               onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }} 
                               placeholder="종료일" 
-                              className={`w-full p-2 border ${errors.endDate ? 'border-red-500' : isEndCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-xl outline-none cursor-pointer text-xs transition-all`}
+                              className={`w-full p-2 border ${errors.end_date ? 'border-red-500' : isEndCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-xl outline-none cursor-pointer text-xs transition-all`}
                             />
                             {isEndCalendarOpen && (
                               <Calendar 
-                                value={data.endDate} 
-                                onChange={(d) => { handleFieldChange('endDate', d); setIsEndCalendarOpen(false); }} 
+                                value={data.end_date} 
+                                onChange={(d) => { handleFieldChange('end_date', d); setIsEndCalendarOpen(false); }} 
                                 onClose={() => setIsEndCalendarOpen(false)}
                               />
                             )}
@@ -240,20 +240,20 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
                         </>
                       )}
                     </div>
-                    {(errors.startDate || errors.endDate) && (
+                    {(errors.start_date || errors.end_date) && (
                       <p className="text-[10px] text-red-500">
-                        {errors.startDate || errors.endDate}
+                        {errors.start_date || errors.end_date}
                       </p>
                     )}
                   </div>
                 ) : (
-                  <span>{data.startDate} {data.vacationType === '연차' ? `~ ${data.endDate}` : ''}</span>
+                  <span>{data.start_date} {data.vac_type === '연차' ? `~ ${data.end_date}` : ''}</span>
                 )}
               </td>
             </tr>
             <tr className="border-b border-gray-200">
               <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">신청 일수</th>
-              <td className="p-2 font-bold text-[#3530B8]">{data.totalDays || 0}일</td>
+              <td className="p-2 font-bold text-[#3530B8]">{data.days || 0}일</td>
             </tr>
             <tr>
               <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">신청 사유</th>

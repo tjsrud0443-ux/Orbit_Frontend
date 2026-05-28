@@ -101,10 +101,10 @@ const ApprovalDetail = () => {
         setDoc_type('VACATION');
         setFormData({
           title: '',
-          vacationType: '연차',
-          startDate: '',
-          endDate: '',
-          totalDays: 0,
+          vac_type: '연차',
+          start_date: '',
+          end_date: '',
+          days: 0,
           reason: '',
           referrers: []
         });
@@ -112,17 +112,15 @@ const ApprovalDetail = () => {
         setDoc_type('PAYMENT');
         setFormData({
           title: '',
-          expenditureDate: '',
-          requestDate: new Date().toLocaleDateString('sv-SE'),
-          purpose: '',
-          accountInfo: '',
-          items: [{ id: 1, itemName: '', amount: 0, receipt: null, note: '' }]
+          pay_date: '',
+          pay_reason: '',
+          account_info: '',
+          items: [{ item_order: 1, item_name: '', amount: 0, receipt_url: null, note: '' }]
         });
       } else if (isGeneralPath) {
         setDoc_type('GENERAL');
         setFormData({
           title: '',
-          requestDate: new Date().toLocaleDateString('sv-SE'),
           purpose: '',
           content: ''
         });
@@ -130,11 +128,10 @@ const ApprovalDetail = () => {
         setDoc_type('PURCHASE');
         setFormData({
           title: '',
-          purchaseRequestDate: '',
-          requestDate: new Date().toLocaleDateString('sv-SE'),
-          purchasePurpose: '',
-          supplier: '',
-          items: [{ id: 1, itemName: '', quantity: 1, unitPrice: 0, note: '' }],
+          purpose: '',
+          vendor: '',
+          purchase_date: '',
+          items: [{ item_order: 1, item_name: '', ea: 1, unit_price: 0, note: '' }],
           attachments: []
         });
       }
@@ -157,7 +154,6 @@ const ApprovalDetail = () => {
 
   // 버튼 액션
   const handleAction = async (actionType) => {
-    console.log(`Action: ${actionType}`, formData, approvers);
 
     if (actionType === 'TEMP_SAVE') {
       // 임시저장 처리
@@ -173,25 +169,25 @@ const ApprovalDetail = () => {
         if (!formData.title?.trim()) return false;
         
         if (doc_type === 'VACATION') {
-          if (!formData.startDate) return false;
-          if (formData.vacationType === '연차' && !formData.endDate) return false;
+          if (!formData.start_date) return false;
+          if (formData.vac_type === '연차' && !formData.end_date) return false;
           if (!formData.reason?.trim()) return false;
         } else if (doc_type === 'PAYMENT') {
-          if (!formData.expenditureDate) return false;
-          if (!formData.purpose?.trim()) return false;
-          if (!formData.accountInfo?.trim()) return false;
+          if (!formData.pay_date) return false;
+          if (!formData.pay_reason?.trim()) return false;
+          if (!formData.account_info?.trim()) return false;
           if (!formData.items || formData.items.length === 0) return false;
-          return formData.items.every(item => item.itemName?.trim() && item.amount > 0 && item.receipt);
+          return formData.items.every(item => item.item_name?.trim() && item.amount > 0 && item.receipt_url);
         } else if (doc_type === 'GENERAL') {
           if (!formData.purpose?.trim()) return false;
           if (!formData.content?.trim()) return false;
         } else if (doc_type === 'PURCHASE') {
-          if (!formData.purchaseRequestDate) return false;
-          if (!formData.purchasePurpose?.trim()) return false;
-          if (!formData.supplier?.trim()) return false;
+          if (!formData.purchase_date) return false;
+          if (!formData.purpose?.trim()) return false;
+          if (!formData.vendor?.trim()) return false;
           if (!formData.items || formData.items.length === 0) return false;
           if (!formData.attachments || formData.attachments.length === 0) return false;
-          return formData.items.every(item => item.itemName?.trim() && item.quantity > 0 && item.unitPrice > 0);
+          return formData.items.every(item => item.item_name?.trim() && item.ea > 0 && item.unit_price > 0);
         }
         return true;
       };
@@ -208,13 +204,25 @@ const ApprovalDetail = () => {
 
       try {
         // formData에 섞여 있는 referrers(참조자 배열) 추출
-        const { referrers, ...docData } = formData;
+        // const { referrers, ...docData } = formData;
+        const { referrers, title, ...restOfData } = formData;
+        
+        const isVacation= doc_type === 'VACATION'
+        const isHalfVacation = isVacation && formData.vac_type?.includes('반차');
 
+        const finalDocData = isVacation
+          ? {
+              ...restOfData,
+              end_date: isHalfVacation ? formData.start_date : formData.end_date,
+              days: isHalfVacation ? 0.5 : Number(formData.days)
+            }
+          : restOfData;
+        
         // 각 테이블 DTO 구조에 대입하기 좋게 조립
         const submitPayload = {
           title: formData.title,
           doc_type: doc_type,
-          users_id: user?.id,       // 기안자 ID
+          users_id: user?.id,
           
           // 결재자 리스트 (users_id 포함)
           approvers: approvers.map((app, index) => ({
@@ -228,16 +236,8 @@ const ApprovalDetail = () => {
           })),
 
           // 나머지 문서 데이터
-          docData: {
-            vac_type: formData.vacationType,
-            start_date: formData.startDate,
-            end_date: formData.endDate,
-            days: Number(formData.totalDays),
-            reason: formData.reason
-          }
+          docData: finalDocData
         };
-
-        console.log("🚀 오라클 백엔드로 전송할 최종 조립 데이터:", submitPayload);
 
         // 문서 타입별로 분리된 API 호출
         let response;

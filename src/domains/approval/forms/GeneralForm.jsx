@@ -3,7 +3,7 @@ import ReferrerSelector from '../components/ReferrerSelector';
 
 const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
   const isEditMode = mode === 'EDIT';
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleDateString('sv-SE');
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
