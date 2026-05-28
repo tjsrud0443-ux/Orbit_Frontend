@@ -481,7 +481,7 @@ const Kanban = () => {
             {/* 우선순위 배지 (최상단) */}
             <div className="flex justify-between items-center mb-6">
               <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${getPriorityStyle(detailModalTask.priority)}`}>
-                {detailModalTask.priority} Priority
+                {detailModalTask.priority}
               </span>
               <button onClick={() => setDetailModalTask(null)} className="text-slate-400 hover:text-slate-600 transition-colors"><FontAwesomeIcon icon={faTimes} /></button>
             </div>
@@ -548,7 +548,7 @@ const Kanban = () => {
                         <div 
                           key={p}
                           onClick={() => { setDetailModalTask({...detailModalTask, priority: p}); setOpenDropdown(null); }}
-                          className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors"
+                          className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors"
                         >
                           {p}
                         </div>
@@ -597,7 +597,7 @@ const Kanban = () => {
                 <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">상세 내용</p>
                 <textarea 
                   rows={4} 
-                  className="w-full bg-slate-50/50 border-none rounded-2xl p-5 text-sm leading-relaxed text-slate-600 outline-none resize-none"
+                  className="w-full bg-slate-50/50 border-none rounded-2xl p-5 text-base leading-relaxed text-slate-600 outline-none resize-none"
                   value={detailModalTask.desc}
                   onChange={e => setDetailModalTask({...detailModalTask, desc: e.target.value})}
                 />
