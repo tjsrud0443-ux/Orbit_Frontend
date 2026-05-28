@@ -39,6 +39,7 @@ const Kanban = () => {
   // 외부 클릭 감지를 위한 Ref
   const inlineFormRef = useRef(null);
   const detailTitleRef = useRef(null);
+  const lastFocusedTaskId = useRef(null);
 
   // 캘린더 및 드롭다운 오픈 상태
   const [openCalendar, setOpenCalendar] = useState(null); // 'start' | 'end' | 'detailEnd' | 'inlineStart-...' | 'inlineEnd-...'
@@ -52,10 +53,13 @@ const Kanban = () => {
   // 인라인 폼 상태
   const [inlineForm, setInlineForm] = useState({ status: null, title: '', assignee: '나 (관리자)', priority: 'Medium', startDate: new Date().toISOString().split('T')[0], endDate: '' });
 
-  // 상세 모달 오픈 시 제목 포커스
+  // 상세 모달 오픈 시 제목 포커스 (최초 1회만)
   useEffect(() => {
-    if (detailModalTask && detailTitleRef.current) {
+    if (detailModalTask && detailTitleRef.current && lastFocusedTaskId.current !== detailModalTask.id) {
       detailTitleRef.current.focus();
+      lastFocusedTaskId.current = detailModalTask.id;
+    } else if (!detailModalTask) {
+      lastFocusedTaskId.current = null;
     }
   }, [detailModalTask]);
 
@@ -333,47 +337,57 @@ const Kanban = () => {
           <div className="bg-white w-full max-w-[500px] rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in slide-in-from-bottom-8 duration-300">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-2xl font-black text-[#1a1c3d]">새 Task 생성</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors"><FontAwesomeIcon icon={faTimes} /></button>
+              <button 
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setNewGlobalTask({ title: '', assignee: '나 (관리자)', priority: 'Medium', status: 'TODO', startDate: new Date().toISOString().split('T')[0], endDate: '', desc: '' });
+                }} 
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
             </div>
 
             <div className="space-y-6">
               {/* 1. 제목 */}
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">제목</label>
+              <div>
                 <input
-                  className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-[#3530B8]/20 transition-all outline-none"
+                  className="w-full text-2xl font-black text-[#1a1c3d] border-none p-0 focus:ring-0 outline-none placeholder:font-semibold"
                   placeholder="무엇을 해야 하나요?"
                   value={newGlobalTask.title}
                   onChange={e => setNewGlobalTask({ ...newGlobalTask, title: e.target.value })}
                 />
               </div>
 
-              {/* 2. 담당자 (출력 전용) */}
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">담당자</label>
-                <div className="w-full bg-slate-100/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-500 flex items-center gap-2">
-                  <FontAwesomeIcon icon={faUser} className="text-[10px]" /> {newGlobalTask.assignee}
+              {/* 2. 담당자 */}
+              <div className="space-y-1.5">
+                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">담당자</p>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-indigo-50 flex items-center justify-center text-[10px] text-[#3530B8] font-bold border border-white">
+                    {newGlobalTask.assignee.charAt(0)}
+                  </div>
+                  <span className="text-sm font-bold text-slate-600">{newGlobalTask.assignee}</span>
                 </div>
               </div>
 
               {/* 3. 상태 / 우선순위 (한 줄) */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2 relative">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">상태</label>
+              <div className="grid grid-cols-2 gap-8">
+                <div className="space-y-1.5 relative">
+                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">상태</p>
                   <div
                     onClick={() => setOpenDropdown(openDropdown === 'globalStatus' ? null : 'globalStatus')}
-                    className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold text-slate-700 flex justify-between items-center cursor-pointer"
+                    className="text-sm font-bold text-[#3530B8] bg-transparent border-none p-0 outline-none cursor-pointer flex items-center gap-1.5"
                   >
                     {newGlobalTask.status}
-                    <FontAwesomeIcon icon={faChevronDown} className="text-slate-400 text-xs" />
+                    <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-400" />
                   </div>
                   {openDropdown === 'globalStatus' && (
-                    <div className="absolute top-full left-0 z-[110] mt-2 w-full bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                    <div className="absolute top-full left-0 z-[110] mt-1 w-32 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
                       {['TODO', 'DOING', 'DONE'].map(s => (
                         <div
                           key={s}
                           onClick={() => { setNewGlobalTask({ ...newGlobalTask, status: s }); setOpenDropdown(null); }}
-                          className="px-6 py-4 text-sm font-bold text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors"
+                          className="px-6 py-4 text-sm font-bold text-slate-700 hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors"
                         >
                           {s}
                         </div>
@@ -381,22 +395,22 @@ const Kanban = () => {
                     </div>
                   )}
                 </div>
-                <div className="space-y-2 relative">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">우선순위</label>
+                <div className="space-y-1.5 relative">
+                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">우선순위</p>
                   <div
                     onClick={() => setOpenDropdown(openDropdown === 'globalPriority' ? null : 'globalPriority')}
-                    className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold text-slate-700 flex justify-between items-center cursor-pointer"
+                    className="text-sm font-bold text-[#3530B8] bg-transparent border-none p-0 outline-none cursor-pointer flex items-center gap-1.5"
                   >
                     {newGlobalTask.priority}
-                    <FontAwesomeIcon icon={faChevronDown} className="text-slate-400 text-xs" />
+                    <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-400" />
                   </div>
                   {openDropdown === 'globalPriority' && (
-                    <div className="absolute top-full left-0 z-[110] mt-2 w-full bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                    <div className="absolute top-full left-0 z-[110] mt-1 w-32 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
                       {['High', 'Medium', 'Low'].map(p => (
                         <div
                           key={p}
                           onClick={() => { setNewGlobalTask({ ...newGlobalTask, priority: p }); setOpenDropdown(null); }}
-                          className="px-6 py-4 text-sm font-bold text-[#9CA3AF] hover:bg-slate-50 cursor-pointer transition-colors"
+                          className="px-6 py-4 text-sm font-bold text-[#9CA3AF] hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors"
                         >
                           {p}
                         </div>
@@ -407,15 +421,15 @@ const Kanban = () => {
               </div>
 
               {/* 4. 시작일 / 마감일 (한 줄) */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-2 relative">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">시작일</label>
+                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">시작일</p>
                   <div
                     onClick={() => setOpenCalendar(openCalendar === 'start' ? null : 'start')}
-                    className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold text-slate-800 flex justify-between items-center cursor-pointer min-w-[150px]"
+                    className="text-sm font-bold text-slate-800 bg-slate-50 px-3 py-1.5 rounded-lg flex justify-between items-center cursor-pointer h-[32px]"
                   >
                     {newGlobalTask.startDate || "날짜 선택"}
-                    <FontAwesomeIcon icon={faCalendarAlt} className="text-slate-400 text-xs" />
+                    <FontAwesomeIcon icon={faCalendarAlt} className="text-slate-400 text-[10px]" />
                   </div>
                   {openCalendar === 'start' && (
                     <div className="absolute top-full left-0 z-[110] mt-2 w-[280px]">
@@ -434,13 +448,13 @@ const Kanban = () => {
                   )}
                 </div>
                 <div className="space-y-2 relative">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">마감일</label>
+                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">마감일</p>
                   <div
                     onClick={() => setOpenCalendar(openCalendar === 'end' ? null : 'end')}
-                    className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold text-slate-800 flex justify-between items-center cursor-pointer min-w-[150px]"
+                    className="text-sm font-bold text-slate-800 bg-slate-50 px-3 py-1.5 rounded-lg cursor-pointer flex justify-between items-center min-w-[150px] h-[32px]"
                   >
                     {newGlobalTask.endDate || "날짜 선택"}
-                    <FontAwesomeIcon icon={faCalendarAlt} className="text-slate-400 text-xs" />
+                    <FontAwesomeIcon icon={faCalendarAlt} className="text-slate-400 text-[10px]" />
                   </div>
                   {openCalendar === 'end' && (
                     <div className="absolute top-full right-0 z-[110] mt-2 w-[280px]">
@@ -461,10 +475,10 @@ const Kanban = () => {
 
               {/* 5. 설명 */}
               <div className="space-y-2">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">설명</label>
+                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">상세 내용</p>
                 <textarea
                   rows={3}
-                  className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm outline-none resize-none font-medium leading-relaxed"
+                  className="w-full bg-slate-50/50 border-none rounded-2xl p-4 text-sm leading-relaxed text-slate-600 outline-none resize-none font-medium"
                   placeholder="상세한 설명을 적어주세요..."
                   value={newGlobalTask.desc}
                   onChange={e => setNewGlobalTask({ ...newGlobalTask, desc: e.target.value })}
@@ -473,7 +487,15 @@ const Kanban = () => {
             </div>
 
             <div className="flex gap-4 mt-10">
-              <button onClick={() => setIsModalOpen(false)} className="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-bold text-sm hover:bg-slate-200 transition-all">취소</button>
+              <button 
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setNewGlobalTask({ title: '', assignee: '나 (관리자)', priority: 'Medium', status: 'TODO', startDate: new Date().toISOString().split('T')[0], endDate: '', desc: '' });
+                }} 
+                className="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-bold text-sm hover:bg-slate-200 transition-all"
+              >
+                취소
+              </button>
               <button onClick={handleGlobalCreate} className="flex-1 bg-[#3530B8] text-white py-4 rounded-2xl font-bold text-sm hover:bg-[#2a2594] transition-all shadow-lg shadow-indigo-100">추가</button>
             </div>
           </div>
