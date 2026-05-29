@@ -9,3 +9,32 @@ export const submitPurchase = (formData) => maxios.post("/approval/submit/purcha
 });
 export const submitPayment = (payload) => maxios.post("/approval/submit/payment", payload);
 export const submitGeneral = (payload) => maxios.post("/approval/submit/general", payload);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+export const getCcDocuments = () => maxios.get("/approval/cc");
