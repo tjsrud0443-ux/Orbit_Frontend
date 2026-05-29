@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { fetchHolidays } from '../../api/holidayApi';
 import { getSchedules } from '../schedules/schedulesApi';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -14,19 +15,35 @@ const Main = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedSchedules, setSelectedSchedules] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
+  const CATEGORY_COLORS = {
+    personal: '#3530B8',
+    leave:    '#10B981',
+    project:  '#6366F1',
+    meeting:  '#ff75bf',
+    holiday:  '#EF4444',
+  };
 
-  useEffect(() => {
-  getSchedules()
-    .then(resp => {
-      const events = resp.data.map(item => ({
+useEffect(() => {
+  const year = new Date().getFullYear();
+
+  Promise.all([getSchedules(), fetchHolidays(year)])
+    .then(([scheduleResp, holidays]) => {
+      const scheduleEvents = scheduleResp.data.map(item => ({
         id: item.schedule_seq.toString(),
         title: item.title,
         date: item.start_dt?.split('T')[0],
-        color: '#3530B8',
+        color: CATEGORY_COLORS[item.schedule_type] ?? '#3530B8',
       }));
-      setCalendarEvents(events);
+
+      const holidayEvents = holidays.map(h => ({
+        ...h,
+        date: h.start,
+        color: '#EF4444',
+      }));
+
+      setCalendarEvents([...scheduleEvents, ...holidayEvents]);
     })
-    .catch(err => console.error('일정 로드 실패:', err));
+    .catch(err => console.error('로드 실패:', err));
 }, []);
 
   useEffect(() => {
@@ -34,20 +51,14 @@ const Main = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // 날짜 클릭 핸들러
-
-  const formatTime = (date) => date.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false });
+  // 현재 시간 및 날짜
+  const formatTime = (date) => date.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
   const formatDate = (date) => date.toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
 
   const notices = [
     { type: "공지", title: "5월 정기 보안 점검 안내", date: "2026.05.28", isNotice: true },
     { type: "일반", title: "사내 워크샵 일정 공지", date: "2026.05.27", isNotice: false },
     { type: "공지", title: "신규 프로젝트 킥오프 미팅", date: "2026.05.26", isNotice: true },
-  ];
-
-  const schedules = [
-    { title: "전사 주간 회의", info: "10:00 · 회의실 A", done: false },
-    { title: "인사팀 면접 진행", info: "14:00 · 회의실 B", done: false },
   ];
 
   const quickActions = [
@@ -112,18 +123,96 @@ const Main = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
               {/* 달력 */}
               <div className="flex flex-col h-full overflow-hidden">
-                <h3 className="text-s font-extrabold text-indigo-950 mb-3 ml">달력</h3>
-                  <div className="flex-1 overflow-hidden">
+                {/* <h3 className="text-s font-extrabold text-indigo-950 mb-3 ml">달력</h3> */}
+                 <style>{`
+                    /* 테두리 및 전체 */
+                    .main-calendar .fc-theme-standard td,
+                    .main-calendar .fc-theme-standard th {
+                      border-color: #F1F5F9 !important;
+                    }
+                    .main-calendar .fc-theme-standard .fc-scrollgrid {
+                      border-color: #F1F5F9 !important;
+                    }
+
+                    /* 요일 헤더 */
+                    .main-calendar .fc-col-header-cell-cushion {
+                      font-size: 0.65rem !important;
+                      font-weight: 700 !important;
+                      color: #94A3B8 !important;
+                      padding: 4px 0 !important;
+                    }
+
+                    /* 날짜 숫자 */
+                    .main-calendar .fc-daygrid-day-number {
+                      font-size: 0.7rem !important;
+                      color: #475569 !important;
+                      padding: 2px 6px !important;
+                    }
+
+                    /* 오늘 날짜 배경 */
+                    .main-calendar .fc-day-today {
+                      background-color: #FFFBEB !important;
+                    }
+                    .main-calendar .fc-day-today .fc-daygrid-day-number {
+                      background-color:  transparent !important;
+                      color: #475569 !important;
+                      border-radius: 50% !important;
+                      width: 1.6rem !important;      /* ← 키움 */
+                      height: 1.6rem !important;     /* ← 키움 */
+                      display: flex !important;
+                      align-items: center !important;
+                      justify-content: center !important;
+                      line-height: 1 !important;     /* ← 추가 */
+                      padding: 0 !important;         /* ← padding 제거 */
+                    }
+
+                    /* 툴바 */
+                    .main-calendar .fc-toolbar-title {
+                      font-size: 0.8rem !important;
+                      font-weight: 700 !important;
+                      color: #1E293B !important;
+                    }
+                    .main-calendar .fc-button {
+                      background: white !important;
+                      border: 1px solid #E2E8F0 !important;
+                      color: #64748B !important;
+                      font-size: 0.6rem !important;
+                      padding: 0.15rem 0.35rem !important;
+                      box-shadow: none !important;
+                    }
+                    .main-calendar .fc-button:hover {
+                      background: #EEF2FF !important;
+                      color: #3530B8 !important;
+                    }
+                    .main-calendar .fc-today-button {
+                      display: none !important;
+                    }
+                    // /* 이벤트 점 */
+                    // .main-calendar .fc-daygrid-event-dot {
+                    //   border-color: #3530B8 !important;
+                    // }
+                    /* 이벤트 점 hover/cursor 제거 */
+                    .main-calendar .fc-daygrid-event {
+                      pointer-events: none !important;
+                      cursor: default !important;
+                    }
+                    /* 스크롤 제거 */
+                    .main-calendar .fc-scroller {
+                      overflow: hidden !important;
+                    }
+                  `}</style>
+                  <div className="flex-1 overflow-hidden main-calendar">
                     <FullCalendar
                       plugins={[dayGridPlugin, interactionPlugin]}
                       initialView="dayGridMonth"
                       locale="ko"
                       headerToolbar={{
-                        left: 'prev',
+                        left: '',
                         center: 'title',
-                        right: 'next'
+                        right: ''
                       }}
                       height="100%"
+                      eventDisplay="list-item"   // ← 점으로 표시
                       events={calendarEvents}
                       dateClick={(info) => {
                         const filtered = calendarEvents.filter(e => e.date === info.dateStr);
@@ -132,20 +221,6 @@ const Main = () => {
                       }}
                     />
                   </div>
-                {/* <div className="grid grid-cols-7 gap-y-0.2 text-center text-xs font-bold text-gray-400 mb-2">
-                  {dayNames.map((d, i) => <div key={i}>{d}</div>)}
-                </div>
-                <div className="grid grid-cols-7 gap-y-0.3 text-center text-base font-bold text-gray-700 flex-1 content-start">
-                  {days.map((day, idx) => (
-                    <div key={idx} className="aspect-square flex items-center justify-center">
-                      {day && (
-                        <span className={`w-9 h-9 flex items-center justify-center rounded-full cursor-pointer hover:bg-slate-100 transition-colors ${day === 28 ? 'bg-[#3530B8] text-white' : ''}`}>
-                          {day}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div> */}
               </div>
               {/* 일정 */}
               <div className="flex flex-col border-t md:border-t-0 md:border-l border-gray-100 pt-5 md:pt-0 md:pl-5 h-full overflow-hidden">
@@ -154,7 +229,7 @@ const Main = () => {
                   <button onClick={() => navigate('/calendar')} className="text-[0.625rem] text-gray-400 font-bold hover:text-indigo-950">일정보기</button>
                 </div>
                 <div className="space-y-2.5 overflow-y-auto h-full pr-1">
-                  {schedules.map((s, i) => (
+                  {(selectedSchedules.length > 0 ? selectedSchedules : []).map((s, i) => (
                     <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-100 rounded-xl hover:shadow-sm transition-shadow">
                       <div className="w-1 h-8 bg-[#3530B8] rounded-full shrink-0"></div>
                       <div className="flex flex-col min-w-0">

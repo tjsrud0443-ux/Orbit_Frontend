@@ -117,7 +117,7 @@ const PERSONAL_FILTERS = [
   { key: 'personal', label: '내 일정',     color: '#3530B8' },
   { key: 'leave',    label: '연차 / 휴가', color: '#10B981' },
   { key: 'project',  label: '프로젝트',    color: '#6366F1' },
-  { key: 'meeting',  label: '회의',        color: '#7C3AED' },
+  { key: 'meeting',  label: '회의',        color: '#ff75bf' },
   { key: 'holiday',  label: '공휴일',      color: '#EF4444' }
 ];
 
@@ -249,9 +249,6 @@ const Calendar = () => {
       })
       .catch(err => console.error('일정 로드 실패:', err));
   }, []);
-
-//날짜 인풋 디자인
-
 
   //useRef : 컴포넌트가 재렌더링되어도 값을 유지
   const loadedYears = useRef(new Set());
