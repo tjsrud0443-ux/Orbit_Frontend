@@ -13,7 +13,7 @@ import {
   faInfoCircle
 } from '@fortawesome/free-solid-svg-icons';
 import { getGroup } from '../departments/departmentsApi';
-import { addDept, addTeam } from './adminApi';
+import { addDept } from './adminApi';
 
 const AdminDept = () => {
   // --- 1. Data States ---
@@ -34,7 +34,8 @@ const AdminDept = () => {
   const [formData, setFormData] = useState({
     dept_name: '',
     dept_code: '',
-    parent_dept_seq: ''
+    parent_dept_seq: '',
+    dept_type: ""
   });
 
   useEffect(() => {
@@ -105,7 +106,7 @@ const AdminDept = () => {
 
   const openCreateHq = () => {
     setFormMode('CREATE_HQ');
-    setFormData({ dept_name: '', dept_code: '', parent_dept_seq: 2 });
+    setFormData({ dept_name: '', dept_code: '', parent_dept_seq: null });
     setSelectedNode(null);
   };
 
@@ -140,17 +141,25 @@ const AdminDept = () => {
       return;
     }
 
+    let payload = { ...formData };
+
+    if (formMode === 'CREATE_HQ') {
+      payload.parent_dept_seq = 2;
+      payload.dept_type = 'HQ';
+    } else if (formMode === 'CREATE_SUB') {
+      payload.dept_type = "SUB";
+    }
+
+
     if (formMode === 'EDIT') {
       console.log("수정모드")
-    } else if (formMode === 'CREATE_SUB') {
-      addTeam(formData).then(resp => {
-        console.log("부서 생성 완료")
-      })
     } else {
-      addDept(formData).then(resp => {
-        console.log("본부 생성 완료");
+      addDept(payload).then(resp => {
+        console.log(payload);
+        console.log("생성완료");
       })
     }
+
     alert(`${formMode === 'EDIT' ? '수정' : '생성'}되었습니다.`);
     handleCloseForm();
   };
