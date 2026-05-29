@@ -67,7 +67,7 @@ const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
 };
 
 const ApprovalDetail = () => {
-  const { docSeq } = useParams();
+  const { type, docSeq } = useParams();
   const location = useLocation();
   const { user } = useUserStore();
   const { fetchEmployees } = useEmployeeStore();
@@ -76,6 +76,7 @@ const ApprovalDetail = () => {
   const [userRole, setUserRole] = useState('REFERRER'); // DRAFTER, APPROVER, REFERRER
   const [doc_type, setDoc_type] = useState('VACATION');
   const [approvers, setApprovers] = useState([]);
+  const [referrers, setReferrers] = useState([]);
   const [formData, setFormData] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -96,6 +97,7 @@ const ApprovalDetail = () => {
       setUserRole('DRAFTER');
       setMode('EDIT');
       setApprovers([]);
+      setReferrers([]);
 
       if (isVacationPath) {
         setDoc_type('VACATION');
@@ -137,23 +139,35 @@ const ApprovalDetail = () => {
       }
     } else {
       // [조회 모드]
-      if (isVacationPath) setDoc_type('VACATION');
-      else if (isPaymentPath) setDoc_type('PAYMENT');
-      else if (isGeneralPath) setDoc_type('GENERAL');
-      else if (isPurchasePath) setDoc_type('PURCHASE');
-      
-      fetchDocumentData(docSeq);
+      if (isVacationPath) {
+        setDoc_type('VACATION');
+      }else if (isPaymentPath) {
+        setDoc_type('PAYMENT');
+      }else if (isGeneralPath) {
+        setDoc_type('GENERAL');
+      }else if (isPurchasePath) {
+        setDoc_type('PURCHASE');
+      }
+      fetchDocumentData(doc_type, docSeq);
     }
   }, [docSeq, location.pathname]);
 
-  const fetchDocumentData = async (docSeq) => {
+  const fetchDocumentData = async (doc_type, docSeq) => {
     try {
-      const response = await getApprovalDetail(type, docSeq).then(resp => {
+      const response = await getApprovalDetail(doc_type, docSeq).then(resp => {
         setFormData(resp.data);
         setApprovers(resp.data.approvers || []);
+        setReferrers(resp.data.referrers || []);
         setMode('VIEW');
-        // userRole 세팅 (백엔드에서 내려준 값 or 별도 로직)
-        // setUserRole(data.userRole);
+
+        const approver = resp.data.approvers?.find(a => a.users_id === user?.id && a.status === 'IN_PROGRESS')
+        if(approver){
+          setUserRole('APPROVER');
+        }else if(resp.data.users_id === user?.id){
+          setUserRole('DRAFTER');
+        }else{
+          setUserRole('REFERRER');
+        }
 
       })
     } catch (error) {
