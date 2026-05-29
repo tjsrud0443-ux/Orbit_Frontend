@@ -15,6 +15,8 @@ const Main = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedSchedules, setSelectedSchedules] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
+  const [checkIn, setCheckIn] = useState(null);   // 출근 시간
+  const [checkOut, setCheckOut] = useState(null); // 퇴근 시간
   const CATEGORY_COLORS = {
     personal: '#3530B8',
     leave:    '#10B981',
@@ -22,6 +24,39 @@ const Main = () => {
     meeting:  '#ff75bf',
     holiday:  '#EF4444',
   };
+
+// 자정 리셋 useEffect 추가
+useEffect(() => {
+  const now = new Date();
+  const midnight = new Date();
+  midnight.setHours(24, 0, 0, 0); // 오늘 자정
+  const msUntilMidnight = midnight - now;
+
+  const resetTimer = setTimeout(() => {
+    setCheckIn(null);
+    setCheckOut(null);
+  }, msUntilMidnight);
+
+  return () => clearTimeout(resetTimer);
+}, []);
+
+// 출근 핸들러
+const handleCheckIn = () => {
+  if (checkIn) return; // 이미 출근한 경우 무시
+  const now = new Date();
+  setCheckIn(now);
+};
+
+// 퇴근 핸들러
+const handleCheckOut = () => {
+  if (!checkIn || checkOut) return; // 출근 전이거나 이미 퇴근한 경우 무시
+  const now = new Date();
+  setCheckOut(now);
+};
+
+const formatStampTime = (date) =>
+  date.toLocaleTimeString('ko-KR', 
+    { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 
 useEffect(() => {
   const year = new Date().getFullYear();
@@ -95,14 +130,38 @@ useEffect(() => {
           <div className="grid grid-cols-1 md:grid-cols-8 gap-6 shrink-0">
             {/* Box 1: 근태 관리 */}
             <div className="md:col-span-3 bg-white p-4 rounded-3xl border border-gray-200 shadow-sm 
-            flex flex-col justify-between min-h-[12.25rem] lg:h-[13.25rem]">
-              <h3 className="text-s font-extrabold text-indigo-950">근태 관리</h3>
-              <p className="text-2xl font-extrabold text-indigo-950 leading-tight">{formatTime(currentTime)}</p>
-              <div className="flex gap-2 w-full mt-2">
-                <button className="flex-1 py-2 rounded-xl bg-[#3530B8] text-white font-bold text-xs hover:bg-[#2a2496] transition-colors">출근</button>
-                <button className="flex-1 py-2 rounded-xl bg-white border border-gray-200 text-gray-400 font-bold text-xs hover:bg-gray-50">퇴근</button>
-              </div>
+            flex flex-col min-h-[12.25rem] lg:h-[13.25rem]">
+              <h3 className="text-s font-extrabold text-indigo-950 self-start">출퇴근</h3>
+              <p className="text-4xl font-extrabold text-indigo-950 leading-tight flex-1 flex items-center justify-center">{formatTime(currentTime)}</p>
+                {/* 출퇴근 시간 표시 */}
+                <div className="flex gap-2 w-full">
+                  <button
+                    onClick={handleCheckIn}
+                    disabled={!!checkIn}
+                    className={`flex-1 py-2 rounded-xl font-bold text-xs transition-colors
+                      ${checkIn
+                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-500 cursor-not-allowed'
+                        : 'bg-[#3530B8] text-white hover:bg-[#2a2496]'
+                      }`}
+                  >
+                    {checkIn ? formatStampTime(checkIn) : '출근'}
+                  </button>
+
+                  <button
+                    onClick={handleCheckOut}
+                    disabled={!checkIn || !!checkOut}
+                    className={`flex-1 py-2 rounded-xl font-bold text-xs transition-colors
+                      ${checkOut
+                        ? 'bg-rose-50 border border-rose-200 text-rose-400 cursor-not-allowed'
+                        : !checkIn
+                          ? 'bg-white border border-gray-200 text-gray-300 cursor-not-allowed'
+                          : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                      }`}
+                  >
+                    {checkOut ? formatStampTime(checkOut) : '퇴근'}
+                  </button>
             </div>
+          </div>
 
             {/* Box 2: 빠른 실행 (3x2) */}
             <div className="md:col-span-5 bg-white p-4 rounded-3xl border border-gray-200 shadow-sm flex flex-col min-h-[13.25rem] lg:h-[13.25rem]">
@@ -187,10 +246,10 @@ useEffect(() => {
                     .main-calendar .fc-today-button {
                       display: none !important;
                     }
-                    // /* 이벤트 점 */
-                    // .main-calendar .fc-daygrid-event-dot {
-                    //   border-color: #3530B8 !important;
-                    // }
+                      /* 이벤트 텍스트 숨기고 점만 표시 */
+                    .main-calendar .fc-daygrid-event .fc-event-title {
+                      display: none !important;
+                    }
                     /* 이벤트 점 hover/cursor 제거 */
                     .main-calendar .fc-daygrid-event {
                       pointer-events: none !important;
@@ -199,6 +258,11 @@ useEffect(() => {
                     /* 스크롤 제거 */
                     .main-calendar .fc-scroller {
                       overflow: hidden !important;
+                    }
+                      /* +N more 호버 효과 제거 */
+                    .main-calendar .fc-daygrid-more-link {
+                      pointer-events: none !important;
+                      cursor: default !important;
                     }
                   `}</style>
                   <div className="flex-1 overflow-hidden main-calendar">
@@ -213,8 +277,23 @@ useEffect(() => {
                       }}
                       height="100%"
                       eventDisplay="list-item"   // ← 점으로 표시
+                      dayMaxEvents={1}  // true시 셀 높이에 맞춰 자동으로 "+N개" 표시
+                      moreLinkClick={() => 'none'} //클릭 막기
                       events={calendarEvents}
+                      //한 칸 클릭
                       dateClick={(info) => {
+                        const clickedDate = new Date(info.dateStr);
+                        const today = new Date();                     
+                        // 현재 달이 아니면 캘린더 페이지로 이동
+                        if (
+                          clickedDate.getFullYear() !== today.getFullYear() ||
+                          clickedDate.getMonth() !== today.getMonth()
+                        ) {
+                          const ok = window.confirm
+                          ('이번 달 이외의 일정은 캘린더 페이지에서 확인할 수 있습니다.\n캘린더 페이지로 이동하시겠습니까?');
+                          if(ok) navigate('/calendar');
+                          return;
+                        }
                         const filtered = calendarEvents.filter(e => e.date === info.dateStr);
                         setSelectedDate(info.dateStr);
                         setSelectedSchedules(filtered);
@@ -226,18 +305,23 @@ useEffect(() => {
               <div className="flex flex-col border-t md:border-t-0 md:border-l border-gray-100 pt-5 md:pt-0 md:pl-5 h-full overflow-hidden">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="text-s font-extrabold text-indigo-950">오늘의 일정</h3>
-                  <button onClick={() => navigate('/calendar')} className="text-[0.625rem] text-gray-400 font-bold hover:text-indigo-950">일정보기</button>
+                  <button onClick={() => navigate('/calendar')} className="text-[0.625rem] text-gray-400 font-bold hover:text-indigo-950">상세보기</button>
                 </div>
                 <div className="space-y-2.5 overflow-y-auto h-full pr-1">
-                  {(selectedSchedules.length > 0 ? selectedSchedules : []).map((s, i) => (
+                  {selectedSchedules.length > 0 ? (selectedSchedules.map((s, i) => (
                     <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-100 rounded-xl hover:shadow-sm transition-shadow">
-                      <div className="w-1 h-8 bg-[#3530B8] rounded-full shrink-0"></div>
+                      <div className="w-1 h-8 bg-[#3530B8] rounded-full shrink-0" style={{ backgroundColor: s.color || '#3530B8' }}></div>
                       <div className="flex flex-col min-w-0">
                         <span className="text-[0.9375rem] font-bold text-gray-800 truncate">{s.title}</span>
                         <span className="text-xs text-gray-400 truncate">{s.info}</span>
                       </div>
                     </div>
-                  ))}
+                  ))
+                ):(
+                  <div className="h-full flex items-center justify-center">
+                    <p className="text-xs text-gray-400">오늘의 일정이 없습니다.</p>
+                  </div>
+                )}
                 </div>
               </div>
             </div>

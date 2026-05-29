@@ -152,7 +152,14 @@ const Calendar = () => {
   };
 
   useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 1024);//1024 미만이면 모바일 처리
+    const handler = () =>{
+       setIsMobile(window.innerWidth < 1024);//1024 미만이면 모바일 처리
+      // 추가: 리사이즈 시 캘린더 크기 재계산
+       setTimeout(()=>{
+         const api = getApi();
+        if (api) api.updateSize();
+       },100)
+      };
     window.addEventListener('resize', handler);// 창을 늘리거나 줄일 때마다 자동으로 호출
     return () => window.removeEventListener('resize', handler);// 페이지 이동시 이벤트 제거해서 메모리 누수 방지
   }, []);
@@ -532,7 +539,7 @@ const Calendar = () => {
             }
           `}
         </style>
-        <div className="flex-1 p-4 flex flex-col gap-4 overflow-y-auto lg:overflow-hidden min-h-0">
+        <div className="flex-1 p-4 flex flex-col gap-4 overflow-y-auto lg:overflow-hidden min-h-0 h-full">
           <div className="px-1">
             <h1 className="text-xl font-bold text-slate-900 leading-tight">캘린더</h1>
             <p className="text-xs text-slate-500 mt-0.5">일정을 한눈에 확인하세요.</p>
@@ -550,7 +557,7 @@ const Calendar = () => {
           </div>
 
           <div className="flex flex-col lg:flex-row gap-2 flex-1 lg:items-stretch min-h-0 lg:overflow-hidden">
-            <div className={`bg-white border border-slate-200 rounded-xl shadow-sm p-4 flex flex-col min-w-0 transition-all duration-300 flex-1 shrink-0 lg:shrink`}>
+            <div className={`bg-white border border-slate-200 rounded-xl shadow-sm p-4 flex flex-col min-w-0 transition-all duration-300 flex-1 shrink-0 lg:shrink lg:overflow-hidden`}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                 <div className="flex items-center gap-2">
                   <button onClick={() => { getApi()?.today(); updateTitle(); }}
@@ -581,16 +588,16 @@ const Calendar = () => {
                 )}
               </div>
 
-              <div className="calendar-container flex-1" style={{ minHeight: isMobile ? 'auto' : 0 }}>
+              <div className="calendar-container flex-1" style={{ minHeight: isMobile ? 'auto' : 0 ,
+                                                                  height: isMobile ? 'auto' : '100%' }}>
                 <FullCalendar
                   ref={calendarRef}
                   plugins={[dayGridPlugin, interactionPlugin]}
                   initialView="dayGridMonth"
                   locale="ko"
                   headerToolbar={false}
-                  stickyHeaderDates={false}  // 헤더 고정 해제 - 스크롤하면 같이 올라감
-                  // dayMaxEvents={true}  // true시 셀 높이에 맞춰 자동으로 "+N개" 표시
-                  dayMaxEvents={3} //보여줄 일정 고정
+                  stickyHeaderDates={false}  // 헤더 고정 해제 - 스크롤하면 같이 올라감                 
+                  dayMaxEvents={true} //보여줄 일정 고정
                   height={isMobile ? 'auto' : '100%'}
                   editable={activeTab === 'personal'}
                   selectable={activeTab === 'personal'}
@@ -743,7 +750,8 @@ const Calendar = () => {
       {detailModal.open && detailModal.event && (
         <ModalOverlay onClose={() => setDetailModal({ open: false, event: null })}>
           <h3 className="text-sm font-bold mb-4">일정 상세</h3>
-          <div className="p-3 mb-4 rounded-lg bg-[#3530B8] text-white text-xs font-semibold">{detailModal.event.title}</div>
+          <div className="p-3 mb-4 rounded-lg bg-[#3530B8] text-white text-xs font-semibold"
+          style={{ backgroundColor: detailModal.event.backgroundColor || detailModal.event.extendedProps?.color || '#3530B8' }}>{detailModal.event.title}</div>
           <div className="space-y-2 mb-5 text-xs text-slate-600">
             <p><span className="font-semibold">시작:</span> {detailModal.event.startStr.split('T')[0]}</p>
             {detailModal.event.extendedProps?.actualEnd && detailModal.event.startStr.split('T')[0] !== detailModal.event.extendedProps.actualEnd && (
