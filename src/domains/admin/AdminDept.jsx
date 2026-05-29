@@ -127,7 +127,6 @@ const AdminDept = () => {
       parent_dept_seq: node.parentDeptSeq,
       auth_group: node.auth_group
     });
-    console.log(node)
   };
 
   const handleCloseForm = () => {

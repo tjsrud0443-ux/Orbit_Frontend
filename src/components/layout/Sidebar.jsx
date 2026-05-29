@@ -8,11 +8,12 @@ import {
 import {
   faSitemap, faFileSignature, faDiagramProject,
   faDoorOpen, faRobot, faBox, faChevronDown, faChevronUp,
-  faSliders, faUserShield, faAddressCard,faDesktop,
+  faSliders, faUserShield, faAddressCard, faDesktop,
   faFileShield, faCommentDots
 } from '@fortawesome/free-solid-svg-icons';
 import useAuthStore from '../../store/authStore';
 import { IMAGES } from '../../images/images';
+import useUserStore from '../../store/userStore';
 
 
 // 직원 사이드바
@@ -33,8 +34,6 @@ const generalMenuItems = [
   {
     name: '인사 관리',
     icon: faAddressCard,
-    team: ['인사팀'],
-    rank: ['대표'],
     subItems: [
       { name: '직원 관리', path: '/adminUsers' },
       { name: '부서 관리', path: '/adminDepartments' },
@@ -44,8 +43,6 @@ const generalMenuItems = [
   {
     name: '자산 관리',
     icon: faDesktop,
-    team: ['총무팀'],
-    rank: ['대표'],
     subItems: [
       { name: '비품 관리', path: '/adminSupply' },
       { name: '비품 신청 관리', path: '/adminSupplyRequest' },
@@ -56,13 +53,13 @@ const generalMenuItems = [
   {
     name: '문서 관리',
     icon: faFileShield,
-    rank: ['부서장', '본부장', '대표'],
+    rank: ['부서장', '본부장'],
     path: '/adminDocument'
   },
   {
     name: 'AI 미답변 질문 관리',
     icon: faCommentDots,
-    rank: ['부서장', '본부장', '대표'],
+    rank: ['부서장', '본부장'],
     path: '/adminQna'
   },
   { name: '프로젝트 관리', path: '/projects', icon: faDiagramProject },
@@ -109,12 +106,13 @@ const adminMenuItems = [
   },
 ];
 
-const Sidebar = ({ isOpen, onClose, user }) => {
+const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
   const navi = useNavigate();
   const logout = useAuthStore(state => state.logout);
   const [openMenuName, setOpenMenuName] = useState(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
+  const user = useUserStore(state => state.user);
 
   const currentMenuPool = isAdminMode ? adminMenuItems : generalMenuItems;
 
@@ -137,12 +135,31 @@ const Sidebar = ({ isOpen, onClose, user }) => {
   };
 
   const filteredMenuItems = currentMenuPool.filter(item => {
-    if (!item.team && !item.rank && !item.role) return true; // 직원 사이드바 조건 없음 무조건 표시
-    if (!isAdminMode && (user?.dept_name === '운영총괄팀')) { return false; }
-    if (item.team && item.team.includes(user?.dept_name)) return true; // 팀 권한 메뉴 표시
-    if (item.rank && item.rank.includes(user?.rank_name)) return true; // 직급 권한 메뉴 표시
-    if (item.role && item.role.includes(user?.role)) return true; // 직원/관리자 권한 버튼 표시
+    if (isAdminMode) {
+      if (user?.auth_group === 'ROLE_SUPER_ADMIN') {
+        return true;
+      }
+      return false;
+    }
 
+    if (!item.rank && item.name !== '인사 관리' && item.name !== '자산 관리') {
+      return true; // 직원 사이드바 조건 없음 무조건 표시
+    }
+
+    if (item.name === '인사 관리') {
+      if (user?.auth_group === 'ROLE_HR_ADMIN') return true;
+      return false;
+    }
+
+    if (item.name === '자산 관리') {
+      if (user?.auth_group === 'ROLE_GA_ADMIN') return true;
+      return false;
+    }
+
+    if (item.rank) {
+      if (user?.auth_group === 'ROLE_SUPER_ADMIN' && user?.rank_name === '부서장' && user?.rank_name === '본부장') return true;
+      if (item.rank && item.rank.includes(user?.rank_name)) return true; // 직급 권한 메뉴 표시
+    }
     return false;
   });
 
@@ -233,7 +250,7 @@ const Sidebar = ({ isOpen, onClose, user }) => {
           </nav>
 
           <div className="mt-3 pt-3 border-t border-slate-100 shrink-0 space-y-1.5">
-            {(user?.role === 'ADMIN' || user?.dept_name === '운영총괄팀' || user?.dept_name === '운영총괄본부') && (
+            {(user?.role === 'ADMIN' || user?.auth_group === 'ROLE_SUPER_ADMIN') && (
               <button
                 onClick={() => {
                   const nextAdminMode = !isAdminMode;

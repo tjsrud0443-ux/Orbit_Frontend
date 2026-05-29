@@ -8,12 +8,12 @@ import useUserStore from '../../store/userStore';
 export default function Layout() {
   const navi = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [user, setUser] = useState(null);
+  // const [user, setUser] = useState(null);
   const setUserInfo = useUserStore(state => state.setUser);
 
   useEffect(() => {
     getUsersInfo().then(resp => {
-      setUser(resp.data)
+      // setUser(resp.data)
       setUserInfo(resp.data)
     })
     .catch(error => {
@@ -28,10 +28,10 @@ export default function Layout() {
 
       <div className="flex w-[90%] h-[90%] bg-white overflow-hidden rounded-xl shadow-md border border-slate-200">
 
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} user={user}/>
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
         <div className="flex flex-col min-h-0 flex-1 min-w-0">
-          <Header onMenuClick={() => setSidebarOpen(true)} user={user}/>
+          <Header onMenuClick={() => setSidebarOpen(true)} />
           <main className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50">
             <Outlet />
           </main>
