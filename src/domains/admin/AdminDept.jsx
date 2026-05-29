@@ -13,7 +13,7 @@ import {
   faInfoCircle
 } from '@fortawesome/free-solid-svg-icons';
 import { getGroup } from '../departments/departmentsApi';
-import { addDept } from './adminApi';
+import { addDept, delDept, updateDept } from './adminApi';
 
 const AdminDept = () => {
   // --- 1. Data States ---
@@ -120,6 +120,7 @@ const AdminDept = () => {
     setFormMode('EDIT');
     setSelectedNode(node);
     setFormData({
+      dept_seq: node.deptSeq,
       dept_name: node.deptName,
       dept_code: node.deptCode,
       parent_dept_seq: node.parentDeptSeq
@@ -152,11 +153,26 @@ const AdminDept = () => {
 
 
     if (formMode === 'EDIT') {
-      console.log("수정모드")
+      updateDept(formData).then(resp => {
+        console.log("수정완료")
+      })
     } else {
       addDept(payload).then(resp => {
-        console.log(payload);
-        console.log("생성완료");
+        getGroup().then(resp => {
+          setFullTree({
+            root: resp.data.root,
+            nodeMap: resp.data.nodeMap
+          });
+          setEmployees(resp.data.users);
+          if (resp.data.root) {
+            setExpandedNodes(new Set([resp.data.root.deptSeq]));
+          }
+          setLoading(false);
+        })
+          .catch(err => {
+            console.error("조직도 로딩 실패", err);
+            setLoading(false);
+          });
       })
     }
 
@@ -167,11 +183,28 @@ const AdminDept = () => {
   const handleDelete = (node) => {
     const count = getDeptMemberCount(node);
     if (count > 0) {
-      alert("부서 내에 소속된 사원이 존재하여 삭제할 수 없습니다.");
+      alert("본부 또는 부서 내에 소속된 사원이 존재하여 삭제할 수 없습니다.");
       return;
     }
-    if (window.confirm(`[${node.deptName}] 부서를 삭제하시겠습니까?`)) {
-      alert("삭제되었습니다.");
+    if (window.confirm(`[${node.deptName}] 을(를) 삭제하시겠습니까?`)) {
+      delDept(node.deptSeq).then(resp => {
+        alert("삭제되었습니다.");
+        getGroup().then(resp => {
+          setFullTree({
+            root: resp.data.root,
+            nodeMap: resp.data.nodeMap
+          });
+          setEmployees(resp.data.users);
+          if (resp.data.root) {
+            setExpandedNodes(new Set([resp.data.root.deptSeq]));
+          }
+          setLoading(false);
+        })
+          .catch(err => {
+            console.error("조직도 로딩 실패", err);
+            setLoading(false);
+          });
+      })
     }
   };
 

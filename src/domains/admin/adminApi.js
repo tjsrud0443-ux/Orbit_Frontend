@@ -24,3 +24,5 @@ export const updateUsersInfo = (usersSeq, editForm) =>maxios.put("/admin/hr/upda
 
 /* 부서 관리 */
 export const addDept = (formData) => maxios.post("/admin/hr/addDept", formData);
+export const delDept = (seq) => maxios.delete("/admin/hr/delDept/" + seq);
+export const updateDept = (formData) => maxios.put("/admin/hr/updateDept", formData);
