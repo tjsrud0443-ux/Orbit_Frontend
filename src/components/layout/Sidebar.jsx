@@ -236,8 +236,10 @@ const Sidebar = ({ isOpen, onClose, user }) => {
             {(user?.role === 'ADMIN' || user?.dept_name === '운영총괄팀' || user?.dept_name === '운영총괄본부') && (
               <button
                 onClick={() => {
-                  setIsAdminMode(!isAdminMode);
+                  const nextAdminMode = !isAdminMode;
+                  setIsAdminMode(nextAdminMode);
                   setOpenMenuName(null);
+                  navi(nextAdminMode ? '/adminMain' : '/main');
                 }}
                 className={`flex items-center justify-center gap-2 w-full px-2 py-2 text-xs font-bold hover:border-[#3530B8] transition-colors cursor-pointer border rounded-lg
                   ${isAdminMode
