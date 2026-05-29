@@ -101,10 +101,10 @@ const ApprovalDetail = () => {
         setDoc_type('VACATION');
         setFormData({
           title: '',
-          vacationType: '연차',
-          startDate: '',
-          endDate: '',
-          totalDays: 0,
+          vac_type: '연차',
+          start_date: '',
+          end_date: '',
+          days: 0,
           reason: '',
           referrers: []
         });
@@ -112,17 +112,15 @@ const ApprovalDetail = () => {
         setDoc_type('PAYMENT');
         setFormData({
           title: '',
-          expenditureDate: '',
-          requestDate: new Date().toLocaleDateString('sv-SE'),
-          purpose: '',
-          accountInfo: '',
-          items: [{ id: 1, itemName: '', amount: 0, receipt: null, note: '' }]
+          pay_date: '',
+          pay_reason: '',
+          account_info: '',
+          items: [{ item_order: 1, item_name: '', amount: 0, receipt: null, note: '' }]
         });
       } else if (isGeneralPath) {
         setDoc_type('GENERAL');
         setFormData({
           title: '',
-          requestDate: new Date().toLocaleDateString('sv-SE'),
           purpose: '',
           content: ''
         });
@@ -130,11 +128,10 @@ const ApprovalDetail = () => {
         setDoc_type('PURCHASE');
         setFormData({
           title: '',
-          purchaseRequestDate: '',
-          requestDate: new Date().toLocaleDateString('sv-SE'),
-          purchasePurpose: '',
-          supplier: '',
-          items: [{ id: 1, itemName: '', quantity: 1, unitPrice: 0, note: '' }],
+          purpose: '',
+          vendor: '',
+          purchase_date: '',
+          items: [{ item_order: 1, item_name: '', ea: 1, unit_price: 0, note: '' }],
           attachments: []
         });
       }
@@ -153,9 +150,10 @@ const ApprovalDetail = () => {
     setMode('VIEW');
   };
 
+  const [isSubmitClicked, setIsSubmitClicked] = useState(false);
+
   // 버튼 액션
   const handleAction = async (actionType) => {
-    console.log(`Action: ${actionType}`, formData, approvers);
 
     if (actionType === 'TEMP_SAVE') {
       // 임시저장 처리
@@ -164,6 +162,64 @@ const ApprovalDetail = () => {
 
     // [결재 상신 버튼을 누른 경우]
     if (actionType === 'SUBMIT') {
+      setIsSubmitClicked(true);
+
+      // 필수 항목 검증
+      const isFormValid = () => {
+        const today = new Date().toLocaleDateString('sv-SE');
+        if (!formData.title?.trim() || formData.title.length > 50) return false;
+        
+        if (doc_type === 'VACATION') {
+          if (!formData.start_date || formData.start_date < today) return false;
+          if (formData.vac_type === '연차') {
+            if (!formData.end_date || formData.end_date < formData.start_date) return false;
+          }
+          if (!formData.reason?.trim() || formData.reason.length > 300) return false;
+        } else if (doc_type === 'PAYMENT') {
+          const pay_date = formData.pay_date;
+          const pay_reason = formData.pay_reason;
+          const account_info = formData.account_info;
+
+          if (!pay_date) return false;
+          if (!pay_reason?.trim() || pay_reason.length > 300) return false;
+          if (!account_info?.trim() || account_info.length > 50) return false;
+          if (!formData.items || formData.items.length === 0) return false;
+          
+          return formData.items.every(item => {
+            const item_name = item.item_name;
+            const amount = item.amount;
+            const receipt = item.receipt;
+            const note = item.note;
+            
+            return (
+              item_name?.trim() && item_name.length <= 30 &&
+              amount > 0 && 
+              receipt &&
+              (!note || note.length <= 100)
+            );
+          });
+        } else if (doc_type === 'GENERAL') {
+          if (!formData.purpose?.trim() || formData.purpose.length > 300) return false;
+          if (!formData.content?.trim() || formData.content.length > 1000) return false;
+        } else if (doc_type === 'PURCHASE') {
+          if (!formData.purchase_date || formData.purchase_date < today) return false;
+          if (!formData.purpose?.trim() || formData.purpose.length > 300) return false;
+          if (!formData.vendor?.trim() || formData.vendor.length > 50) return false;
+          if (!formData.items || formData.items.length === 0) return false;
+          if (!formData.attachments || formData.attachments.length === 0) return false;
+          return formData.items.every(item => 
+            item.item_name?.trim() && item.item_name.length <= 50 &&
+            item.ea > 0 && 
+            item.unit_price > 0
+          );
+        }
+        return true;
+      };
+
+      if (!isFormValid()) {
+        return;
+      }
+
       if (!approvers || approvers.length === 0) {
         alert('최소 한 명 이상의 결재자를 추가해야 합니다.');
         return;
@@ -171,13 +227,25 @@ const ApprovalDetail = () => {
 
       try {
         // formData에 섞여 있는 referrers(참조자 배열) 추출
-        const { referrers, ...docData } = formData;
+        // const { referrers, ...docData } = formData;
+        const { referrers, title, ...restOfData } = formData;
+        
+        const isVacation= doc_type === 'VACATION'
+        const isHalfVacation = isVacation && formData.vac_type?.includes('반차');
 
+        const finalDocData = isVacation
+          ? {
+              ...restOfData,
+              end_date: isHalfVacation ? formData.start_date : formData.end_date,
+              days: isHalfVacation ? 0.5 : Number(formData.days)
+            }
+          : restOfData;
+        
         // 각 테이블 DTO 구조에 대입하기 좋게 조립
         const submitPayload = {
           title: formData.title,
           doc_type: doc_type,
-          users_id: user?.id,       // 기안자 ID
+          users_id: user?.id,
           
           // 결재자 리스트 (users_id 포함)
           approvers: approvers.map((app, index) => ({
@@ -191,27 +259,51 @@ const ApprovalDetail = () => {
           })),
 
           // 나머지 문서 데이터
-          docData: {
-            vac_type: formData.vacationType,
-            start_date: formData.startDate,
-            end_date: formData.endDate,
-            days: Number(formData.totalDays),
-            reason: formData.reason
-          }
+          ...finalDocData
         };
-
-        console.log("🚀 오라클 백엔드로 전송할 최종 조립 데이터:", submitPayload);
 
         // 문서 타입별로 분리된 API 호출
         let response;
         if (doc_type === 'VACATION') {
           response = await submitVacation(submitPayload);
-        } else if (doc_type === 'PAYMENT') {
-          response = await submitPayment(submitPayload);
         } else if (doc_type === 'GENERAL') {
           response = await submitGeneral(submitPayload);
+        } else if (doc_type === 'PAYMENT') {
+          const formDataObj = new FormData();
+
+          const total_amount = (formData.items || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+
+          const paymentPayload = {
+            ...submitPayload,
+            total_amount: total_amount
+          };
+
+          formDataObj.append("dto", new Blob([JSON.stringify(paymentPayload)], {type: "application/json"}));
+          if(formData.items && formData.items.length > 0){
+            formData.items.forEach(item => {
+              if(item.receipt instanceof File){
+                formDataObj.append("files", item.receipt);
+              }
+            });
+          }
+          response = await submitPayment(formDataObj);
         } else if (doc_type === 'PURCHASE') {
-          response = await submitPurchase(submitPayload);
+          // 💡 변경 요청 사항 적용: Multipart/Form-Data 형식으로 변환
+          const formDataObj = new FormData();
+          
+          // 1. JSON 데이터를 Blob으로 변환하여 "dto" 키로 append
+          formDataObj.append("dto", new Blob([JSON.stringify(submitPayload)], { type: "application/json" }));
+          
+          // 2. 첨부파일들을 "files" 키로 각각 append
+          if (formData.attachments && formData.attachments.length > 0) {
+            formData.attachments.forEach(file => {
+              if (file instanceof File) {
+                formDataObj.append("files", file);
+              }
+            });
+          }
+
+          response = await submitPurchase(formDataObj);
         }
 
         // maxios 통신 성공 시
@@ -251,6 +343,7 @@ const ApprovalDetail = () => {
       onChange: setFormData,
       mode: mode,
       user: user,
+      isSubmitClicked: isSubmitClicked
     };
 
     switch (doc_type) {
