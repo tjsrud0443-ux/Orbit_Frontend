@@ -1,34 +1,68 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Calendar from '../../../components/common/Calendar';
 import ReferrerSelector from '../components/ReferrerSelector';
 
-const VacationForm = ({ data, onChange, mode, user }) => {
+const VacationForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
   const isEditMode = mode === 'EDIT';
   const today = new Date().toLocaleDateString('sv-SE');
   
   const [isStartCalendarOpen, setIsStartCalendarOpen] = useState(false);
   const [isEndCalendarOpen, setIsEndCalendarOpen] = useState(false);
+  const [isTypeOpen, setIsTypeOpen] = useState(false);
+  const [errors, setErrors] = useState({});
 
-  const handleFieldChange = (field, value) => {
-    if (!onChange) return;
-
-    let updatedData = { ...data, [field]: value };
-
-    // 1. 날짜 제약 조건 검증
-    if (field === 'startDate') {
-      if (value < today) {
-        alert('시작 날짜는 오늘 이후여야 합니다.');
-        return;
+  useEffect(() => {
+    if (isSubmitClicked) {
+      const newErrors = {};
+      newErrors.title = validateField('title', data.title, data);
+      newErrors.start_date = validateField('start_date', data.start_date, data);
+      if (data.vac_type === '연차') {
+        newErrors.end_date = validateField('end_date', data.end_date, data);
       }
-      if (data.endDate && value > data.endDate) {
-        updatedData.endDate = ''; // 시작일이 종료일보다 늦어지면 종료일 리셋
+      newErrors.reason = validateField('reason', data.reason, data);
+      setErrors(newErrors);
+    }
+  }, [isSubmitClicked]);
+
+  const validateField = (field, value, currentData) => {
+    let error = '';
+    if (!value && field !== 'end_date') {
+      if (field === 'title') error = '제목을 입력해주세요.';
+      if (field === 'start_date') error = '시작 날짜를 선택해주세요.';
+      if (field === 'reason') error = '신청 사유를 입력해주세요.';
+    }
+
+    if (value) {
+      if (field === 'title' && value.length > 50) error = '글자 수 초과 (50자 이하)';
+      if (field === 'reason' && value.length > 300) error = '글자 수 초과 (300자 이하)';
+    }
+
+    if (field === 'start_date' && value && value < today) {
+      error = '시작 날짜는 오늘 이후여야 합니다.';
+    }
+
+    if (field === 'end_date') {
+      if (currentData.vac_type === '연차' && !value) {
+        error = '종료 날짜를 선택해주세요.';
+      } else if (value && currentData.start_date && value < currentData.start_date) {
+        error = '종료 날짜는 시작 날짜 이후여야 합니다.';
       }
     }
 
-    if (field === 'endDate') {
-      if (data.startDate && value < data.startDate) {
-        alert('종료 날짜는 시작 날짜 이후여야 합니다.');
-        return;
+    return error;
+  };
+
+  const handleFieldChange = (key, value) => {
+    if (!onChange) return;
+
+    let updatedData = { ...data, [key]: value };
+    const error = validateField(key, value, updatedData);
+    setErrors(prev => ({ ...prev, [key]: error }));
+
+    if (key === 'start_date') {
+      if (data.end_date && value > data.end_date) {
+        updatedData.end_date = '';
+        setErrors(prev => ({ ...prev, end_date: '종료 날짜를 선택해주세요.' }));
       }
     }
 
@@ -36,16 +70,26 @@ const VacationForm = ({ data, onChange, mode, user }) => {
     const calculateDays = (type, start, end) => {
       if (type !== '연차') return 0.5;
       if (!start || !end) return 0;
+      
       const s = new Date(start);
       const e = new Date(end);
-      const diff = Math.ceil((e - s) / (1000 * 60 * 60 * 24)) + 1;
-      return diff > 0 ? diff : 0;
+      let count = 0;
+      let current = new Date(s);
+      
+      while (current <= e) {
+        const dayOfWeek = current.getDay();
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) { // 0: Sunday, 6: Saturday
+          count++;
+        }
+        current.setDate(current.getDate() + 1);
+      }
+      return count;
     };
 
-    updatedData.totalDays = Math.max(0, calculateDays(
-      updatedData.vacationType || '연차', 
-      updatedData.startDate, 
-      updatedData.endDate
+    updatedData.days = Math.max(0, calculateDays(
+      updatedData.vac_type || '연차', 
+      updatedData.start_date, 
+      updatedData.end_date
     ));
 
     onChange(updatedData);
@@ -62,13 +106,17 @@ const VacationForm = ({ data, onChange, mode, user }) => {
           <h2 className="text-xs font-bold text-gray-800">제목</h2>
         </div>
         {isEditMode ? (
-          <input 
-            type="text"
-            value={data.title || ''}
-            onChange={(e) => handleFieldChange('title', e.target.value)}
-            placeholder="제목을 입력하세요"
-            className="w-full p-2.5 text-xs bg-white border border-gray-200 rounded-xl outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 transition-all"
-          />
+          <div>
+            <input 
+              type="text"
+              value={data.title || ''}
+              onChange={(e) => handleFieldChange('title', e.target.value)}
+              placeholder="제목을 입력하세요 (50자 이하)"
+              maxLength={50}
+              className={`w-full p-2.5 text-xs bg-white border ${errors.title ? 'border-red-500' : 'border-gray-200'} rounded-xl outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 transition-all`}
+            />
+            {errors.title && <p className="mt-1 text-[10px] text-red-500">{errors.title}</p>}
+          </div>
         ) : (
           <div className="w-full p-2.5 text-xs bg-gray-50 border border-gray-100 rounded-xl">
             {data.title || '-'}
@@ -116,17 +164,33 @@ const VacationForm = ({ data, onChange, mode, user }) => {
               <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">연차 종류</th>
               <td className="p-2">
                 {isEditMode ? (
-                  <select 
-                    value={data.vacationType || '연차'}
-                    onChange={(e) => handleFieldChange('vacationType', e.target.value)}
-                    className="w-full p-1 bg-white border border-gray-300 rounded outline-none focus:border-[#3530B8]"
-                  >
-                    <option value="연차">연차</option>
-                    <option value="오전반차">오전반차</option>
-                    <option value="오후반차">오후반차</option>
-                  </select>
+                  <div className="relative w-full">
+                    <div 
+                      onClick={() => setIsTypeOpen(!isTypeOpen)}
+                      className={`w-full px-3 py-1.5 bg-white border ${isTypeOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-200'} rounded-lg text-xs font-medium transition-all cursor-pointer flex justify-between items-center`}
+                    >
+                      <span className="text-gray-800">{data.vac_type || '연차'}</span>
+                      <svg className={`w-3.5 h-3.5 text-gray-400 transition-transform ${isTypeOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                    </div>
+                    {isTypeOpen && (
+                      <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-32 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-200">
+                        {['연차', '오전반차', '오후반차'].map((type) => (
+                          <div 
+                            key={type}
+                            onClick={() => { 
+                              handleFieldChange('vac_type', type); 
+                              setIsTypeOpen(false); 
+                            }}
+                            className="px-4 py-2.5 text-xs hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-medium border-b border-gray-50 last:border-0 transition-colors"
+                          >
+                            {type}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ) : (
-                  <span>{data.vacationType}</span>
+                  <span>{data.vac_type}</span>
                 )}
               </td>
             </tr>
@@ -134,66 +198,77 @@ const VacationForm = ({ data, onChange, mode, user }) => {
               <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">신청 기간</th>
               <td className="p-2">
                 {isEditMode ? (
-                  <div className="flex items-center gap-2">
-                    <div className="relative w-50">
-                      <input 
-                        type="text" 
-                        readOnly 
-                        value={data.startDate || ''} 
-                        onClick={() => { setIsStartCalendarOpen(!isStartCalendarOpen); setIsEndCalendarOpen(false); }} 
-                        placeholder="시작일" 
-                        className={`w-full p-2 border ${isStartCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-xl outline-none cursor-pointer text-xs transition-all`}
-                      />
-                      {isStartCalendarOpen && (
-                        <Calendar 
-                          value={data.startDate} 
-                          onChange={(d) => { handleFieldChange('startDate', d); setIsStartCalendarOpen(false); }} 
-                          onClose={() => setIsStartCalendarOpen(false)}
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <div className="relative w-50">
+                        <input 
+                          type="text" 
+                          readOnly 
+                          value={data.start_date || ''} 
+                          onClick={() => { setIsStartCalendarOpen(!isStartCalendarOpen); setIsEndCalendarOpen(false); }} 
+                          placeholder="시작일" 
+                          className={`w-full p-2 border ${errors.start_date ? 'border-red-500' : isStartCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-xl outline-none cursor-pointer text-xs transition-all`}
                         />
+                        {isStartCalendarOpen && (
+                          <Calendar 
+                            value={data.start_date} 
+                            onChange={(d) => { handleFieldChange('start_date', d); setIsStartCalendarOpen(false); }} 
+                            onClose={() => setIsStartCalendarOpen(false)}
+                          />
+                        )}
+                      </div>
+                      {data.vac_type === '연차' && (
+                        <>
+                          <span className="px-1">~</span>
+                          <div className="relative w-50">
+                            <input 
+                              type="text" 
+                              readOnly 
+                              value={data.end_date || ''} 
+                              onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }} 
+                              placeholder="종료일" 
+                              className={`w-full p-2 border ${errors.end_date ? 'border-red-500' : isEndCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-xl outline-none cursor-pointer text-xs transition-all`}
+                            />
+                            {isEndCalendarOpen && (
+                              <Calendar 
+                                value={data.end_date} 
+                                onChange={(d) => { handleFieldChange('end_date', d); setIsEndCalendarOpen(false); }} 
+                                onClose={() => setIsEndCalendarOpen(false)}
+                              />
+                            )}
+                          </div>
+                        </>
                       )}
                     </div>
-                    {data.vacationType === '연차' && (
-                      <>
-                        <span className="px-1">~</span>
-                        <div className="relative w-50">
-                          <input 
-                            type="text" 
-                            readOnly 
-                            value={data.endDate || ''} 
-                            onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }} 
-                            placeholder="종료일" 
-                            className={`w-full p-2 border ${isEndCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-xl outline-none cursor-pointer text-xs transition-all`}
-                          />
-                          {isEndCalendarOpen && (
-                            <Calendar 
-                              value={data.endDate} 
-                              onChange={(d) => { handleFieldChange('endDate', d); setIsEndCalendarOpen(false); }} 
-                              onClose={() => setIsEndCalendarOpen(false)}
-                            />
-                          )}
-                        </div>
-                      </>
+                    {(errors.start_date || errors.end_date) && (
+                      <p className="text-[10px] text-red-500">
+                        {errors.start_date || errors.end_date}
+                      </p>
                     )}
                   </div>
                 ) : (
-                  <span>{data.startDate} {data.vacationType === '연차' ? `~ ${data.endDate}` : ''}</span>
+                  <span>{data.start_date} {data.vac_type === '연차' ? `~ ${data.end_date}` : ''}</span>
                 )}
               </td>
             </tr>
             <tr className="border-b border-gray-200">
               <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">신청 일수</th>
-              <td className="p-2 font-bold text-[#3530B8]">{data.totalDays || 0}일</td>
+              <td className="p-2 font-bold text-[#3530B8]">{data.days || 0}일</td>
             </tr>
             <tr>
               <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">신청 사유</th>
               <td className="p-2">
                 {isEditMode ? (
-                  <textarea 
-                    value={data.reason || ''}
-                    onChange={(e) => handleFieldChange('reason', e.target.value)}
-                    placeholder="사유를 입력하세요"
-                    className="w-full h-25 p-2 bg-white border border-gray-300 rounded outline-none focus:border-[#3530B8] resize-none"
-                  ></textarea>
+                  <div>
+                    <textarea 
+                      value={data.reason || ''}
+                      onChange={(e) => handleFieldChange('reason', e.target.value)}
+                      placeholder="사유를 입력하세요 (300자 이하)"
+                      maxLength={300}
+                      className={`w-full h-25 p-2 bg-white border ${errors.reason ? 'border-red-500' : 'border-gray-300'} rounded outline-none focus:border-[#3530B8] resize-none`}
+                    ></textarea>
+                    {errors.reason && <p className="mt-1 text-[10px] text-red-500">{errors.reason}</p>}
+                  </div>
                 ) : (
                   <div className="min-h-[4rem] whitespace-pre-wrap">{data.reason}</div>
                 )}
