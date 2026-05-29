@@ -35,7 +35,8 @@ const AdminDept = () => {
     dept_name: '',
     dept_code: '',
     parent_dept_seq: '',
-    dept_type: ""
+    dept_type: "",
+    auth_group: ""
   });
 
   useEffect(() => {
@@ -106,13 +107,13 @@ const AdminDept = () => {
 
   const openCreateHq = () => {
     setFormMode('CREATE_HQ');
-    setFormData({ dept_name: '', dept_code: '', parent_dept_seq: null });
+    setFormData({ dept_name: '', dept_code: '', parent_dept_seq: null, auth_group: 'ROLE_USER' });
     setSelectedNode(null);
   };
 
   const openCreateSub = () => {
     setFormMode('CREATE_SUB');
-    setFormData({ dept_name: '', dept_code: '', parent_dept_seq: null });
+    setFormData({ dept_name: '', dept_code: '', parent_dept_seq: null, auth_group: 'ROLE_USER' });
     setSelectedNode(null);
   };
 
@@ -123,8 +124,10 @@ const AdminDept = () => {
       dept_seq: node.deptSeq,
       dept_name: node.deptName,
       dept_code: node.deptCode,
-      parent_dept_seq: node.parentDeptSeq
+      parent_dept_seq: node.parentDeptSeq,
+      auth_group: node.auth_group
     });
+    console.log(node)
   };
 
   const handleCloseForm = () => {
@@ -363,13 +366,49 @@ const AdminDept = () => {
                 <span>{formData.dept_code.length}/20</span>
               </div>
             </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">부서 권한</label>
+              <div className="grid grid-cols-2 gap-2">
+                <div
+                  className={`px-3 py-2 rounded-xl border text-[11px] font-bold cursor-pointer transition-all flex items-center justify-center
+                    ${formData.auth_group === 'ROLE_USER' ? 'bg-[#3530B8] text-white border-[#3530B8]' : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-[#3530B8]'}`}
+                  onClick={() => setFormData({ ...formData, auth_group: 'ROLE_USER' })}
+                >
+                  일반 부서
+                </div>
+                <div
+                  value="ROLE_HR_ADMIN"
+                  className={`px-3 py-2 rounded-xl border text-[11px] font-bold cursor-pointer transition-all flex items-center justify-center
+                    ${formData.auth_group === 'ROLE_HR_ADMIN' ? 'bg-[#3530B8] text-white border-[#3530B8]' : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-[#3530B8]'}`}
+                  onClick={() => setFormData({ ...formData, auth_group: 'ROLE_HR_ADMIN' })}
+                >
+                  인사 관리
+                </div>
+                <div
+                  value="ROLE_GA_ADMIN"
+                  className={`px-3 py-2 rounded-xl border text-[11px] font-bold cursor-pointer transition-all flex items-center justify-center
+                    ${formData.auth_group === 'ROLE_GA_ADMIN' ? 'bg-[#3530B8] text-white border-[#3530B8]' : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-[#3530B8]'}`}
+                  onClick={() => setFormData({ ...formData, auth_group: 'ROLE_GA_ADMIN' })}
+                >
+                  총무 관리
+                </div>
+                <div
+                  value="ROLE_SUPER_ADMIN"
+                  className={`px-3 py-2 rounded-xl border text-[11px] font-bold cursor-pointer transition-all flex items-center justify-center
+                    ${formData.auth_group === 'ROLE_SUPER_ADMIN' ? 'bg-[#3530B8] text-white border-[#3530B8]' : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-[#3530B8]'}`}
+                  onClick={() => setFormData({ ...formData, auth_group: 'ROLE_SUPER_ADMIN' })}
+                >
+                  총괄 관리자
+                </div>
+              </div>
+            </div>
           </div>
           <div className="p-6 bg-slate-50/50 border-t border-slate-100 flex gap-2 shrink-0 mt-auto">
             <button onClick={handleCloseForm} className="flex-1 h-10 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-100 transition-all cursor-pointer">취소</button>
             <button onClick={handleSave} className="flex-[1.5] h-10 bg-[#3530B8] text-white rounded-xl text-xs font-bold hover:bg-[#2a2594] transition-all shadow-md shadow-indigo-100 cursor-pointer">저장하기</button>
           </div>
         </aside>
-      </div>
+      </div >
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -377,7 +416,7 @@ const AdminDept = () => {
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #CBD5E0; }
       `}</style>
-    </div>
+    </div >
   );
 };
 
