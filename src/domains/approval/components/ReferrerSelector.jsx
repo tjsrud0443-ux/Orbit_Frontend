@@ -149,7 +149,7 @@ const ReferrerSelector = ({ value = [], onChange, isEditMode }) => {
                 </div>
               ))
             ) : (
-              <span className="text-xs text-gray-400 italic">지정된 참조자가 없습니다.</span>
+              <span className="text-xs text-gray-400">지정된 참조자가 없습니다.</span>
             )}
           </div>
         )}
