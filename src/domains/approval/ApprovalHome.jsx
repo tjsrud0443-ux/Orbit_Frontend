@@ -282,10 +282,10 @@ const ApprovalHome = () => {
                   </div>
                   <div className="col-span-2 text-center">
                     <span className={`px-2.5 py-0.5 text-[0.625rem] font-bold rounded-full ${
-                      doc.status === '진행 중' ? 'bg-blue-50 text-blue-600' :
-                      doc.status === '결재 대기' ? 'bg-amber-50 text-amber-600' :
-                      doc.status === '결재 완료' ? 'bg-green-50 text-green-600' :
-                      'bg-red-50 text-red-600'
+                      doc.status === '진행 중' ? 'bg-[#F0F7FF] text-[#007BFF]' :
+                      doc.status === '결재 대기' ? 'bg-[#FFF9F0] text-[#FF9800]' :
+                      doc.status === '결재 완료' ? 'bg-[#F0FDF4] text-[#10B981]' :
+                      'bg-[#FFF0F0] text-[#FF4D4F]'
                     }`}>
                       {doc.status}
                     </span>
