@@ -2,9 +2,11 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBell } from '@fortawesome/free-regular-svg-icons';
 import useAuthStore from '../../store/authStore';
+import useUserStore from '../../store/userStore';
 
-const Header = ({ onMenuClick, user }) => {
+const Header = ({ onMenuClick }) => {
   const token = useAuthStore(state => state.token);
+  const user = useUserStore(state => state.user);
 
   return (
     <header className="h-14 bg-white border-b border-slate-200 flex items-center

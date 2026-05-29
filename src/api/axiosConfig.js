@@ -17,10 +17,11 @@ maxios.interceptors.response.use((resp) => {
 },
     error => {
         if (error.response) {
-            if (error.response.status === 403) {
+            if (error.response.status === 403 && error.config.url !== '/auth/login') {
                 alert("해당 페이지에 접근할 수 있는 권한이 없습니다.")
                 window.location.href = "/main";
             }
         }
+        return Promise.reject(error);
     }
 )

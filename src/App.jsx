@@ -79,23 +79,20 @@ function App() {
 
           <Route path="/aiChat" element={<AiChat />} />
 
-          <Route path="/adminMain" element={<AdminMain />} />
+          <Route element={<ProtectedRoute
+            allow={[{ type: "group", value: "ROLE_SUPER_ADMIN" }]} />}>
+            <Route path="/adminMain" element={<AdminMain />} />
+          </Route>
 
           <Route element={<ProtectedRoute
-            allow={[
-              { type: "dept", value: "인사팀" },
-              { type: "rank", value: "대표" }
-            ]} />}>
+            allow={[{ type: "group", value: "ROLE_HR_ADMIN" }]} />}>
             <Route path="/adminUsers" element={<AdminUsers />} />
             <Route path="/adminDepartments" element={<AdminDept />} />
             <Route path="/adminSignup" element={<AdminSignup />} />
           </Route>
 
           <Route element={<ProtectedRoute
-            allow={[
-              { type: "dept", value: "총무팀" },
-              { type: "rank", value: "대표" }
-            ]} />}>
+            allow={[{ type: "group", value: "ROLE_GA_ADMIN" }]} />}>
             <Route path="/adminSupply" element={<AdminSupply />} />
             <Route path="/adminSupplyRequest" element={<AdminSupplyReq />} />
             <Route path="/adminSupplyRental" element={<AdminSupplyRental />} />
@@ -105,13 +102,12 @@ function App() {
           <Route element={<ProtectedRoute
             allow={[
               { type: "rank", value: "부서장" },
-              { type: "rank", value: "본부장" },
-              { type: "rank", value: "대표" }
+              { type: "rank", value: "본부장" }
             ]} />}>
             <Route path="/adminDocument" element={<AdminDocuments />} />
             <Route path="/adminQna" element={<AdminQna />} />
           </Route>
-          
+
         </Route>
       </Routes>
     </Router>

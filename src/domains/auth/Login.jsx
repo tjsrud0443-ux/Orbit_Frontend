@@ -39,7 +39,11 @@ const Login = () => {
       loginSuccess(resp.data)
       navi("/main");
     }).catch(error => {
-      setLoginError("계정 정보가 일치하지 않습니다. 다시 시도해 주세요.");
+      if (error.response.status === 403) {
+        setLoginError("로그인이 불가한 계정입니다. 관리자에게 문의해 주세요.");
+      } else if(error.response.status === 401) {
+        setLoginError("계정 정보가 일치하지 않습니다. 다시 시도해 주세요.");
+      }
     })
   };
 
@@ -76,13 +80,13 @@ const Login = () => {
             <div className="space-y-1 md:space-y-2">
               <label className="text-xs md:text-sm font-bold text-gray-600 ml-1">ID</label>
               <input
-              type="text"
-              name="id"
-              value={login.id}
-              onChange={handleChange}
-              onKeyDown={handleKeyDown}
-              placeholder="아이디를 입력하세요"
-              className={`w-full px-4 py-2 md:py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3530B8] focus:border-transparent transition-all placeholder:text-gray-300"
+                type="text"
+                name="id"
+                value={login.id}
+                onChange={handleChange}
+                onKeyDown={handleKeyDown}
+                placeholder="아이디를 입력하세요"
+                className={`w-full px-4 py-2 md:py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3530B8] focus:border-transparent transition-all placeholder:text-gray-300"
               ${error.id ? `border-red-400 bg-red-50` : `border-gray-200 focus:border-blue-400`}`}
               />              {error.id && <p className="text-red-500 text-sm ml-1 mt-1">ID를 입력해 주세요.</p>}
             </div>
@@ -101,7 +105,7 @@ const Login = () => {
                 ${error.pw ? `border-red-400 bg-red-50` : `border-gray-200 focus:border-blue-400`}  `}
               />
               {error.pw && <p className="text-red-500 text-sm ml-1 mt-1">Password를 입력해 주세요.</p>}
-              
+
               <div className="flex justify-end mt-1 gap-1">
                 <Link
                   to="/findId"
@@ -121,14 +125,14 @@ const Login = () => {
             </div>
 
             {/* Login Button */}
-            
+
             <button
               onClick={handleLogin}
               className="w-full bg-[#3530B8] hover:bg-[#28248a] text-white font-bold py-2.5 md:py-3.5 rounded-xl shadow-lg shadow-[#3530B8]/20 transition-all active:scale-[0.98] mt-2 md:mt-4"
             >
               Login
             </button>
-            </div>
+          </div>
 
           {/* Signup Link */}
           <div className="mt-4 md:mt-8 text-center text-xs md:text-sm text-gray-500">
