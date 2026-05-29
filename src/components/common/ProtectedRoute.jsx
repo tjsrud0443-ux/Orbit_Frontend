@@ -8,24 +8,22 @@ function ProtectedRoute({ allow }) {
         return <div>로딩 중....</div>; 
     }
 
-    const dept_name = user.dept_name;
-    const rank_name = user.rank_name;
+    const group = user.auth_group;
+    const rank = user.rank_name;
     const role = user.role;
 
-    const isAdmin = role === "ADMIN" || dept_name === "운영총괄본부" ||
-        dept_name === "운영총괄팀";
-
+    const isAdmin = role === "ADMIN" || group === "ROLE_SUPER_ADMIN";
     if (isAdmin) {
         return <Outlet />;
     }
 
     const result = allow.some(item => {
-        if (item.type === "dept") {
-            return item.value === dept_name;
+        if (item.type === "group") {
+            return item.value === group;
         }
 
         if (item.type === "rank") {
-            return item.value === rank_name;
+            return item.value === rank;
         }
 
         return false;
