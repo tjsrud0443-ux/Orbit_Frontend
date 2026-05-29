@@ -7,7 +7,7 @@ import VacationForm from './forms/VacationForm';
 import PaymentForm from './forms/PaymentForm';
 import GeneralForm from './forms/GeneralForm';
 import PurchaseForm from './forms/PurchaseForm';
-import { submitVacation, submitPayment, submitGeneral, submitPurchase } from './approvalApi';
+import { submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail } from './approvalApi';
 
 // 결재자 선택 모달 컴포넌트
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
@@ -67,7 +67,7 @@ const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
 };
 
 const ApprovalDetail = () => {
-  const { docId } = useParams();
+  const { docSeq } = useParams();
   const location = useLocation();
   const { user } = useUserStore();
   const { fetchEmployees } = useEmployeeStore();
@@ -91,7 +91,7 @@ const ApprovalDetail = () => {
     const isGeneralPath = location.pathname.includes('general');
     const isPurchasePath = location.pathname.includes('purchase');
 
-    if (!docId) {
+    if (!docSeq) {
       // [작성 모드]
       setUserRole('DRAFTER');
       setMode('EDIT');
@@ -142,12 +142,23 @@ const ApprovalDetail = () => {
       else if (isGeneralPath) setDoc_type('GENERAL');
       else if (isPurchasePath) setDoc_type('PURCHASE');
       
-      fetchDocumentData(docId);
+      fetchDocumentData(docSeq);
     }
-  }, [docId, location.pathname]);
+  }, [docSeq, location.pathname]);
 
-  const fetchDocumentData = async (id) => {
-    setMode('VIEW');
+  const fetchDocumentData = async (docSeq) => {
+    try {
+      const response = await getApprovalDetail(type, docSeq).then(resp => {
+        setFormData(resp.data);
+        setApprovers(resp.data.approvers || []);
+        setMode('VIEW');
+        // userRole 세팅 (백엔드에서 내려준 값 or 별도 로직)
+        // setUserRole(data.userRole);
+
+      })
+    } catch (error) {
+      console.error('기안 문서 조회 실패:', error);
+    }
   };
 
   const [isSubmitClicked, setIsSubmitClicked] = useState(false);
