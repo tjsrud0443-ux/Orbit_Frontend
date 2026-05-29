@@ -8,12 +8,10 @@ import useUserStore from '../../store/userStore';
 export default function Layout() {
   const navi = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  // const [user, setUser] = useState(null);
   const setUserInfo = useUserStore(state => state.setUser);
 
   useEffect(() => {
     getUsersInfo().then(resp => {
-      // setUser(resp.data)
       setUserInfo(resp.data)
     })
     .catch(error => {
