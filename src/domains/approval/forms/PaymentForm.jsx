@@ -55,7 +55,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
     if (value) {
       if (field === 'title' && value.length > 50) error = '글자 수 초과 (50자 이하)';
       if (field === 'pay_reason' && value.length > 300) error = '글자 수 초과 (300자 이하)';
-      if (field === 'account_info' && value.length > 30) error = '글자 수 초과 (30자 이하)';
+      if (field === 'account_info' && value.length > 50) error = '글자 수 초과 (50자 이하)';
     }
 
     return error;
@@ -260,8 +260,8 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
               <textarea 
                 value={data.account_info || ''}
                 onChange={(e) => handleFieldChange('account_info', e.target.value)}
-                placeholder="은행명 / 계좌번호 / 예금주 (30자 이하)"
-                maxLength={30}
+                placeholder="은행명 / 계좌번호 / 예금주 (50자 이하)"
+                maxLength={50}
                 className={`w-full h-20 p-2 text-xs bg-white border ${errors.account_info ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all`}
               ></textarea>
               {errors.account_info && <p className="mt-1 text-[10px] text-red-500">{errors.account_info}</p>}

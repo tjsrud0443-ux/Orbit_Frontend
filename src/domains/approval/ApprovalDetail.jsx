@@ -115,7 +115,7 @@ const ApprovalDetail = () => {
           pay_date: '',
           pay_reason: '',
           account_info: '',
-          items: [{ item_order: 1, item_name: '', amount: 0, receipt_url: null, note: '' }]
+          items: [{ item_order: 1, item_name: '', amount: 0, receipt: null, note: '' }]
         });
       } else if (isGeneralPath) {
         setDoc_type('GENERAL');
@@ -188,7 +188,7 @@ const ApprovalDetail = () => {
           return formData.items.every(item => {
             const item_name = item.item_name;
             const amount = item.amount;
-            const receipt = item.receipt_url || item.receipt;
+            const receipt = item.receipt;
             const note = item.note;
             
             return (
@@ -271,10 +271,27 @@ const ApprovalDetail = () => {
         let response;
         if (doc_type === 'VACATION') {
           response = await submitVacation(submitPayload);
-        } else if (doc_type === 'PAYMENT') {
-          response = await submitPayment(submitPayload);
         } else if (doc_type === 'GENERAL') {
           response = await submitGeneral(submitPayload);
+        } else if (doc_type === 'PAYMENT') {
+          const formDataObj = new FormData();
+
+          const total_amount = (formData.items || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+
+          const paymentPayload = {
+            ...submitPayload,
+            total_amount: total_amount
+          };
+
+          formDataObj.append("dto", new Blob([JSON.stringify(paymentPayload)], {type: "application/json"}));
+          if(formData.items && formData.items.length > 0){
+            formData.items.forEach(item => {
+              if(item.receipt instanceof File){
+                formDataObj.append("files", item.receipt);
+              }
+            });
+          }
+          response = await submitPayment(formDataObj);
         } else if (doc_type === 'PURCHASE') {
           // 💡 변경 요청 사항 적용: Multipart/Form-Data 형식으로 변환
           const formDataObj = new FormData();
