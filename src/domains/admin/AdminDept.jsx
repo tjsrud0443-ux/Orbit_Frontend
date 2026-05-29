@@ -154,7 +154,21 @@ const AdminDept = () => {
 
     if (formMode === 'EDIT') {
       updateDept(formData).then(resp => {
-        console.log("수정완료")
+        getGroup().then(resp => {
+          setFullTree({
+            root: resp.data.root,
+            nodeMap: resp.data.nodeMap
+          });
+          setEmployees(resp.data.users);
+          if (resp.data.root) {
+            setExpandedNodes(new Set([resp.data.root.deptSeq]));
+          }
+          setLoading(false);
+        })
+          .catch(err => {
+            console.error("조직도 로딩 실패", err);
+            setLoading(false);
+          });
       })
     } else {
       addDept(payload).then(resp => {
