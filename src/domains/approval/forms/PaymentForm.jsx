@@ -63,8 +63,10 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
 
   const handleFieldChange = (field, value) => {
     if (!onChange) return;
-    const error = validateField(field, value);
-    setErrors(prev => ({ ...prev, [field]: error }));
+    if (field !== 'items') {
+      const error = validateField(field, value);
+      setErrors(prev => ({ ...prev, [field]: error }));
+    }
     onChange({ ...data, [field]: value });
   };
 
@@ -72,9 +74,16 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
     const newItems = [...(data.items || [])];
     newItems[index] = { ...newItems[index], [field]: value };
     
-    // 개별 아이템 필드 검증 (item_name, amount는 필수)
+    // 개별 아이템 필드 검증
     const itemErrors = { ...(errors.items || {}) };
-    if (!value && (field === 'item_name' || field === 'amount')) {
+    
+    if (field === 'receipt') {
+      if (!value) {
+        itemErrors[`${index}-receipt`] = '영수증을 첨부해주세요.';
+      } else {
+        delete itemErrors[`${index}-receipt`];
+      }
+    } else if (!value && (field === 'item_name' || field === 'amount')) {
       itemErrors[`${index}-${field}`] = field === 'item_name' ? '품목명을 입력해주세요.' : '금액을 입력해주세요.';
     } else {
       if (field === 'item_name' && value.length > 30) {
@@ -352,15 +361,12 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
                             className="hidden" 
                             onChange={(e) => {
                               handleItemChange(index, 'receipt', e.target.files[0]);
-                              const itemErrors = { ...(errors.items || {}) };
-                              delete itemErrors[`${index}-receipt`];
-                              setErrors(prev => ({ ...prev, items: itemErrors }));
                             }}
                           />
                         </label>
                         {item.receipt && <span className="text-[9px] text-gray-500 truncate max-w-[80px]">{item.receipt.name}</span>}
                         {errors.items?.[`${index}-receipt`] && !item.receipt && (
-                          <p className="text-[8px] text-red-500 mt-0.5 whitespace-nowrap">{errors.items[`${index}-receipt`]}</p>
+                          <p className="text-[9px] text-red-500 mt-0.5 whitespace-nowrap">{errors.items[`${index}-receipt`]}</p>
                         )}
                       </div>
                     ) : (

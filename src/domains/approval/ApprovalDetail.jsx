@@ -182,7 +182,7 @@ const ApprovalDetail = () => {
 
           if (!pay_date) return false;
           if (!pay_reason?.trim() || pay_reason.length > 300) return false;
-          if (!account_info?.trim() || account_info.length > 30) return false;
+          if (!account_info?.trim() || account_info.length > 50) return false;
           if (!formData.items || formData.items.length === 0) return false;
           
           return formData.items.every(item => {
@@ -217,7 +217,6 @@ const ApprovalDetail = () => {
       };
 
       if (!isFormValid()) {
-        // alert 대신 빨간 테두리 표시를 위해 상태 유지 (각 폼에서 isSubmitClicked를 활용)
         return;
       }
 
@@ -241,8 +240,6 @@ const ApprovalDetail = () => {
               days: isHalfVacation ? 0.5 : Number(formData.days)
             }
           : restOfData;
-
-          console.log(restOfData);
         
         // 각 테이블 DTO 구조에 대입하기 좋게 조립
         const submitPayload = {
@@ -264,8 +261,6 @@ const ApprovalDetail = () => {
           // 나머지 문서 데이터
           ...finalDocData
         };
-
-          console.log(finalDocData);
 
         // 문서 타입별로 분리된 API 호출
         let response;
