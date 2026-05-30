@@ -18,7 +18,7 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, drafter }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'APPROVED': return 'text-[#F0FDF4]';
+      case 'APPROVED': return 'text-[#10B981]';
       case 'REJECTED': return 'text-[#FF4D4F]';
       case 'IN_PROGRESS': return 'text-blue-300';
       default: return 'text-[#FF9800]/80';

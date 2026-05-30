@@ -14,8 +14,8 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
     if (!data.items || data.items.length === 0) {
       handleFieldChange('items', [{ id: 1, item_name: '', amount: 0, receipt: null, note: '' }]);
     }
-    if (!data.requestDate) {
-      handleFieldChange('requestDate', today);
+    if (!data.created_at) {
+      handleFieldChange('created_at', today);
     }
   }, []);
 
@@ -141,6 +141,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
   };
 
   const applicant = isEditMode ? user : data;
+  const displayDate = isEditMode ? today : (data?.created_at?.substring(0, 10) || '-');
 
   return (
     <div className="space-y-5">
@@ -223,11 +224,11 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
                     )}
                   </div>
                 ) : (
-                  <span>{data.pay_date || '-'}</span>
+                  <span>{data.pay_date?.substring(0, 10) || '-'}</span>
                 )}
               </td>
               <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">신청일</th>
-              <td className="p-2">{data.requestDate || today}</td>
+              <td className="p-2">{displayDate}</td>
             </tr>
           </tbody>
         </table>

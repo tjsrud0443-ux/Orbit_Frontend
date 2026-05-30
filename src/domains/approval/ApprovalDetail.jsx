@@ -78,6 +78,11 @@ const ApprovalDetail = () => {
   const [approvers, setApprovers] = useState([]);
   const [formData, setFormData] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // 반려 관련 상태
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejectError, setRejectError] = useState(false);
 
   const navigate = useNavigate();
 
@@ -90,6 +95,13 @@ const ApprovalDetail = () => {
 
     const upperType = type.toUpperCase();
     setDoc_type(upperType);
+    
+    // 이전 데이터 초기화 (화면 깜빡임 방지 및 정확한 폼 렌더링을 위해)
+    setFormData({});
+    setIsSubmitClicked(false);
+    setIsRejecting(false);
+    setRejectReason('');
+    setRejectError(false);
 
     if (!docSeq) {
       // [작성 모드]
@@ -109,11 +121,11 @@ const ApprovalDetail = () => {
     } else {
       fetchDocumentData(type, docSeq);
     }
-  }, [type, docSeq]);
+  }, [type, docSeq, user?.id]);
 
   const fetchDocumentData = async (type, docSeq) => {
     try {
-      const response = await getApprovalDetail(type, docSeq).then(resp => {
+      await getApprovalDetail(type, docSeq).then(resp => {
         setFormData({
           ...resp.data.common,   // draft_documents 정보
           ...resp.data.detail,   // 각 문서별 본문 디테일 정보
@@ -122,27 +134,23 @@ const ApprovalDetail = () => {
           referrers: resp.data.referrers || []
         });
 
-        setApprovers(resp.data.approvers || []);
-        setMode('VIEW');
-
+        const fetchedApprovers = resp.data.approvers || [];
+        setApprovers(fetchedApprovers);
+        
         const documentStatus = resp.data.common?.status;
+        const drafterId = resp.data.common?.users_id || resp.data.users_id;
 
-        const approver = resp.data.approvers?.find(a => a.users_id === user?.id && a.status === 'IN_PROGRESS')
-        if(approver){
+        // 역할 및 모드 설정
+        if (drafterId === user?.id) {
+          setUserRole('DRAFTER');
+          setMode(documentStatus === 'TEMP' ? 'EDIT' : 'VIEW');
+        } else if (fetchedApprovers.some(a => a.users_id === user?.id)) {
           setUserRole('APPROVER');
           setMode('VIEW');
-        }else if(resp.data.users_id === user?.id){
-          setUserRole('DRAFTER');
-          if (documentStatus === 'TEMP') {
-            setMode('EDIT');
-          }else{
-            setMode('VIEW');
-          }
-        }else{
+        } else {
           setUserRole('REFERRER');
           setMode('VIEW');
         }
-
       })
     } catch (error) {
       console.error('기안 문서 조회 실패:', error);
@@ -152,11 +160,53 @@ const ApprovalDetail = () => {
   const [isSubmitClicked, setIsSubmitClicked] = useState(false);
 
   // 버튼 액션
-  const handleAction = async (actionType) => {
+  const handleAction = async (actionType, payload) => {
     const isTempSave = actionType === 'TEMP_SAVE';
 
+    if (actionType === 'APPROVE') {
+      if (!window.confirm('문서를 승인하시겠습니까?')) return;
+      try {
+        // API 연동 (상세 구현은 백엔드 스펙에 맞게 조정 필요)
+        const response = await getApprovalDetail(type, docSeq); // 임시 예시
+        alert('결재 승인이 완료되었습니다.');
+        navigate('/approval');
+      } catch (error) {
+        alert('승인 처리 중 오류가 발생했습니다.');
+      }
+      return;
+    }
+
+    if (actionType === 'REJECT') {
+      if (!payload?.trim()) {
+        setRejectError(true);
+        return;
+      }
+      if (!window.confirm('문서를 반려하시겠습니까?')) return;
+      try {
+        // API 연동 (상세 구현은 백엔드 스펙에 맞게 조정 필요)
+        // const response = await rejectApproval(docSeq, { reject_reason: payload });
+        alert('결재 반려가 완료되었습니다.');
+        navigate('/approval');
+      } catch (error) {
+        alert('반려 처리 중 오류가 발생했습니다.');
+      }
+      return;
+    }
+
+    if (actionType === 'SUBMIT_CANCEL') {
+      if (!window.confirm('상신을 취소하시겠습니까?')) return;
+      try {
+        // API 연동
+        alert('상신 취소가 완료되었습니다.');
+        navigate('/approval');
+      } catch (error) {
+        alert('상신 취소 중 오류가 발생했습니다.');
+      }
+      return;
+    }
+
     // [결재 상신 버튼을 누른 경우]
-    if (actionType === 'SUBMIT') {
+    if (actionType === 'SUBMIT' || actionType === 'TEMP_SAVE') {
       setIsSubmitClicked(true);
 
       // 필수 항목 검증
@@ -329,6 +379,7 @@ const ApprovalDetail = () => {
   // 4. 문서 타입에 따른 폼 렌더링
   const renderForm = () => {
     const props = {
+      key: doc_type, // 문서 타입이 바뀔 때 컴포넌트 강제 재마운트 (초기화 이슈 해결)
       data: formData,
       onChange: setFormData,
       mode: mode,
@@ -368,6 +419,10 @@ const ApprovalDetail = () => {
       created_at: formData.created_at
     };
 
+  // 반려 여부 및 사유 확인
+  const rejectedApprover = approvers?.find(app => app.status === 'REJECTED');
+  const showRejectReason = mode === 'VIEW' && !!rejectedApprover;
+
   return (
     <>
       <EmployeeSelectionModal 
@@ -382,11 +437,61 @@ const ApprovalDetail = () => {
         userRole={userRole}
         mode={mode}
         approvers={approvers}
+        referrers={formData.referrers}
         onAddApprover={handleAddApprover}
         onRemoveApprover={handleRemoveApprover}
         onAction={handleAction}
+        isRejecting={isRejecting}
+        setIsRejecting={setIsRejecting}
+        rejectReason={rejectReason}
+        setRejectReason={setRejectReason}
+        rejectError={rejectError}
+        setRejectError={setRejectError}
       >
         {renderForm()}
+
+        {/* 반려 사유 영역 (조회 모드에서 반려된 경우 또는 결재자가 반려 진행 중인 경우) */}
+        {(showRejectReason || isRejecting) && (
+          <div className="mt-8 pt-8 border-t-2 border-red-50 animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-1.5 h-4 bg-red-500 rounded-full"></div>
+              <span className="text-xs font-bold text-red-600">반려 사유</span>
+            </div>
+            
+            {isRejecting ? (
+              <>
+                <textarea
+                  className={`w-full p-4 text-sm border-2 rounded-xl bg-red-50/30 focus:outline-none transition-all resize-none h-32 ${
+                    rejectError ? 'border-red-500 ring-4 ring-red-500/10 shadow-lg shadow-red-500/5' : 'border-red-100 focus:border-red-200'
+                  }`}
+                  value={rejectReason}
+                  onChange={(e) => {
+                    setRejectReason(e.target.value);
+                    if (e.target.value.trim()) setRejectError(false);
+                  }}
+                  placeholder="반려 사유를 상세히 입력해주세요."
+                  autoFocus
+                />
+                {rejectError && (
+                  <p className="text-xs text-red-500 mt-2 font-bold flex items-center gap-1 animate-pulse">
+                    <span>⚠️</span> 반려 사유를 입력해주세요.
+                  </p>
+                )}
+              </>
+            ) : (
+              <div className="p-5 bg-red-50 rounded-xl border border-red-100 shadow-sm">
+                <p className="text-sm text-red-700 leading-relaxed font-medium">
+                  {rejectedApprover?.reject_reason || '반려 사유가 등록되지 않았습니다.'}
+                </p>
+                <div className="mt-3 flex justify-end">
+                  <span className="text-[10px] font-bold text-red-400 bg-red-100/50 px-2 py-1 rounded">
+                    반려자: {rejectedApprover?.name} {rejectedApprover?.rank_name}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </ApprovalDocumentContainer>
     </>
   );
