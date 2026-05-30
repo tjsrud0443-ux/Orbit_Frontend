@@ -5,6 +5,7 @@ import ApprovalActionButtons from './ApprovalActionButtons';
 const ApprovalDocumentContainer = ({ 
   title, 
   user, 
+  drafter,
   userRole, 
   mode, 
   approvers, 
@@ -29,7 +30,7 @@ const ApprovalDocumentContainer = ({
             isEditMode={mode === 'EDIT' && userRole === 'DRAFTER'} 
             onAdd={onAddApprover}
             onRemove={onRemoveApprover}
-            user={user}
+            drafter={drafter}
           />
         </div>
 
