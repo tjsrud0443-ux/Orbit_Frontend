@@ -7,7 +7,7 @@ import VacationForm from './forms/VacationForm';
 import PaymentForm from './forms/PaymentForm';
 import GeneralForm from './forms/GeneralForm';
 import PurchaseForm from './forms/PurchaseForm';
-import { submitVacation, submitPayment, submitGeneral, submitPurchase } from './approvalApi';
+import { submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail } from './approvalApi';
 
 // 결재자 선택 모달 컴포넌트
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
@@ -67,7 +67,7 @@ const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
 };
 
 const ApprovalDetail = () => {
-  const { docId } = useParams();
+  const { type, docSeq } = useParams();
   const location = useLocation();
   const { user } = useUserStore();
   const { fetchEmployees } = useEmployeeStore();
@@ -86,79 +86,74 @@ const ApprovalDetail = () => {
   }, [fetchEmployees]);
 
   useEffect(() => {
-    const isPaymentPath = location.pathname.includes('payment');
-    const isVacationPath = location.pathname.includes('vacation');
-    const isGeneralPath = location.pathname.includes('general');
-    const isPurchasePath = location.pathname.includes('purchase');
+    if (!type) return; 
 
-    if (!docId) {
+    const upperType = type.toUpperCase();
+    setDoc_type(upperType);
+
+    if (!docSeq) {
       // [작성 모드]
       setUserRole('DRAFTER');
       setMode('EDIT');
       setApprovers([]);
-
-      if (isVacationPath) {
-        setDoc_type('VACATION');
-        setFormData({
-          title: '',
-          vac_type: '연차',
-          start_date: '',
-          end_date: '',
-          days: 0,
-          reason: '',
-          referrers: []
-        });
-      } else if (isPaymentPath) {
-        setDoc_type('PAYMENT');
-        setFormData({
-          title: '',
-          pay_date: '',
-          pay_reason: '',
-          account_info: '',
-          items: [{ item_order: 1, item_name: '', amount: 0, receipt: null, note: '' }]
-        });
-      } else if (isGeneralPath) {
-        setDoc_type('GENERAL');
-        setFormData({
-          title: '',
-          purpose: '',
-          content: ''
-        });
-      } else if (isPurchasePath) {
-        setDoc_type('PURCHASE');
-        setFormData({
-          title: '',
-          purpose: '',
-          vendor: '',
-          purchase_date: '',
-          items: [{ item_order: 1, item_name: '', ea: 1, unit_price: 0, note: '' }],
-          attachments: []
-        });
+      
+      if (upperType === 'VACATION') {
+        setFormData({ title: '', vac_type: '연차', start_date: '', end_date: '', days: 0, reason: '' });
+      } else if (upperType === 'PAYMENT') {
+        setFormData({ title: '', pay_date: '', pay_reason: '', account_info: '', items: [{ item_order: 1, item_name: '', amount: 0, receipt: null, note: '' }] });
+      } else if (upperType === 'GENERAL') {
+        setFormData({ title: '', purpose: '', content: '' });
+      } else if (upperType === 'PURCHASE') {
+        setFormData({ title: '', purpose: '', vendor: '', purchase_date: '', items: [{ item_order: 1, item_name: '', ea: 1, unit_price: 0, note: '' }], attachments: [] });
       }
     } else {
-      // [조회 모드]
-      if (isVacationPath) setDoc_type('VACATION');
-      else if (isPaymentPath) setDoc_type('PAYMENT');
-      else if (isGeneralPath) setDoc_type('GENERAL');
-      else if (isPurchasePath) setDoc_type('PURCHASE');
-      
-      fetchDocumentData(docId);
+      fetchDocumentData(type, docSeq);
     }
-  }, [docId, location.pathname]);
+  }, [type, docSeq]);
 
-  const fetchDocumentData = async (id) => {
-    setMode('VIEW');
+  const fetchDocumentData = async (type, docSeq) => {
+    try {
+      const response = await getApprovalDetail(type, docSeq).then(resp => {
+        setFormData({
+          ...resp.data.common,   // draft_documents 정보
+          ...resp.data.detail,   // 각 문서별 본문 디테일 정보
+          items: resp.data.items || [], // 상세 품목 리스트
+          attachments: resp.data.attachments || [],
+          referrers: resp.data.referrers || []
+        });
+
+        setApprovers(resp.data.approvers || []);
+        setMode('VIEW');
+
+        const documentStatus = resp.data.common?.status;
+
+        const approver = resp.data.approvers?.find(a => a.users_id === user?.id && a.status === 'IN_PROGRESS')
+        if(approver){
+          setUserRole('APPROVER');
+          setMode('VIEW');
+        }else if(resp.data.users_id === user?.id){
+          setUserRole('DRAFTER');
+          if (documentStatus === 'TEMP') {
+            setMode('EDIT');
+          }else{
+            setMode('VIEW');
+          }
+        }else{
+          setUserRole('REFERRER');
+          setMode('VIEW');
+        }
+
+      })
+    } catch (error) {
+      console.error('기안 문서 조회 실패:', error);
+    }
   };
 
   const [isSubmitClicked, setIsSubmitClicked] = useState(false);
 
   // 버튼 액션
   const handleAction = async (actionType) => {
-
-    if (actionType === 'TEMP_SAVE') {
-      // 임시저장 처리
-      return;
-    }
+    const isTempSave = actionType === 'TEMP_SAVE';
 
     // [결재 상신 버튼을 누른 경우]
     if (actionType === 'SUBMIT') {
@@ -226,8 +221,6 @@ const ApprovalDetail = () => {
       }
 
       try {
-        // formData에 섞여 있는 referrers(참조자 배열) 추출
-        // const { referrers, ...docData } = formData;
         const { referrers, title, ...restOfData } = formData;
         
         const isVacation= doc_type === 'VACATION'
@@ -246,7 +239,8 @@ const ApprovalDetail = () => {
           title: formData.title,
           doc_type: doc_type,
           users_id: user?.id,
-          
+          status: isTempSave ? 'TEMP' : 'DRAFT',
+          is_temp: isTempSave ? 1 : 0,
           // 결재자 리스트 (users_id 포함)
           approvers: approvers.map((app, index) => ({
             users_id: app.id || app.users_id,
@@ -265,9 +259,9 @@ const ApprovalDetail = () => {
         // 문서 타입별로 분리된 API 호출
         let response;
         if (doc_type === 'VACATION') {
-          response = await submitVacation(submitPayload);
+          response = docSeq ? updateVacation(docSeq, submitPayload) : submitVacation(submitPayload);
         } else if (doc_type === 'GENERAL') {
-          response = await submitGeneral(submitPayload);
+          response = docSeq ? updateGeneral(docSeq, submitPayload) : submitGeneral(submitPayload);
         } else if (doc_type === 'PAYMENT') {
           const formDataObj = new FormData();
 
@@ -286,15 +280,12 @@ const ApprovalDetail = () => {
               }
             });
           }
-          response = await submitPayment(formDataObj);
+          response = docSeq ? updatePayment(docSeq, formDataObj) : submitPayment(formDataObj);
         } else if (doc_type === 'PURCHASE') {
-          // 💡 변경 요청 사항 적용: Multipart/Form-Data 형식으로 변환
           const formDataObj = new FormData();
           
-          // 1. JSON 데이터를 Blob으로 변환하여 "dto" 키로 append
           formDataObj.append("dto", new Blob([JSON.stringify(submitPayload)], { type: "application/json" }));
           
-          // 2. 첨부파일들을 "files" 키로 각각 append
           if (formData.attachments && formData.attachments.length > 0) {
             formData.attachments.forEach(file => {
               if (file instanceof File) {
@@ -303,12 +294,11 @@ const ApprovalDetail = () => {
             });
           }
 
-          response = await submitPurchase(formDataObj);
+          response = docSeq ? await updatePurchase(docSeq, formDataObj) : await submitPurchase(formDataObj);
         }
 
-        // maxios 통신 성공 시
         if (response && (response.status === 200 || response.status === 201 || response.data)) {
-          alert('결재 문서가 성공적으로 상신되었습니다.');
+          alert(isTempSave ? '임시저장이 완료되었습니다.' : '결재 문서가 성공적으로 상신되었습니다.');
           navigate('/approval');
         }
 
@@ -370,6 +360,14 @@ const ApprovalDetail = () => {
     }
   };
 
+  const drafter = mode === 'EDIT'
+  ? user 
+  : { 
+      name:       formData.name,
+      rank_name:  formData.rank_name,
+      created_at: formData.created_at
+    };
+
   return (
     <>
       <EmployeeSelectionModal 
@@ -380,6 +378,7 @@ const ApprovalDetail = () => {
       <ApprovalDocumentContainer
         title={getTitle()}
         user={user}
+        drafter={drafter}
         userRole={userRole}
         mode={mode}
         approvers={approvers}
