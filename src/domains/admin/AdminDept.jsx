@@ -213,12 +213,17 @@ const AdminDept = () => {
   };
 
   const handleDelete = (node) => {
-    const count = getDeptMemberCount(node);
-    if (count > 0) {
-      alert("본부 또는 부서 내에 소속된 사원이 존재하여 삭제할 수 없습니다.");
+    if (node.children && node.children.length > 0) {
+      alert("하위 부서가 존재하여 삭제할 수 없습니다. \n하위 부서를 먼저 삭제해 주세요.");
       return;
     }
-    if (window.confirm(`[${node.deptName}] 을(를) 삭제하시겠습니까?`)) {
+
+    const count = getDeptMemberCount(node);
+    if (count > 0) {
+      alert("본부 또는 부서 내에 소속된 직원이 존재하여 삭제할 수 없습니다.");
+      return;
+    }
+    if (window.confirm(`[ ${node.deptName} ] 을(를) 삭제하시겠습니까? \n삭제 후에는 복구가 불가합니다.`)) {
       delDept(node.deptSeq).then(resp => {
         alert("삭제되었습니다.");
         getGroup().then(resp => {
