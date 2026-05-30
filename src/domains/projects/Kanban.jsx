@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTimes, faUser, faChevronDown, faCircle, faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTimes, faUser, faChevronDown, faCircle, faCalendarAlt, faChevronLeft } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
 
 // 초기 Mock 데이터
@@ -32,6 +33,7 @@ const PROJECT_MEMBERS = [
 ];
 
 const Kanban = () => {
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState(INITIAL_TASKS);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [detailModalTask, setDetailModalTask] = useState(null);
@@ -156,7 +158,15 @@ const Kanban = () => {
       <div className="hidden lg:flex flex-col h-full overflow-hidden">
         {/* 1. 상단 프로젝트 헤더 */}
         <header className="flex justify-between items-center px-10 py-8 bg-white border-b border-slate-100 shrink-0">
-          <h1 className="text-2xl font-black text-[#1a1c3d] tracking-tight">Orbit 그룹웨어 고도화</h1>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => navigate('/projects')}
+              className="w-10 h-10 bg-white rounded-xl shadow-md border border-slate-50 flex items-center justify-center hover:bg-slate-50 transition-all cursor-pointer group"
+            >
+              <FontAwesomeIcon icon={faChevronLeft} className="text-slate-300 group-hover:text-slate-400 transition-colors" />
+            </button>
+            <h1 className="text-2xl font-black text-[#1a1c3d] tracking-tight">Orbit 그룹웨어 고도화</h1>
+          </div>
           <div className="flex items-center gap-6">
             <div className="flex -space-x-3">
               {PROJECT_MEMBERS.map(m => (
