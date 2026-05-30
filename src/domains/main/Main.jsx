@@ -1,15 +1,28 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFileSignature, faDoorOpen, faFileCirclePlus, faDiagramProject, faClipboard, faBox } from '@fortawesome/free-solid-svg-icons';
+
 import { fetchHolidays } from '../../api/holidayApi';
 import { getSchedules } from '../schedules/schedulesApi';
+import { checkIn_api, checkOut_api, getAttendanceStatus } from './mainApi';
+import useUserStore from '../../store/userStore';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 
+import DraftModal from './DraftModal';
+import ProjectModal from './ProjectModal';
+
 const Main = () => {
   const navigate = useNavigate();
+  const user = useUserStore(state => state.user);
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  //빠른실행탭 모달 연결을 위한 상태변수
+  const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
 
   //calendar
   const [selectedDate, setSelectedDate] = useState(null);
@@ -25,34 +38,71 @@ const Main = () => {
     holiday:  '#EF4444',
   };
 
-// 자정 리셋 useEffect 추가
-useEffect(() => {
-  const now = new Date();
-  const midnight = new Date();
-  midnight.setHours(24, 0, 0, 0); // 오늘 자정
-  const msUntilMidnight = midnight - now;
+  // 자정 리셋 useEffect 추가
+  useEffect(() => {
+    const now = new Date();
+    const midnight = new Date();
+    midnight.setHours(24, 0, 0, 0); // 오늘 자정
+    const msUntilMidnight = midnight - now;
 
-  const resetTimer = setTimeout(() => {
-    setCheckIn(null);
-    setCheckOut(null);
-  }, msUntilMidnight);
+    const resetTimer = setTimeout(() => {
+      setCheckIn(null);
+      setCheckOut(null);
+    }, msUntilMidnight);
 
-  return () => clearTimeout(resetTimer);
-}, []);
+    return () => clearTimeout(resetTimer);
+  }, []);
 
-// 출근 핸들러
-const handleCheckIn = () => {
-  if (checkIn) return; // 이미 출근한 경우 무시
-  const now = new Date();
-  setCheckIn(now);
-};
+  // 근태 정보 초기 로드
+  useEffect(() => {
+    if (user && user.id) {
+      getAttendanceStatus()
+        .then(resp => {
+          if (resp.data) {
+            // 서버에서 받은 시간이 있다면 상태 업데이트
+            if (resp.data.check_in) setCheckIn(new Date(resp.data.check_in));
+            if (resp.data.check_out) setCheckOut(new Date(resp.data.check_out));
+          }
+        })
+        .catch(err => {
+          console.error('근태 정보 로드 실패:', err);
+        });
+    }
+  }, [user]);
 
-// 퇴근 핸들러
-const handleCheckOut = () => {
-  if (!checkIn || checkOut) return; // 출근 전이거나 이미 퇴근한 경우 무시
-  const now = new Date();
-  setCheckOut(now);
-};
+  // 출근 핸들러
+  const handleCheckIn = () => {
+    if (checkIn) return; // 이미 출근한 경우 무시
+
+    checkIn_api()
+      .then(() => {
+        const now = new Date();
+        setCheckIn(now);
+        alert('출근 처리가 완료되었습니다.');
+      })
+      .catch(err => {
+        console.error('출근 처리 실패:', err);
+        alert('출근 처리에 실패했습니다.');
+      });
+  };
+
+  // 퇴근 핸들러
+  const handleCheckOut = () => {
+    if (!checkIn || checkOut) return; // 출근 전이거나 이미 퇴근한 경우 무시
+
+    if (!window.confirm('퇴근 처리하시겠습니까?')) return;
+
+    checkOut_api()
+      .then(() => {
+        const now = new Date();
+        setCheckOut(now);
+        alert('퇴근 처리가 완료되었습니다.');
+      })
+      .catch(err => {
+        console.error('퇴근 처리 실패:', err);
+        alert('퇴근 처리에 실패했습니다.');
+      });
+  };
 
 const formatStampTime = (date) =>
   date.toLocaleTimeString('ko-KR', 
@@ -96,17 +146,23 @@ useEffect(() => {
     { type: "공지", title: "신규 프로젝트 킥오프 미팅", date: "2026.05.26", isNotice: true },
   ];
 
-  const quickActions = [
-    { title: "전자결재", icon: "📝" },
-    { title: "일정 추가", icon: "📅" },
-    { title: "회의실", icon: "💬" },
-    { title: "비품 신청", icon: "🗑️" },
-    { title: "업무 보고", icon: "📊" },
-    { title: "연차 신청", icon: "🏖️" },
-  ];
-
+const quickActions = [
+  { title: "기안 작성", icon: faFileSignature, bgColor: "white", borderColor: "#FFECB3", iconBgColor: "#FFECB3", color: "#FF9800",
+    onClick: () => setIsDraftModalOpen(true)
+   },
+  { title: "회의실 예약", icon: faDoorOpen, bgColor: "white", borderColor: "#D1E9FF", iconBgColor: "#D1E9FF", color: "#007BFF" },
+  { title: "새 문서 등록", icon: faFileCirclePlus, bgColor: "white", borderColor: "#BBF7D0", iconBgColor: "#BBF7D0", color: "#10B981" },
+  { title: "프로젝트 생성", icon: faDiagramProject, bgColor: "white", borderColor: "#FFCCC7", iconBgColor: "#FFCCC7", color: "#FF4D4F", 
+    onClick: () => setIsProjectModalOpen(true) 
+  },
+  { title: "회의록 작성", icon: faClipboard, bgColor: "white", borderColor: "#D9C7FF", iconBgColor: "#D9C7FF", color: "#7C3AED" },
+  { title: "비품 신청", icon: faBox, bgColor: "white", borderColor: "#FFB3D9", iconBgColor: "#FFB3D9", color: "#DB2777" },
+];
   return (
     <div className="w-full h-auto lg:h-full flex flex-col p-4 lg:px-7 box-border lg:overflow-hidden bg-white">
+      {/* 빠른실행 모달로 바로가기 */}
+      {isDraftModalOpen && <DraftModal onClose={() => setIsDraftModalOpen(false)} />}
+      {isProjectModalOpen && <ProjectModal onClose={() => setIsProjectModalOpen(false)} />}
       {/* PC에서만 부모 스크롤 차단 */}
       <style>{`
         @media (min-width: 64rem) {
@@ -116,8 +172,8 @@ useEffect(() => {
 
       {/* 헤더 영역 */}
       <div className="mb-4 px-3 py-3 shrink-0">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">000님!</h1>
-        <p className="text-[0.85rem] text-gray-500 font-medium">{formatDate(new Date())} · 오늘도 좋은 하루 되세요 👋</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">{user?.name || '사용자'}님!</h1>
+        <p className="text-[0.85rem] text-gray-500 font-medium">{formatDate(new Date())} · 오늘도 좋은 하루 되세요</p>
       </div>
 
       {/* 메인 레이아웃: 좌측(8)과 우측(4) 영역을 분리하여 PC에서 독립된 기둥으로 정렬 */}
@@ -168,9 +224,14 @@ useEffect(() => {
               <h3 className="text-s font-extrabold text-indigo-950 mb-2">빠른 실행</h3>
               <div className="grid grid-cols-3 grid-rows-2 gap-2 flex-1">
                 {quickActions.map((action, idx) => (
-                  <button key={idx} className="flex flex-col items-center justify-center bg-slate-50 border border-slate-100 rounded-xl hover:bg-slate-100 transition-all">
-                    <span className="text-xl mb-0.5">{action.icon}</span>
-                    <span className="text-[0.6875rem] font-bold text-gray-700">{action.title}</span>
+                  <button key={idx}
+                   onClick={action.onClick || undefined}
+                    style={{ backgroundColor: action.bgColor, borderColor: action.borderColor }}
+                    className="flex flex-col items-center justify-center gap-1.5 border rounded-2xl hover:brightness-95 transition-all">
+                    <div style={{ backgroundColor: action.iconBgColor }} className="p-2.5 rounded-full">
+                      <FontAwesomeIcon icon={action.icon} style={{ color: action.color }} className="text-base" />
+                    </div>
+                    <span className="text-[0.7rem] font-bold" style={{ color: action.color }}>{action.title}</span>
                   </button>
                 ))}
               </div>
@@ -366,7 +427,10 @@ useEffect(() => {
               <p className="text-xs text-indigo-200">궁금한 업무 정보를 물어보세요.</p>
             </div>
             <div className="mt-auto relative z-10">
-              <button className="w-full py-3.5 bg-white text-indigo-950 font-bold text-sm rounded-xl shadow-md active:scale-[0.98] transition-all">
+              <button
+                onClick={() => navigate('/aiChat')}
+                className="w-full py-3.5 bg-white text-indigo-950 font-bold text-sm rounded-xl shadow-md active:scale-[0.98] transition-all"
+              >
                 AI 채팅 시작하기
               </button>
             </div>
