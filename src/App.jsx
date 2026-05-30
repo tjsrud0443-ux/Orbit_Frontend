@@ -17,7 +17,7 @@ import AdminMeetingRooms from './domains/admin/AdminMeetingRooms';
 import AdminDocuments from './domains/admin/AdminDocuments';
 import AdminQna from './domains/admin/AdminQna';
 import ApprovalHome from './domains/approval/ApprovalHome';
-import ApprovalMypage from './domains/approval/ApprovalMypage';
+import ApprovalMyPage from './domains/approval/ApprovalMyPage';
 import ApprovalInbox from './domains/approval/ApprovalInbox';
 import ApprovalCc from './domains/approval/ApprovalCc';
 import ApprovalTemp from './domains/approval/ApprovalTemp';
@@ -37,6 +37,7 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import ApprovalDetail from './domains/approval/ApprovalDetail';
 
 
+
 function App() {
   return (
     <Router>
@@ -53,7 +54,7 @@ function App() {
           <Route path="/departments" element={<Departments />} />
 
           <Route path="/approval" element={<ApprovalHome />} />
-          <Route path="/approvalMypage" element={<ApprovalMypage />} />
+          <Route path="/approvalMypage" element={<ApprovalMyPage />} />
           <Route path="/approvalInbox" element={<ApprovalInbox />} />
           <Route path="/approvalCc" element={<ApprovalCc />} />
           <Route path="/approvalTemp" element={<ApprovalTemp />} />
