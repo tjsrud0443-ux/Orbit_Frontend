@@ -161,7 +161,7 @@ const Kanban = () => {
           <div className="flex items-center gap-4">
             <button 
               onClick={() => navigate('/projects')}
-              className="w-10 h-10 bg-white rounded-xl shadow-md border border-slate-50 flex items-center justify-center hover:bg-slate-50 transition-all cursor-pointer group"
+              className="w-10 h-10 bg-white rounded-xl shadow-md border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-all cursor-pointer group"
             >
               <FontAwesomeIcon icon={faChevronLeft} className="text-slate-300 group-hover:text-slate-400 transition-colors" />
             </button>
@@ -359,7 +359,15 @@ const Kanban = () => {
       {/* 2. 모바일 뷰 (신규 구현) */}
       <div className="flex lg:hidden flex-col h-full bg-white overflow-hidden px-6 py-8">
         {/* 타이틀 */}
-        <h1 className="text-xl font-black text-[#1a1c3d] mb-6">Orbit 그룹웨어 고도화</h1>
+        <div className="flex items-center gap-3 mb-6">
+          <button 
+            onClick={() => navigate('/projects')}
+            className="w-8 h-8 bg-white rounded-lg shadow-sm border border-slate-50 flex items-center justify-center active:bg-slate-50 transition-all cursor-pointer"
+          >
+            <FontAwesomeIcon icon={faChevronLeft} className="text-slate-300 text-xs" />
+          </button>
+          <h1 className="text-xl font-black text-[#1a1c3d]">Orbit 그룹웨어 고도화</h1>
+        </div>
         
         {/* 참여자 & Task 생성 버튼 */}
         <div className="flex justify-between items-center mb-8">
