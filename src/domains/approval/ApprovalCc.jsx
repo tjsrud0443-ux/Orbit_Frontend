@@ -223,13 +223,23 @@ const ApprovalCc = () => {
     navigate(`/approval/detail/${doc.doc_type}/${doc.doc_seq}`);
   };
 
-  const filterDocuments = (status) => {
-    return documents.filter(doc => {
-      const matchesStatus = doc.status === status;
+  const docTypeMap = {
+    '일반품의서': 'GENERAL',
+    '지출결의서': 'PAYMENT',
+    '휴가신청서': 'VACATION',
+    '구매신청서': 'PURCHASE'
+  };
+
+  const getFilteredData = (dataList) => {
+    return dataList.filter(doc => {
       const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesType = selectedType === '전체 문서' || selectedType === '전체' || doc.doc_type === selectedType;
-      return matchesStatus && matchesSearch && matchesType;
+      const matchesType = selectedType === '전체 문서' || selectedType === '전체' || doc.doc_type === docTypeMap[selectedType];
+      return matchesSearch && matchesType;
     });
+  };
+
+  const filterDocuments = (status) => {
+    return getFilteredData(documents.filter(doc => doc.status === status));
   };
 
   return (
@@ -303,7 +313,7 @@ const ApprovalCc = () => {
           />
           <DocumentTable
             title="결재 완료"
-            data={approvedDocs}
+            data={getFilteredData(approvedDocs)}
             count={approvedCount}
             page={approvedPage}
             setPage={setApprovedPage}
@@ -313,7 +323,7 @@ const ApprovalCc = () => {
           />
           <DocumentTable
             title="결재 반려"
-            data={rejectedDocs}
+            data={getFilteredData(rejectedDocs)}
             count={rejectedCount}
             page={rejectedPage}
             setPage={setRejectedPage}
