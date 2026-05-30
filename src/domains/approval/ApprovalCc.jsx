@@ -60,7 +60,7 @@ const StatusBadge = ({ status }) => {
   };
 
   return (
-    <span className={`text-xs px-2 py-0.5 md:px-2.5 md:py-1 rounded-full font-bold border whitespace-nowrap ${styles[status] || 'bg-gray-50 text-gray-600'}`}>
+    <span className={`text-[11px] px-2 py-0.5 md:px-2.5 md:py-1 rounded-full font-bold border whitespace-nowrap ${styles[status] || 'bg-gray-50 text-gray-600'}`}>
       {statusText[status] || status}
     </span>
   );
@@ -137,13 +137,13 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
                 <td className="px-3 py-4 text-xs font-bold text-gray-600 truncate whitespace-nowrap">
                   {approverName(doc)}
                 </td>
-                <td className="px-2 py-0.5 text-xs text-center whitespace-nowrap">
+                <td className="px-2 py-0.5 text-[11px] text-center whitespace-nowrap">
                   <StatusBadge status={doc.status} />
                 </td>
                 <td className="px-3 py-4 text-center whitespace-nowrap">
                   <button
                     onClick={() => onDetailClick(doc)}
-                    className="text-xs font-bold text-[#3530B8] bg-[#F0F4FF] px-4 py-2 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all"
+                    className="text-[11px] font-bold text-[#3530B8] bg-[#F0F4FF] px-4 py-2 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all"
                   >
                     상세보기
                   </button>
