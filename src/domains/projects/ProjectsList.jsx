@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown } from '@fortawesome/free-solid-svg-icons';
@@ -24,6 +24,18 @@ const ProjectsList = () => {
   const [search, setSearch] = useState('');
   const [searchBy, setSearchBy] = useState('프로젝트명');
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
+  const searchDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchDropdownRef.current && !searchDropdownRef.current.contains(event.target)) {
+        setIsSearchDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3;
 
@@ -92,10 +104,10 @@ const ProjectsList = () => {
       <div className="flex flex-col md:flex-row h-auto gap-6">
         <div className={`bg-white rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-4 md:p-8 flex flex-col transition-all duration-300 ${selectedProject ? 'md:w-[65%] w-full' : 'w-full'}`}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
-            <div className="flex bg-[#f4f7fc] p-1 rounded-2xl w-full md:w-fit overflow-x-auto">
+            <div className="flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit overflow-x-auto items-center">
               {['전체', '진행중', '완료'].map(tab => (
                 <button key={tab} onClick={() => { setFilter(tab === '진행중' ? '진행 중' : tab); setCurrentPage(1); }}
-                  className={`flex-1 md:flex-none px-6 py-2 rounded-xl text-sm font-bold transition-all ${filter === tab || (tab === '진행중' && filter === '진행 중') ? 'bg-[#3530B8] text-white shadow-sm' : 'text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>
+                  className={`flex-1 md:flex-none px-6 py-1.5 rounded-xl text-sm font-bold transition-all ${filter === tab || (tab === '진행중' && filter === '진행 중') ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>
                   {tab}
                 </button>
               ))}
@@ -103,17 +115,17 @@ const ProjectsList = () => {
 
             <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto items-end md:items-center">
               <div className="flex gap-2 w-full md:w-auto justify-end">
-                <div className="relative w-1/3 md:w-auto">
-                  <div className="bg-[#f4f7fc] px-4 py-2.5 rounded-xl text-xs text-gray-600 outline-none cursor-pointer flex items-center justify-between gap-3" 
+                <div className="relative w-fit md:w-auto" ref={searchDropdownRef}>
+                  <div className="bg-[#f4f7fc] px-4 h-[40px] rounded-xl text-xs text-[#8a92a6] outline-none cursor-pointer flex items-center justify-between gap-3 whitespace-nowrap"
                     onClick={() => setIsSearchDropdownOpen(!isSearchDropdownOpen)}>
                     {searchBy}
                     <FontAwesomeIcon icon={faChevronDown} className="text-[10px]" />
                   </div>
                   {isSearchDropdownOpen && (
-                    <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-lg z-50 overflow-hidden border-none">
+                    <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-lg z-50 overflow-hidden border border-[#edf2f9]">
                       {['프로젝트명', '참여자'].map(option => (
-                        <div key={option} 
-                          className="px-4 py-2.5 text-xs text-gray-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors"
+                        <div key={option}
+                          className="px-4 py-2.5 text-xs text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors whitespace-nowrap"
                           onClick={() => { setSearchBy(option); setIsSearchDropdownOpen(false); }}>
                           {option}
                         </div>
@@ -121,13 +133,13 @@ const ProjectsList = () => {
                     </div>
                   )}
                 </div>
-                <div className="relative flex items-center w-2/3 md:w-48">
+                <div className="relative flex items-center flex-1 md:w-48">
                   <FontAwesomeIcon icon={faSearch} className="absolute left-4 text-[#8a92a6]" />
                   <input placeholder="검색" value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
-                    className="pl-12 pr-4 py-2.5 bg-[#f4f7fc] rounded-xl text-sm w-full outline-none" />
+                    className="pl-12 pr-4 h-[40px] bg-[#f4f7fc] rounded-xl text-sm w-full outline-none placeholder:text-[#8a92a6]" />
                 </div>
               </div>
-              <button onClick={() => setIsModalOpen(true)} className="bg-[#3530B8] text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-[#2a2594] whitespace-nowrap w-fit md:w-auto">
+              <button onClick={() => setIsModalOpen(true)} className="bg-[#3530B8] text-white text-xs md:text-sm px-2.5 md:px-6 py-2.5 rounded-xl font-bold hover:bg-[#2a2594] whitespace-nowrap w-fit md:w-auto">
                 <FontAwesomeIcon icon={faPlus} className="mr-2" /> 새 프로젝트
               </button>
             </div>
@@ -230,7 +242,7 @@ const ProjectsList = () => {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-10 rounded-[2.5rem] w-[550px] shadow-2xl">
             <h2 className="text-2xl font-bold mb-8">새 프로젝트 생성</h2>
-            <label className="block text-xs font-bold text-[#1a1c3d] mb-2">프로젝트명 *</label>
+            <label className="block text-xs font-bold text-[#1a1c3d] mb-2 ">프로젝트명 *</label>
             <input className="w-full p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none text-xs" onChange={e => setNewProject({ ...newProject, title: e.target.value })} />
 
             <div className="flex gap-4 mb-4">
@@ -240,7 +252,7 @@ const ProjectsList = () => {
                   {newProject.start || "날짜 선택"}
                 </div>
                 {isStartCalendarOpen && (
-                  <Calendar 
+                  <Calendar
                     value={newProject.start}
                     minDate={new Date().toISOString().split('T')[0]}
                     onChange={(date) => {
@@ -278,7 +290,7 @@ const ProjectsList = () => {
 
             <label className="block text-xs font-bold text-[#1a1c3d] mb-2">참여자 추가 *</label>
             <div className="relative mb-2">
-              <input value={empSearch} onChange={e => { setEmpSearch(e.target.value); setShowEmpDropdown(true); }} className="w-full p-4 bg-[#f4f7fc] rounded-xl outline-none text-xs" placeholder="이름으로 검색하여 참여자를 추가하세요."/>
+              <input value={empSearch} onChange={e => { setEmpSearch(e.target.value); setShowEmpDropdown(true); }} className="w-full p-4 bg-[#f4f7fc] rounded-xl outline-none text-xs" placeholder="이름으로 검색하여 참여자를 추가하세요." />
               {showEmpDropdown && empSearch && (
                 <div className="absolute top-full left-0 w-full bg-white border border-[#edf2f9] rounded-xl shadow-lg mt-1 z-50 overflow-hidden">
                   {MOCK_EMPLOYEES.filter(e => e.name.includes(empSearch)).map(e => (
