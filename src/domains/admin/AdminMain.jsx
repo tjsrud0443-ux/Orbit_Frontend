@@ -66,7 +66,7 @@ const DEPT_EMPLOYEE_DATA = {
       label: '직원 수',
       data: [4, 4, 1, 3, 1, 2, 2, 2, 2, 1],
       backgroundColor: BRAND_COLORS.main,
-      borderRadius: 8,
+      borderRadius: 2,
       barThickness: 32,
     },
   ],
