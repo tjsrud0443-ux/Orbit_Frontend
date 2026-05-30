@@ -185,16 +185,12 @@ const ApprovalCc = () => {
 
   useEffect(() => {
     getAllCcDocuments().then(resp => {
-      console.log("문서 정보 확인 :", resp.data)
       setDocuments(resp.data);
     })
   }, [])
 
   useEffect(() => {
     getPageDocuments("APPROVED", approvedPage).then(resp => {
-      console.log(resp.data.list);
-      console.log(resp.data.count);
-
       setApprovedDocs(resp.data.list);
       setApprovedCount(Math.ceil(resp.data.count / 5));
     })
@@ -202,9 +198,6 @@ const ApprovalCc = () => {
 
   useEffect(() => {
     getPageDocuments("REJECTED", rejectedPage).then(resp => {
-      console.log(resp.data.list);
-      console.log(resp.data.count);
-
       setRejectedDocs(resp.data.list);
       setRejectedCount(Math.ceil(resp.data.count / 5));
     })
