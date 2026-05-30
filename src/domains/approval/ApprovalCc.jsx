@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -174,6 +174,20 @@ const ApprovalCc = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('전체 문서');
   const [isTypeOpen, setIsTypeOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsTypeOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const [documents, setDocuments] = useState([]);
 
@@ -231,7 +245,7 @@ const ApprovalCc = () => {
 
           {/* Search Bar */}
           <div className="flex items-center gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-slate-200 w-full md:w-auto focus-within:ring-2 focus-within:ring-[#3530B8]/20 focus-within:border-[#3530B8] transition-all">
-            <div className="relative">
+            <div className="relative" ref={dropdownRef}>
               <div
                 onClick={() => setIsTypeOpen(!isTypeOpen)}
                 className="px-3 py-1.5 text-xs bg-slate-50 border-none rounded-lg text-slate-400 font-medium cursor-pointer outline-none flex items-center justify-between min-w-[100px]"
