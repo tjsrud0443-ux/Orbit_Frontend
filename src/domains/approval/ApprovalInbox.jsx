@@ -90,7 +90,7 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true }) =>
                 <td className="px-3 py-4 text-center whitespace-nowrap">
                   <button 
                     onClick={() => onDetailClick(doc)}
-                    className="px-2 py-1 md:px-3 md:py-1.5 text-[10px] md:text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors border border-indigo-100 whitespace-nowrap"
+                    className="text-xs font-bold text-[#3530B8] bg-[#F0F4FF] px-4 py-2 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all"
                   >
                     상세보기
                   </button>

@@ -9,101 +9,6 @@ import Pagination from '../../components/common/Pagination';
 import { getCcDocuments } from './approvalApi';
 import useAuthStore from '../../store/authStore';
 
-// --- Dummy Data ---
-// const CC_DOCUMENTS = [
-//   { 
-//     id: 201, 
-//     title: '2024년 2분기 마케팅 예산 편성 안', 
-//     type: '일반품의서', 
-//     typeKey: 'general', 
-//     drafter: '홍길동 과장', 
-//     date: '2024-05-20', 
-//     status: '결재 대기',
-//     currentApprover: '김철수 부장',
-//     approvalLine: [
-//       { name: '김철수', rank: '부장' },
-//       { name: '이영희', rank: '차장' },
-//       { name: '박지민', rank: '팀장' }
-//     ]
-//   },
-//   { 
-//     id: 202, 
-//     title: '신규 협력업체 계약 검토 요청', 
-//     type: '일반품의서', 
-//     typeKey: 'general', 
-//     drafter: '이몽룡 대리', 
-//     date: '2024-05-21', 
-//     status: '진행 중',
-//     currentApprover: '박상무 상무',
-//     approvalLine: [
-//       { name: '박상무', rank: '상무' },
-//       { name: '최전무', rank: '전무' },
-//       { name: '이대표', rank: '대표' },
-//       { name: '정회장', rank: '회장' }
-//     ]
-//   },
-//   { 
-//     id: 203, 
-//     title: '영업부 하반기 전략 회의 비용', 
-//     type: '지출결의서', 
-//     typeKey: 'payment', 
-//     drafter: '성춘향 팀장', 
-//     date: '2024-05-22', 
-//     status: '결재 완료',
-//     currentApprover: '김영희 대리',
-//     approvalLine: [
-//       { name: '홍길동', rank: '과장' },
-//       { name: '김영희', rank: '대리' }
-//     ]
-//   },
-//   { 
-//     id: 204, 
-//     title: '전사 하계 워크숍 장소 선정', 
-//     type: '구매신청서', 
-//     typeKey: 'purchase', 
-//     drafter: '임꺽정 차장', 
-//     date: '2024-05-23', 
-//     status: '반려',
-//     currentApprover: '오진우 회장',
-//     approvalLine: [
-//       { name: '박지민', rank: '대리' },
-//       { name: '최유진', rank: '팀장' },
-//       { name: '강하늘', rank: '본부장' },
-//       { name: '한소희', rank: '대표' },
-//       { name: '오진우', rank: '회장' }
-//     ]
-//   },
-//   { 
-//     id: 205, 
-//     title: 'IT 자산 교체 주기 변경 기안', 
-//     type: '일반품의서', 
-//     typeKey: 'general', 
-//     drafter: '장길산 대리', 
-//     date: '2024-05-24', 
-//     status: '결재 완료',
-//     currentApprover: '박상무 상무',
-//     approvalLine: [
-//       { name: '박상무', rank: '상무' }
-//     ]
-//   },
-//   { 
-//     id: 206, 
-//     title: '법인카드 부정 사용 방지 가이드라인', 
-//     type: '일반품의서', 
-//     typeKey: 'general', 
-//     drafter: '홍길동 과장', 
-//     date: '2024-05-25', 
-//     status: '반려',
-//     currentApprover: '최전무 전무',
-//     approvalLine: [
-//       { name: '이영희', rank: '과장' },
-//       { name: '박지민', rank: '부장' },
-//       { name: '최전무', rank: '전무' }
-//     ]
-//   },
-// ];
-
-
 // 결재선
 const ApprovalLineStack = ({ line }) => {
   const displayLimit = 3;
@@ -118,7 +23,7 @@ const ApprovalLineStack = ({ line }) => {
           <div
             key={index}
             className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center shadow-sm overflow-hidden relative group"
-            title={`${lineUser.users_id} ${lineUser.rank_name}`}
+            title={`${lineUser.name} ${lineUser.rank_name}`}
           >
             <div className="w-full h-full bg-indigo-50 flex items-center justify-center text-[10px] md:text-[11px] font-bold text-indigo-600 uppercase">
               <img src={`http://localhost/file/profile/view?sysname=${lineUser?.sysname}&token=${token}`}
@@ -155,7 +60,7 @@ const StatusBadge = ({ status }) => {
   };
 
   return (
-    <span className={`px-2 py-0.5 md:px-2.5 md:py-1 rounded-full text-[10px] md:text-xs font-bold border whitespace-nowrap ${styles[status] || 'bg-gray-50 text-gray-600'}`}>
+    <span className={`text-xs px-2 py-0.5 md:px-2.5 md:py-1 rounded-full font-bold border whitespace-nowrap ${styles[status] || 'bg-gray-50 text-gray-600'}`}>
       {statusText[status] || status}
     </span>
   );
@@ -171,6 +76,36 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
     ? data.slice((page - 1) * itemsPerPage, page * itemsPerPage)
     : data;
 
+  const docTypeText = {
+    'VACATION': '휴가신청서',
+    'PAYMENT': '지출결의서',
+    'GENERAL': '일반품의서',
+    'PURCHASE': '구매신청서'
+  }
+
+  const approverName = (doc) => {
+    const currentApprover = doc.approvers?.find(
+      app => app.status === 'IN_PROGRESS'
+    )
+    if (currentApprover) {
+      return `${currentApprover.name} ${currentApprover.rank_name}`;
+    }
+
+    const rejectedApprover = doc.approvers?.find(
+      app => app.status === 'REJECTED'
+    )
+    if (rejectedApprover) {
+      return `${rejectedApprover.name} ${rejectedApprover.rank_name}`;
+    }
+
+    const approvedApprover = doc.approvers?.find(
+      app => app.status === 'APPROVED'
+    )
+    if (approvedApprover) {
+      return `${approvedApprover.name} ${approvedApprover.rank_name}`;
+    }
+    return "";
+  }
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-3">
       <div className="pl-4 md:pl-6 pr-4 py-3 border-b border-slate-100 bg-white">
@@ -192,32 +127,26 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
           <tbody className="divide-y divide-slate-100">
             {displayData.map((doc) => (
               <tr key={doc.doc_seq} className="hover:bg-slate-50/50 transition-colors">
-                <td className="pl-4 md:pl-6 pr-3 py-4 text-xs font-bold text-gray-700 truncate whitespace-nowrap">{doc.title}</td>
-                <td className="px-3 py-4 text-xs font-medium text-gray-500 truncate whitespace-nowrap">{doc.doc_type}</td>
+                <td className="pl-4 md:pl-6 pr-3 py-4 text-sm font-bold text-gray-700 truncate whitespace-nowrap">{doc.title}</td>
+                <td className="px-3 py-4 text-xs font-medium text-gray-500 truncate whitespace-nowrap">{docTypeText[doc.doc_type] || doc.doc_type}</td>
                 <td className="px-3 py-4 truncate whitespace-nowrap">
                   <div className="flex items-center gap-2 overflow-hidden">
-                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 rounded-full bg-slate-200 flex items-center justify-center text-[9px] md:text-[10px]">
-                      <img src={`http://localhost/file/profile/view?sysname=${doc?.sysname}&token=${token}`}
-                        alt={doc?.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <span className="text-xs font-bold text-gray-600 truncate">{doc.users_id}</span>
+                    <span className="text-xs font-bold text-gray-600 truncate">{doc.name}</span>
                   </div>
                 </td>
                 <td className="px-3 py-4">
                   <ApprovalLineStack line={doc.approvers || []} />
                 </td>
                 <td className="px-3 py-4 text-xs font-bold text-gray-600 truncate whitespace-nowrap">
-                  {doc.step_order}
+                  {approverName(doc)}
                 </td>
-                <td className="px-3 py-4 text-center whitespace-nowrap">
+                <td className="px-2 py-0.5 text-xs text-center whitespace-nowrap">
                   <StatusBadge status={doc.status} />
                 </td>
                 <td className="px-3 py-4 text-center whitespace-nowrap">
                   <button
                     onClick={() => onDetailClick(doc)}
-                    className="px-2 py-1 md:px-3 md:py-1.5 text-[10px] md:text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors border border-indigo-100 whitespace-nowrap"
+                    className="text-xs font-bold text-[#3530B8] bg-[#F0F4FF] px-4 py-2 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all"
                   >
                     상세보기
                   </button>
