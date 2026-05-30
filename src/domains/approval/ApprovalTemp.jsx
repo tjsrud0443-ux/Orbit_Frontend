@@ -32,7 +32,7 @@ const ApprovalTemp = () => {
   }
 
   const filteredDocs = documents.filter(doc => {
-    const matchesType = selectedType === '전체 문서' || doc.type === selectedType;
+    const matchesType = selectedType === '전체 문서' || doc.doc_type === selectedType;
     const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesType && matchesSearch;
   });
@@ -41,13 +41,18 @@ const ApprovalTemp = () => {
   const displayDocs = filteredDocs.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
   const handleEdit = (doc) => {
-    navi(`/approval/write/${doc.doc_type}/${doc.doc_seq}`);
+    navi(`/approval/detail/${doc.doc_type}/${doc.doc_seq}`);
   };
 
   const handleDelete = (doc) => {
     deleteTempDoc(doc.doc_seq, doc.doc_type).then(resp => {
       getTempDoc().then(resp => {
         setDocuments(resp.data);
+        
+        const newCount = Math.ceil(resp.data.length / itemsPerPage);
+        if (page > newCount && newCount > 0) {
+          setPage(newCount);
+        }
       })
     })
   };
@@ -123,7 +128,7 @@ const ApprovalTemp = () => {
                   displayDocs.map((doc) => (
                     <tr key={doc.seq} className="hover:bg-slate-50 transition-colors group">
                       <td className="py-5 pl-8 pr-4">
-                        <span className="text-xs font-bold text-slate-700 transition-colors">
+                        <span className="text-sm font-bold text-slate-700 transition-colors">
                           {doc.title}
                         </span>
                       </td>
