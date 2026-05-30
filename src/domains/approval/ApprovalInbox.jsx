@@ -168,9 +168,6 @@ const ApprovalInbox = () => {
                 className="w-full pl-9 pr-3 py-1.5 text-xs border-none focus:ring-0 placeholder:text-slate-400 outline-none bg-transparent"
               />
             </div>
-            <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-colors">
-              검색
-            </button>
           </div>
         </div>
 
