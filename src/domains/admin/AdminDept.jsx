@@ -38,6 +38,7 @@ const AdminDept = () => {
     dept_type: "",
     auth_group: ""
   });
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     getGroup()
@@ -62,6 +63,7 @@ const AdminDept = () => {
     if (formMode === 'CREATE_HQ') setPanelTitle('본부 생성');
     else if (formMode === 'CREATE_SUB') setPanelTitle('부서 생성');
     else if (formMode === 'EDIT') setPanelTitle('정보 수정');
+    setErrors({});
   }, [formMode]);
 
   useEffect(() => {
@@ -132,15 +134,29 @@ const AdminDept = () => {
   const handleCloseForm = () => {
     setFormMode(null);
     setSelectedNode(null);
+    setErrors({});
   };
 
   const handleSave = () => {
-    if (!formData.dept_name || !formData.dept_code) {
-      alert("부서명과 부서 코드를 입력해주세요.");
-      return;
+    const newErrors = {};
+    if (!formData.dept_name) {
+      newErrors.dept_name = `${formMode === 'CREATE_HQ' ? '본부명' : '부서명'}을 입력해주세요.`;
+    } else if (!/^[ㄱ-ㅎㅏ-ㅣ가-힣]+$/.test(formData.dept_name)) {
+      newErrors.dept_name = "한글만 입력 가능합니다.";
     }
+
+    if (!formData.dept_code) {
+      newErrors.dept_code = "부서 코드를 입력해주세요.";
+    } else if (!/^[A-Z]+$/.test(formData.dept_code)) {
+      newErrors.dept_code = "영문(대문자)만 입력 가능합니다.";
+    }
+
     if (formMode === 'CREATE_SUB' && !formData.parent_dept_seq) {
-      alert("상위 본부를 선택해주세요.");
+      newErrors.parent_dept_seq = "상위 본부를 선택해주세요.";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
@@ -197,12 +213,17 @@ const AdminDept = () => {
   };
 
   const handleDelete = (node) => {
-    const count = getDeptMemberCount(node);
-    if (count > 0) {
-      alert("본부 또는 부서 내에 소속된 사원이 존재하여 삭제할 수 없습니다.");
+    if (node.children && node.children.length > 0) {
+      alert("하위 부서가 존재하여 삭제할 수 없습니다. \n하위 부서를 먼저 삭제해 주세요.");
       return;
     }
-    if (window.confirm(`[${node.deptName}] 을(를) 삭제하시겠습니까?`)) {
+
+    const count = getDeptMemberCount(node);
+    if (count > 0) {
+      alert("본부 또는 부서 내에 소속된 직원이 존재하여 삭제할 수 없습니다.");
+      return;
+    }
+    if (window.confirm(`[ ${node.deptName} ] 을(를) 삭제하시겠습니까? \n삭제 후에는 복구가 불가합니다.`)) {
       delDept(node.deptSeq).then(resp => {
         alert("삭제되었습니다.");
         getGroup().then(resp => {
@@ -325,12 +346,13 @@ const AdminDept = () => {
               <div className="space-y-1.5 relative">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">상위 본부 선택</label>
                 <div
-                  className="w-full h-10 px-3 bg-white border border-slate-200 rounded-xl text-xs text-gray-500 flex items-center justify-between cursor-pointer transition-all hover:border-[#3530B8]"
+                  className={`w-full h-10 px-3 bg-white border ${errors.parent_dept_seq ? 'border-red-500' : 'border-slate-200'} rounded-xl text-xs text-gray-500 flex items-center justify-between cursor-pointer transition-all hover:border-[#3530B8]`}
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 >
                   {formData.parent_dept_seq ? Object.values(fullTree.nodeMap).find(n => n.deptSeq == formData.parent_dept_seq)?.deptName : "본부를 선택하세요"}
                   <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-400" />
                 </div>
+                {errors.parent_dept_seq && <p className="text-[9px] text-red-500 font-medium ml-1">{errors.parent_dept_seq}</p>}
                 {isDropdownOpen && (
                   <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.15)] z-50 overflow-hidden border border-slate-100">
                     {Object.values(fullTree.nodeMap).filter(node => node.parentDeptSeq === 2).map(dept => (
@@ -340,6 +362,7 @@ const AdminDept = () => {
                         onClick={() => {
                           setFormData({ ...formData, parent_dept_seq: dept.deptSeq });
                           setIsDropdownOpen(false);
+                          setErrors(prev => ({ ...prev, parent_dept_seq: null }));
                         }}
                       >
                         {dept.deptName}
@@ -351,7 +374,18 @@ const AdminDept = () => {
             )}
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">{formMode === 'CREATE_HQ' ? '본부명' : '부서명'}</label>
-              <input type="text" placeholder="예: 개발본부, 인사팀" maxLength={30} className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20 focus:border-[#3530B8] transition-all" value={formData.dept_name} onChange={(e) => setFormData({ ...formData, dept_name: e.target.value.replace(/[^ㄱ-ㅎㅏ-ㅣ가-힣]{3,30}/g, "") })} />
+              <input 
+                type="text" 
+                placeholder="예: 개발본부, 인사팀" 
+                maxLength={30} 
+                className={`w-full h-10 px-3 bg-slate-50 border ${errors.dept_name ? 'border-red-500' : 'border-slate-200'} rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20 focus:border-[#3530B8] transition-all`} 
+                value={formData.dept_name} 
+                onChange={(e) => {
+                  setFormData({ ...formData, dept_name: e.target.value.replace(/[^ㄱ-ㅎㅏ-ㅣ가-힣]/g, "") });
+                  if (errors.dept_name) setErrors(prev => ({ ...prev, dept_name: null }));
+                }} 
+              />
+              {errors.dept_name && <p className="text-[9px] text-red-500 font-medium ml-1">{errors.dept_name}</p>}
               <div className="flex items-center justify-between gap-1.5 text-[9px] text-slate-400 font-medium ml-1">
                 <div className="flex items-center gap-1.5"><FontAwesomeIcon icon={faInfoCircle} className="text-[#3530B8]/50" /> <span>한글만 입력 가능</span></div>
                 <span>{formData.dept_name.length}/30</span>
@@ -359,7 +393,18 @@ const AdminDept = () => {
             </div>
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">부서 코드</label>
-              <input type="text" placeholder="예: DEPT" maxLength={20} className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20 focus:border-[#3530B8] transition-all font-mono" value={formData.dept_code} onChange={(e) => setFormData({ ...formData, dept_code: e.target.value.replace(/[^A-Z]{2,20}/g, "") })} />
+              <input 
+                type="text" 
+                placeholder="예: DEPT" 
+                maxLength={20} 
+                className={`w-full h-10 px-3 bg-slate-50 border ${errors.dept_code ? 'border-red-500' : 'border-slate-200'} rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20 focus:border-[#3530B8] transition-all font-mono`} 
+                value={formData.dept_code} 
+                onChange={(e) => {
+                  setFormData({ ...formData, dept_code: e.target.value.replace(/[^A-Z]/g, "") });
+                  if (errors.dept_code) setErrors(prev => ({ ...prev, dept_code: null }));
+                }} 
+              />
+              {errors.dept_code && <p className="text-[9px] text-red-500 font-medium ml-1">{errors.dept_code}</p>}
               <div className="flex items-center justify-between gap-1.5 text-[9px] text-slate-400 font-medium ml-1">
                 <div className="flex items-center gap-1.5"><FontAwesomeIcon icon={faInfoCircle} className="text-[#3530B8]/50" /> <span>영문(대문자)만 입력 가능</span></div>
                 <span>{formData.dept_code.length}/20</span>

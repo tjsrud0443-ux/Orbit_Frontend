@@ -232,7 +232,12 @@ const Kanban = () => {
                     ))}
 
                     {inlineForm.status === status ? (
-                      <div ref={inlineFormRef} className="bg-white rounded-2xl p-5 shadow-xl border-2 border-[#3530B8]/20 space-y-4 animate-in fade-in zoom-in duration-200">
+                      <div 
+                        ref={inlineFormRef} 
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        className="bg-white rounded-2xl p-5 shadow-xl border-2 border-[#3530B8]/20 space-y-4 animate-in fade-in zoom-in duration-200"
+                      >
                         <input
                           autoFocus
                           placeholder="Task 제목"
@@ -414,7 +419,12 @@ const Kanban = () => {
 
           {/* 인라인 추가 (모바일용 - 데스크탑과 동일한 로직 적용) */}
           {inlineForm.status === activeTab ? (
-            <div ref={inlineFormRef} className="bg-white rounded-2xl p-5 shadow-xl border-2 border-[#3530B8]/20 space-y-4 animate-in fade-in zoom-in duration-200">
+            <div 
+              ref={inlineFormRef} 
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl p-5 shadow-xl border-2 border-[#3530B8]/20 space-y-4 animate-in fade-in zoom-in duration-200"
+            >
               <input
                 autoFocus
                 placeholder="Task 제목"
@@ -520,8 +530,8 @@ const Kanban = () => {
 
       {/* 3. 상단 'Task 생성' 팝업 모달 */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-[#1a1c3d]/60 backdrop-blur-sm flex items-center justify-center z-[100] animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-[500px] rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in slide-in-from-bottom-8 duration-300">
+        <div className="fixed inset-0 bg-[#1a1c3d]/60 backdrop-blur-sm flex items-center justify-center z-[100] animate-in fade-in duration-300 p-8">
+          <div className="bg-white w-full max-w-[500px] rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-2xl animate-in zoom-in slide-in-from-bottom-8 duration-300 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-2xl font-black text-[#1a1c3d]">새 Task 생성</h2>
               <button 
@@ -691,7 +701,7 @@ const Kanban = () => {
 
       {/* 4. Task 상세/수정 팝업 모달 */}
       {detailModalTask && (
-        <div className="fixed inset-0 bg-[#1a1c3d]/60 backdrop-blur-sm flex items-center justify-center z-[100] animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-[#1a1c3d]/60 backdrop-blur-sm flex items-center justify-center z-[100] animate-in fade-in duration-300 p-8">
           <div className="bg-white w-full max-w-[500px] rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in slide-in-from-bottom-8 duration-300">
             {/* 우선순위 배지 (최상단) */}
             <div className="flex justify-between items-center mb-6">
