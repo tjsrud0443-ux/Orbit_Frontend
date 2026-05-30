@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faSearch,
   faUser,
+  faChevronDown,
 } from '@fortawesome/free-solid-svg-icons';
 import Pagination from '../../components/common/Pagination';
 import { getAllCcDocuments, getPageDocuments } from './approvalApi';
@@ -171,7 +172,8 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
 const ApprovalCc = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedType, setSelectedType] = useState('전체');
+  const [selectedType, setSelectedType] = useState('전체 문서');
+  const [isTypeOpen, setIsTypeOpen] = useState(false);
 
   const [documents, setDocuments] = useState([]);
 
@@ -229,17 +231,31 @@ const ApprovalCc = () => {
 
           {/* Search Bar */}
           <div className="flex items-center gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-slate-200 w-full md:w-auto focus-within:ring-2 focus-within:ring-[#3530B8]/20 focus-within:border-[#3530B8] transition-all">
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              className="px-3 py-1.5 text-xs bg-slate-50 border-none rounded-lg focus:ring-0 text-slate-600 font-medium cursor-pointer outline-none"
-            >
-              <option>전체 문서</option>
-              <option>일반품의서</option>
-              <option>지출결의서</option>
-              <option>휴가신청서</option>
-              <option>구매신청서</option>
-            </select>
+            <div className="relative">
+              <div
+                onClick={() => setIsTypeOpen(!isTypeOpen)}
+                className="px-3 py-1.5 text-xs bg-slate-50 border-none rounded-lg text-slate-400 font-medium cursor-pointer outline-none flex items-center justify-between min-w-[100px]"
+              >
+                <span>{selectedType}</span>
+                <FontAwesomeIcon icon={faChevronDown} className={`ml-2 text-[10px] transition-transform ${isTypeOpen ? 'rotate-180' : ''}`} />
+              </div>
+              {isTypeOpen && (
+                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1">
+                  {['전체 문서', '일반품의서', '지출결의서', '휴가신청서', '구매신청서'].map((type) => (
+                    <div
+                      key={type}
+                      onClick={() => {
+                        setSelectedType(type);
+                        setIsTypeOpen(false);
+                      }}
+                      className="px-3 py-1.5 text-xs text-slate-400 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
+                    >
+                      {type}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className="h-5 w-[1px] bg-slate-200 mx-1"></div>
             <div className="relative flex-1 md:w-56">
               <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
