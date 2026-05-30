@@ -42,16 +42,16 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
   };
 
   const title = isEditMode 
-    ? (data?.title || data?.TITLE || '') 
-    : (data?.TITLE || data?.title || '-');
+    ? (data?.title || '') 
+    : (data?.title || '-');
 
   const purpose = isEditMode
-    ? (data?.purpose || data?.PURPOSE || '')
-    : (data?.PURPOSE || data?.purpose || '-');
+    ? (data?.purpose || '')
+    : (data?.purpose || '-');
 
   const content = isEditMode
-    ? (data?.content || data?.CONTENT || '')
-    : (data?.CONTENT || data?.content || '-');
+    ? (data?.content || '')
+    : (data?.content || '-');
 
   const applicant = isEditMode
     ? {
@@ -61,18 +61,18 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
         rank_name: user?.rank_name || '-'
       }
     : {
-        name: data?.NAME || data?.name || '-',
-        users_seq: data?.USERS_SEQ || data?.users_seq || '-',
-        dept_name: data?.DEPT_NAME || data?.dept_name || '-',
-        rank_name: data?.RANK_NAME || data?.rank_name || '-'
+        name: data?.name || '-',
+        users_seq: data?.users_seq || '-',
+        dept_name: data?.dept_name || '-',
+        rank_name: data?.rank_name || '-'
       };
 
   let created_at = '-';
   if (isEditMode) {
     created_at = today;
   } else {
-    const draftDate = data?.CREATED_AT || data?.created_at;
-    created_at = draftDate ? draftDate.substring(0, 10) : '-'; // "2026-05-29" 형식으로 자르기
+    const draftDate = data?.created_at;
+    created_at = draftDate ? draftDate.substring(0, 10) : '-';
   }
   
   return (
