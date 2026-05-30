@@ -239,8 +239,8 @@ const ProjectsList = () => {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white p-10 rounded-[2.5rem] w-[550px] shadow-2xl">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-8">
+          <div className="bg-white p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] w-full max-w-[550px] shadow-2xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-2xl font-bold mb-8">새 프로젝트 생성</h2>
             <label className="block text-xs font-bold text-[#1a1c3d] mb-2 ">프로젝트명 *</label>
             <input className="w-full p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none text-xs" onChange={e => setNewProject({ ...newProject, title: e.target.value })} />
