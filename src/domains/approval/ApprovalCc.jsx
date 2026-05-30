@@ -6,7 +6,7 @@ import {
   faUser,
 } from '@fortawesome/free-solid-svg-icons';
 import Pagination from '../../components/common/Pagination';
-import { getCcDocuments } from './approvalApi';
+import { getAllCcDocuments, getPageDocuments } from './approvalApi';
 import useAuthStore from '../../store/authStore';
 
 // 결재선
@@ -67,14 +67,9 @@ const StatusBadge = ({ status }) => {
 };
 
 // 현재 결재자
-const DocumentTable = ({ title, data, onDetailClick, showPagination = true, approverLabel = '현재 결재자' }) => {
-  const [page, setPage] = useState(1);
-  const itemsPerPage = 5;
-  const count = Math.ceil(data.length / itemsPerPage);
+const DocumentTable = ({ title, data, onDetailClick, showPagination = true, approverLabel = '현재 결재자', count = 0, page = 1, setPage = () => { } }) => {
   const token = useAuthStore(state => state.token);
-  const displayData = showPagination
-    ? data.slice((page - 1) * itemsPerPage, page * itemsPerPage)
-    : data;
+  const displayData = data;
 
   const docTypeText = {
     'VACATION': '휴가신청서',
@@ -98,9 +93,11 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
       return `${rejectedApprover.name} ${rejectedApprover.rank_name}`;
     }
 
-    const approvedApprover = doc.approvers?.find(
-      app => app.status === 'APPROVED'
-    )
+    const approvedApprover = [...(doc.approvers)]
+      .reverse()
+      .find(
+        app => app.status === 'APPROVED'
+      )
     if (approvedApprover) {
       return `${approvedApprover.name} ${approvedApprover.rank_name}`;
     }
@@ -175,14 +172,44 @@ const ApprovalCc = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('전체');
+
   const [documents, setDocuments] = useState([]);
 
+  const [approvedDocs, setApprovedDocs] = useState([]);
+  const [approvedPage, setApprovedPage] = useState(1);
+  const [approvedCount, setApprovedCount] = useState(0);
+
+  const [rejectedDocs, setRejectedDocs] = useState([]);
+  const [rejectedPage, setRejectedPage] = useState(1);
+  const [rejectedCount, setRejectedCount] = useState(0);
+
   useEffect(() => {
-    getCcDocuments().then(resp => {
+    getAllCcDocuments().then(resp => {
       console.log("문서 정보 확인 :", resp.data)
       setDocuments(resp.data);
     })
   }, [])
+
+  useEffect(() => {
+    getPageDocuments("APPROVED", approvedPage).then(resp => {
+      console.log(resp.data.list);
+      console.log(resp.data.count);
+
+      setApprovedDocs(resp.data.list);
+      setApprovedCount(Math.ceil(resp.data.count / 5));
+    })
+  }, [approvedPage]);
+
+  useEffect(() => {
+    getPageDocuments("REJECTED", rejectedPage).then(resp => {
+      console.log(resp.data.list);
+      console.log(resp.data.count);
+
+      setRejectedDocs(resp.data.list);
+      setRejectedCount(Math.ceil(resp.data.count / 5));
+    })
+  }, [rejectedPage]);
+
   const handleOpenDetail = (doc) => {
     navigate(`/approval/detail/${doc.doc_type}/${doc.doc_seq}`);
   };
@@ -203,8 +230,8 @@ const ApprovalCc = () => {
         {/* Title & Description */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">참조된 문서함</h1>
-            <p className="text-xs text-slate-500 font-medium">나에게 참조된 문서들의 결재 상태를 확인하세요.</p>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">참조 문서함</h1>
+            <p className="text-xs text-slate-500 font-medium">나에게 참조된 문서들의 목록과 상세정보를 확인하세요.</p>
           </div>
 
           {/* Search Bar */}
@@ -253,14 +280,20 @@ const ApprovalCc = () => {
           />
           <DocumentTable
             title="결재 완료"
-            data={filterDocuments('APPROVED')}
+            data={approvedDocs}
+            count={approvedCount}
+            page={approvedPage}
+            setPage={setApprovedPage}
             onDetailClick={handleOpenDetail}
             showPagination={true}
             approverLabel="최종 결재자"
           />
           <DocumentTable
             title="결재 반려"
-            data={filterDocuments('REJECTED')}
+            data={rejectedDocs}
+            count={rejectedCount}
+            page={rejectedPage}
+            setPage={setRejectedPage}
             onDetailClick={handleOpenDetail}
             showPagination={true}
             approverLabel="최종 결재자"

@@ -37,4 +37,5 @@ export const submitGeneral = (payload) => maxios.post("/approval/submit/general"
 
 
 
-export const getCcDocuments = () => maxios.get("/approval/cc");
+export const getAllCcDocuments = () => maxios.get("/approval/cc");
+export const getPageDocuments = (status, cpage) => maxios.get("/approval/cc/page", { params: { status, cpage } });
