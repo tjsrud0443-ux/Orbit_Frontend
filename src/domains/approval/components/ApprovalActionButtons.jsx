@@ -1,97 +1,143 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const ApprovalActionButtons = ({ userRole, mode, onAction, approvers }) => {
+const ApprovalActionButtons = ({ 
+  user,
+  userRole, 
+  mode, 
+  onAction, 
+  approvers,
+  isRejecting,
+  setIsRejecting,
+  rejectReason,
+  setRejectReason,
+  rejectError,
+  setRejectError
+}) => {
   const navigate = useNavigate();
-  const [isRejecting, setIsRejecting] = useState(false);
-  const [rejectReason, setRejectReason] = useState('');
 
-  // 상신 취소 가능 여부 확인: 기안자이면서 VIEW 모드이고, 첫 번째 결재자가 '진행 중' 상태인 경우
-  const canCancelSubmit = userRole === 'DRAFTER' && mode === 'VIEW' && approvers?.[0]?.status === 'IN_PROGRESS';
+  // 상태 판단 로직
+  const firstApproverStatus = approvers?.[0]?.status;
+  const myApproverInfo = approvers?.find(a => a.users_id === user?.id);
+  const myStatus = myApproverInfo?.status;
 
-  // DRAFTER(기안자): 닫기, 임시저장, 결재상신
-  const renderDrafterButtons = () => (
-    <>
-      <button 
-        className="px-5 py-1.5 bg-[#F0F4FF] text-[#3530B8] font-bold text-xs rounded-lg hover:bg-[#DDE8FF] transition-all"
-        onClick={() => onAction('TEMP_SAVE')}
-      >
-        임시저장
-      </button>
-      <button 
-        className="px-7 py-1.5 bg-[#3530B8] text-white font-bold text-xs rounded-lg hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all"
-        onClick={() => onAction('SUBMIT')}
-      >
-        결재상신
-      </button>
-    </>
-  );
+  // 1. 단순 기안자 (첫 번째 결재자가 결재를 완료한 상태)
+  const isSimpleDrafter = userRole === 'DRAFTER' && mode === 'VIEW' && (firstApproverStatus === 'APPROVED' || firstApproverStatus === 'REJECTED');
+  
+  // 2. 수정 가능한 기안자 (첫 번째 결재자가 결재하기 전 상태)
+  const isEditableDrafter = userRole === 'DRAFTER' && mode === 'VIEW' && firstApproverStatus === 'IN_PROGRESS';
 
-  // APPROVER(결재자): 닫기, 반려, 결재승인
-  const renderApproverButtons = () => (
-    <div className="flex flex-col items-center w-full gap-4">
-      {isRejecting && (
-        <div className="w-full animate-in slide-in-from-bottom-2 duration-200">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-1 h-3 bg-red-500 rounded-full"></div>
-            <span className="text-xs font-bold text-gray-800">반려 사유</span>
-          </div>
-          <textarea
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-            placeholder="반려 사유를 입력해주세요."
-            className="w-full p-3 text-xs border border-red-100 rounded-xl bg-red-50/30 focus:outline-none focus:ring-2 focus:ring-red-500/10 focus:border-red-200 transition-all resize-none h-24"
-          />
-        </div>
-      )}
-      <div className="flex justify-center gap-3 w-full">
-        <button 
-          className="px-5 py-1.5 bg-red-50 text-red-600 border border-red-100 font-bold text-xs rounded-lg hover:bg-red-100 transition-all"
-          onClick={() => {
-            if (!isRejecting) {
-              setIsRejecting(true);
-            } else {
-              if (!rejectReason.trim()) {
-                alert('반려 사유를 입력해주세요.');
-                return;
-              }
-              onAction('REJECT', rejectReason);
-            }
-          }}
-        >
-          {isRejecting ? '반려 처리' : '반려'}
-        </button>
-        <button 
-          className="px-7 py-1.5 bg-[#3530B8] text-white font-bold text-xs rounded-lg hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all"
-          onClick={() => onAction('APPROVE')}
-        >
-          결재승인
-        </button>
-      </div>
-    </div>
+  // 3. 참조자 (기안자나 결재자가 아닌 경우)
+  const isActualReferrer = userRole === 'REFERRER' && mode === 'VIEW';
+
+  // 4. 결재자 (현재 결재 순서인 경우)
+  const isCurrentApprover = userRole === 'APPROVER' && mode === 'VIEW' && myStatus === 'IN_PROGRESS';
+
+  // 5. 결재자 (결재를 이미 완료한 경우)
+  const isPastApprover = userRole === 'APPROVER' && mode === 'VIEW' && (myStatus === 'APPROVED' || myStatus === 'REJECTED');
+
+  // 반려 처리 실행
+  const handleRejectConfirm = () => {
+    if (!rejectReason.trim()) {
+      setRejectError(true);
+      return;
+    }
+    onAction('REJECT', rejectReason);
+  };
+
+  // 반려 취소 (입력창 닫기)
+  const handleRejectCancel = () => {
+    setIsRejecting(false);
+    setRejectReason('');
+    setRejectError(false);
+  };
+
+  // 닫기 버튼
+  const CloseButton = () => (
+    <button 
+      className="px-6 py-2 border border-gray-200 text-gray-500 font-bold text-xs rounded-xl hover:bg-gray-50 transition-all active:scale-95"
+      onClick={() => navigate(-1)}
+    >
+      닫기
+    </button>
   );
 
   return (
-    <div className="flex flex-col items-center w-full gap-3 pt-5 pb-2 border-t border-gray-50 flex-shrink-0">
+    <div className="flex flex-col items-center w-full gap-3 pt-8 pb-2 border-t border-gray-100 flex-shrink-0">
       <div className="flex justify-center gap-3 w-full">
-        <button 
-          className="px-5 py-1.5 border border-gray-200 text-gray-500 font-bold text-xs rounded-lg hover:bg-gray-50 transition-all"
-          onClick={() => navigate(-1)}
-        >
-          닫기
-        </button>
-
-        {canCancelSubmit && (
-          <button 
-            className="px-5 py-1.5 bg-white border border-red-200 text-red-500 font-bold text-xs rounded-lg hover:bg-red-50 transition-all"
-            onClick={() => onAction('SUBMIT_CANCEL')}
-          >
-            상신 취소
-          </button>
+        {/* [기안 모드] - 기존 로직 유지 (명시적으로 작성되지 않은 경우) */}
+        {mode === 'EDIT' && userRole === 'DRAFTER' && (
+          <>
+            <CloseButton />
+            <button 
+              className="px-6 py-2 bg-[#F0F4FF] text-[#3530B8] font-bold text-xs rounded-xl hover:bg-[#DDE8FF] transition-all active:scale-95"
+              onClick={() => onAction('TEMP_SAVE')}
+            >
+              임시저장
+            </button>
+            <button 
+              className="px-8 py-2 bg-[#3530B8] text-white font-bold text-xs rounded-xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all active:scale-95"
+              onClick={() => onAction('SUBMIT')}
+            >
+              결재상신
+            </button>
+          </>
         )}
 
-        {userRole === 'DRAFTER' && mode === 'EDIT' && renderDrafterButtons()}
-        {userRole === 'APPROVER' && mode === 'VIEW' && renderApproverButtons()}
+        {/* [VIEW 모드] - 요구사항에 따른 분기 */}
+        {mode === 'VIEW' && (
+          <>
+            {/* 반려 진행 중인 결재자용 버튼 세트 */}
+            {isRejecting ? (
+              <div className="flex gap-3 animate-in fade-in zoom-in-95 duration-200">
+                <button 
+                  className="px-8 py-2 bg-red-500 text-white font-bold text-xs rounded-xl hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all active:scale-95"
+                  onClick={handleRejectConfirm}
+                >
+                  반려 확정
+                </button>
+                <button 
+                  className="px-6 py-2 bg-gray-100 text-gray-500 font-bold text-xs rounded-xl hover:bg-gray-200 transition-all active:scale-95"
+                  onClick={handleRejectCancel}
+                >
+                  취소
+                </button>
+              </div>
+            ) : (
+              <>
+                <CloseButton />
+
+                {/* 수정 가능한 기안자: 상신취소 추가 */}
+                {isEditableDrafter && (
+                  <button 
+                    className="px-6 py-2 bg-white border border-red-200 text-red-500 font-bold text-xs rounded-xl hover:bg-red-50 transition-all active:scale-95"
+                    onClick={() => onAction('SUBMIT_CANCEL')}
+                  >
+                    상신취소
+                  </button>
+                )}
+
+                {/* 현재 결재자: 반려, 승인 추가 */}
+                {isCurrentApprover && (
+                  <>
+                    <button 
+                      className="px-6 py-2 bg-red-50 text-red-600 border border-red-100 font-bold text-xs rounded-xl hover:bg-red-100 transition-all active:scale-95"
+                      onClick={() => setIsRejecting(true)}
+                    >
+                      반려
+                    </button>
+                    <button 
+                      className="px-8 py-2 bg-[#3530B8] text-white font-bold text-xs rounded-xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all active:scale-95"
+                      onClick={() => onAction('APPROVE')}
+                    >
+                      승인
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
