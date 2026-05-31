@@ -72,7 +72,6 @@ const AdminUsers = () => {
       '퇴사': 'REJECTED',
       '전체': ''
     };
-     console.log("보내는 status:", statusMap[tab]);  // 여기 찍어봐요
     getAllUsers(page, keyword, statusMap[tab]).then(resp => {
         setEmployees(resp.data.users || []);
         setTotalCount(resp.data.totalCount || 0);
@@ -124,11 +123,6 @@ const AdminUsers = () => {
 
   // 상세 정보 저장
   const handleDetailSave = () => {
-       console.log("보내는 데이터:", {
-       users_seq: selectedUser.users_seq,
-       ...editForm
-     });
-
     updateUsersInfo(selectedUser.users_seq, editForm).then(() => {
       setEmployees(prev => prev.map(emp => 
         emp.users_seq === selectedUser.users_seq ? 
@@ -153,7 +147,6 @@ const AdminUsers = () => {
       }));
       setIsDetailEditing(false);
     }).catch(err => {
-      console.error("수정 실패:", err);
       alert("정보 수정 중 오류가 발생했습니다.");
     });
   };
@@ -169,8 +162,6 @@ const AdminUsers = () => {
       'REJECTED': '퇴사'
     };
     const koreanStatus = statusMap[newStatus] || newStatus;
-
-    console.log("보내는 status:", newStatus);
 
     updateUsersState(upUsersSeq, newStatus).then(() => {
       // 1. 현재 페이지 데이터 다시 불러오기 (데이터와 상단 카운트 동시 갱신)
@@ -354,7 +345,6 @@ const AdminUsers = () => {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              console.log("수정 버튼 클릭 - 사번:", emp.users_seq);
                               setEditingId(emp.users_seq);
                             }}
                             className="w-max px-7 py-1 text-xs font-bold text-slate-600 bg-white border border-slate-300 rounded-full hover:bg-slate-50 shadow-sm">
