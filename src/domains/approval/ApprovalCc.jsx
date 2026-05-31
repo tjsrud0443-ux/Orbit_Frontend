@@ -88,7 +88,7 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
     }
 
     const rejectedApprover = doc.approvers?.find(
-      app => app.status === 'REJECTED'
+      app => app.status === 'REJECTED' && app.reject_reason
     )
     if (rejectedApprover) {
       return `${rejectedApprover.name} ${rejectedApprover.rank_name}`;
