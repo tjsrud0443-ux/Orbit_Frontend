@@ -23,7 +23,7 @@ import {
   faBoxOpen,
   faChevronRight,
 } from '@fortawesome/free-solid-svg-icons';
-import { getDashboard, getDeptEmployeeCount, getDeptLeave, getJoinResign } from './adminApi';
+import { getAiQuestions, getDashboard, getDeptEmployeeCount, getDeptLeave, getJoinResign } from './adminApi';
 
 // 1. ChartJS 필수 구성 요소 등록
 ChartJS.register(
@@ -50,16 +50,6 @@ const BRAND_COLORS = {
   donut: ['#4338CA', '#6366F1', '#818CF8', '#A5B4FC',],
   lineExit: '#fc0000',
 };
-
-
-// AI 미답변 질문 목록
-const RECENT_QUESTIONS = [
-  { id: 1, text: '퇴직금 계산 기준은 어떻게 되나요?', time: '10분 전' },
-  { id: 2, text: '연차 이월은 몇 개월까지 가능한가요?', time: '1시간 전' },
-  { id: 3, text: '법인카드 사용 한도 변경 방법은?', time: '3시간 전' },
-  { id: 4, text: '재택근무 신청 절차는 어떻게 되나요?', time: '5시간 전' },
-  { id: 5, text: '교육비 지원 대상과 절차는?', time: '1일 전' },
-];
 
 // --- [Sub Components] ---
 
@@ -99,6 +89,7 @@ const AdminMain = () => {
     aiQuestionsCount: 0,
     supplyRequestCount: 0
   });
+  const [aiQuestions, setAiQuestions] = useState({});
 
   const [deptEmployeeData, setDeptEmployeeData] = useState({
     labels: [],
@@ -209,6 +200,13 @@ const AdminMain = () => {
         ],
       });
     });
+  }, []);
+
+  useEffect(() => {
+    getAiQuestions().then(resp => {
+      console.log(resp.data)
+      setAiQuestions(resp.data);
+    })
   }, []);
 
   useEffect(() => {
@@ -351,13 +349,13 @@ const AdminMain = () => {
             }
           >
             <div className="divide-y divide-gray-100">
-              {RECENT_QUESTIONS.map((q) => (
-                <div key={q.id} className="flex items-center justify-between py-4 px-2">
+              {aiQuestions.map((item,index) => (
+                <div key={index} className="flex items-center justify-between py-4 px-2">
                   <span className="text-[#1a1c3d] text-sm font-bold truncate pr-4">
-                    {q.text}
+                    {item.question}
                   </span>
                   <span className="text-[#8a92a6] text-xs font-medium whitespace-nowrap">
-                    {q.time}
+                    {item.created_at}
                   </span>
                 </div>
               ))}

@@ -31,3 +31,4 @@ export const getDashboard = () => maxios.get("/admin/dashboard");
 export const getDeptEmployeeCount = () => maxios.get("/admin/deptEmployeeCount");
 export const getDeptLeave = () => maxios.get("/admin/deptLeave");
 export const getJoinResign = () => maxios.get("/admin/joinResign");
+export const getAiQuestions = () => maxios.get("/admin/aiQuestions")
