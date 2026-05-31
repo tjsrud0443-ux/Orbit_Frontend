@@ -7,7 +7,7 @@ import VacationForm from './forms/VacationForm';
 import PaymentForm from './forms/PaymentForm';
 import GeneralForm from './forms/GeneralForm';
 import PurchaseForm from './forms/PurchaseForm';
-import { submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail } from './approvalApi';
+import { submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail, updateApproval, approveDraft } from './approvalApi';
 
 // 결재자 선택 모달 컴포넌트
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
@@ -78,6 +78,11 @@ const ApprovalDetail = () => {
   const [approvers, setApprovers] = useState([]);
   const [formData, setFormData] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // 반려 관련 상태
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejectError, setRejectError] = useState(false);
 
   const navigate = useNavigate();
 
@@ -90,6 +95,13 @@ const ApprovalDetail = () => {
 
     const upperType = type.toUpperCase();
     setDoc_type(upperType);
+    
+    // 이전 데이터 초기화 (화면 깜빡임 방지 및 정확한 폼 렌더링을 위해)
+    setFormData({});
+    setIsSubmitClicked(false);
+    setIsRejecting(false);
+    setRejectReason('');
+    setRejectError(false);
 
     if (!docSeq) {
       // [작성 모드]
@@ -109,11 +121,11 @@ const ApprovalDetail = () => {
     } else {
       fetchDocumentData(type, docSeq);
     }
-  }, [type, docSeq]);
+  }, [type, docSeq, user?.id]);
 
   const fetchDocumentData = async (type, docSeq) => {
     try {
-      const response = await getApprovalDetail(type, docSeq).then(resp => {
+      await getApprovalDetail(type, docSeq).then(resp => {
         setFormData({
           ...resp.data.common,   // draft_documents 정보
           ...resp.data.detail,   // 각 문서별 본문 디테일 정보
@@ -122,27 +134,23 @@ const ApprovalDetail = () => {
           referrers: resp.data.referrers || []
         });
 
-        setApprovers(resp.data.approvers || []);
-        setMode('VIEW');
-
+        const fetchedApprovers = resp.data.approvers || [];
+        setApprovers(fetchedApprovers);
+        
         const documentStatus = resp.data.common?.status;
+        const drafterId = resp.data.common?.users_id || resp.data.users_id;
 
-        const approver = resp.data.approvers?.find(a => a.users_id === user?.id && a.status === 'IN_PROGRESS')
-        if(approver){
+        // 역할 및 모드 설정
+        if (drafterId === user?.id) {
+          setUserRole('DRAFTER');
+          setMode(documentStatus === 'TEMP' ? 'EDIT' : 'VIEW');
+        } else if (fetchedApprovers.some(a => a.users_id === user?.id)) {
           setUserRole('APPROVER');
           setMode('VIEW');
-        }else if(resp.data.users_id === user?.id){
-          setUserRole('DRAFTER');
-          if (documentStatus === 'TEMP') {
-            setMode('EDIT');
-          }else{
-            setMode('VIEW');
-          }
-        }else{
+        } else {
           setUserRole('REFERRER');
           setMode('VIEW');
         }
-
       })
     } catch (error) {
       console.error('기안 문서 조회 실패:', error);
@@ -151,19 +159,20 @@ const ApprovalDetail = () => {
 
   const [isSubmitClicked, setIsSubmitClicked] = useState(false);
 
-  // 버튼 액션
-  const handleAction = async (actionType) => {
+  // [통합 전송 핸들러] 상신 vs 임시저장
+  const handleSave = async (actionType) => {
     const isTempSave = actionType === 'TEMP_SAVE';
+    const isSubmit = actionType === 'SUBMIT';
+    const isNew = !docSeq;
 
-    // [결재 상신 버튼을 누른 경우]
-    if (actionType === 'SUBMIT') {
-      setIsSubmitClicked(true);
+    // 1. 유효성 검사 분기
+    setIsSubmitClicked(isSubmit);
 
-      // 필수 항목 검증
+    if (isSubmit) {
       const isFormValid = () => {
         const today = new Date().toLocaleDateString('sv-SE');
         if (!formData.title?.trim() || formData.title.length > 50) return false;
-        
+
         if (doc_type === 'VACATION') {
           if (!formData.start_date || formData.start_date < today) return false;
           if (formData.vac_type === '연차') {
@@ -171,28 +180,22 @@ const ApprovalDetail = () => {
           }
           if (!formData.reason?.trim() || formData.reason.length > 300) return false;
         } else if (doc_type === 'PAYMENT') {
-          const pay_date = formData.pay_date;
-          const pay_reason = formData.pay_reason;
-          const account_info = formData.account_info;
-
-          if (!pay_date) return false;
-          if (!pay_reason?.trim() || pay_reason.length > 300) return false;
-          if (!account_info?.trim() || account_info.length > 50) return false;
+          if (!formData.pay_date || !formData.pay_reason?.trim() || !formData.account_info?.trim()) return false;
           if (!formData.items || formData.items.length === 0) return false;
           
-          return formData.items.every(item => {
-            const item_name = item.item_name;
-            const amount = item.amount;
-            const receipt = item.receipt;
-            const note = item.note;
-            
-            return (
-              item_name?.trim() && item_name.length <= 30 &&
-              amount > 0 && 
-              receipt &&
-              (!note || note.length <= 100)
-            );
-          });
+          const itemsValid = formData.items.every(item => 
+            item.item_name?.trim() && 
+            item.item_name.length <= 30 &&
+            Number(item.amount) > 0 && 
+            item.receipt &&
+            (!item.note || item.note.length <= 100)
+          );
+
+          if (!itemsValid) {
+            alert("지출 항목 내 비고 외 모든 정보는 필수 입력 사항입니다.");
+            return false;
+          }
+          return true;
         } else if (doc_type === 'GENERAL') {
           if (!formData.purpose?.trim() || formData.purpose.length > 300) return false;
           if (!formData.content?.trim() || formData.content.length > 1000) return false;
@@ -202,110 +205,151 @@ const ApprovalDetail = () => {
           if (!formData.vendor?.trim() || formData.vendor.length > 50) return false;
           if (!formData.items || formData.items.length === 0) return false;
           if (!formData.attachments || formData.attachments.length === 0) return false;
-          return formData.items.every(item => 
-            item.item_name?.trim() && item.item_name.length <= 50 &&
-            item.ea > 0 && 
-            item.unit_price > 0
+
+          const itemsValid = formData.items.every(item => 
+            item.item_name?.trim() && 
+            item.item_name.length <= 50 &&
+            Number(item.ea) > 0 && 
+            Number(item.unit_price) > 0
           );
+
+          if (!itemsValid) {
+            alert("구매 품목 내 비고 외 모든 정보는 필수 입력 사항입니다.");
+            return false;
+          }
+          return true;
         }
         return true;
       };
 
-      if (!isFormValid()) {
-        return;
-      }
-
+      if (!isFormValid()) return;
       if (!approvers || approvers.length === 0) {
         alert('최소 한 명 이상의 결재자를 추가해야 합니다.');
         return;
       }
+    }
 
-      try {
-        const { referrers, title, ...restOfData } = formData;
-        
-        const isVacation= doc_type === 'VACATION'
-        const isHalfVacation = isVacation && formData.vac_type?.includes('반차');
+    // 2. 데이터 가공 및 Payload 조립
+    try {
+      const { referrers, title, ...restOfData } = formData;
+      const isVacation = doc_type === 'VACATION';
+      const isHalfVacation = isVacation && formData.vac_type?.includes('반차');
 
-        const finalDocData = isVacation
-          ? {
-              ...restOfData,
-              end_date: isHalfVacation ? formData.start_date : formData.end_date,
-              days: isHalfVacation ? 0.5 : Number(formData.days)
-            }
-          : restOfData;
-        
-        // 각 테이블 DTO 구조에 대입하기 좋게 조립
-        const submitPayload = {
-          title: formData.title,
-          doc_type: doc_type,
-          users_id: user?.id,
-          status: isTempSave ? 'TEMP' : 'DRAFT',
-          is_temp: isTempSave ? 1 : 0,
-          // 결재자 리스트 (users_id 포함)
-          approvers: approvers.map((app, index) => ({
-            users_id: app.id || app.users_id,
-            step_order: index + 1
-          })),
+      const finalDocData = isVacation
+        ? {
+          ...restOfData,
+          end_date: isHalfVacation ? formData.start_date : formData.end_date,
+          days: isHalfVacation ? 0.5 : Number(formData.days)
+        }
+        : restOfData;
 
-          // 참조자 리스트 (users_id 포함)
-          referrers: (referrers || []).map(ref => ({
-            users_id: ref.id || ref.users_id
-          })),
+      const submitPayload = {
+        title: formData.title,
+        doc_type: doc_type,
+        users_id: user?.id,
+        status: isTempSave ? 'TEMP' : 'DRAFT',
+        is_temp: isTempSave ? 1 : 0,
+        // actionType: actionType, // 백엔드 분기 처리용/
+        approvers: approvers.map((app, index) => ({
+          users_id: app.id || app.users_id,
+          step_order: index + 1
+        })),
+        referrers: (referrers || []).map(ref => ({
+          users_id: ref.id || ref.users_id
+        })),
+        ...finalDocData
+      };
 
-          // 나머지 문서 데이터
-          ...finalDocData
-        };
+      let response;
 
-        // 문서 타입별로 분리된 API 호출
-        let response;
-        if (doc_type === 'VACATION') {
-          response = docSeq ? updateVacation(docSeq, submitPayload) : submitVacation(submitPayload);
-        } else if (doc_type === 'GENERAL') {
-          response = docSeq ? updateGeneral(docSeq, submitPayload) : submitGeneral(submitPayload);
-        } else if (doc_type === 'PAYMENT') {
+      // 3. API 호출 (신규: POST / 임시저장 재작성: PUT)
+      if (isNew) {
+        if (doc_type === 'VACATION') response = await submitVacation(submitPayload);
+        else if (doc_type === 'GENERAL') response = await submitGeneral(submitPayload);
+        else if (doc_type === 'PAYMENT' || doc_type === 'PURCHASE') {
           const formDataObj = new FormData();
-
-          const total_amount = (formData.items || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-
-          const paymentPayload = {
-            ...submitPayload,
-            total_amount: total_amount
-          };
-
-          formDataObj.append("dto", new Blob([JSON.stringify(paymentPayload)], {type: "application/json"}));
-          if(formData.items && formData.items.length > 0){
-            formData.items.forEach(item => {
-              if(item.receipt instanceof File){
-                formDataObj.append("files", item.receipt);
-              }
-            });
+          if (doc_type === 'PAYMENT') {
+            submitPayload.total_amount = (formData.items || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
           }
-          response = docSeq ? updatePayment(docSeq, formDataObj) : submitPayment(formDataObj);
-        } else if (doc_type === 'PURCHASE') {
-          const formDataObj = new FormData();
-          
           formDataObj.append("dto", new Blob([JSON.stringify(submitPayload)], { type: "application/json" }));
-          
-          if (formData.attachments && formData.attachments.length > 0) {
-            formData.attachments.forEach(file => {
-              if (file instanceof File) {
-                formDataObj.append("files", file);
-              }
-            });
+          const files = doc_type === 'PAYMENT' ? formData.items?.map(i => i.receipt) : formData.attachments;
+          files?.forEach(file => { if (file instanceof File) formDataObj.append("files", file); });
+          response = (doc_type === 'PAYMENT') ? await submitPayment(formDataObj) : await submitPurchase(formDataObj);
+        }
+      } else {
+        // 임시 저장된 문서 수정 (PUT /api/approval/update/${docSeq})
+        if (doc_type === 'PAYMENT' || doc_type === 'PURCHASE') {
+          const formDataObj = new FormData();
+          if (doc_type === 'PAYMENT') {
+            submitPayload.total_amount = (formData.items || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
           }
-
-          response = docSeq ? await updatePurchase(docSeq, formDataObj) : await submitPurchase(formDataObj);
+          formDataObj.append("dto", new Blob([JSON.stringify(submitPayload)], { type: "application/json" }));
+          const files = doc_type === 'PAYMENT' ? formData.items?.map(i => i.receipt) : formData.attachments;
+          files?.forEach(file => { if (file instanceof File) formDataObj.append("files", file); });
+          response = await updateApproval(docSeq, formDataObj);
+        } else {
+          response = await updateApproval(docSeq, submitPayload);
         }
-
-        if (response && (response.status === 200 || response.status === 201 || response.data)) {
-          alert(isTempSave ? '임시저장이 완료되었습니다.' : '결재 문서가 성공적으로 상신되었습니다.');
-          navigate('/approval');
-        }
-
-      } catch (error) {
-        console.error('결재 상신 중 에러 발생:', error);
-        alert('결재 상신 중 오류가 발생했습니다.');
       }
+
+      if (response && (response.status === 200 || response.status === 201 || response.data)) {
+        alert(isTempSave ? '임시저장이 완료되었습니다.' : '결재 문서가 성공적으로 상신되었습니다.');
+        navigate('/approval');
+      }
+    } catch (error) {
+      console.error('문서 처리 중 에러 발생:', error);
+      alert('처리 중 오류가 발생했습니다.');
+    }
+  };
+
+  // 버튼 액션
+  const handleAction = async (actionType, payload) => {
+    const isTempSave = actionType === 'TEMP_SAVE';
+
+    if (actionType === 'APPROVE') {
+      if (!window.confirm('문서를 승인하시겠습니까?')) return;
+      try {
+        const response = await approveDraft(docSeq, user?.id);
+        alert('결재 승인이 완료되었습니다.');
+        navigate('/approvalInbox');
+      } catch (error) {
+        alert('승인 처리 중 오류가 발생했습니다.');
+      }
+      return;
+    }
+
+    if (actionType === 'REJECT') {
+      if (!payload?.trim()) {
+        setRejectError(true);
+        return;
+      }
+      if (!window.confirm('문서를 반려하시겠습니까?')) return;
+      try {
+        // API 연동 (상세 구현은 백엔드 스펙에 맞게 조정 필요)
+        // const response = await rejectApproval(docSeq, { reject_reason: payload });
+        alert('결재 반려가 완료되었습니다.');
+        navigate('/approval');
+      } catch (error) {
+        alert('반려 처리 중 오류가 발생했습니다.');
+      }
+      return;
+    }
+
+    if (actionType === 'SUBMIT_CANCEL') {
+      if (!window.confirm('상신을 취소하시겠습니까?')) return;
+      try {
+        // API 연동
+        alert('상신 취소가 완료되었습니다.');
+        navigate('/approval');
+      } catch (error) {
+        alert('상신 취소 중 오류가 발생했습니다.');
+      }
+      return;
+    }
+
+    // [결재 상신 / 임시 저장]
+    if (actionType === 'SUBMIT' || actionType === 'TEMP_SAVE') {
+      handleSave(actionType);
     }
   };
 
@@ -338,13 +382,13 @@ const ApprovalDetail = () => {
 
     switch (doc_type) {
       case 'VACATION':
-        return <VacationForm {...props} />;
+        return <VacationForm key={doc_type} {...props} />;
       case 'PAYMENT':
-        return <PaymentForm {...props} />;
+        return <PaymentForm key={doc_type} {...props} />;
       case 'GENERAL':
-        return <GeneralForm {...props} />;
+        return <GeneralForm key={doc_type} {...props} />;
       case 'PURCHASE':
-        return <PurchaseForm {...props} />;
+        return <PurchaseForm key={doc_type} {...props} />;
       default:
         return <div>알 수 없는 문서 형식입니다.</div>;
     }
@@ -368,6 +412,10 @@ const ApprovalDetail = () => {
       created_at: formData.created_at
     };
 
+  // 반려 여부 및 사유 확인
+  const rejectedApprover = approvers?.find(app => app.status === 'REJECTED');
+  const showRejectReason = mode === 'VIEW' && rejectedApprover;
+
   return (
     <>
       <EmployeeSelectionModal 
@@ -382,11 +430,61 @@ const ApprovalDetail = () => {
         userRole={userRole}
         mode={mode}
         approvers={approvers}
+        referrers={formData.referrers}
         onAddApprover={handleAddApprover}
         onRemoveApprover={handleRemoveApprover}
         onAction={handleAction}
+        isRejecting={isRejecting}
+        setIsRejecting={setIsRejecting}
+        rejectReason={rejectReason}
+        setRejectReason={setRejectReason}
+        rejectError={rejectError}
+        setRejectError={setRejectError}
       >
         {renderForm()}
+
+        {/* 반려 사유 영역 (조회 모드에서 반려된 경우 또는 결재자가 반려 진행 중인 경우) */}
+        {(showRejectReason || isRejecting) && (
+          <div className="mt-8 pt-8 border-t-2 border-red-50 animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-1.5 h-4 bg-red-500 rounded-full"></div>
+              <span className="text-xs font-bold text-red-600">반려 사유</span>
+            </div>
+            
+            {isRejecting ? (
+              <>
+                <textarea
+                  className={`w-full p-4 text-sm border-2 rounded-xl bg-red-50/30 focus:outline-none transition-all resize-none h-32 ${
+                    rejectError ? 'border-red-500 ring-4 ring-red-500/10 shadow-lg shadow-red-500/5' : 'border-red-100 focus:border-red-200'
+                  }`}
+                  value={rejectReason}
+                  onChange={(e) => {
+                    setRejectReason(e.target.value);
+                    if (e.target.value.trim()) setRejectError(false);
+                  }}
+                  placeholder="반려 사유를 상세히 입력해주세요."
+                  autoFocus
+                />
+                {rejectError && (
+                  <p className="text-xs text-red-500 mt-2 font-bold flex items-center gap-1 animate-pulse">
+                    <span>⚠️</span> 반려 사유를 입력해주세요.
+                  </p>
+                )}
+              </>
+            ) : (
+              <div className="p-5 bg-red-50 rounded-xl border border-red-100 shadow-sm">
+                <p className="text-sm text-red-700 leading-relaxed font-medium">
+                  {rejectedApprover?.reject_reason || '반려 사유가 등록되지 않았습니다.'}
+                </p>
+                <div className="mt-3 flex justify-end">
+                  <span className="text-[10px] font-bold text-red-400 bg-red-100/50 px-2 py-1 rounded">
+                    반려자: {rejectedApprover?.name} {rejectedApprover?.rank_name}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </ApprovalDocumentContainer>
     </>
   );
