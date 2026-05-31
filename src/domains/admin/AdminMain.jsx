@@ -66,8 +66,11 @@ const DEPT_EMPLOYEE_DATA = {
       label: '직원 수',
       data: [4, 4, 1, 3, 1, 2, 2, 2, 2, 1],
       backgroundColor: BRAND_COLORS.main,
-      borderRadius: 2,
       barThickness: 32,
+      borderRadius: (context) => {
+        const width = window.innerWidth;
+        return width >= 1024 ? 8 : 2;
+      },
     },
   ],
 };
