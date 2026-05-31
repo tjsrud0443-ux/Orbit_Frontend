@@ -6,5 +6,6 @@ export const IMAGES = {
     ORBTI_TITLE : `${GCS_BUCKET_URL}/OrbitTitle.png`,
     ORBTI_LOGO : `${GCS_BUCKET_URL}/OrbitLogo.png`,
     APPROVAL_IMG : `${GCS_BUCKET_URL}/approvalImg.png`,
-    SIGNUP_PIC : `${GCS_BUCKET_URL}/SignupPic.png`
+    SIGNUP_PIC : `${GCS_BUCKET_URL}/SignupPic.png`,
+    MAIN_AI1 : `${GCS_BUCKET_URL}/Ai_2light.png`,
 };

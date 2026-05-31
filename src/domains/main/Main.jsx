@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileSignature, faDoorOpen, faFileCirclePlus, faDiagramProject, faClipboard, faBox } from '@fortawesome/free-solid-svg-icons';
 
+import { IMAGES } from '../../images/images'; 
 import { fetchHolidays } from '../../api/holidayApi';
 import { getSchedules } from '../schedules/schedulesApi';
 import { checkIn_api, checkOut_api, getAttendanceStatus } from './mainApi';
@@ -147,16 +148,26 @@ useEffect(() => {
   ];
 
 const quickActions = [
-  { title: "기안 작성", icon: faFileSignature, bgColor: "white", borderColor: "#FFECB3", iconBgColor: "#FFECB3", color: "#FF9800",
+  { title: "기안 작성", icon: faFileSignature,
+    bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#FFF4E5", color: "#f89e04",
     onClick: () => setIsDraftModalOpen(true)
-   },
-  { title: "회의실 예약", icon: faDoorOpen, bgColor: "white", borderColor: "#D1E9FF", iconBgColor: "#D1E9FF", color: "#007BFF" },
-  { title: "새 문서 등록", icon: faFileCirclePlus, bgColor: "white", borderColor: "#BBF7D0", iconBgColor: "#BBF7D0", color: "#10B981" },
-  { title: "프로젝트 생성", icon: faDiagramProject, bgColor: "white", borderColor: "#FFCCC7", iconBgColor: "#FFCCC7", color: "#FF4D4F", 
-    onClick: () => setIsProjectModalOpen(true) 
   },
-  { title: "회의록 작성", icon: faClipboard, bgColor: "white", borderColor: "#D9C7FF", iconBgColor: "#D9C7FF", color: "#7C3AED" },
-  { title: "비품 신청", icon: faBox, bgColor: "white", borderColor: "#FFB3D9", iconBgColor: "#FFB3D9", color: "#DB2777" },
+  { title: "회의실 예약", icon: faDoorOpen,
+    bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#EFF6FF", color: "#2c7af7"
+  },
+  { title: "새 문서 등록", icon: faFileCirclePlus,
+    bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#ECFDF5", color: "#09af78"
+  },
+  { title: "프로젝트 생성", icon: faDiagramProject,
+    bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#FFF1F2", color: "#f62f32",
+    onClick: () => setIsProjectModalOpen(true)
+  },
+  { title: "회의록 작성", icon: faClipboard,
+    bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#F5F3FF", color: "#702de3"
+  },
+  { title: "비품 신청", icon: faBox,
+    bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#FFF0F9", color: "#e2328a"
+  },
 ];
   return (
     <div className="w-full h-auto lg:h-full flex flex-col p-4 lg:px-7 box-border lg:overflow-hidden bg-white">
@@ -186,52 +197,67 @@ const quickActions = [
           <div className="grid grid-cols-1 md:grid-cols-8 gap-6 shrink-0">
             {/* Box 1: 근태 관리 */}
             <div className="md:col-span-3 bg-white p-4 rounded-3xl border border-gray-200 shadow-sm 
-            flex flex-col min-h-[12.25rem] lg:h-[13.25rem]">
+            flex flex-col min-h-[16.25rem] lg:h-[16.25rem]">
               <h3 className="text-s font-extrabold text-indigo-950 self-start">출퇴근</h3>
-              <p className="text-4xl font-extrabold text-indigo-950 leading-tight flex-1 flex items-center justify-center">{formatTime(currentTime)}</p>
+                <div className="flex-1 flex flex-col items-center justify-center">
+                  <span className="text-xs font-semibold text-gray-500 mb-1">현재 시간</span>
+                  <p className="text-4xl font-extrabold text-indigo-950 leading-tight">{formatTime(currentTime)}</p>
+                </div>
                 {/* 출퇴근 시간 표시 */}
-                <div className="flex gap-2 w-full">
-                  <button
-                    onClick={handleCheckIn}
-                    disabled={!!checkIn}
-                    className={`flex-1 py-2 rounded-xl font-bold text-xs transition-colors
-                      ${checkIn
-                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-500 cursor-not-allowed'
-                        : 'bg-[#3530B8] text-white hover:bg-[#2a2496]'
-                      }`}
-                  >
-                    {checkIn ? formatStampTime(checkIn) : '출근'}
-                  </button>
+              <div className="flex gap-2 w-full">
+                <button
+                  onClick={handleCheckIn}
+                  disabled={!!checkIn}
+                  className={`flex-1 py-3 rounded-xl font-bold text-xs transition-colors
+                    ${checkIn
+                      ? 'bg-emerald-50 border border-emerald-200 text-emerald-500 cursor-not-allowed'
+                      : 'bg-[#3530B8] text-white hover:bg-[#2a2496]'
+                    }`}
+                >
+                  출근
+                </button>
 
-                  <button
-                    onClick={handleCheckOut}
-                    disabled={!checkIn || !!checkOut}
-                    className={`flex-1 py-2 rounded-xl font-bold text-xs transition-colors
-                      ${checkOut
-                        ? 'bg-rose-50 border border-rose-200 text-rose-400 cursor-not-allowed'
-                        : !checkIn
-                          ? 'bg-white border border-gray-200 text-gray-300 cursor-not-allowed'
-                          : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-                      }`}
-                  >
-                    {checkOut ? formatStampTime(checkOut) : '퇴근'}
-                  </button>
-            </div>
+                <button
+                  onClick={handleCheckOut}
+                  disabled={!checkIn || !!checkOut}
+                  className={`flex-1 py-3 rounded-xl font-bold text-xs transition-colors
+                    ${checkOut
+                      ? 'bg-rose-50 border border-rose-200 text-rose-400 cursor-not-allowed'
+                      : !checkIn
+                        ? 'bg-white border border-gray-200 text-gray-300 cursor-not-allowed'
+                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                    }`}
+                >
+                  퇴근
+                </button>
+              </div>
+
+              {/* 시간 표시 */}
+              <div className="flex gap-2 w-full mt-4 mb-3">
+                <span className="flex-1 text-center text-xs text-emerald-500 font-bold">
+                  {checkIn ? formatStampTime(checkIn) : '-'}
+                </span>
+                <span className="flex-1 text-center text-xs text-rose-400 font-bold">
+                  {checkOut ? formatStampTime(checkOut) : '-'}
+                </span>
+              </div>
           </div>
 
             {/* Box 2: 빠른 실행 (3x2) */}
-            <div className="md:col-span-5 bg-white p-4 rounded-3xl border border-gray-200 shadow-sm flex flex-col min-h-[13.25rem] lg:h-[13.25rem]">
+            <div className="md:col-span-5 bg-white p-4 rounded-3xl border border-gray-200 shadow-sm flex flex-col min-h-[16.25rem] lg:h-[16.25rem]">
               <h3 className="text-s font-extrabold text-indigo-950 mb-2">빠른 실행</h3>
               <div className="grid grid-cols-3 grid-rows-2 gap-2 flex-1">
                 {quickActions.map((action, idx) => (
                   <button key={idx}
                    onClick={action.onClick || undefined}
+                   onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F0F4FF'}
+  onMouseLeave={e => e.currentTarget.style.backgroundColor = action.bgColor}
                     style={{ backgroundColor: action.bgColor, borderColor: action.borderColor }}
-                    className="flex flex-col items-center justify-center gap-1.5 border rounded-2xl hover:brightness-95 transition-all">
-                    <div style={{ backgroundColor: action.iconBgColor }} className="p-2.5 rounded-full">
-                      <FontAwesomeIcon icon={action.icon} style={{ color: action.color }} className="text-base" />
+                    className="flex flex-row items-center justify-start gap-2.5 px-3 border rounded-2xl transition-all">
+                    <div style={{ backgroundColor: action.iconBgColor }} className="p-2.5 ml-1 rounded-xl">
+                      <FontAwesomeIcon icon={action.icon} style={{ color: action.color }} className="text-2xl" />
                     </div>
-                    <span className="text-[0.7rem] font-bold" style={{ color: action.color }}>{action.title}</span>
+                    <span className="text-[0.85rem] font-semibold" style={{ color: action.textColor}}>{action.title}</span>
                   </button>
                 ))}
               </div>
@@ -239,7 +265,7 @@ const quickActions = [
           </div>
 
           {/* 하단: 달력 및 일정 */}
-          <div className="flex-1 bg-white p-4 rounded-3xl border border-gray-200 shadow-sm min-h-[20rem] lg:min-h-0 overflow-hidden">
+          <div className="flex-1 bg-white p-4 rounded-3xl border border-gray-200 shadow-sm min-h-[13rem] lg:min-h-0 overflow-hidden">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
               {/* 달력 */}
               <div className="flex flex-col h-full overflow-hidden">
@@ -416,23 +442,28 @@ const quickActions = [
           </div>
 
           {/* Box 5: AI 챗봇 */}
-          <div className="bg-indigo-950 p-5 rounded-3xl shadow-lg flex flex-col justify-between text-white relative overflow-hidden min-h-[15.625rem] lg:flex-1">
-            <div className="absolute top-[-1.25rem] right-[-1.25rem] w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+                 <div className="bg-[#F0F4FF] p-5 rounded-3xl shadow-lg flex flex-col justify-between text-[#1a1756] relative overflow-hidden min-h-[15.625rem] lg:flex-1">
+            <div className="absolute top-[-1.25rem] right-[-1.25rem] w-20 h-20 bg-white/10 rounded-full blur-3xl"></div>
             <div className="shrink-0 relative z-10">
               <div className="flex items-center gap-2 mb-3">
-                <span className="p-1.5 bg-white/20 rounded-xl text-lg">🤖</span>
-                <h3 className="text-s font-bold">Orbit AI</h3>
+                <span className="p-1 bg-white/20 rounded-xl text-lg">🤖</span>
+                <h3 className="text-lg font-bold">Orbit AI</h3>
               </div>
-              <p className="text-xl font-bold leading-tight mb-2">무엇을 도와드릴까요?</p>
-              <p className="text-xs text-indigo-200">궁금한 업무 정보를 물어보세요.</p>
+              <p className="text-2xl font-semibold leading-tight mb-2">무엇을 도와드릴까요?</p>
+              <p className="text-s text-[#3530B8]">궁금한 업무 정보를 물어보세요.</p>
             </div>
-            <div className="mt-auto relative z-10">
+            <div className="mt-auto relative z-10">         
               <button
                 onClick={() => navigate('/aiChat')}
                 className="w-full py-3.5 bg-white text-indigo-950 font-bold text-sm rounded-xl shadow-md active:scale-[0.98] transition-all"
               >
                 AI 채팅 시작하기
               </button>
+              <img 
+                src={IMAGES.MAIN_AI1} 
+                className="absolute bottom-4 left-4 w-60 h-60 ml-48 mb-10 object-contain" 
+                alt="" 
+              />
             </div>
           </div>
 
