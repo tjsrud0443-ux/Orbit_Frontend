@@ -309,9 +309,9 @@ const ApprovalDetail = () => {
         // 문서 타입별로 분리된 API 호출
         let response;
         if (doc_type === 'VACATION') {
-          response = docSeq ? updateVacation(docSeq, submitPayload) : submitVacation(submitPayload);
+          response = await (docSeq ? updateVacation(docSeq, submitPayload) : submitVacation(submitPayload));
         } else if (doc_type === 'GENERAL') {
-          response = docSeq ? updateGeneral(docSeq, submitPayload) : submitGeneral(submitPayload);
+          response = await (docSeq ? updateGeneral(docSeq, submitPayload) : submitGeneral(submitPayload));
         } else if (doc_type === 'PAYMENT') {
           const formDataObj = new FormData();
 
@@ -330,7 +330,7 @@ const ApprovalDetail = () => {
               }
             });
           }
-          response = docSeq ? updatePayment(docSeq, formDataObj) : submitPayment(formDataObj);
+          response = await (docSeq ? updatePayment(docSeq, formDataObj) : submitPayment(formDataObj));
         } else if (doc_type === 'PURCHASE') {
           const formDataObj = new FormData();
           
@@ -344,7 +344,7 @@ const ApprovalDetail = () => {
             });
           }
 
-          response = docSeq ? await updatePurchase(docSeq, formDataObj) : await submitPurchase(formDataObj);
+          response =  await (docSeq ? updatePurchase(docSeq, formDataObj) : submitPurchase(formDataObj));
         }
 
         if (response && (response.status === 200 || response.status === 201 || response.data)) {
@@ -379,7 +379,6 @@ const ApprovalDetail = () => {
   // 4. 문서 타입에 따른 폼 렌더링
   const renderForm = () => {
     const props = {
-      key: doc_type, // 문서 타입이 바뀔 때 컴포넌트 강제 재마운트 (초기화 이슈 해결)
       data: formData,
       onChange: setFormData,
       mode: mode,
@@ -389,13 +388,13 @@ const ApprovalDetail = () => {
 
     switch (doc_type) {
       case 'VACATION':
-        return <VacationForm {...props} />;
+        return <VacationForm key={doc_type} {...props} />;
       case 'PAYMENT':
-        return <PaymentForm {...props} />;
+        return <PaymentForm key={doc_type} {...props} />;
       case 'GENERAL':
-        return <GeneralForm {...props} />;
+        return <GeneralForm key={doc_type} {...props} />;
       case 'PURCHASE':
-        return <PurchaseForm {...props} />;
+        return <PurchaseForm key={doc_type} {...props} />;
       default:
         return <div>알 수 없는 문서 형식입니다.</div>;
     }
