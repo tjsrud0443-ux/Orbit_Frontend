@@ -214,7 +214,6 @@ const ApprovalMyPage = () => {
 
   useEffect(() => {
     getPageMyDoc("REJECTED", rejectedPage, searchTerm, docTypeMap[selectedType] || selectedType).then(resp => {
-      console.log(searchTerm, selectedType)
       setRejectedDocs(resp.data.list);
       setRejectedCount(Math.ceil(resp.data.count / 5));
     })
