@@ -182,13 +182,28 @@ const ApprovalDetail = () => {
         } else if (doc_type === 'PAYMENT') {
           if (!formData.pay_date || !formData.pay_reason?.trim() || !formData.account_info?.trim()) return false;
           if (!formData.items || formData.items.length === 0) return false;
-          return formData.items.every(item => item.item_name?.trim() && item.amount > 0 && item.receipt);
+          return formData.items.every(item => 
+            item.item_name?.trim() && 
+            item.item_name.length <= 30 &&
+            Number(item.amount) > 0 && 
+            item.receipt &&
+            (!item.note || item.note.length <= 100)
+          );
         } else if (doc_type === 'GENERAL') {
-          if (!formData.purpose?.trim() || !formData.content?.trim()) return false;
+          if (!formData.purpose?.trim() || formData.purpose.length > 300) return false;
+          if (!formData.content?.trim() || formData.content.length > 1000) return false;
         } else if (doc_type === 'PURCHASE') {
-          if (!formData.purchase_date || !formData.purpose?.trim() || !formData.vendor?.trim()) return false;
-          if (!formData.items || formData.items.length === 0 || !formData.attachments || formData.attachments.length === 0) return false;
-          return formData.items.every(item => item.item_name?.trim() && item.ea > 0 && item.unit_price > 0);
+          if (!formData.purchase_date || formData.purchase_date < today) return false;
+          if (!formData.purpose?.trim() || formData.purpose.length > 300) return false;
+          if (!formData.vendor?.trim() || formData.vendor.length > 50) return false;
+          if (!formData.items || formData.items.length === 0) return false;
+          if (!formData.attachments || formData.attachments.length === 0) return false;
+          return formData.items.every(item => 
+            item.item_name?.trim() && 
+            item.item_name.length <= 50 &&
+            Number(item.ea) > 0 && 
+            Number(item.unit_price) > 0
+          );
         }
         return true;
       };
@@ -248,7 +263,7 @@ const ApprovalDetail = () => {
           response = (doc_type === 'PAYMENT') ? await submitPayment(formDataObj) : await submitPurchase(formDataObj);
         }
       } else {
-        // 임시 저장된 문서 수정 (PUT /approval/update/${docSeq})
+        // 임시 저장된 문서 수정 (PUT /api/approval/update/${docSeq})
         if (doc_type === 'PAYMENT' || doc_type === 'PURCHASE') {
           const formDataObj = new FormData();
           if (doc_type === 'PAYMENT') {
@@ -265,7 +280,7 @@ const ApprovalDetail = () => {
 
       if (response && (response.status === 200 || response.status === 201 || response.data)) {
         alert(isTempSave ? '임시저장이 완료되었습니다.' : '결재 문서가 성공적으로 상신되었습니다.');
-        navigate(isTempSave ? '/approvalTemp' : '/approval');
+        navigate('/approval');
       }
     } catch (error) {
       console.error('문서 처리 중 에러 발생:', error);

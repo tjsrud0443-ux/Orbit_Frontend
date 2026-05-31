@@ -53,7 +53,10 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, drafter }) => {
 
         {/* 결재자 리스트 영역 */}
         {approvers.map((approver, idx) => {
-          const statusText = getStatusText(approver, idx);
+          const hasRejectionBefore = approvers.slice(0, idx).some(a => a.status === 'REJECTED');
+          const statusText = hasRejectionBefore ? '' : getStatusText(approver, idx);
+          const showDetails = !hasRejectionBefore;
+
           return (
             <div key={idx} className="w-16 border-y border-r border-white/30 flex flex-col border-l-0 relative">
               <div className="bg-white/10 text-[0.7rem] py-0.5 text-center font-bold border-b border-white/30 text-white/90">
@@ -68,8 +71,8 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, drafter }) => {
                 )}
               </div>
               <div className={`${isEditMode ? 'h-11' : 'h-14'} flex flex-col items-center justify-center text-[0.7rem] font-medium text-white/90 p-1`}>
-                <span className="truncate w-full text-center">{approver.name || '-'}</span>
-                {!isEditMode && statusText && (
+                <span className="truncate w-full text-center">{showDetails ? (approver.name || '-') : '-'}</span>
+                {!isEditMode && statusText && showDetails && (
                   <span className={`text-[0.7rem] mt-1 font-bold ${getStatusColor(approver.status)}`}>
                     {statusText}
                   </span>
@@ -77,7 +80,7 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, drafter }) => {
               </div>
               {!isEditMode && (
                 <div className="h-7 border-t border-white/30 flex items-center justify-center text-[9px] font-medium text-white/60 bg-white/5">
-                  {approver.handle_at?.slice(0,10) || '-'}
+                  {(showDetails && approver.handle_at) ? approver.handle_at.slice(0, 10) : '-'}
                 </div>
               )}
             </div>
