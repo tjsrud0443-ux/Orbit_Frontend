@@ -11,7 +11,7 @@ export const submitPayment = (payload) => maxios.post("/approval/submit/payment"
 export const submitGeneral = (payload) => maxios.post("/approval/submit/general", payload);
 export const getApprovalDetail = (type, docSeq) => maxios.get(`/approval/detail/${type}/${docSeq}`);
 export const updateApproval = (docSeq, payload) => maxios.put(`/approval/update/${docSeq}`, payload);
-export const approveDraft = (docSeq, id) => maxios.put(`/approval/approve/${docSeq}`, {params : {users_id: id}});
+export const approveDraft = (docSeq, id) => maxios.put(`/approval/approve/${docSeq}`, null, {params : {users_id: id}});
 
 
 

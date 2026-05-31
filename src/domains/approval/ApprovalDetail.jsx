@@ -293,11 +293,11 @@ const ApprovalDetail = () => {
       }
 
       if (response && (response.status === 200 || response.status === 201 || response.data)) {
-        alert(isTempSave ? '임시저장이 완료되었습니다.' : '결재 문서가 성공적으로 상신되었습니다.');
+        alert(isTempSave ? '임시저장이 완료되었습니다.' : '기안이 성공적으로 상신되었습니다.');
         navigate('/approval');
       }
     } catch (error) {
-      console.error('문서 처리 중 에러 발생:', error);
+      console.error('처리 중 에러 발생:', error);
       alert('처리 중 오류가 발생했습니다.');
     }
   };
@@ -307,10 +307,10 @@ const ApprovalDetail = () => {
     const isTempSave = actionType === 'TEMP_SAVE';
 
     if (actionType === 'APPROVE') {
-      if (!window.confirm('문서를 승인하시겠습니까?')) return;
+      if (!window.confirm('기안을 승인하시겠습니까?')) return;
       try {
         const response = await approveDraft(docSeq, user?.id);
-        alert('결재 승인이 완료되었습니다.');
+        alert('승인이 완료되었습니다.');
         navigate('/approvalInbox');
       } catch (error) {
         alert('승인 처리 중 오류가 발생했습니다.');
@@ -323,11 +323,11 @@ const ApprovalDetail = () => {
         setRejectError(true);
         return;
       }
-      if (!window.confirm('문서를 반려하시겠습니까?')) return;
+      if (!window.confirm('기안을 반려하시겠습니까?')) return;
       try {
         // API 연동 (상세 구현은 백엔드 스펙에 맞게 조정 필요)
         // const response = await rejectApproval(docSeq, { reject_reason: payload });
-        alert('결재 반려가 완료되었습니다.');
+        alert('반려가 완료되었습니다.');
         navigate('/approval');
       } catch (error) {
         alert('반려 처리 중 오류가 발생했습니다.');
@@ -462,7 +462,7 @@ const ApprovalDetail = () => {
                     setRejectReason(e.target.value);
                     if (e.target.value.trim()) setRejectError(false);
                   }}
-                  placeholder="반려 사유를 상세히 입력해주세요."
+                  placeholder="반려 사유를 입력해주세요."
                   autoFocus
                 />
                 {rejectError && (
