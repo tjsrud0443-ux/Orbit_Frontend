@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Chart as ChartJS,
@@ -23,6 +23,7 @@ import {
   faBoxOpen,
   faChevronRight,
 } from '@fortawesome/free-solid-svg-icons';
+import { getDashboard, getDeptEmployeeCount, getDeptLeave, getJoinResign } from './adminApi';
 
 // 1. ChartJS 필수 구성 요소 등록
 ChartJS.register(
@@ -46,74 +47,10 @@ const BRAND_COLORS = {
   greyBlue: '#8a92a6',
   border: '#edf2f9',
   bg: '#f4f7fc',
-  donut: ['#4338CA', '#6366F1', '#818CF8', '#A5B4FC', ],
+  donut: ['#4338CA', '#6366F1', '#818CF8', '#A5B4FC',],
   lineExit: '#fc0000',
 };
-// 상단 KPI 데이터
-const KPI_DATA = [
-  { id: 1, title: '전체 직원 수', value: '128명', icon: faUsers, iconColor: 'text-[#3530B8]', bgColor: 'bg-[#F0F4FF]' },
-  { id: 2, title: '신규 입사자 (이번 달)', value: '8명', icon: faUserPlus, iconColor: 'text-emerald-500', bgColor: 'bg-[#F0F4FF]' },
-  { id: 3, title: '퇴사자 (이번 달)', value: '2명', icon: faUserMinus, iconColor: 'text-[#FF4D4F]', bgColor: 'bg-[#F0F4FF]' },
-  { id: 4, title: 'AI 미답변 질문', value: '7건', icon: faCommentDots, iconColor: 'text-amber-500', bgColor: 'bg-[#F0F4FF]' },
-  { id: 5, title: '비품 신청 (승인 대기)', value: '12건', icon: faBoxOpen, iconColor: 'text-[#7c3aed]', bgColor: 'bg-[#F0F4FF]' },
-];
 
-// 차트 데이터: 부서별 직원 수 (Bar)
-const DEPT_EMPLOYEE_DATA = {
-  labels: ['개발팀', '기획팀', '디자인팀', '인사팀', '총무팀', '재무팀', 'IT팀', '마케팅팀', '고객지원팀', '운영총괄팀'],
-  datasets: [
-    {
-      label: '직원 수',
-      data: [4, 4, 1, 3, 1, 2, 2, 2, 2, 1],
-      backgroundColor: BRAND_COLORS.main,
-      barThickness: 32,
-      borderRadius: (context) => {
-        const width = window.innerWidth;
-        return width >= 1024 ? 8 : 2;
-      },
-    },
-  ],
-};
-
-// 차트 데이터: 부서별 연차 사용 현황 (Donut)
-const ANNUAL_LEAVE_DATA = {
-  labels: ['기술본부', '경영지원본부', '사업운영본부', '운영총괄본부'],
-  datasets: [
-    {
-      data: [12, 9, 5, 2],
-      backgroundColor: BRAND_COLORS.donut,
-      borderWidth: 0,
-      hoverOffset: 4,
-    },
-  ],
-};
-
-// 차트 데이터: 입/퇴사자 추이 (Line)
-const ENTRY_EXIT_TREND_DATA = {
-  labels: ['11월', '12월', '1월', '2월', '3월', '4월'],
-  datasets: [
-    {
-      label: '입사자',
-      data: [5, 12, 4, 3, 4, 7],
-      borderColor: BRAND_COLORS.main,
-      backgroundColor: 'transparent',
-      fill: false,
-      tension: 0,
-      pointRadius: 3,
-      pointBackgroundColor: BRAND_COLORS.main,
-    },
-    {
-      label: '퇴사자',
-      data: [1, 2, 4, 1, 3, 2],
-      borderColor: BRAND_COLORS.lineExit,
-      backgroundColor: 'transparent',
-      fill: false,
-      tension: 0,
-      pointRadius: 3,
-      pointBackgroundColor: BRAND_COLORS.lineExit,
-    },
-  ],
-};
 
 // AI 미답변 질문 목록
 const RECENT_QUESTIONS = [
@@ -154,9 +91,127 @@ const ChartCard = ({ title, children, extra }) => (
 
 const AdminMain = () => {
   const navigate = useNavigate();
-  const barRef = React.useRef(null);
+  const barRef = useRef(null);
+  const [dashboard, setDashboard] = useState({
+    allEmployeeCount: 0,
+    joinEmployeeCount: 0,
+    resignEmployeeCount: 0,
+    aiQuestionsCount: 0,
+    supplyRequestCount: 0
+  });
 
-  React.useEffect(() => {
+  const [deptEmployeeData, setDeptEmployeeData] = useState({
+    labels: [],
+    datasets: [
+      {
+        label: '직원 수',
+        data: [],
+        backgroundColor: BRAND_COLORS.main,
+        barThickness: 32,
+      },
+    ],
+  });
+
+  const [deptsLeave, setDeptsLeave] = useState({
+    labels: [],
+    datasets: [
+      {
+        data: [],
+        backgroundColor: BRAND_COLORS.donut,
+        borderWidth: 0,
+        hoverOffset: 4,
+      },
+    ],
+  });
+
+  // 차트 데이터: 입/퇴사자 추이 (Line)
+  const [joinResign, setJoinResign] = useState({
+    labels: [],
+    datasets: [
+      {
+        label: '입사자',
+        data: [],
+        borderColor: BRAND_COLORS.main,
+        backgroundColor: 'transparent',
+      },
+      {
+        label: '퇴사자',
+        data: [],
+        borderColor: BRAND_COLORS.lineExit,
+        backgroundColor: 'transparent',
+      },
+    ],
+  });
+
+  useEffect(() => {
+    getDashboard().then(resp => {
+      setDashboard(resp.data);
+    })
+  }, []);
+
+  useEffect(() => {
+    getDeptEmployeeCount().then(resp => {
+      const teamList = resp.data.filter(item => item.deptName.endsWith("팀"))
+
+      setDeptEmployeeData({
+        labels: teamList.map(item => item.deptName),
+        datasets: [
+          {
+            label: '직원 수',
+            data: teamList.map(item => item.employeeCount),
+            backgroundColor: BRAND_COLORS.main,
+            barThickness: 32,
+            borderRadius: (context) => {
+              const width = window.innerWidth;
+              return width >= 1024 ? 8 : 2;
+            },
+          },
+        ],
+      });
+    });
+  }, []);
+
+  useEffect(() => {
+    getDeptLeave().then(resp => {
+      setDeptsLeave({
+        labels: resp.data.map(item => item.deptName),
+        datasets: [
+          {
+            data: resp.data.map(item => item.leave),
+            backgroundColor: BRAND_COLORS.donut,
+            borderWidth: 0,
+            hoverOffset: 4,
+          },
+        ],
+      });
+    });
+  }, []);
+
+  useEffect(() => {
+    getJoinResign().then(resp => {
+      const monthlyData = resp.data.joinCount;
+
+      setJoinResign({
+        labels: monthlyData.map(item => item.month),
+        datasets: [
+          {
+            label: '입사자',
+            data: monthlyData.map(item => item.joinCount),
+            borderColor: BRAND_COLORS.main,
+            backgroundColor: 'transparent',
+          },
+          {
+            label: '퇴사자',
+            data: monthlyData.map(item => item.resignCount),
+            borderColor: BRAND_COLORS.lineExit,
+            backgroundColor: 'transparent',
+          },
+        ],
+      });
+    });
+  }, []);
+
+  useEffect(() => {
     const handleResize = () => {
       if (barRef.current) {
         const chart = barRef.current;
@@ -165,10 +220,18 @@ const AdminMain = () => {
         chart.update();
       }
     };
-    handleResize(); // Initial check
+    handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const KPI_DATA = [
+    { id: 1, title: '전체 직원 수', value: `${dashboard.allEmployeeCount}명`, icon: faUsers, iconColor: 'text-[#3530B8]', bgColor: 'bg-[#F0F4FF]' },
+    { id: 2, title: '신규 입사자 (이번 달)', value: `${dashboard.joinEmployeeCount}명`, icon: faUserPlus, iconColor: 'text-emerald-500', bgColor: 'bg-[#F0F4FF]' },
+    { id: 3, title: '퇴사자 (이번 달)', value: `${dashboard.resignEmployeeCount}명`, icon: faUserMinus, iconColor: 'text-[#FF4D4F]', bgColor: 'bg-[#F0F4FF]' },
+    { id: 4, title: 'AI 미답변 질문', value: `${dashboard.aiQuestionsCount}건`, icon: faCommentDots, iconColor: 'text-amber-500', bgColor: 'bg-[#F0F4FF]' },
+    { id: 5, title: '비품 신청 (승인 대기)', value: `${dashboard.supplyRequestCount}건`, icon: faBoxOpen, iconColor: 'text-[#7c3aed]', bgColor: 'bg-[#F0F4FF]' },
+  ];
 
   return (
     <div className="flex-1 bg-white min-h-screen p-8 lg:p-12 overflow-y-auto">
@@ -194,15 +257,15 @@ const AdminMain = () => {
           <ChartCard title="부서별 직원 수 현황">
             <Bar
               ref={barRef}
-              data={DEPT_EMPLOYEE_DATA}
+              data={deptEmployeeData}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
                   y: { beginAtZero: true, grid: { color: '#f5f6fa' }, border: { display: false } },
-                  x: { 
-                    grid: { display: false }, 
+                  x: {
+                    grid: { display: false },
                     border: { display: false },
                     ticks: {
                       maxRotation: 45,
@@ -218,7 +281,7 @@ const AdminMain = () => {
             <div className="flex flex-col sm:flex-row items-center justify-between h-full gap-16 lg:gap-20 pl-4 sm:pl-8 md:pl-12">
               <div className="w-full max-w-[200px] h-[200px]">
                 <Doughnut
-                  data={ANNUAL_LEAVE_DATA}
+                  data={deptsLeave}
                   options={{
                     responsive: true,
                     maintainAspectRatio: false,
@@ -229,15 +292,15 @@ const AdminMain = () => {
                 />
               </div>
               <div className="flex-1 w-full space-y-2">
-                {ANNUAL_LEAVE_DATA.labels.map((label, idx) => (
+                {deptsLeave.labels.map((label, idx) => (
                   <div key={label} className="flex items-center gap-3 group">
                     <div
                       className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: ANNUAL_LEAVE_DATA.datasets[0].backgroundColor[idx] }}
+                      style={{ backgroundColor: deptsLeave.datasets[0].backgroundColor[idx] }}
                     />
                     <div className="flex items-baseline gap-2">
                       <span className="text-sm font-bold text-[#8a92a6] group-hover:text-[#1a1c3d] transition-colors whitespace-nowrap">{label}</span>
-                      <span className="text-sm font-extrabold text-[#1a1c3d]">{ANNUAL_LEAVE_DATA.datasets[0].data[idx]}%</span>
+                      <span className="text-sm font-extrabold text-[#1a1c3d]">{deptsLeave.datasets[0].data[idx]}%</span>
                     </div>
                   </div>
                 ))}
@@ -250,7 +313,7 @@ const AdminMain = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <ChartCard title="입/퇴사자 현황">
             <Line
-              data={ENTRY_EXIT_TREND_DATA}
+              data={joinResign}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
@@ -263,8 +326,8 @@ const AdminMain = () => {
                 },
                 scales: {
                   y: { beginAtZero: true, grid: { color: '#f5f6fa' }, border: { display: false } },
-                  x: { 
-                    grid: { display: false }, 
+                  x: {
+                    grid: { display: false },
                     border: { display: false },
                     ticks: {
                       maxRotation: 45,
