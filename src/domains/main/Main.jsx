@@ -5,8 +5,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileSignature, faDoorOpen, faFileCirclePlus, faDiagramProject, faClipboard, faBox } from '@fortawesome/free-solid-svg-icons';
 
 import { IMAGES } from '../../images/images'; 
-import { fetchHolidays } from '../../api/holidayApi';
-import { getSchedules } from '../schedules/schedulesApi';
+
+import usePublicCalendar from '../schedules/publicCalendar';
 import { checkIn_api, checkOut_api, getAttendanceStatus } from './mainApi';
 import useUserStore from '../../store/userStore';
 import FullCalendar from '@fullcalendar/react';
@@ -25,19 +25,9 @@ const Main = () => {
   const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
 
-  //calendar
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedSchedules, setSelectedSchedules] = useState([]);
-  const [calendarEvents, setCalendarEvents] = useState([]);
   const [checkIn, setCheckIn] = useState(null);   // 출근 시간
   const [checkOut, setCheckOut] = useState(null); // 퇴근 시간
-  const CATEGORY_COLORS = {
-    personal: '#3530B8',
-    leave:    '#10B981',
-    project:  '#6366F1',
-    meeting:  '#ff75bf',
-    holiday:  '#EF4444',
-  };
+
 
   // 자정 리셋 useEffect 추가
   useEffect(() => {
@@ -109,34 +99,12 @@ const formatStampTime = (date) =>
   date.toLocaleTimeString('ko-KR', 
     { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 
-useEffect(() => {
-  const year = new Date().getFullYear();
-
-  Promise.all([getSchedules(), fetchHolidays(year)])
-    .then(([scheduleResp, holidays]) => {
-      const scheduleEvents = scheduleResp.data.map(item => ({
-        id: item.schedule_seq.toString(),
-        title: item.title,
-        date: item.start_dt?.split('T')[0],
-        color: CATEGORY_COLORS[item.schedule_type] ?? '#3530B8',
-      }));
-
-      const holidayEvents = holidays.map(h => ({
-        ...h,
-        date: h.start,
-        color: '#EF4444',
-      }));
-
-      setCalendarEvents([...scheduleEvents, ...holidayEvents]);
-    })
-    .catch(err => console.error('로드 실패:', err));
-}, []);
-
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
-
+ //calendar
+ const { calendarEvents, selectedDate, selectedSchedules, handleDateClick } = usePublicCalendar();
   // 현재 시간 및 날짜
   const formatTime = (date) => date.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
   const formatDate = (date) => date.toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
@@ -246,14 +214,14 @@ const quickActions = [
             {/* Box 2: 빠른 실행 (3x2) */}
             <div className="md:col-span-5 bg-white p-4 rounded-3xl border border-gray-200 shadow-sm flex flex-col min-h-[16.25rem] lg:h-[16.25rem]">
               <h3 className="text-s font-extrabold text-indigo-950 mb-2">빠른 실행</h3>
-              <div className="grid grid-cols-3 grid-rows-2 gap-2 flex-1">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 flex-1">
                 {quickActions.map((action, idx) => (
                   <button key={idx}
                    onClick={action.onClick || undefined}
                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F0F4FF'}
   onMouseLeave={e => e.currentTarget.style.backgroundColor = action.bgColor}
                     style={{ backgroundColor: action.bgColor, borderColor: action.borderColor }}
-                    className="flex flex-row items-center justify-start gap-2.5 px-3 border rounded-2xl transition-all">
+                    className="flex flex-row items-center justify-start gap-2.5 px-3 py-2 border rounded-2xl transition-all">
                     <div style={{ backgroundColor: action.iconBgColor }} className="p-2.5 ml-1 rounded-xl">
                       <FontAwesomeIcon icon={action.icon} style={{ color: action.color }} className="text-2xl" />
                     </div>
@@ -368,30 +336,14 @@ const quickActions = [
                       moreLinkClick={() => 'none'} //클릭 막기
                       events={calendarEvents}
                       //한 칸 클릭
-                      dateClick={(info) => {
-                        const clickedDate = new Date(info.dateStr);
-                        const today = new Date();                     
-                        // 현재 달이 아니면 캘린더 페이지로 이동
-                        if (
-                          clickedDate.getFullYear() !== today.getFullYear() ||
-                          clickedDate.getMonth() !== today.getMonth()
-                        ) {
-                          const ok = window.confirm
-                          ('이번 달 이외의 일정은 캘린더 페이지에서 확인할 수 있습니다.\n캘린더 페이지로 이동하시겠습니까?');
-                          if(ok) navigate('/calendar');
-                          return;
-                        }
-                        const filtered = calendarEvents.filter(e => e.date === info.dateStr);
-                        setSelectedDate(info.dateStr);
-                        setSelectedSchedules(filtered);
-                      }}
+                      dateClick={handleDateClick}
                     />
                   </div>
               </div>
               {/* 일정 */}
               <div className="flex flex-col border-t md:border-t-0 md:border-l border-gray-100 pt-5 md:pt-0 md:pl-5 h-full overflow-hidden">
                 <div className="flex justify-between items-center mb-3">
-                  <h3 className="text-s font-extrabold text-indigo-950">오늘의 일정</h3>
+                  <h3 className="text-s font-extrabold text-indigo-950">전사 일정 및 공휴일</h3>
                   <button onClick={() => navigate('/calendar')} className="text-[0.625rem] text-gray-400 font-bold hover:text-indigo-950">상세보기</button>
                 </div>
                 <div className="space-y-2.5 overflow-y-auto h-full pr-1">
@@ -449,19 +401,19 @@ const quickActions = [
                 <span className="p-1 bg-white/20 rounded-xl text-lg">🤖</span>
                 <h3 className="text-lg font-bold">Orbit AI</h3>
               </div>
-              <p className="text-2xl font-semibold leading-tight mb-2">무엇을 도와드릴까요?</p>
-              <p className="text-s text-[#3530B8]">궁금한 업무 정보를 물어보세요.</p>
+              <p className="text-xl lg:text-2xl font-semibold leading-tight mb-2">무엇을 도와드릴까요?</p>
+              <p className="text-[0.75rem] lg:text-s text-[#3530B8]">궁금한 업무 정보를 물어보세요.</p>
             </div>
             <div className="mt-auto relative z-10">         
               <button
                 onClick={() => navigate('/aiChat')}
-                className="w-full py-3.5 bg-white text-indigo-950 font-bold text-sm rounded-xl shadow-md active:scale-[0.98] transition-all"
+                className="relative z-20 w-1/2 lg:w-full py-3.5 bg-white text-indigo-950 font-bold text-sm rounded-xl shadow-md active:scale-[0.98] transition-all"
               >
                 AI 채팅 시작하기
               </button>
               <img 
                 src={IMAGES.MAIN_AI1} 
-                className="absolute bottom-4 left-4 w-60 h-60 ml-48 mb-10 object-contain" 
+                className="absolute -bottom-4 lg:bottom-14 -right-2 w-28 h-28 lg:w-60 lg:h-60 object-contain opacity-80 lg:opacity-100" 
                 alt="" 
               />
             </div>
