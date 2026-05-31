@@ -13,3 +13,4 @@ export const getApprovalDetail = (type, docSeq) => maxios.get(`/approval/detail/
 export const getAllCcDocuments = () => maxios.get("/approval/cc");
 export const getPageDocuments = (status, cpage) => maxios.get("/approval/cc/page", { params: { status, cpage } });
 export const updateApproval = (docSeq, payload) => maxios.put(`/approval/update/${docSeq}`, payload);
+export const approveDraft = (docSeq, id) => maxios.put(`/approval/approve/${docSeq}`, {params : {users_id: id}});

@@ -7,7 +7,7 @@ import VacationForm from './forms/VacationForm';
 import PaymentForm from './forms/PaymentForm';
 import GeneralForm from './forms/GeneralForm';
 import PurchaseForm from './forms/PurchaseForm';
-import { submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail, updateApproval } from './approvalApi';
+import { submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail, updateApproval, approveDraft } from './approvalApi';
 
 // 결재자 선택 모달 컴포넌트
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
@@ -309,10 +309,9 @@ const ApprovalDetail = () => {
     if (actionType === 'APPROVE') {
       if (!window.confirm('문서를 승인하시겠습니까?')) return;
       try {
-        // API 연동 (상세 구현은 백엔드 스펙에 맞게 조정 필요)
-        const response = await getApprovalDetail(type, docSeq); // 임시 예시
+        const response = await approveDraft(docSeq, user?.id);
         alert('결재 승인이 완료되었습니다.');
-        navigate('/approval');
+        navigate('/approvalInbox');
       } catch (error) {
         alert('승인 처리 중 오류가 발생했습니다.');
       }
