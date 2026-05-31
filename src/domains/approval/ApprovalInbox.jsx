@@ -121,7 +121,18 @@ const ApprovalInbox = () => {
   const filterDocuments = (docs) => {
     return docs.filter(doc => {
       const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesType = selectedType === '전체 문서' || selectedType === '전체' || doc.type === selectedType;
+      const docTypeText = {
+        'VACATION': '휴가신청서',
+        'PAYMENT': '지출결의서',
+        'GENERAL': '일반품의서',
+        'PURCHASE': '구매신청서'
+      }
+
+      const matchesType =
+        selectedType === '전체 문서' ||
+        selectedType === '전체' ||
+        docTypeText[doc.doc_type] === selectedType;
+
       return matchesSearch && matchesType;
     });
   };
@@ -140,11 +151,11 @@ const ApprovalInbox = () => {
   }, []);
 
   useEffect(() => {
-    getPageMyDoneDoc(doneDocumentPage).then(resp => {
+    getPageMyDoneDoc(doneDocumentPage, searchTerm, selectedType).then(resp => {
       setDoneDocument(resp.data.list);
       setDoneDocumentCount(Math.ceil(resp.data.count / 5));
     })
-  }, [doneDocumentPage])
+  }, [doneDocumentPage, searchTerm, selectedType])
 
   return (
     <div className="flex-1 bg-white overflow-y-auto p-5 lg:p-6">
@@ -161,14 +172,14 @@ const ApprovalInbox = () => {
           <div className="flex items-center gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-slate-200 w-full md:w-auto focus-within:ring-2 focus-within:ring-[#3530B8]/20 focus-within:border-[#3530B8] transition-all">
             <select
               value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
+              onChange={(e) => { setSelectedType(e.target.value); setDoneDocumentPage(1) }}
               className="px-3 py-1.5 text-xs bg-slate-50 border-none rounded-lg focus:ring-0 text-slate-600 font-medium cursor-pointer outline-none"
             >
-              <option>전체 문서</option>
-              <option>일반품의서</option>
-              <option>지출결의서</option>
-              <option>휴가신청서</option>
-              <option>구매신청서</option>
+              <option value="전체">전체 문서</option>
+              <option value="GENERAL">일반품의서</option>
+              <option value="PAYMENT">지출결의서</option>
+              <option value="VACATION">휴가신청서</option>
+              <option value="PURCHASE">구매신청서</option>
             </select>
             <div className="h-5 w-[1px] bg-slate-200 mx-1"></div>
             <div className="relative flex-1 md:w-56">
@@ -177,7 +188,7 @@ const ApprovalInbox = () => {
                 type="text"
                 placeholder="문서 제목 검색..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => { setSearchTerm(e.target.value); setDoneDocumentPage(1); }}
                 className="w-full pl-9 pr-3 py-1.5 text-xs border-none focus:ring-0 placeholder:text-slate-400 outline-none bg-transparent"
               />
             </div>
@@ -194,7 +205,7 @@ const ApprovalInbox = () => {
           />
           <DocumentTable
             title="결재 완료"
-            data={filterDocuments(doneDocument)}
+            data={doneDocument}
             onDetailClick={handleOpenDetail}
             count={doneDocumentCount}
             page={doneDocumentPage}

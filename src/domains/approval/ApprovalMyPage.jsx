@@ -206,18 +206,19 @@ const ApprovalMyPage = () => {
   }, [])
 
   useEffect(() => {
-    getPageMyDoc("APPROVED", approvedPage).then(resp => {
+    getPageMyDoc("APPROVED", approvedPage, searchTerm, docTypeMap[selectedType] || selectedType).then(resp => {
       setApprovedDocs(resp.data.list);
       setApprovedCount(Math.ceil(resp.data.count / 5));
     })
-  }, [approvedPage]);
+  }, [approvedPage, searchTerm, selectedType]);
 
   useEffect(() => {
-    getPageMyDoc("REJECTED", rejectedPage).then(resp => {
+    getPageMyDoc("REJECTED", rejectedPage, searchTerm, docTypeMap[selectedType] || selectedType).then(resp => {
+      console.log(searchTerm, selectedType)
       setRejectedDocs(resp.data.list);
       setRejectedCount(Math.ceil(resp.data.count / 5));
     })
-  }, [rejectedPage]);
+  }, [rejectedPage, searchTerm, selectedType]);
 
   const handleOpenDetail = (doc) => {
     navigate(`/approval/detail/${doc.doc_type}/${doc.doc_seq}`);
@@ -233,6 +234,12 @@ const ApprovalMyPage = () => {
   const getFilteredData = (dataList) => {
     return dataList.filter(doc => {
       const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase());
+      const docTypeText = {
+        'VACATION': '휴가신청서',
+        'PAYMENT': '지출결의서',
+        'GENERAL': '일반품의서',
+        'PURCHASE': '구매신청서'
+      }
       const matchesType = selectedType === '전체 문서' || selectedType === '전체' || doc.doc_type === docTypeMap[selectedType];
       return matchesSearch && matchesType;
     });
@@ -270,6 +277,8 @@ const ApprovalMyPage = () => {
                       key={type}
                       onClick={() => {
                         setSelectedType(type);
+                        setApprovedPage(1); 
+                        setRejectedPage(1); 
                         setIsTypeOpen(false);
                       }}
                       className="px-3 py-1.5 text-xs text-slate-400 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
@@ -287,7 +296,7 @@ const ApprovalMyPage = () => {
                 type="text"
                 placeholder="문서 제목 검색..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => { setSearchTerm(e.target.value); setApprovedPage(1); setRejectedPage(1); }}
                 className="w-full pl-9 pr-3 py-1.5 text-xs border-none focus:ring-0 placeholder:text-slate-400 outline-none bg-transparent"
               />
             </div>
@@ -310,7 +319,7 @@ const ApprovalMyPage = () => {
           />
           <DocumentTable
             title="결재 완료"
-            data={getFilteredData(approvedDocs)}
+            data={approvedDocs}
             count={approvedCount}
             page={approvedPage}
             setPage={setApprovedPage}
@@ -320,7 +329,7 @@ const ApprovalMyPage = () => {
           />
           <DocumentTable
             title="결재 반려"
-            data={getFilteredData(rejectedDocs)}
+            data={rejectedDocs}
             count={rejectedCount}
             page={rejectedPage}
             setPage={setRejectedPage}
