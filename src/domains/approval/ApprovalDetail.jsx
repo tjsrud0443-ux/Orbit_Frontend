@@ -7,7 +7,7 @@ import VacationForm from './forms/VacationForm';
 import PaymentForm from './forms/PaymentForm';
 import GeneralForm from './forms/GeneralForm';
 import PurchaseForm from './forms/PurchaseForm';
-import { submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail, updateApproval, approveDraft } from './approvalApi';
+import { submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail, updateApproval, approveDraft, rejectApproval } from './approvalApi';
 
 // 결재자 선택 모달 컴포넌트
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
@@ -309,7 +309,7 @@ const ApprovalDetail = () => {
     if (actionType === 'APPROVE') {
       if (!window.confirm('기안을 승인하시겠습니까?')) return;
       try {
-        const response = await approveDraft(docSeq, user?.id);
+        const response = await approveDraft(docSeq);
         alert('승인이 완료되었습니다.');
         navigate('/approvalInbox');
       } catch (error) {
@@ -325,11 +325,12 @@ const ApprovalDetail = () => {
       }
       if (!window.confirm('기안을 반려하시겠습니까?')) return;
       try {
-        // API 연동 (상세 구현은 백엔드 스펙에 맞게 조정 필요)
-        // const response = await rejectApproval(docSeq, { reject_reason: payload });
+        console.log(rejectReason);
+        const response = await rejectApproval(docSeq, rejectReason);
         alert('반려가 완료되었습니다.');
-        navigate('/approval');
+        navigate('/approvalInbox');
       } catch (error) {
+        console.log(error);
         alert('반려 처리 중 오류가 발생했습니다.');
       }
       return;
