@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faSearch,
-  faUser
+  faUser,
+  faChevronDown,
 } from '@fortawesome/free-solid-svg-icons';
 import Pagination from '../../components/common/Pagination';
 import { getMyDraftDoc, getPageMyDoneDoc } from './approvalApi';
@@ -110,7 +111,29 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, coun
 const ApprovalInbox = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedType, setSelectedType] = useState('전체');
+  const [selectedType, setSelectedType] = useState('전체 문서');
+  const [isTypeOpen, setIsTypeOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsTypeOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const docTypeMap = {
+    '일반품의서': 'GENERAL',
+    '지출결의서': 'PAYMENT',
+    '휴가신청서': 'VACATION',
+    '구매신청서': 'PURCHASE'
+  };
 
   // 상세 보기 버튼 클릭 시 ApprovalDetail 페이지로 이동
   const handleOpenDetail = (doc) => {
@@ -131,7 +154,7 @@ const ApprovalInbox = () => {
       const matchesType =
         selectedType === '전체 문서' ||
         selectedType === '전체' ||
-        docTypeText[doc.doc_type] === selectedType;
+        doc.doc_type === docTypeMap[selectedType];
 
       return matchesSearch && matchesType;
     });
@@ -151,7 +174,7 @@ const ApprovalInbox = () => {
   }, []);
 
   useEffect(() => {
-    getPageMyDoneDoc(doneDocumentPage, searchTerm, selectedType).then(resp => {
+    getPageMyDoneDoc(doneDocumentPage, searchTerm, docTypeMap[selectedType] || selectedType).then(resp => {
       setDoneDocument(resp.data.list);
       setDoneDocumentCount(Math.ceil(resp.data.count / 5));
     })
@@ -170,17 +193,32 @@ const ApprovalInbox = () => {
 
           {/* Search Bar */}
           <div className="flex items-center gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-slate-200 w-full md:w-auto focus-within:ring-2 focus-within:ring-[#3530B8]/20 focus-within:border-[#3530B8] transition-all">
-            <select
-              value={selectedType}
-              onChange={(e) => { setSelectedType(e.target.value); setDoneDocumentPage(1) }}
-              className="px-3 py-1.5 text-xs bg-slate-50 border-none rounded-lg focus:ring-0 text-slate-600 font-medium cursor-pointer outline-none"
-            >
-              <option value="전체">전체 문서</option>
-              <option value="GENERAL">일반품의서</option>
-              <option value="PAYMENT">지출결의서</option>
-              <option value="VACATION">휴가신청서</option>
-              <option value="PURCHASE">구매신청서</option>
-            </select>
+            <div className="relative" ref={dropdownRef}>
+              <div
+                onClick={() => setIsTypeOpen(!isTypeOpen)}
+                className="px-3 py-1.5 text-xs bg-slate-50 border-none rounded-lg text-slate-400 font-medium cursor-pointer outline-none flex items-center justify-between min-w-[100px]"
+              >
+                <span>{selectedType}</span>
+                <FontAwesomeIcon icon={faChevronDown} className={`ml-2 text-[10px] transition-transform ${isTypeOpen ? 'rotate-180' : ''}`} />
+              </div>
+              {isTypeOpen && (
+                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1">
+                  {['전체 문서', '일반품의서', '지출결의서', '휴가신청서', '구매신청서'].map((type) => (
+                    <div
+                      key={type}
+                      onClick={() => {
+                        setSelectedType(type);
+                        setDoneDocumentPage(1); 
+                        setIsTypeOpen(false);
+                      }}
+                      className="px-3 py-1.5 text-xs text-slate-400 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
+                    >
+                      {type}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className="h-5 w-[1px] bg-slate-200 mx-1"></div>
             <div className="relative flex-1 md:w-56">
               <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
