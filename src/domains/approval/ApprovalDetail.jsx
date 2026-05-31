@@ -182,13 +182,20 @@ const ApprovalDetail = () => {
         } else if (doc_type === 'PAYMENT') {
           if (!formData.pay_date || !formData.pay_reason?.trim() || !formData.account_info?.trim()) return false;
           if (!formData.items || formData.items.length === 0) return false;
-          return formData.items.every(item => 
+          
+          const itemsValid = formData.items.every(item => 
             item.item_name?.trim() && 
             item.item_name.length <= 30 &&
             Number(item.amount) > 0 && 
             item.receipt &&
             (!item.note || item.note.length <= 100)
           );
+
+          if (!itemsValid) {
+            alert("지출 항목 내 비고 외 모든 정보는 필수 입력 사항입니다.");
+            return false;
+          }
+          return true;
         } else if (doc_type === 'GENERAL') {
           if (!formData.purpose?.trim() || formData.purpose.length > 300) return false;
           if (!formData.content?.trim() || formData.content.length > 1000) return false;
@@ -198,12 +205,19 @@ const ApprovalDetail = () => {
           if (!formData.vendor?.trim() || formData.vendor.length > 50) return false;
           if (!formData.items || formData.items.length === 0) return false;
           if (!formData.attachments || formData.attachments.length === 0) return false;
-          return formData.items.every(item => 
+
+          const itemsValid = formData.items.every(item => 
             item.item_name?.trim() && 
             item.item_name.length <= 50 &&
             Number(item.ea) > 0 && 
             Number(item.unit_price) > 0
           );
+
+          if (!itemsValid) {
+            alert("구매 품목 내 비고 외 모든 정보는 필수 입력 사항입니다.");
+            return false;
+          }
+          return true;
         }
         return true;
       };
