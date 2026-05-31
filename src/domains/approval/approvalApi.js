@@ -12,3 +12,4 @@ export const submitGeneral = (payload) => maxios.post("/approval/submit/general"
 export const getApprovalDetail = (type, docSeq) => maxios.get(`/approval/detail/${type}/${docSeq}`);
 export const getAllCcDocuments = () => maxios.get("/approval/cc");
 export const getPageDocuments = (status, cpage) => maxios.get("/approval/cc/page", { params: { status, cpage } });
+export const updateApproval = (docSeq, payload) => maxios.put(`/approval/update/${docSeq}`, payload);

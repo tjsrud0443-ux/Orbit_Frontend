@@ -7,7 +7,7 @@ import VacationForm from './forms/VacationForm';
 import PaymentForm from './forms/PaymentForm';
 import GeneralForm from './forms/GeneralForm';
 import PurchaseForm from './forms/PurchaseForm';
-import { submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail } from './approvalApi';
+import { submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail, updateApproval } from './approvalApi';
 
 // 결재자 선택 모달 컴포넌트
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
@@ -159,6 +159,120 @@ const ApprovalDetail = () => {
 
   const [isSubmitClicked, setIsSubmitClicked] = useState(false);
 
+  // [통합 전송 핸들러] 상신 vs 임시저장
+  const handleSave = async (actionType) => {
+    const isTempSave = actionType === 'TEMP_SAVE';
+    const isSubmit = actionType === 'SUBMIT';
+    const isNew = !docSeq;
+
+    // 1. 유효성 검사 분기
+    setIsSubmitClicked(isSubmit);
+
+    if (isSubmit) {
+      const isFormValid = () => {
+        const today = new Date().toLocaleDateString('sv-SE');
+        if (!formData.title?.trim() || formData.title.length > 50) return false;
+
+        if (doc_type === 'VACATION') {
+          if (!formData.start_date || formData.start_date < today) return false;
+          if (formData.vac_type === '연차') {
+            if (!formData.end_date || formData.end_date < formData.start_date) return false;
+          }
+          if (!formData.reason?.trim() || formData.reason.length > 300) return false;
+        } else if (doc_type === 'PAYMENT') {
+          if (!formData.pay_date || !formData.pay_reason?.trim() || !formData.account_info?.trim()) return false;
+          if (!formData.items || formData.items.length === 0) return false;
+          return formData.items.every(item => item.item_name?.trim() && item.amount > 0 && item.receipt);
+        } else if (doc_type === 'GENERAL') {
+          if (!formData.purpose?.trim() || !formData.content?.trim()) return false;
+        } else if (doc_type === 'PURCHASE') {
+          if (!formData.purchase_date || !formData.purpose?.trim() || !formData.vendor?.trim()) return false;
+          if (!formData.items || formData.items.length === 0 || !formData.attachments || formData.attachments.length === 0) return false;
+          return formData.items.every(item => item.item_name?.trim() && item.ea > 0 && item.unit_price > 0);
+        }
+        return true;
+      };
+
+      if (!isFormValid()) return;
+      if (!approvers || approvers.length === 0) {
+        alert('최소 한 명 이상의 결재자를 추가해야 합니다.');
+        return;
+      }
+    }
+
+    // 2. 데이터 가공 및 Payload 조립
+    try {
+      const { referrers, title, ...restOfData } = formData;
+      const isVacation = doc_type === 'VACATION';
+      const isHalfVacation = isVacation && formData.vac_type?.includes('반차');
+
+      const finalDocData = isVacation
+        ? {
+          ...restOfData,
+          end_date: isHalfVacation ? formData.start_date : formData.end_date,
+          days: isHalfVacation ? 0.5 : Number(formData.days)
+        }
+        : restOfData;
+
+      const submitPayload = {
+        title: formData.title,
+        doc_type: doc_type,
+        users_id: user?.id,
+        status: isTempSave ? 'TEMP' : 'DRAFT',
+        is_temp: isTempSave ? 1 : 0,
+        // actionType: actionType, // 백엔드 분기 처리용/
+        approvers: approvers.map((app, index) => ({
+          users_id: app.id || app.users_id,
+          step_order: index + 1
+        })),
+        referrers: (referrers || []).map(ref => ({
+          users_id: ref.id || ref.users_id
+        })),
+        ...finalDocData
+      };
+
+      let response;
+
+      // 3. API 호출 (신규: POST / 임시저장 재작성: PUT)
+      if (isNew) {
+        if (doc_type === 'VACATION') response = await submitVacation(submitPayload);
+        else if (doc_type === 'GENERAL') response = await submitGeneral(submitPayload);
+        else if (doc_type === 'PAYMENT' || doc_type === 'PURCHASE') {
+          const formDataObj = new FormData();
+          if (doc_type === 'PAYMENT') {
+            submitPayload.total_amount = (formData.items || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+          }
+          formDataObj.append("dto", new Blob([JSON.stringify(submitPayload)], { type: "application/json" }));
+          const files = doc_type === 'PAYMENT' ? formData.items?.map(i => i.receipt) : formData.attachments;
+          files?.forEach(file => { if (file instanceof File) formDataObj.append("files", file); });
+          response = (doc_type === 'PAYMENT') ? await submitPayment(formDataObj) : await submitPurchase(formDataObj);
+        }
+      } else {
+        // 임시 저장된 문서 수정 (PUT /approval/update/${docSeq})
+        if (doc_type === 'PAYMENT' || doc_type === 'PURCHASE') {
+          const formDataObj = new FormData();
+          if (doc_type === 'PAYMENT') {
+            submitPayload.total_amount = (formData.items || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+          }
+          formDataObj.append("dto", new Blob([JSON.stringify(submitPayload)], { type: "application/json" }));
+          const files = doc_type === 'PAYMENT' ? formData.items?.map(i => i.receipt) : formData.attachments;
+          files?.forEach(file => { if (file instanceof File) formDataObj.append("files", file); });
+          response = await updateApproval(docSeq, formDataObj);
+        } else {
+          response = await updateApproval(docSeq, submitPayload);
+        }
+      }
+
+      if (response && (response.status === 200 || response.status === 201 || response.data)) {
+        alert(isTempSave ? '임시저장이 완료되었습니다.' : '결재 문서가 성공적으로 상신되었습니다.');
+        navigate(isTempSave ? '/approvalTemp' : '/approval');
+      }
+    } catch (error) {
+      console.error('문서 처리 중 에러 발생:', error);
+      alert('처리 중 오류가 발생했습니다.');
+    }
+  };
+
   // 버튼 액션
   const handleAction = async (actionType, payload) => {
     const isTempSave = actionType === 'TEMP_SAVE';
@@ -205,157 +319,9 @@ const ApprovalDetail = () => {
       return;
     }
 
-    // [결재 상신 버튼을 누른 경우]
+    // [결재 상신 / 임시 저장]
     if (actionType === 'SUBMIT' || actionType === 'TEMP_SAVE') {
-      setIsSubmitClicked(true);
-
-      // 필수 항목 검증
-      const isFormValid = () => {
-        const today = new Date().toLocaleDateString('sv-SE');
-        if (!formData.title?.trim() || formData.title.length > 50) return false;
-        
-        if (doc_type === 'VACATION') {
-          if (!formData.start_date || formData.start_date < today) return false;
-          if (formData.vac_type === '연차') {
-            if (!formData.end_date || formData.end_date < formData.start_date) return false;
-          }
-          if (!formData.reason?.trim() || formData.reason.length > 300) return false;
-        } else if (doc_type === 'PAYMENT') {
-          const pay_date = formData.pay_date;
-          const pay_reason = formData.pay_reason;
-          const account_info = formData.account_info;
-
-          if (!pay_date) return false;
-          if (!pay_reason?.trim() || pay_reason.length > 300) return false;
-          if (!account_info?.trim() || account_info.length > 50) return false;
-          if (!formData.items || formData.items.length === 0) return false;
-          
-          return formData.items.every(item => {
-            const item_name = item.item_name;
-            const amount = item.amount;
-            const receipt = item.receipt;
-            const note = item.note;
-            
-            return (
-              item_name?.trim() && item_name.length <= 30 &&
-              amount > 0 && 
-              receipt &&
-              (!note || note.length <= 100)
-            );
-          });
-        } else if (doc_type === 'GENERAL') {
-          if (!formData.purpose?.trim() || formData.purpose.length > 300) return false;
-          if (!formData.content?.trim() || formData.content.length > 1000) return false;
-        } else if (doc_type === 'PURCHASE') {
-          if (!formData.purchase_date || formData.purchase_date < today) return false;
-          if (!formData.purpose?.trim() || formData.purpose.length > 300) return false;
-          if (!formData.vendor?.trim() || formData.vendor.length > 50) return false;
-          if (!formData.items || formData.items.length === 0) return false;
-          if (!formData.attachments || formData.attachments.length === 0) return false;
-          return formData.items.every(item => 
-            item.item_name?.trim() && item.item_name.length <= 50 &&
-            item.ea > 0 && 
-            item.unit_price > 0
-          );
-        }
-        return true;
-      };
-
-      if (!isFormValid()) {
-        return;
-      }
-
-      if (!approvers || approvers.length === 0) {
-        alert('최소 한 명 이상의 결재자를 추가해야 합니다.');
-        return;
-      }
-
-      try {
-        const { referrers, title, ...restOfData } = formData;
-        
-        const isVacation= doc_type === 'VACATION'
-        const isHalfVacation = isVacation && formData.vac_type?.includes('반차');
-
-        const finalDocData = isVacation
-          ? {
-              ...restOfData,
-              end_date: isHalfVacation ? formData.start_date : formData.end_date,
-              days: isHalfVacation ? 0.5 : Number(formData.days)
-            }
-          : restOfData;
-        
-        // 각 테이블 DTO 구조에 대입하기 좋게 조립
-        const submitPayload = {
-          title: formData.title,
-          doc_type: doc_type,
-          users_id: user?.id,
-          status: isTempSave ? 'TEMP' : 'DRAFT',
-          is_temp: isTempSave ? 1 : 0,
-          // 결재자 리스트 (users_id 포함)
-          approvers: approvers.map((app, index) => ({
-            users_id: app.id || app.users_id,
-            step_order: index + 1
-          })),
-
-          // 참조자 리스트 (users_id 포함)
-          referrers: (referrers || []).map(ref => ({
-            users_id: ref.id || ref.users_id
-          })),
-
-          // 나머지 문서 데이터
-          ...finalDocData
-        };
-
-        // 문서 타입별로 분리된 API 호출
-        let response;
-        if (doc_type === 'VACATION') {
-          response = await (docSeq ? updateVacation(docSeq, submitPayload) : submitVacation(submitPayload));
-        } else if (doc_type === 'GENERAL') {
-          response = await (docSeq ? updateGeneral(docSeq, submitPayload) : submitGeneral(submitPayload));
-        } else if (doc_type === 'PAYMENT') {
-          const formDataObj = new FormData();
-
-          const total_amount = (formData.items || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-
-          const paymentPayload = {
-            ...submitPayload,
-            total_amount: total_amount
-          };
-
-          formDataObj.append("dto", new Blob([JSON.stringify(paymentPayload)], {type: "application/json"}));
-          if(formData.items && formData.items.length > 0){
-            formData.items.forEach(item => {
-              if(item.receipt instanceof File){
-                formDataObj.append("files", item.receipt);
-              }
-            });
-          }
-          response = await (docSeq ? updatePayment(docSeq, formDataObj) : submitPayment(formDataObj));
-        } else if (doc_type === 'PURCHASE') {
-          const formDataObj = new FormData();
-          
-          formDataObj.append("dto", new Blob([JSON.stringify(submitPayload)], { type: "application/json" }));
-          
-          if (formData.attachments && formData.attachments.length > 0) {
-            formData.attachments.forEach(file => {
-              if (file instanceof File) {
-                formDataObj.append("files", file);
-              }
-            });
-          }
-
-          response =  await (docSeq ? updatePurchase(docSeq, formDataObj) : submitPurchase(formDataObj));
-        }
-
-        if (response && (response.status === 200 || response.status === 201 || response.data)) {
-          alert(isTempSave ? '임시저장이 완료되었습니다.' : '결재 문서가 성공적으로 상신되었습니다.');
-          navigate('/approval');
-        }
-
-      } catch (error) {
-        console.error('결재 상신 중 에러 발생:', error);
-        alert('결재 상신 중 오류가 발생했습니다.');
-      }
+      handleSave(actionType);
     }
   };
 
@@ -420,7 +386,7 @@ const ApprovalDetail = () => {
 
   // 반려 여부 및 사유 확인
   const rejectedApprover = approvers?.find(app => app.status === 'REJECTED');
-  const showRejectReason = mode === 'VIEW' && !!rejectedApprover;
+  const showRejectReason = mode === 'VIEW' && rejectedApprover;
 
   return (
     <>
