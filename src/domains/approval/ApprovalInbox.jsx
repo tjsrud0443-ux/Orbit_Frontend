@@ -3,57 +3,44 @@ import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faSearch,
-  faCheckCircle,
-  faTimesCircle,
-  faUser,
-  faSignature,
-  faChevronDown
+  faUser
 } from '@fortawesome/free-solid-svg-icons';
 import Pagination from '../../components/common/Pagination';
 import { getMyDraftDoc, getPageMyDoneDoc } from './approvalApi';
-
-// --- Dummy Data ---
-// typeKey는 ApprovalDetail.jsx의 URL 파라미터 및 경로 인식 로직에 맞춤
-// const PENDING_DOCUMENTS = [
-//   { id: 1, title: '2024년 상반기 사무용품 구매 신청', type: '구매신청서', typeKey: 'purchase', drafter: '김철수 대리', date: '2024-05-20', status: '결재 대기' },
-//   { id: 2, title: '연차 휴가 신청서 (6/1 ~ 6/3)', type: '휴가신청서', typeKey: 'vacation', drafter: '이영희 사원', date: '2024-05-22', status: '결재 대기' },
-//   { id: 3, title: '영업부 외부 미팅 비용 정산', type: '지출결의서', typeKey: 'payment', drafter: '박지민 과장', date: '2024-05-23', status: '결재 대기' },
-//   { id: 4, title: '신규 프로젝트 추진 기안문', type: '일반품의서', typeKey: 'general', drafter: '최동현 차장', date: '2024-05-24', status: '결재 대기' },
-//   { id: 5, title: '출장 보고서 및 비용 정산', type: '지출결의서', typeKey: 'payment', drafter: '정수빈 사원', date: '2024-05-25', status: '결재 대기' },
-// ];
-
-// const COMPLETED_DOCUMENTS = [
-//   { id: 101, title: '개발팀 신규 서버 도입 건', type: '구매신청서', typeKey: 'purchase', drafter: '강하늘 과장', date: '2024-05-10', status: '결재 완료' },
-//   { id: 102, title: '재택근무 신청 (5/15)', type: '휴가신청서', typeKey: 'vacation', drafter: '오진우 대리', date: '2024-05-12', status: '반려' },
-//   { id: 103, title: '마케팅 협력업체 계약 검토', type: '일반품의서', typeKey: 'general', drafter: '한소희 대리', date: '2024-05-15', status: '결재 완료' },
-// ];
+import useAuthStore from '../../store/authStore';
 
 // --- Sub Components ---
 
 const StatusBadge = ({ status }) => {
   const styles = {
-    '결재 대기': 'bg-[#FFF9F0] text-[#FF9800] border-[#FFF9F0]',
-    '결재 완료': 'bg-[#F0FDF4] text-[#10B981] border-[#F0FDF4]',
-    '반려': 'bg-[#FFF0F0] text-[#FF4D4F] border-[#FFF0F0]'
+    'IN_PROGRESS': 'bg-[#FFF9F0] text-[#FF9800] border-[#FFF9F0]',
+    'APPROVED': 'bg-[#F0FDF4] text-[#10B981] border-[#F0FDF4]',
+    'REJECTED': 'bg-[#FFF0F0] text-[#FF4D4F] border-[#FFF0F0]'
+  };
+
+  const statusText = {
+    'IN_PROGRESS': '결재 대기',
+    'APPROVED': '결재 완료',
+    'REJECTED': '반려'
   };
 
   return (
     <span className={`px-2 py-0.5 md:px-2.5 md:py-1 rounded-full text-[10px] md:text-xs font-semibold border whitespace-nowrap ${styles[status] || 'bg-gray-50 text-gray-600'}`}>
-      {status}
+      {statusText[status] || status}
     </span>
   );
 };
 
-const DocumentTable = ({ title, data, onDetailClick, showPagination = true }) => {
-  const [page, setPage] = useState(1);
-  const itemsPerPage = 5;
-  const count = Math.ceil(data.length / itemsPerPage);
+const DocumentTable = ({ title, data, onDetailClick, showPagination = true, count = 0, page = 1, setPage = () => { } }) => {
+  const token = useAuthStore(state => state.token);
+  const displayData = data;
 
-  // 페이지네이션 비활성화 시 전체 데이터 표시, 활성화 시 슬라이싱
-  const displayData = showPagination
-    ? data.slice((page - 1) * itemsPerPage, page * itemsPerPage)
-    : data;
-
+  const docTypeText = {
+    'VACATION': '휴가신청서',
+    'PAYMENT': '지출결의서',
+    'GENERAL': '일반품의서',
+    'PURCHASE': '구매신청서'
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-3">
@@ -76,18 +63,22 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true }) =>
             {displayData.map((doc) => (
               <tr key={doc.doc_seq} className="hover:bg-slate-50/50 transition-colors">
                 <td className="pl-4 md:pl-6 pr-3 py-4 text-sm font-bold text-gray-700 truncate whitespace-nowrap">{doc.title}</td>
-                <td className="px-3 py-4 text-xs font-medium text-gray-500 truncate whitespace-nowrap">{doc.doc_type}</td>
+                <td className="px-3 py-4 text-xs font-medium text-gray-500 truncate whitespace-nowrap">{docTypeText[doc.doc_type] || doc.doc_type}</td>
                 <td className="px-3 py-4 truncate whitespace-nowrap">
                   <div className="flex items-center gap-2 overflow-hidden">
-                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 rounded-full bg-slate-200 flex items-center justify-center text-[9px] md:text-[10px]">
-                      <FontAwesomeIcon icon={faUser} className="text-slate-400" />
+                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 rounded-full bg-slate-200 flex items-center justify-center text-[9px] md:text-[10px] overflow-hidden aspect-square">
+                      <img
+                        src={`http://localhost/file/profile/view?sysname=${doc?.sysname}&token=${token}`}
+                        alt={doc.name}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                     <span className="text-xs font-bold text-gray-600 truncate">{doc.name}</span>
                   </div>
                 </td>
-                <td className="px-3 py-4 text-xs font-medium text-gray-400 text-center truncate whitespace-nowrap">{doc.created_at}</td>
+                <td className="px-3 py-4 text-xs font-medium text-gray-400 text-center truncate whitespace-nowrap">{doc.created_at.substring(0, 10)}</td>
                 <td className="px-3 py-4 text-center whitespace-nowrap">
-                  <StatusBadge status={doc.status} />
+                  <StatusBadge status={doc.app_status} />
                 </td>
                 <td className="px-3 py-4 text-center whitespace-nowrap">
                   <button
@@ -124,7 +115,7 @@ const ApprovalInbox = () => {
   // 상세 보기 버튼 클릭 시 ApprovalDetail 페이지로 이동
   const handleOpenDetail = (doc) => {
     // ApprovalDetail.jsx의 경로 규칙에 따라 /approval/detail/:type/:docId 로 이동
-    navigate(`/approval/detail/${doc.typeKey}/${doc.id}`);
+    navigate(`/approval/detail/${doc.doc_type}/${doc.doc_seq}`);
   };
 
   const filterDocuments = (docs) => {
@@ -143,16 +134,17 @@ const ApprovalInbox = () => {
 
   useEffect(() => {
     getMyDraftDoc().then(resp => {
+      console.log(resp.data)
       setDraftDocuments(resp.data);
     })
   }, []);
 
-  // useEffect(() => {
-  //   getPageMyDoneDoc(status, doneDocumentPage).then(resp => {
-  //     setDoneDocument(resp.data.list);
-  //     setDoneDocumentCount(Math.ceil(resp.data.count / 5));
-  //   })
-  // }, [doneDocumentPage])
+  useEffect(() => {
+    getPageMyDoneDoc(doneDocumentPage).then(resp => {
+      setDoneDocument(resp.data.list);
+      setDoneDocumentCount(Math.ceil(resp.data.count / 5));
+    })
+  }, [doneDocumentPage])
 
   return (
     <div className="flex-1 bg-white overflow-y-auto p-5 lg:p-6">
@@ -204,6 +196,9 @@ const ApprovalInbox = () => {
             title="결재 완료"
             data={filterDocuments(doneDocument)}
             onDetailClick={handleOpenDetail}
+            count={doneDocumentCount}
+            page={doneDocumentPage}
+            setPage={setDoneDocumentPage}
           />
         </div>
       </div>
