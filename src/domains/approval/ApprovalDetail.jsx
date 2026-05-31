@@ -78,6 +78,7 @@ const ApprovalDetail = () => {
   const [approvers, setApprovers] = useState([]);
   const [formData, setFormData] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [refresh, setRefresh] = useState(0);
   
   // 반려 관련 상태
   const [isRejecting, setIsRejecting] = useState(false);
@@ -121,7 +122,7 @@ const ApprovalDetail = () => {
     } else {
       fetchDocumentData(type, docSeq);
     }
-  }, [type, docSeq, user?.id]);
+  }, [type, docSeq, user?.id, refresh]);
 
   const fetchDocumentData = async (type, docSeq) => {
     try {
@@ -297,8 +298,7 @@ const ApprovalDetail = () => {
         navigate('/approval');
       }
     } catch (error) {
-      console.error('처리 중 에러 발생:', error);
-      alert('처리 중 오류가 발생했습니다.');
+      alert(error.response.data);
     }
   };
 
@@ -309,9 +309,9 @@ const ApprovalDetail = () => {
     if (actionType === 'APPROVE') {
       if (!window.confirm('기안을 승인하시겠습니까?')) return;
       try {
-        const response = await approveDraft(docSeq);
+        const response = await approveDraft(docSeq, doc_type);
         alert('승인이 완료되었습니다.');
-        navigate('/approvalInbox');
+        setRefresh(prev => prev + 1);
       } catch (error) {
         alert('승인 처리 중 오류가 발생했습니다.');
       }
@@ -328,7 +328,7 @@ const ApprovalDetail = () => {
         console.log(rejectReason);
         const response = await rejectApproval(docSeq, rejectReason);
         alert('반려가 완료되었습니다.');
-        navigate('/approvalInbox');
+        setRefresh(prev => prev + 1);
       } catch (error) {
         console.log(error);
         alert('반려 처리 중 오류가 발생했습니다.');
