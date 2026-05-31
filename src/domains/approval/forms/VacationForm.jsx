@@ -96,6 +96,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
   };
 
   const applicant = isEditMode ? user : data;
+  const displayDate = isEditMode ? today : (data?.created_at?.substring(0, 10) || '-');
 
   return (
     <div className="space-y-5">
@@ -146,7 +147,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
             </tr>
             <tr>
               <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">신청일</th>
-              <td colSpan="3" className="p-2">{today}</td>
+              <td colSpan="3" className="p-2">{displayDate}</td>
             </tr>
           </tbody>
         </table>
@@ -247,7 +248,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
                     )}
                   </div>
                 ) : (
-                  <span>{data.start_date} {data.vac_type === '연차' ? `~ ${data.end_date}` : ''}</span>
+                  <span>{data?.start_date?.substring(0, 10)} {data.vac_type === '연차' ? `~ ${data?.end_date?.substring(0, 10)}` : ''}</span>
                 )}
               </td>
             </tr>

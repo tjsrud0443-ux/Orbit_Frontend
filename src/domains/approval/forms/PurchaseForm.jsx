@@ -14,8 +14,8 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
     if (!data.items || data.items.length === 0) {
       handleFieldChange('items', [{ item_order: 1, item_name: '', ea: 1, unit_price: 0, note: '' }]);
     }
-    if (!data.requestDate) {
-      handleFieldChange('requestDate', today);
+    if (!data.created_at) {
+      handleFieldChange('created_at', today);
     }
   }, []);
 
@@ -159,6 +159,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
   };
 
   const applicant = isEditMode ? user : data;
+  const displayDate = isEditMode ? today : (data?.created_at?.substring(0, 10) || '-');
 
   return (
     <div className="space-y-6">
@@ -241,11 +242,11 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
                     )}
                   </div>
                 ) : (
-                  <span>{data.purchase_date || '-'}</span>
+                  <span>{data.purchase_date?.substring(0, 10) || '-'}</span>
                 )}
               </td>
               <th className="w-24 bg-gray-50 p-2.5 border-r border-gray-200 text-left font-bold">신청일</th>
-              <td className="p-2.5">{today}</td>
+              <td className="p-2.5">{displayDate}</td>
             </tr>
           </tbody>
         </table>

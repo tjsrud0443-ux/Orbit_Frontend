@@ -12,6 +12,12 @@ const ApprovalDocumentContainer = ({
   onAddApprover, 
   onRemoveApprover, 
   onAction,
+  isRejecting,
+  setIsRejecting,
+  rejectReason,
+  setRejectReason,
+  rejectError,
+  setRejectError,
   children 
 }) => {
   return (
@@ -40,10 +46,17 @@ const ApprovalDocumentContainer = ({
           
           {/* Action Buttons */}
           <ApprovalActionButtons 
+            user={user}
             userRole={userRole} 
             mode={mode} 
             onAction={onAction} 
             approvers={approvers}
+            isRejecting={isRejecting}
+            setIsRejecting={setIsRejecting}
+            rejectReason={rejectReason}
+            setRejectReason={setRejectReason}
+            rejectError={rejectError}
+            setRejectError={setRejectError}
           />
         </div>
       </div>

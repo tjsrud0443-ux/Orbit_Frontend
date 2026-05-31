@@ -41,39 +41,12 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
     onChange({ ...data, [field]: value });
   };
 
-  const title = isEditMode 
-    ? (data?.title || data?.TITLE || '') 
-    : (data?.TITLE || data?.title || '-');
+  const title = data?.title || data?.TITLE || '';
+  const purpose = data?.purpose || data?.PURPOSE || '';
+  const content = data?.content || data?.CONTENT || '';
 
-  const purpose = isEditMode
-    ? (data?.purpose || data?.PURPOSE || '')
-    : (data?.PURPOSE || data?.purpose || '-');
-
-  const content = isEditMode
-    ? (data?.content || data?.CONTENT || '')
-    : (data?.CONTENT || data?.content || '-');
-
-  const applicant = isEditMode
-    ? {
-        name: user?.name || '-',
-        users_seq: user?.users_seq || '-',
-        dept_name: user?.dept_name || '-',
-        rank_name: user?.rank_name || '-'
-      }
-    : {
-        name: data?.NAME || data?.name || '-',
-        users_seq: data?.USERS_SEQ || data?.users_seq || '-',
-        dept_name: data?.DEPT_NAME || data?.dept_name || '-',
-        rank_name: data?.RANK_NAME || data?.rank_name || '-'
-      };
-
-  let created_at = '-';
-  if (isEditMode) {
-    created_at = today;
-  } else {
-    const draftDate = data?.CREATED_AT || data?.created_at;
-    created_at = draftDate ? draftDate.substring(0, 10) : '-'; // "2026-05-29" 형식으로 자르기
-  }
+  const applicant = isEditMode ? user : data;
+  const displayDate = isEditMode ? today : (data?.created_at?.substring(0, 10) || '-');
   
   return (
     <div className="space-y-6">
@@ -87,7 +60,7 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
           <div>
             <input 
               type="text"
-              value={editTitle}
+              value={title}
               onChange={(e) => handleFieldChange('title', e.target.value)}
               placeholder="제목을 입력하세요 (50자 이하)"
               maxLength={50}
@@ -97,7 +70,7 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
           </div>
         ) : (
           <div className="w-full p-3 text-xs bg-gray-50 border border-gray-100 rounded-xl">
-            {title}
+            {title || '-'}
           </div>
         )}
       </div>
@@ -112,19 +85,19 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
           <tbody>
             <tr className="border-b border-gray-200">
               <th className="w-24 bg-gray-50 p-3 border-r border-gray-200 text-left font-bold">성명</th>
-              <td className="p-3 border-r border-gray-200">{applicant.name}</td>
+              <td className="p-3 border-r border-gray-200">{applicant?.name || '-'}</td>
               <th className="w-24 bg-gray-50 p-3 border-r border-gray-200 text-left font-bold">사번</th>
-              <td className="p-3">{applicant.users_seq}</td>
+              <td className="p-3">{applicant?.users_seq || '-'}</td>
             </tr>
             <tr className="border-b border-gray-200">
               <th className="w-24 bg-gray-50 p-3 border-r border-gray-200 text-left font-bold">부서</th>
-              <td className="p-3 border-r border-gray-200">{applicant.dept_name}</td>
+              <td className="p-3 border-r border-gray-200">{applicant?.dept_name || '-'}</td>
               <th className="w-24 bg-gray-50 p-3 border-r border-gray-200 text-left font-bold">직급</th>
-              <td className="p-3">{applicant.rank_name}</td>
+              <td className="p-3">{applicant?.rank_name || '-'}</td>
             </tr>
             <tr>
               <th className="w-24 bg-gray-50 p-3 border-r border-gray-200 text-left font-bold">신청일</th>
-              <td className="p-3" colSpan={3}>{created_at}</td>
+              <td className="p-3" colSpan={3}>{displayDate}</td>
             </tr>
           </tbody>
         </table>
@@ -139,7 +112,7 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
         {isEditMode ? (
           <div>
             <textarea 
-              value={editPurpose}
+              value={purpose}
               onChange={(e) => handleFieldChange('purpose', e.target.value)}
               placeholder="품의 목적을 간략하게 입력하세요 (300자 이하)"
               maxLength={300}
@@ -149,7 +122,7 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
           </div>
         ) : (
           <div className="w-full p-3 text-xs bg-gray-50 border border-gray-100 rounded-xl whitespace-pre-wrap">
-            {purpose}
+            {purpose || '-'}
           </div>
         )}
       </div>
@@ -163,7 +136,7 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
         {isEditMode ? (
           <div>
             <textarea 
-              value={editContent}
+              value={content}
               onChange={(e) => handleFieldChange('content', e.target.value)}
               placeholder="품의 내용을 자유롭게 입력하세요 (1000자 이하)"
               maxLength={1000}
@@ -173,7 +146,7 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
           </div>
         ) : (
           <div className="w-full min-h-[20rem] p-4 text-xs bg-gray-50 border border-gray-100 rounded-xl whitespace-pre-wrap overflow-y-auto">
-            {content}
+            {content || '-'}
           </div>
         )}
       </div>
