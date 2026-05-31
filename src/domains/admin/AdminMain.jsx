@@ -24,6 +24,8 @@ import {
   faChevronRight,
 } from '@fortawesome/free-solid-svg-icons';
 import { getAiQuestions, getDashboard, getDeptEmployeeCount, getDeptLeave, getJoinResign } from './adminApi';
+import { formatDistanceToNow } from 'date-fns';
+import { ko } from 'date-fns/locale';
 
 // 1. ChartJS 필수 구성 요소 등록
 ChartJS.register(
@@ -89,7 +91,7 @@ const AdminMain = () => {
     aiQuestionsCount: 0,
     supplyRequestCount: 0
   });
-  const [aiQuestions, setAiQuestions] = useState({});
+  const [aiQuestions, setAiQuestions] = useState([]);
 
   const [deptEmployeeData, setDeptEmployeeData] = useState({
     labels: [],
@@ -204,7 +206,6 @@ const AdminMain = () => {
 
   useEffect(() => {
     getAiQuestions().then(resp => {
-      console.log(resp.data)
       setAiQuestions(resp.data);
     })
   }, []);
@@ -349,13 +350,16 @@ const AdminMain = () => {
             }
           >
             <div className="divide-y divide-gray-100">
-              {aiQuestions.map((item,index) => (
+              {aiQuestions.map((item, index) => (
                 <div key={index} className="flex items-center justify-between py-4 px-2">
                   <span className="text-[#1a1c3d] text-sm font-bold truncate pr-4">
                     {item.question}
                   </span>
                   <span className="text-[#8a92a6] text-xs font-medium whitespace-nowrap">
-                    {item.created_at}
+                    {formatDistanceToNow(new Date(item.created_at.replace(' ', 'T')), {
+                      addSuffix: true,
+                      locale: ko,
+                    })}
                   </span>
                 </div>
               ))}
