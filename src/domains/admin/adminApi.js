@@ -26,3 +26,9 @@ export const updateUsersInfo = (usersSeq, editForm) =>maxios.put("/admin/hr/upda
 export const addDept = (formData) => maxios.post("/admin/hr/addDept", formData);
 export const delDept = (seq) => maxios.delete("/admin/hr/delDept/" + seq);
 export const updateDept = (formData) => maxios.put("/admin/hr/updateDept", formData);
+
+export const getDashboard = () => maxios.get("/admin/dashboard");
+export const getDeptEmployeeCount = () => maxios.get("/admin/deptEmployeeCount");
+export const getDeptLeave = () => maxios.get("/admin/deptLeave");
+export const getJoinResign = () => maxios.get("/admin/joinResign");
+export const getAiQuestions = () => maxios.get("/admin/aiQuestions")
