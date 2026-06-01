@@ -9,11 +9,16 @@ export const submitPurchase = (formData) => maxios.post("/approval/submit/purcha
 });
 export const submitPayment = (payload) => maxios.post("/approval/submit/payment", payload);
 export const submitGeneral = (payload) => maxios.post("/approval/submit/general", payload);
+
 export const getApprovalDetail = (type, docSeq) => maxios.get(`/approval/detail/${type}/${docSeq}`);
-export const updateApproval = (docSeq, payload) => maxios.put(`/approval/update/${docSeq}`, payload);
+
 export const approveDraft = (docSeq, doc_type) => maxios.put(`/approval/approve/${docSeq}`, null, {params: {doc_type: doc_type}});
 export const rejectApproval = (docSeq, reject_reason) => maxios.put(`/approval/reject/${docSeq}`, {reject_reason : reject_reason});
 
+export const updateVacation = (docSeq, payload) => maxios.put(`/approval/update/vacation/${docSeq}`, payload);
+export const updateGeneral = (docSeq, payload) => maxios.put(`/approval/update/general/${docSeq}`, payload);
+export const updatePayment = (docSeq, payload) => maxios.put(`/approval/update/payment/${docSeq}`, payload);
+export const updatePurchase = (docSeq, payload) => maxios.put(`/approval/update/purchase/${docSeq}`, payload);
 
 
 

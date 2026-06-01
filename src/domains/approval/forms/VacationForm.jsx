@@ -69,6 +69,10 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
     const error = validateField(key, value, updatedData);
     setErrors(prev => ({ ...prev, [key]: error }));
 
+    if(key === 'vac_type' && value !== '연차'){
+      setErrors(prev => ({...prev, end_date: ''}));
+    }
+
     if (key === 'start_date') {
       if (data.end_date && value > data.end_date) {
         updatedData.end_date = '';

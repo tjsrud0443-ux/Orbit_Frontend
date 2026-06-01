@@ -7,7 +7,7 @@ import VacationForm from './forms/VacationForm';
 import PaymentForm from './forms/PaymentForm';
 import GeneralForm from './forms/GeneralForm';
 import PurchaseForm from './forms/PurchaseForm';
-import { submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail, updateApproval, approveDraft, rejectApproval } from './approvalApi';
+import { submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail, approveDraft, rejectApproval, updateVacation, updateGeneral, updatePayment, updatePurchase } from './approvalApi';
 
 // 결재자 선택 모달 컴포넌트
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
@@ -227,7 +227,7 @@ const ApprovalDetail = () => {
         return true;
       };
       if (!isFormValid()) return;
-      
+
       if (!approvers || approvers.length === 0) {
         alert('최소 한 명 이상의 결재자를 추가해야 합니다.');
         return;
@@ -248,52 +248,43 @@ const ApprovalDetail = () => {
         : restOfData;
 
       const submitPayload = {
+        ...finalDocData,
         title: formData.title,
         doc_type: doc_type,
         users_id: user?.id,
         status: isTempSave ? 'TEMP' : 'DRAFT',
         is_temp: isTempSave ? 1 : 0,
-        // actionType: actionType, // 백엔드 분기 처리용/
         approvers: approvers.map((app, index) => ({
           users_id: app.id || app.users_id,
           step_order: index + 1
         })),
         referrers: (referrers || []).map(ref => ({
           users_id: ref.id || ref.users_id
-        })),
-        ...finalDocData
+        }))
       };
 
       let response;
 
-      // 3. API 호출 (신규: POST / 임시저장 재작성: PUT)
-      if (isNew) {
-        if (doc_type === 'VACATION') response = await submitVacation(submitPayload);
-        else if (doc_type === 'GENERAL') response = await submitGeneral(submitPayload);
-        else if (doc_type === 'PAYMENT' || doc_type === 'PURCHASE') {
-          const formDataObj = new FormData();
-          if (doc_type === 'PAYMENT') {
-            submitPayload.total_amount = (formData.items || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-          }
-          formDataObj.append("dto", new Blob([JSON.stringify(submitPayload)], { type: "application/json" }));
-          const files = doc_type === 'PAYMENT' ? formData.items?.map(i => i.receipt) : formData.attachments;
-          files?.forEach(file => { if (file instanceof File) formDataObj.append("files", file); });
-          response = (doc_type === 'PAYMENT') ? await submitPayment(formDataObj) : await submitPurchase(formDataObj);
-        }
-      } else {
-        // 임시 저장된 문서 수정 (PUT /api/approval/update/${docSeq})
-        if (doc_type === 'PAYMENT' || doc_type === 'PURCHASE') {
-          const formDataObj = new FormData();
-          if (doc_type === 'PAYMENT') {
-            submitPayload.total_amount = (formData.items || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-          }
-          formDataObj.append("dto", new Blob([JSON.stringify(submitPayload)], { type: "application/json" }));
-          const files = doc_type === 'PAYMENT' ? formData.items?.map(i => i.receipt) : formData.attachments;
-          files?.forEach(file => { if (file instanceof File) formDataObj.append("files", file); });
-          response = await updateApproval(docSeq, formDataObj);
-        } else {
-          response = await updateApproval(docSeq, submitPayload);
-        }
+      // 신규: POST / 임시저장 재작성: PUT
+      if (doc_type === 'VACATION') {
+        response = await (isNew ? submitVacation(submitPayload) : updateVacation(docSeq, submitPayload));
+      } else if (doc_type === 'GENERAL') {
+        response = await (isNew ? submitGeneral(submitPayload) : updateGeneral(docSeq, submitPayload));
+      } else if (doc_type === 'PAYMENT') {
+        const formDataObj = new FormData();
+        submitPayload.total_amount = (formData.items || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+        formDataObj.append("dto", new Blob([JSON.stringify(submitPayload)], { type: "application/json" }));
+        const files = formData.items?.map(i => i.receipt);
+        files?.forEach(file => { if (file instanceof File) formDataObj.append("files", file); });
+        response = await (isNew ? submitPayment(formDataObj) : updatePayment(docSeq, formDataObj));
+      } else if (doc_type === 'PURCHASE') {
+        const formDataObj = new FormData();
+        const { attachments, ...payloadWithoutAttachments } = submitPayload;
+        formDataObj.append("dto", new Blob([JSON.stringify(payloadWithoutAttachments)], { type: "application/json" }));
+        formData.attachments?.forEach(file => {
+          if (file instanceof File) formDataObj.append("files", file);
+        });
+        response = await (isNew ? submitPurchase(formDataObj) : updatePurchase(docSeq, formDataObj));
       }
 
       if (response && (response.status === 200 || response.status === 201 || response.data)) {
