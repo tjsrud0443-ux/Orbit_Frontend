@@ -210,27 +210,27 @@ const ApprovalHome = () => {
         {/* Dashboard Top Area */}
         <div className="flex flex-col xl:flex-row gap-4 items-stretch">
           
-          <div className="xl:w-3/4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="xl:w-3/4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {statusItems.map((item, idx) => (
               <div 
                 key={idx} 
                 onClick={() => navi(item.label === '결재 대기' ? '/approvalInbox' : '/approvalMypage')}
-                className={`${cardStyles[item.color].bg} ${cardStyles[item.color].border} p-5 rounded-[2rem] border-2 shadow-sm flex flex-col justify-between transition-all hover:shadow-md cursor-pointer group`}
+                className={`${cardStyles[item.color].bg} ${cardStyles[item.color].border} p-5 rounded-[2rem] border-2 shadow-sm flex flex-col justify-between transition-all hover:shadow-md cursor-pointer group aspect-square md:aspect-auto`}
               >
                 <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-full ${cardStyles[item.color].iconBg} flex items-center justify-center flex-shrink-0`}>
-                    <div className={cardStyles[item.color].icon}>{item.icon}</div>
+                  <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full ${cardStyles[item.color].iconBg} flex items-center justify-center flex-shrink-0`}>
+                    <div className={`${cardStyles[item.color].icon} scale-90 md:scale-100`}>{item.icon}</div>
                   </div>
                   <div className="flex flex-col items-start translate-x-1">
-                    <span className="text-[0.8125rem] font-bold text-gray-800 mb-1">{item.label}</span>
-                    <span className={`text-3xl font-bold ${cardStyles[item.color].text}`}>
-                      {item.count}<span className="text-sm font-bold ml-1">건</span>
+                    <span className="text-[0.75rem] md:text-[0.8125rem] font-bold text-gray-800 mb-0.5 md:mb-1">{item.label}</span>
+                    <span className={`text-2xl md:text-3xl font-bold ${cardStyles[item.color].text}`}>
+                      {item.count}<span className="text-xs md:text-sm font-bold ml-1">건</span>
                     </span>
                   </div>
                 </div>
-                <div className="mt-4 pt-3 border-t border-black/5 flex justify-between items-center">
-                  <p className="text-[0.6875rem] font-bold text-gray-400">{item.desc}</p>
-                  <span className="text-gray-300 font-bold text-base group-hover:text-gray-500 transition-colors">&gt;</span>
+                <div className="mt-2 md:mt-4 pt-2 md:pt-3 border-t border-black/5 flex justify-between items-center">
+                  <p className="text-[0.625rem] md:text-[0.6875rem] font-bold text-gray-400 truncate pr-2">{item.desc}</p>
+                  <span className="text-gray-300 font-bold text-sm md:text-base group-hover:text-gray-500 transition-colors">&gt;</span>
                 </div>
               </div>
             ))}
@@ -246,7 +246,7 @@ const ApprovalHome = () => {
                 </div>
                 <button 
                   onClick={() => setIsDraftModalOpen(true)}
-                  className="bg-white text-[#3530B8] py-2 px-4 rounded-xl font-bold text-[0.6875rem] flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors w-fit shadow-lg"
+                  className="bg-white text-[#3530B8] py-2 px-4 rounded-xl font-bold text-[0.6875rem] flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors w-fit shadow-lg mt-4 xl:mt-0"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -272,70 +272,77 @@ const ApprovalHome = () => {
             </button>
           </div>
 
-          {/* Table Header */}
-          <div className="grid grid-cols-12 px-10 py-4 border-b border-gray-50 text-[0.8125rem] font-bold text-gray-400 bg-gray-50/10 flex-shrink-0">
-            <div className="col-span-4">제목</div>
-            <div className="col-span-2 text-center">문서 종류</div>
-            <div className="col-span-2 text-center">기안일</div>
-            <div className="col-span-2 text-center">결재 상태</div>
-            <div className="col-span-2 text-center">현재 결재자</div>
-          </div>
+          {/* Table Area - Scrollable on Mobile */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="overflow-x-auto custom-scrollbar">
+              <div className="min-w-[900px]">
+                {/* Table Header */}
+                <div className="grid grid-cols-12 px-10 py-4 border-b border-gray-50 text-[0.8125rem] font-bold text-gray-400 bg-gray-50/10 flex-shrink-0">
+                  <div className="col-span-4">제목</div>
+                  <div className="col-span-2 text-center">문서 종류</div>
+                  <div className="col-span-2 text-center">기안일</div>
+                  <div className="col-span-2 text-center">결재 상태</div>
+                  <div className="col-span-2 text-center">현재 결재자</div>
+                </div>
 
-          {/* List Content */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-            {
-              homeData.recentDocs.map((doc, idx) => (
-                <div key={doc.doc_seq || idx} className="grid grid-cols-12 px-10 py-5 border-b border-gray-50 items-center hover:bg-gray-50/50 transition-colors cursor-pointer group">
-                  <div className="col-span-4 text-sm font-bold text-gray-700 truncate pr-4">
-                    {doc.title}
-                  </div>
-                  <div className="col-span-2 text-center text-xs font-medium text-gray-500">
-                    {getDocTypeLabel(doc.doc_type)}
-                  </div>
-                  <div className="col-span-2 text-center text-xs font-medium text-gray-400">
-                    {doc.created_at}
-                  </div>
-                  <div className="col-span-2 text-center">
-                    <span className={`px-2.5 py-0.5 text-[0.625rem] font-bold rounded-full ${
-                      doc.status === 'IN_PROGRESS' ? 'bg-[#F0F7FF] text-[#007BFF]' :
-                      doc.status === 'DRAFT' ? 'bg-[#FFF9F0] text-[#FF9800]' :
-                      doc.status === 'APPROVED' ? 'bg-[#F0FDF4] text-[#10B981]' :
-                      'bg-[#FFF0F0] text-[#FF4D4F]'
-                    }`}>
-                      {getStatusLabel(doc.status)}
-                    </span>
-                  </div>
-                  <div className="col-span-2 flex items-center justify-center gap-2">
-                    {doc.sysname ? (
-                      <div className="w-6 h-6 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex-shrink-0">
-                        <img 
-                          src={`http://localhost/file/profile/view?sysname=${doc.sysname}&token=${token}`} 
-                          className="w-full h-full object-cover" 
-                          alt="Profile" 
-                        />
+                {/* List Content */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar max-h-[20rem]">
+                  {
+                    homeData.recentDocs.map((doc, idx) => (
+                      <div key={doc.doc_seq || idx} className="grid grid-cols-12 px-10 py-5 border-b border-gray-50 items-center hover:bg-gray-50/50 transition-colors cursor-pointer group whitespace-nowrap">
+                        <div className="col-span-4 text-sm font-bold text-gray-700 truncate pr-4">
+                          {doc.title}
+                        </div>
+                        <div className="col-span-2 text-center text-xs font-medium text-gray-500">
+                          {getDocTypeLabel(doc.doc_type)}
+                        </div>
+                        <div className="col-span-2 text-center text-xs font-medium text-gray-400">
+                          {doc.created_at}
+                        </div>
+                        <div className="col-span-2 text-center">
+                          <span className={`px-2.5 py-0.5 text-[0.625rem] font-bold rounded-full ${
+                            doc.status === 'IN_PROGRESS' ? 'bg-[#F0F7FF] text-[#007BFF]' :
+                            doc.status === 'DRAFT' ? 'bg-[#FFF9F0] text-[#FF9800]' :
+                            doc.status === 'APPROVED' ? 'bg-[#F0FDF4] text-[#10B981]' :
+                            'bg-[#FFF0F0] text-[#FF4D4F]'
+                          }`}>
+                            {getStatusLabel(doc.status)}
+                          </span>
+                        </div>
+                        <div className="col-span-2 flex items-center justify-center gap-2">
+                          {doc.sysname ? (
+                            <div className="w-6 h-6 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex-shrink-0">
+                              <img 
+                                src={`http://localhost/file/profile/view?sysname=${doc.sysname}&token=${token}`} 
+                                className="w-full h-full object-cover" 
+                                alt="Profile" 
+                              />
+                            </div>
+                          ) : (
+                            ''
+                          )}
+                          <span className="text-xs font-bold text-gray-600 truncate">
+                            {doc.approver_name ? `${doc.approver_name} ${doc.approver_rank}` : '-'}
+                          </span>
+                        </div>
                       </div>
-                    ) : (
-                      ''
-                    )}
-                    <span className="text-xs font-bold text-gray-600 truncate">
-                      {doc.approver_name ? `${doc.approver_name} ${doc.approver_rank}` : '-'}
-                    </span>
-                  </div>
+                    ))
+                  }
+                  
+                  {/* Empty State (데이터가 없을 때만 표시) */}
+                  {homeData.recentDocs.length === 0 && (
+                    <div className="p-20 flex flex-col items-center justify-center text-gray-400">
+                      <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-5">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
+                      <p className="text-sm font-bold text-gray-300 tracking-tight">최근에 상신하거나 수신한 문서가 없습니다.</p>
+                    </div>
+                  )}
                 </div>
-              ))
-            }
-            
-            {/* Empty State (데이터가 없을 때만 표시) */}
-            {homeData.recentDocs.length === 0 && (
-              <div className="p-20 flex flex-col items-center justify-center text-gray-400">
-                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-5">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <p className="text-sm font-bold text-gray-300 tracking-tight">최근에 상신하거나 수신한 문서가 없습니다.</p>
               </div>
-            )}
+            </div>
           </div>
         </div>
 
