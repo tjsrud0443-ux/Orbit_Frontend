@@ -8,10 +8,13 @@ import {
   faTimes,
   faPaperclip,
   faTrashCan,
-  faBars
+  faBars,
+  faChevronDown,
+  faChevronUp
 } from '@fortawesome/free-solid-svg-icons';
 import { IMAGES } from '../../images/images';
 import { inputMsg } from './aiChatApi';
+import { getGroup } from '../departments/departmentsApi';
 
 const AiChat = () => {
   // --- 1. States ---
@@ -33,15 +36,35 @@ const AiChat = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const scrollRef = useRef(null);
 
+  // 커스텀 드롭다운 상태
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [selectedDept, setSelectedDept] = useState("부서 선택");
+  const [deptList, setDeptList] = useState([]);
+
   // --- 2. Effects ---
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   useEffect(() => {
-    const handleClick = () => setActiveMenuId(null);
+    const handleClick = () => {
+      setActiveMenuId(null);
+      setIsDropdownOpen(false);
+    };
     window.addEventListener('click', handleClick);
     return () => window.removeEventListener('click', handleClick);
+  }, []);
+
+  // 부서 목록 가져오기
+  useEffect(() => {
+    getGroup().then(resp => {
+      if (resp.data && resp.data.nodeMap) {
+        const depts = Object.values(resp.data.nodeMap);
+        setDeptList(depts);
+      }
+    }).catch(err => {
+      console.error("부서 목록 로딩 실패:", err);
+    });
   }, []);
 
   // --- 3. Handlers ---
@@ -259,20 +282,46 @@ const AiChat = () => {
           <div className="bg-white p-8 rounded-2xl w-[400px] shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-bold text-lg">담당 부서(관리자) 문의</h3>
-              <button onClick={() => setIsModalOpen(false)}><FontAwesomeIcon icon={faTimes} /></button>
+              <button onClick={() => { setIsModalOpen(false); setIsDropdownOpen(false); }}><FontAwesomeIcon icon={faTimes} /></button>
             </div>
-            <select className="w-full p-3 border border-[#edf2f9] rounded-lg mb-4 text-sm">
-              <option>개발팀</option>
-              <option>기획팀</option>
-              <option>디자인팀</option>
-              <option>인사팀</option>
-              <option>총무/재무팀</option>
-              <option>IT지원팀</option>
-            </select>
+            
+            {/* Custom Dropdown */}
+            <div className="relative mb-4">
+              <div 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDropdownOpen(!isDropdownOpen);
+                }}
+                className="w-full p-3 border border-[#edf2f9] rounded-lg text-sm cursor-pointer flex justify-between items-center bg-white"
+              >
+                <span className={selectedDept === "부서 선택" ? "text-slate-400" : "text-slate-700"}>
+                  {selectedDept}
+                </span>
+                <FontAwesomeIcon icon={isDropdownOpen ? faChevronUp : faChevronDown} className="text-slate-400 text-xs" />
+              </div>
+              {isDropdownOpen && (
+                <div className="absolute top-full left-0 w-full bg-white border border-[#edf2f9] rounded-lg mt-1 shadow-lg z-[70] max-h-48 overflow-y-auto">
+                  {deptList.map(dept => (
+                    <div 
+                      key={dept.deptSeq}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedDept(dept.deptName);
+                        setIsDropdownOpen(false);
+                      }}
+                      className="px-3 py-1.5 text-xs text-slate-400 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
+                    >
+                      {dept.deptName}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <textarea className="w-full p-3 border border-[#edf2f9] rounded-lg mb-4 text-sm h-32" placeholder="AI가 답변하지 못한 상세 문의 내용을 작성해주시면 담당자가 검토 후 그룹웨어로 답변을 드립니다."></textarea>
             <div className="flex gap-2">
-              <button onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-slate-100">취소</button>
-              <button onClick={() => { alert('담당 부서로 문의가 안전하게 접수되었습니다.'); setIsModalOpen(false); }} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-[#3530B8] text-white">제출</button>
+              <button onClick={() => { setIsModalOpen(false); setIsDropdownOpen(false); }} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-slate-100">취소</button>
+              <button onClick={() => { alert('담당 부서로 문의가 안전하게 접수되었습니다.'); setIsModalOpen(false); setIsDropdownOpen(false); }} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-[#3530B8] text-white">제출</button>
             </div>
           </div>
         </div>
