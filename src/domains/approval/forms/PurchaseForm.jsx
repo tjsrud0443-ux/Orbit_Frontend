@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Calendar from '../../../components/common/Calendar';
 import ReferrerSelector from '../components/ReferrerSelector';
+import useAuthStore from '../../../store/authStore';
 
 const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveClicked }) => {
   const isEditMode = mode === 'EDIT';
@@ -110,21 +111,11 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
   const handleRemoveAttachment = (targetIdx) => {
     onChange(prev => {
       const currentAttachments = prev.attachments || [];
-      // const targetFile = currentAttachments[idx];
       const filteredFiles = currentAttachments.filter((_, i) => i !== targetIdx);
       
       if (filteredFiles.length === 0) {
         setErrors(err => ({ ...err, attachments: '파일을 첨부해주세요.' }));
       }
-
-      // if (targetFile && targetFile.attachment_seq) {
-      //   const deletedSeqs = prev.deletedAttachmentSeqs || [];
-      //   return {
-      //     ...prev,
-      //     attachments: filteredFiles,
-      //     deletedAttachmentSeqs: [...deletedSeqs, targetFile.attachment_seq]
-      //   };
-      // }
       return { ...prev, attachments: filteredFiles };
     });
   };
@@ -172,7 +163,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
 
   const applicant = isEditMode ? user : data;
   const displayDate = isEditMode ? today : (data?.created_at?.substring(0, 10) || '-');
-  const token = sessionStorage.getItem("token");
+  const token = useAuthStore(state => state.token);
 
   return (
     <div className="space-y-6">
