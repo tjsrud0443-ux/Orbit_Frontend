@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSchedules } from './schedulesApi';
 import { fetchHolidays } from '../../api/holidayApi';
@@ -13,6 +13,7 @@ const CATEGORY_COLORS = {
 
 const useCalendar = () => {
   const navigate = useNavigate();
+  const calendarEventsRef = useRef([]);  
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedSchedules, setSelectedSchedules] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
@@ -22,25 +23,42 @@ const useCalendar = () => {
 
     Promise.all([getSchedules(), fetchHolidays(year)])
       .then(([scheduleResp, holidays]) => {
-        const scheduleEvents = scheduleResp.data.map(item => ({
+        const scheduleEvents = scheduleResp.data.map(item => {
+          const start = item.start_dt?.split('T')[0];
+          const end = item.end_dt?.split('T')[0];
+          const isMultiDay = end && end !== start;
+          // end날짜 하루 추가
+const adjustedEnd = isMultiDay 
+  ? new Date(new Date(end).getTime() + 86400000).toISOString().split('T')[0]
+  : undefined;
+        return {
           id: item.schedule_seq.toString(),
           title: item.title,
-          date: item.start_dt?.split('T')[0],
+          start,
+          end:adjustedEnd,
+          originalEnd: end,  // ← 추가
+          allDay: true,
+          display: isMultiDay ? 'block' : 'list-item',
           color: CATEGORY_COLORS[item.schedule_type] ?? '#3530B8',
-        }));
+        };
+  });
 
-        const holidayEvents = holidays.map(h => ({
-          ...h,
-          date: h.start,
-          color: '#EF4444',
-        }));
-
-        setCalendarEvents([...scheduleEvents, ...holidayEvents]);
-      })
-      .catch(err => console.error('로드 실패:', err));
+    const holidayEvents = holidays.map(h => ({
+      ...h,
+      start: h.start,
+      allDay: true, 
+       display: 'list-item', 
+      color: '#EF4444',
+    }));
+    const allEvents = [...scheduleEvents, ...holidayEvents];
+    calendarEventsRef.current = allEvents;  // ← 추가
+    setCalendarEvents(allEvents);
+    }).catch(err => console.error('로드 실패:', err));
   }, []);
 
   const handleDateClick = (info) => {
+      console.log('calendarEventsRef:', calendarEventsRef.current);  // ← 추가
+  console.log('클릭한 날짜:', info.dateStr);
     const clickedDate = new Date(info.dateStr);
     const today = new Date();
     if (
@@ -51,7 +69,13 @@ const useCalendar = () => {
       if (ok) navigate('/calendar');
       return;
     }
-    const filtered = calendarEvents.filter(e => e.date === info.dateStr);
+    const filtered = calendarEventsRef.current.filter(e =>{
+      const endDate = e.originalEnd || e.end;
+        if (e.end) {
+          return info.dateStr >= e.start && info.dateStr <= e.end;
+        }
+        return e.start === info.dateStr;
+      });
     setSelectedDate(info.dateStr);
     setSelectedSchedules(filtered);
   };

@@ -1,34 +1,38 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { getProfileInfo, updateUserInfo } from '../mypage/mypageApi'; 
 import { useNavigate } from 'react-router-dom';
 import useUserStore from '../../store/userStore';
-import { updateUserInfo } from '../../api/userApi';
 
 const MyPageEdit = () => {
-  const navigate = useNavigate();
+  const navigate = useNavigate();//페이지 이동용
+  /*전역 store에서 로그인한 유저 정보(user)를 가져오고,
+   수정 후 store 업데이트할 때 setUser 사용 */
   const { user, setUser } = useUserStore();
-  const postcodeRef = useRef(null);
-  
-  const [isEditing, setIsEditing] = useState(false);
-  const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    email: user?.email || '',
-    phone: user?.phone || '',
-    zonecode: user?.zonecode || '',
-    address1: user?.address1 || '',
-    address2: user?.address2 || '',
+  const postcodeRef = useRef(null); 
+  const [profileData, setProfileData] = useState(null);//기존 데이터 저장용
+  const [isEditing, setIsEditing] = useState(false); // 수정모드인지 아닌지
+  const [isPostcodeOpen, setIsPostcodeOpen] = useState(false); //검색버튼 활 비활
+  const [formData, setFormData] = useState({//수정된 데이터 처리용
+    email: '',
+    phone: '',
+    zonecode: '',
+    address1: '',
+    address2: '',
   });
 
-  useEffect(() => {
-    if (user) {
+useEffect(() => {
+  getProfileInfo()
+    .then(resp => {
+      setProfileData(resp.data);
       setFormData({
-        email: user.email || '',
-        phone: user.phone || '',
-        zonecode: user.zonecode || '',
-        address1: user.address1 || '',
-        address2: user.address2 || '',
+        email: resp.data.email || '',
+        phone: resp.data.phone || '',
+        zonecode: resp.data.zonecode || '',
+        address1: resp.data.address1 || '',
+        address2: resp.data.address2 || '',
       });
-    }
-  }, [user]);
+    }).catch(err => console.log("내정보 불러오기 실패", err));
+}, []);
 
   useEffect(() => {
     if (isPostcodeOpen && postcodeRef.current) {
@@ -57,13 +61,16 @@ const MyPageEdit = () => {
     setIsPostcodeOpen(true);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     if (e) e.preventDefault();
     try {
-      await updateUserInfo(formData);
-      setUser({ ...user, ...formData });
-      alert('회원 정보가 수정되었습니다.');
-      setIsEditing(false);
+      updateUserInfo(formData).then(()=>{
+        setProfileData({ ...profileData, ...formData });
+        setUser({ ...user, ...formData });
+        alert('회원 정보가 수정되었습니다.');
+        setIsEditing(false);
+      })
+
     } catch (error) {
       console.error('Update failed:', error);
       alert('정보 수정에 실패했습니다.');
@@ -72,11 +79,11 @@ const MyPageEdit = () => {
 
   const handleCancel = () => {
     setFormData({
-      email: user?.email || '',
-      phone: user?.phone || '',
-      zonecode: user?.zonecode || '',
-      address1: user?.address1 || '',
-      address2: user?.address2 || '',
+      email: profileData?.email || '',
+      phone: profileData?.phone || '',
+      zonecode: profileData?.zonecode || '',
+      address1: profileData?.address1 || '',
+      address2: profileData?.address2 || '',
     });
     setIsEditing(false);
   };
@@ -143,12 +150,12 @@ const MyPageEdit = () => {
             <span style={{ color: '#3530B8' }}>●</span> 기본 인사 정보
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 3rem' }}>
-            <div style={infoRowStyle}><span style={labelStyle}>이름</span><span style={valueStyle}>{user?.name}</span></div>
-            <div style={infoRowStyle}><span style={labelStyle}>아이디</span><span style={valueStyle}>{user?.id}</span></div>
-            <div style={infoRowStyle}><span style={labelStyle}>사번</span><span style={valueStyle}>{user?.empNo}</span></div>
-            <div style={infoRowStyle}><span style={labelStyle}>부서</span><span style={valueStyle}>{user?.department}</span></div>
-            <div style={infoRowStyle}><span style={labelStyle}>직급</span><span style={valueStyle}>{user?.position}</span></div>
-            <div style={infoRowStyle}><span style={labelStyle}>입사일</span><span style={valueStyle}>{user?.joinDate}</span></div>
+            <div style={infoRowStyle}><span style={labelStyle}>이름</span><span style={valueStyle}>{profileData?.name}</span></div>
+            <div style={infoRowStyle}><span style={labelStyle}>아이디</span><span style={valueStyle}>{profileData?.id}</span></div>
+            <div style={infoRowStyle}><span style={labelStyle}>사번</span><span style={valueStyle}>{profileData?.users_seq}</span></div>
+            <div style={infoRowStyle}><span style={labelStyle}>부서</span><span style={valueStyle}>{profileData?.dept_name}</span></div>
+            <div style={infoRowStyle}><span style={labelStyle}>직급</span><span style={valueStyle}>{profileData?.rank_name}</span></div>
+            <div style={infoRowStyle}><span style={labelStyle}>입사일</span><span style={valueStyle}>{profileData?.hire_date?.split(' ')[0]}</span></div>
           </div>
         </div>
 
@@ -166,7 +173,7 @@ const MyPageEdit = () => {
               {isEditing ? (
                 <input type="email" name="email" value={formData.email} onChange={handleChange} style={inputStyle} />
               ) : (
-                <span style={valueStyle}>{user?.email || '-'}</span>
+                <span style={valueStyle}>{profileData?.email || '-'}</span>
               )}
             </div>
             <div style={infoRowStyle}>
@@ -174,7 +181,7 @@ const MyPageEdit = () => {
               {isEditing ? (
                 <input type="text" name="phone" value={formData.phone} onChange={handleChange} style={inputStyle} />
               ) : (
-                <span style={valueStyle}>{user?.phone || '-'}</span>
+                <span style={valueStyle}>{profileData?.phone || '-'}</span>
               )}
             </div>
 
@@ -187,7 +194,7 @@ const MyPageEdit = () => {
                   <button type="button" onClick={handleSearch} style={{ padding: '0 1rem', background: '#3530B8', color: 'white', border: 'none', borderRadius: '0.5rem', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer' }}>검색</button>
                 </div>
               ) : (
-                <span style={valueStyle}>{user?.zonecode || '-'}</span>
+                <span style={valueStyle}>{profileData?.zonecode || '-'}</span>
               )}
             </div>
 
@@ -197,7 +204,7 @@ const MyPageEdit = () => {
               {isEditing ? (
                 <input type="text" name="address1" value={formData.address1} readOnly style={{ ...inputStyle, background: '#F8FAFC', border: '1px solid #E2E8F0' }} />
               ) : (
-                <span style={valueStyle}>{user?.address1 || '-'}</span>
+                <span style={valueStyle}>{profileData?.address1 || '-'}</span>
               )}
             </div>
 
@@ -207,7 +214,7 @@ const MyPageEdit = () => {
               {isEditing ? (
                 <input type="text" name="address2" value={formData.address2} onChange={handleChange} style={inputStyle} />
               ) : (
-                <span style={valueStyle}>{user?.address2 || '-'}</span>
+                <span style={valueStyle}>{profileData?.address2 || '-'}</span>
               )}
             </div>
           </div>

@@ -330,9 +330,9 @@ const quickActions = [
                       initialView="dayGridMonth"
                       locale="ko"
                       headerToolbar={{
-                        left: '',   // ← 이전 달 버튼
+                        left: '',  
                         center: 'title',
-                        right: ''   // ← 다음 달 버튼
+                        right: ''  
                       }}
                       height="100%"
                       eventDisplay="list-item"   // ← 점으로 표시
@@ -404,10 +404,10 @@ const quickActions = [
             <div className="shrink-0 relative z-10">
               <div className="flex items-center gap-2 mb-3">
                 <span className="p-1 bg-white/20 rounded-xl text-lg">🤖</span>
-                <h3 className="text-lg font-bold">Orbit AI</h3>
+                <h3 className="text-lg font-extrabold">Orbit AI</h3>
               </div>
               <p className="text-xl lg:text-2xl font-semibold leading-tight mb-2">무엇을 도와드릴까요?</p>
-              <p className="text-[0.75rem] lg:text-s text-[#3530B8]">궁금한 업무 정보를 물어보세요.</p>
+              <p className="text-[0.75rem] font-semibold lg:text-s text-[#3530B8]">궁금한 업무 정보를 물어보세요.</p>
             </div>
             <div className="mt-auto relative z-10">         
               <button

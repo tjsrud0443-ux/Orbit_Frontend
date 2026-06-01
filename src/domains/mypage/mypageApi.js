@@ -1,1 +1,10 @@
-﻿
+﻿import { maxios } from "../../api/axiosConfig";
+
+/*마이페이지 회원 관련 */
+export const getProfileInfo = () => maxios.get("/users/myPage");
+export const updateUserInfo = (userData) => maxios.put("/users/myPage/edit", userData);
+
+/*이번 달 요약 */
+export const getCntMonth = () => maxios.get("/Attendance/monthCount");
+/*이번 주 근태 요약 */
+export const getCntWeek = () => maxios.get("/Attendance/weekCount");
