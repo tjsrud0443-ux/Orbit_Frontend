@@ -56,10 +56,10 @@ const handleDateClick = (info) => {
   setDayModal({ open: true, date: info.dateStr, schedules: filtered });
 };
   const statusStyle = (status) => {
-    if (status === '승인') return { background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0' };
-    if (status === '대기') return { background: '#FFF7ED', color: '#D97706', border: '1px solid #FDE68A' };
-    if (status === '처리중') return { background: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE' };
-    return { background: '#F1F5F9', color: '#64748B', border: '1px solid #E2E8F0' };
+    if (status === '승인') return { background: '#F0FDF4', color: '#10B981', border: '1px solid #DCFCE7' };
+    if (status === '대기') return { background: '#FFF9F0', color: '#FF9800', border: '1px solid #FEF3C7' };
+    if (status === '처리중') return { background: '#F0F4FF', color: '#3530B8', border: '1px solid #DDE8FF' };
+    return { background: '#FFF0F0', color: '#FF4D4F', border: '1px solid #FEE2E2' };
   };
 
   const [monthSummary, setMonthSummary] = useState({
@@ -106,26 +106,21 @@ const handleDateClick = (info) => {
 }, []);
 
 const weeklyAttendance = [
-  { label: '정상', value: `${weekSummary.workDays}일`, color: '#3530B8' },
-  { label: '지각', value: `${weekSummary.lateCnt}회`, color: '#F59E0B' },
-  { label: '연차', value: `${weekSummary.usedLeave}일`, color: '#10B981' },
-  { label: '연장근무', value: `${weekSummary.overtimeHours}시간`, color: '#EC4899' },
+  { label: '정상', value: `${weekSummary.workDays}일`, text: '#22c55e', bg: '#f0fdf4', border: '#dcfce7' },
+  { label: '지각', value: `${weekSummary.lateCnt}회`, text: '#ef4444', bg: '#fef2f2', border: '#fee2e2' },
+  { label: '연차', value: `${weekSummary.usedLeave}일`, text: '#f59e0b', bg: '#fffbeb', border: '#fef3c7' },
+  { label: '연장근무', value: `${weekSummary.overtimeHours}시간`, text: '#3b82f6', bg: '#eff6ff', border: '#dbeafe' },
 ];
 
   const leaveTotal = 15;
   const leaveUsed = 1;
   const leaveRemain = leaveTotal - leaveUsed - 0.5;
 
-  const radius = 54;
-  const circumference = 2 * Math.PI * radius;
-  const usedAngle = (leaveUsed / leaveTotal) * circumference;
-  const remainAngle = (leaveRemain / leaveTotal) * circumference;
-
   const donutData = {
-    labels: ['사용', '반차', '잔여'],
+    labels: ['잔여', '사용', '반차'],
     datasets: [{
-      data: [leaveUsed, 0.5, leaveRemain],
-      backgroundColor: ['#10B981', '#6366F1', '#3530B8'],
+      data: [leaveRemain, leaveUsed, 0.5],
+      backgroundColor: ['#3F51B5', '#757de8', '#d9d9fe'],
       borderWidth: 0,
     }]
   };
@@ -154,29 +149,29 @@ const weeklyAttendance = [
       </div>
 
       {/* 메인 2열 그리드 레이아웃 */}
-      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: '1rem', alignItems: 'stretch' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
         
         {/* 왼쪽 컬럼: (내 정보 + 연차 현황) + 개인 캘린더 */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div className="lg:col-span-7 flex flex-col gap-4">
           
-          {/* 상단: 내 정보와 연차 현황 가로 배치 */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          {/* 상단: 내 정보와 연차 현황 가로 배치 (모바일 세로) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* 내 정보 */}
-            <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '1.5rem', padding: '1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', minHeight: '12rem' }}>
-              <h3 style={{ fontSize: '0.8rem', fontWeight: '800', color: '#0F172A', marginBottom: '0.75rem' }}>내 정보</h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', flex: 1 }}>
-                <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#F0F4FF', border: '2px solid #E0E7FF', overflow: 'hidden', flexShrink: 0 }}>
+            <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm flex flex-col min-h-[12rem]">
+              <h3 className="text-[0.8rem] font-extrabold text-slate-900 mb-3">내 정보</h3>
+              <div className="flex items-center gap-4 mb-4 flex-1">
+                <div className="w-14 h-14 rounded-full bg-slate-50 border-2 border-slate-100 overflow-hidden shrink-0">
                   <img
                     src={`http://localhost/file/profile/view?sysname=${user?.sysname}&token=${token}`}
                     alt={profileData?.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    className="w-full h-full object-cover"
                     onError={(e) => {
                       e.target.style.display = 'none';
-                      e.target.parentNode.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.25rem;font-weight:700;color:#3530B8">${profileData?.name?.charAt(0) || '김'}</div>`;
+                      e.target.parentNode.innerHTML = `<div class="w-full h-full flex items-center justify-center text-xl font-bold text-[#3530B8]">${profileData?.name?.charAt(0) || '김'}</div>`;
                     }}
                   />
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '3rem 1fr', gap: '0.2rem 0.5rem', fontSize: '0.75rem' }}>
+                <div className="grid grid-cols-[3rem_1fr] gap-x-2 gap-y-0.5 text-xs">
                   {[
                     ['이름', profileData?.name || ''],
                     ['직급', profileData?.rank_name || ''],
@@ -185,25 +180,25 @@ const weeklyAttendance = [
                     ['입사일', profileData?.hire_date?.split(' ')[0] || ''],
                   ].map(([label, val]) => (
                     <React.Fragment key={label}>
-                      <span style={{ color: '#94A3B8', fontWeight: '600' }}>{label}</span>
-                      <span style={{ color: '#1E293B', fontWeight: '500' }}>{val}</span>
+                      <span className="text-slate-400 font-bold">{label}</span>
+                      <span className="text-slate-800 font-semibold">{val}</span>
                     </React.Fragment>
                   ))}
                 </div>
               </div>
               <button
                 onClick={() => navigate('/mypage/edit')}
-                style={{ width: '100%', padding: '0.35rem', background: 'white', border: '1px solid #E2E8F0', borderRadius: '0.75rem', fontSize: '0.75rem', fontWeight: '700', color: '#475569', cursor: 'pointer' }}
+                className="w-full py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-50 transition-colors"
               >
                 정보 수정
               </button>
             </div>
 
             {/* 연차 현황 */}
-            <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '1.5rem', padding: '1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', minHeight: '12rem' }}>
-              <h3 style={{ fontSize: '0.8rem', fontWeight: '800', color: '#0F172A', marginBottom: '0.75rem' }}>연차 현황</h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
-               <div style={{ position: 'relative', width: '90px', height: '90px', flexShrink: 0 }}>
+            <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm flex flex-col min-h-[12rem]">
+              <h3 className="text-[0.8rem] font-extrabold text-slate-900 mb-3">연차 현황</h3>
+              <div className="flex flex-col sm:flex-row items-center gap-4 flex-1">
+               <div className="relative w-32 h-32 shrink-0">
                   <Doughnut
                     data={donutData}
                     options={{
@@ -213,21 +208,23 @@ const weeklyAttendance = [
                       plugins: { legend: { display: false } }
                     }}
                   />
-                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: '0.5rem', color: '#94A3B8', fontWeight: '600' }}>총 연차</span>
-                    <span style={{ fontSize: '0.9rem', color: '#0F172A', fontWeight: '800' }}>{leaveTotal}일</span>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-[0.6rem] color-[#8a95a5] font-bold">총 연차</span>
+                    <span className="text-sm text-slate-900 font-extrabold">{leaveTotal}일</span>
                   </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <div className="flex flex-col gap-2 w-full sm:w-auto">
                   {[
-                    { label: '연차', value: `${leaveTotal}일`, color: '#3530B8' },
-                    { label: '사용', value: `${leaveUsed}일`, color: '#10B981' },
-                    { label: '잔여', value: `${leaveRemain}일`, color: '#E2E8F0' },
+                    { label: '연차', value: `${leaveTotal}일`, color: '#d9d9fe'},
+                    { label: '사용', value: `${leaveUsed + 0.5}일`, color: '#7b83ee'},
+                    { label: '잔여', value: `${leaveRemain}일`, color: '#3F51B5' },
                   ].map(({ label, value, color }) => (
-                    <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: color, flexShrink: 0 }} />
-                      <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: '600' }}>{label}</span>
-                      <span style={{ fontSize: '0.72rem', color: '#0F172A', fontWeight: '700' }}>{value}</span>
+                    <div key={label} className="flex items-center justify-between sm:justify-start gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
+                        <span className="text-xs text-slate-500 font-bold">{label}</span>
+                      </div>
+                      <span className="text-xs text-slate-900 font-bold">{value}</span>
                     </div>
                   ))}
                 </div>
@@ -236,10 +233,10 @@ const weeklyAttendance = [
           </div>
 
           {/* 개인 캘린더 */}
-          <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '1.5rem', padding: '1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', height: '31.5rem'  }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <h3 style={{ fontSize: '0.8rem', fontWeight: '800', color: '#0F172A', marginBottom: '0.75rem' }}>개인 캘린더</h3>
-              <button onClick={() => navigate('/calendar')} style={{ fontSize: '0.65rem', color: '#94A3B8', fontWeight: '700', background: 'none', border: 'none', cursor: 'pointer' }}>상세보기 →</button>
+          <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm h-[32rem]">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-[0.8rem] font-extrabold text-slate-900">개인 캘린더</h3>
+              <button onClick={() => navigate('/calendar')} className="text-[0.65rem] text-slate-400 font-bold hover:text-[#3530B8]">상세보기 →</button>
             </div>          
              <style>{`
                   .main-calendar .fc-theme-standard td,
@@ -272,7 +269,7 @@ const weeklyAttendance = [
                     align-items: center !important;
                   }
                 `}</style>
-                <div style={{ height: '26.5rem', overflow: 'hidden' }} className="main-calendar">
+                <div className="h-[27rem] overflow-hidden main-calendar">
                   <FullCalendar
                     plugins={[dayGridPlugin, interactionPlugin]}
                     initialView="dayGridMonth"
@@ -290,52 +287,49 @@ const weeklyAttendance = [
         </div>
 
         {/* 오른쪽 컬럼: 요약 + 신청내역 + 근태 */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div className="lg:col-span-5 flex flex-col gap-4">
           {/* 이번 달 요약 */}
-          <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '1.5rem', padding: '1.35rem 1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-            <h3 style={{ fontSize: '0.8rem', fontWeight: '800', color: '#0F172A', marginBottom: '1.1rem' }}>이번 달 요약</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
+          <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm">
+            <h3 className="text-[0.8rem] font-extrabold text-slate-900 mb-4">이번 달 요약</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {attendanceSummary.map(({ label, value }) => (
-                <div key={label} style={{ background: '#F8FAFC', borderRadius: '0.75rem', padding: '0.8rem 0.5rem', textAlign: 'center' }}>
-                  <p style={{ fontSize: '0.65rem', color: '#94A3B8', fontWeight: '600', marginBottom: '0.4rem' }}>{label}</p>
-                  <p style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0F172A' }}>{value}</p>
+                <div key={label} className="rounded-2xl p-3 text-center border transition-all hover:bg-white hover:shadow-sm" style={{ background: '#F0F4FF', borderColor: '#DDE8FF' }}>
+                  <p className="text-[0.65rem] text-slate-500 font-bold mb-1.5">{label}</p>
+                  <p className="text-lg font-extrabold text-[#3530B8]">{value}</p>
                 </div>
               ))}
             </div>
           </div>
 
           {/* 신청 내역 - 높이 대폭 확장 */}
-          <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '1.5rem', padding: '1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', flex: 1, minHeight: '20rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
-              <h3 style={{ fontSize: '0.8rem', fontWeight: '800', color: '#0F172A' }}>신청 내역</h3>
-              <button style={{ fontSize: '0.65rem', color: '#94A3B8', fontWeight: '700', background: 'none', border: 'none', cursor: 'pointer' }}>
+          <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm flex-1 min-h-[20rem]">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-[0.8rem] font-extrabold text-slate-900">신청 내역</h3>
+              <button className="text-[0.65rem] text-slate-400 font-bold hover:text-[#3530B8]">
                 {activeTab} 신청 내역 →
               </button>
             </div>
 
             {/* 탭 */}
-            <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.8rem' }}>
+            <div className="flex gap-1.5 mb-4 overflow-x-auto no-scrollbar">
               {tabs.map(tab => (
                 <button key={tab} onClick={() => setActiveTab(tab)}
-                  style={{
-                    padding: '0.3rem 0.75rem', borderRadius: '0.6rem', fontSize: '0.7rem', fontWeight: '700', cursor: 'pointer', border: 'none',
-                    background: activeTab === tab ? '#3530B8' : '#F1F5F9',
-                    color: activeTab === tab ? 'white' : '#64748B',
-                  }}>
+                  className={`px-4 py-1.5 rounded-xl text-[0.7rem] font-extrabold whitespace-nowrap transition-all
+                    ${activeTab === tab ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
                   {tab}
                 </button>
               ))}
             </div>
 
             {/* 목록 */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div className="flex flex-col gap-2">
               {(requestData[activeTab] || []).map((item, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0.9rem', background: '#F8FAFC', borderRadius: '0.75rem', border: '1px solid #F1F5F9' }}>
-                  <div>
-                    <p style={{ fontSize: '0.78rem', fontWeight: '700', color: '#1E293B', marginBottom: '0.15rem' }}>{item.title}</p>
-                    <p style={{ fontSize: '0.65rem', color: '#94A3B8' }}>{item.date}</p>
+                <div key={i} className="flex justify-between items-center p-3 px-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-slate-700 mb-0.5 truncate">{item.title}</p>
+                    <p className="text-[0.65rem] text-slate-400 font-semibold">{item.date}</p>
                   </div>
-                  <span style={{ fontSize: '0.65rem', fontWeight: '700', padding: '0.2rem 0.6rem', borderRadius: '0.45rem', ...statusStyle(item.status) }}>
+                  <span className="text-[0.65rem] font-extrabold px-2.5 py-1 rounded-lg shrink-0" style={statusStyle(item.status)}>
                     {item.status}
                   </span>
                 </div>
@@ -344,14 +338,14 @@ const weeklyAttendance = [
           </div>
 
           {/* 근태 현황 */}
-          <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '1.5rem', padding: '1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-            <h3 style={{ fontSize: '0.8rem', fontWeight: '800', color: '#0F172A', marginBottom: '0.25rem' }}>근태 현황</h3>
-            <p style={{ fontSize: '0.55rem', color: '#94A3B8', fontWeight: '600', marginBottom: '0.6rem' }}>이번 주 근태</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
-              {weeklyAttendance.map(({ label, value, color }) => (
-                <div key={label} style={{ background: '#F8FAFC', borderRadius: '0.75rem', padding: '0.5rem 0.35rem', textAlign: 'center', borderTop: `3px solid ${color}` }}>
-                  <p style={{ fontSize: '0.65rem', color: '#94A3B8', fontWeight: '600', marginBottom: '0.25rem' }}>{label}</p>
-                  <p style={{ fontSize: '0.9rem', fontWeight: '800', color: '#0F172A' }}>{value}</p>
+          <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm">
+            <h3 className="text-[0.8rem] font-extrabold text-slate-900 mb-1">근태 현황</h3>
+            <p className="text-[0.6rem] text-slate-400 font-bold mb-3">이번 주 근태</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              {weeklyAttendance.map(({ label, value, text, bg, border }) => (
+                <div key={label} className="rounded-2xl p-3 text-center transition-all hover:shadow-md border" style={{ background: bg, borderColor: border }}>
+                  <p className="text-[0.65rem] font-bold mb-1" style={{ color: text }}>{label}</p>
+                  <p className="text-base font-extrabold" style={{ color: text }}>{value}</p>
                 </div>
               ))}
             </div>

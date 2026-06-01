@@ -133,7 +133,35 @@ useEffect(() => {
   };
 
   return (
-    <div style={{ width: '100%', height: '100%', padding: '1.5rem 1.75rem', boxSizing: 'border-box', background: '#F8FAFC', overflowY: 'auto' }}>
+    <div style={{ width: '100%', height: '100%', padding: '1.5rem 1.75rem', boxSizing: 'border-box', background: 'white', overflowY: 'auto' }}>
+      <style>{`
+        .info-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0 3rem;
+        }
+        @media (max-width: 767px) {
+          .info-grid {
+            grid-template-columns: 1fr;
+            gap: 0;
+          }
+        }
+        @media (max-width: 480px) {
+          .info-row {
+            grid-template-columns: 1fr !important;
+            height: auto !important;
+            padding: 0.75rem 0 !important;
+          }
+          .info-label {
+            height: auto !important;
+            margin-bottom: 0.25rem;
+          }
+          .info-value {
+            height: auto !important;
+            padding: 0 !important;
+          }
+        }
+      `}</style>
       {/* 헤더 */}
       <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
@@ -149,13 +177,13 @@ useEffect(() => {
           <h3 style={{ fontSize: '1rem', fontWeight: '800', color: '#0F172A', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span style={{ color: '#3530B8' }}>●</span> 기본 인사 정보
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 3rem' }}>
-            <div style={infoRowStyle}><span style={labelStyle}>이름</span><span style={valueStyle}>{profileData?.name}</span></div>
-            <div style={infoRowStyle}><span style={labelStyle}>아이디</span><span style={valueStyle}>{profileData?.id}</span></div>
-            <div style={infoRowStyle}><span style={labelStyle}>사번</span><span style={valueStyle}>{profileData?.users_seq}</span></div>
-            <div style={infoRowStyle}><span style={labelStyle}>부서</span><span style={valueStyle}>{profileData?.dept_name}</span></div>
-            <div style={infoRowStyle}><span style={labelStyle}>직급</span><span style={valueStyle}>{profileData?.rank_name}</span></div>
-            <div style={infoRowStyle}><span style={labelStyle}>입사일</span><span style={valueStyle}>{profileData?.hire_date?.split(' ')[0]}</span></div>
+          <div className="info-grid">
+            <div style={infoRowStyle} className="info-row"><span style={labelStyle} className="info-label">이름</span><span style={valueStyle} className="info-value">{profileData?.name}</span></div>
+            <div style={infoRowStyle} className="info-row"><span style={labelStyle} className="info-label">아이디</span><span style={valueStyle} className="info-value">{profileData?.id}</span></div>
+            <div style={infoRowStyle} className="info-row"><span style={labelStyle} className="info-label">사번</span><span style={valueStyle} className="info-value">{profileData?.users_seq}</span></div>
+            <div style={infoRowStyle} className="info-row"><span style={labelStyle} className="info-label">부서</span><span style={valueStyle} className="info-value">{profileData?.dept_name}</span></div>
+            <div style={infoRowStyle} className="info-row"><span style={labelStyle} className="info-label">직급</span><span style={valueStyle} className="info-value">{profileData?.rank_name}</span></div>
+            <div style={infoRowStyle} className="info-row"><span style={labelStyle} className="info-label">입사일</span><span style={valueStyle} className="info-value">{profileData?.hire_date?.split(' ')[0]}</span></div>
           </div>
         </div>
 
@@ -168,53 +196,53 @@ useEffect(() => {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <div style={infoRowStyle}>
-              <label style={labelStyle}>이메일</label>
+            <div style={infoRowStyle} className="info-row">
+              <label style={labelStyle} className="info-label">이메일</label>
               {isEditing ? (
                 <input type="email" name="email" value={formData.email} onChange={handleChange} style={inputStyle} />
               ) : (
-                <span style={valueStyle}>{profileData?.email || '-'}</span>
+                <span style={valueStyle} className="info-value">{profileData?.email || '-'}</span>
               )}
             </div>
-            <div style={infoRowStyle}>
-              <label style={labelStyle}>휴대전화</label>
+            <div style={infoRowStyle} className="info-row">
+              <label style={labelStyle} className="info-label">휴대전화</label>
               {isEditing ? (
                 <input type="text" name="phone" value={formData.phone} onChange={handleChange} style={inputStyle} />
               ) : (
-                <span style={valueStyle}>{profileData?.phone || '-'}</span>
+                <span style={valueStyle} className="info-value">{profileData?.phone || '-'}</span>
               )}
             </div>
 
             {/* 우편번호 */}
-            <div style={infoRowStyle}>
-              <label style={labelStyle}>우편번호</label>
+            <div style={infoRowStyle} className="info-row">
+              <label style={labelStyle} className="info-label">우편번호</label>
               {isEditing ? (
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <input type="text" name="zonecode" value={formData.zonecode} readOnly style={{ ...inputStyle, width: '120px', background: '#F8FAFC', border: '1px solid #E2E8F0' }} />
                   <button type="button" onClick={handleSearch} style={{ padding: '0 1rem', background: '#3530B8', color: 'white', border: 'none', borderRadius: '0.5rem', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer' }}>검색</button>
                 </div>
               ) : (
-                <span style={valueStyle}>{profileData?.zonecode || '-'}</span>
+                <span style={valueStyle} className="info-value">{profileData?.zonecode || '-'}</span>
               )}
             </div>
 
             {/* 기본주소 */}
-            <div style={infoRowStyle}>
-              <label style={labelStyle}>기본주소</label>
+            <div style={infoRowStyle} className="info-row">
+              <label style={labelStyle} className="info-label">기본주소</label>
               {isEditing ? (
                 <input type="text" name="address1" value={formData.address1} readOnly style={{ ...inputStyle, background: '#F8FAFC', border: '1px solid #E2E8F0' }} />
               ) : (
-                <span style={valueStyle}>{profileData?.address1 || '-'}</span>
+                <span style={valueStyle} className="info-value">{profileData?.address1 || '-'}</span>
               )}
             </div>
 
             {/* 상세주소 */}
-            <div style={infoRowStyle}>
-              <label style={labelStyle}>상세주소</label>
+            <div style={infoRowStyle} className="info-row">
+              <label style={labelStyle} className="info-label">상세주소</label>
               {isEditing ? (
                 <input type="text" name="address2" value={formData.address2} onChange={handleChange} style={inputStyle} />
               ) : (
-                <span style={valueStyle}>{profileData?.address2 || '-'}</span>
+                <span style={valueStyle} className="info-value">{profileData?.address2 || '-'}</span>
               )}
             </div>
           </div>
