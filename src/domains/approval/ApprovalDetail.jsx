@@ -159,22 +159,27 @@ const ApprovalDetail = () => {
   };
 
   const [isSubmitClicked, setIsSubmitClicked] = useState(false);
+  const [isTempSaveClicked, setIsTempSaveClicked] = useState(false);
 
-  // [통합 전송 핸들러] 상신 vs 임시저장
+  // 상신 vs 임시저장
   const handleSave = async (actionType) => {
     const isTempSave = actionType === 'TEMP_SAVE';
     const isSubmit = actionType === 'SUBMIT';
     const isNew = !docSeq;
 
-    // 1. 유효성 검사 분기
-    setIsSubmitClicked(isSubmit);
+    // 유효성 검사 분기
+    if (isSubmit) setIsSubmitClicked(true);
+    if (isTempSave) setIsTempSaveClicked(true);
+    if (isSubmit) setIsTempSaveClicked(false);
+    if (isTempSave) setIsSubmitClicked(false);
 
-    if (isSubmit) {
+    if (!formData.title?.trim() || formData.title.length > 50) return false;
+
+    if(isSubmit){
       const isFormValid = () => {
         const today = new Date().toLocaleDateString('sv-SE');
-        if (!formData.title?.trim() || formData.title.length > 50) return false;
 
-        if (doc_type === 'VACATION') {
+        if (doc_type === 'VACATION') { 
           if (!formData.start_date || formData.start_date < today) return false;
           if (formData.vac_type === '연차') {
             if (!formData.end_date || formData.end_date < formData.start_date) return false;
@@ -218,18 +223,16 @@ const ApprovalDetail = () => {
             alert("구매 품목 내 비고 외 모든 정보는 필수 입력 사항입니다.");
             return false;
           }
-          return true;
         }
         return true;
       };
-
       if (!isFormValid()) return;
+      
       if (!approvers || approvers.length === 0) {
         alert('최소 한 명 이상의 결재자를 추가해야 합니다.');
         return;
       }
     }
-
     // 2. 데이터 가공 및 Payload 조립
     try {
       const { referrers, title, ...restOfData } = formData;
@@ -298,14 +301,18 @@ const ApprovalDetail = () => {
         navigate('/approval');
       }
     } catch (error) {
-      alert(error.response.data);
+      if(error.response && error.response.data){
+        alert(error.response.data);
+      }else{
+        alert("기안 문서 처리 중 오류가 발생했습니다.");
+      }
     }
   };
 
   // 버튼 액션
   const handleAction = async (actionType, payload) => {
     const isTempSave = actionType === 'TEMP_SAVE';
-
+    
     if (actionType === 'APPROVE') {
       if (!window.confirm('기안을 승인하시겠습니까?')) return;
       try {
@@ -330,7 +337,6 @@ const ApprovalDetail = () => {
         alert('반려가 완료되었습니다.');
         setRefresh(prev => prev + 1);
       } catch (error) {
-        console.log(error);
         alert('반려 처리 중 오류가 발생했습니다.');
       }
       return;
@@ -378,7 +384,8 @@ const ApprovalDetail = () => {
       onChange: setFormData,
       mode: mode,
       user: user,
-      isSubmitClicked: isSubmitClicked
+      isSubmitClicked: isSubmitClicked,
+      isTempSaveClicked: isTempSaveClicked
     };
 
     switch (doc_type) {

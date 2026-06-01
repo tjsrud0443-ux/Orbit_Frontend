@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Calendar from '../../../components/common/Calendar';
 import ReferrerSelector from '../components/ReferrerSelector';
 
-const VacationForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
+const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveClicked }) => {
   const isEditMode = mode === 'EDIT';
   const today = new Date().toLocaleDateString('sv-SE');
   
@@ -21,8 +21,18 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
       }
       newErrors.reason = validateField('reason', data.reason, data);
       setErrors(newErrors);
+    } else {
+      setErrors({});
     }
   }, [isSubmitClicked]);
+
+  useEffect(() => {
+    if (isTempSaveClicked){
+      const newErrors= {};
+      newErrors.title = validateField('title', data.title);
+      setErrors(newErrors);
+    }
+  }, [isTempSaveClicked]);
 
   const validateField = (field, value, currentData) => {
     let error = '';
