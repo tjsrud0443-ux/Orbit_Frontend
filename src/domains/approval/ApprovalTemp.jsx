@@ -45,7 +45,11 @@ const ApprovalTemp = () => {
   };
 
   const handleDelete = (doc) => {
+    if(!window.confirm("정말 삭제하시겠습니까? 삭제 후에는 복구가 불가합니다. ")) {
+      return;
+    }
     deleteTempDoc(doc.doc_seq, doc.doc_type).then(resp => {
+      alert("삭제가 완료되었습니다.");
       getTempDoc().then(resp => {
         setDocuments(resp.data);
         

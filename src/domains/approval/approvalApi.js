@@ -81,7 +81,7 @@ export const approveDraft = (docSeq, id) => maxios.put(`/approval/approve/${docS
 
 
 export const getAllCcDocuments = () => maxios.get("/approval/cc");
-export const getPageDocuments = (status, cpage) => maxios.get("/approval/cc/page", { params: { status, cpage } });
+export const getPageDocuments = (status, cpage, keyword, docType ) => maxios.get("/approval/cc/page", { params: { status, cpage, keyword, docType } });
 export const getTempDoc = () => maxios.get("/approval/temp");
 export const deleteTempDoc = (doc_seq, doc_type) => maxios.delete(`/approval/tempDelete/${doc_seq}`, { params: { doc_type: doc_type } });
 export const getMyDoc = () => maxios.get("/approval/myDoc");

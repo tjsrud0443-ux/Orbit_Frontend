@@ -168,7 +168,6 @@ const ApprovalInbox = () => {
 
   useEffect(() => {
     getMyDraftDoc().then(resp => {
-      console.log(resp.data)
       setDraftDocuments(resp.data);
     })
   }, []);
