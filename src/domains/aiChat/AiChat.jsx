@@ -1,22 +1,27 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faPaperPlane, 
-  faEllipsisV, 
-  faPlus, 
-  faFileAlt, 
+import {
+  faPaperPlane,
+  faEllipsisV,
+  faPlus,
+  faFileAlt,
   faTimes,
   faPaperclip,
   faTrashCan,
   faBars
 } from '@fortawesome/free-solid-svg-icons';
 import { IMAGES } from '../../images/images';
+import { inputMsg } from './aiChatApi';
 
 const AiChat = () => {
   // --- 1. States ---
-  const [userRole] = useState('사원'); 
-  const [messages, setMessages] = useState([{ id: 1, sender: 'AI', text: '안녕하세요! Orbit AI입니다. 궁금하신 내용을 질문해주세요.', isTyping: false }]);
-  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState([
+    { id: 1, sender: 'AI', text: '안녕하세요! Orbit 사내 업무지원 AI 비서입니다. 인사, 규정, 복리후생 등 궁금하신 내용을 질문해주세요.', isTyping: false }
+  ]);
+  
+  // 🔥 구조 변경: input 상태는 단순 문자열(String)로 관리하는 것이 정석입니다!
+  const [input, setInput] = useState("");
+  
   const [chatHistory, setChatHistory] = useState([
     { id: 1, title: '연차 신청 방법 문의' },
     { id: 2, title: '프로젝트 A 일정 관련' }
@@ -48,37 +53,81 @@ const AiChat = () => {
     }
   };
 
+  // 🔥 백엔드 릴레이션 매핑의 핵심 핸들러 리팩토링
   const handleSend = () => {
     if (!input.trim()) return;
-    const userMsg = { id: Date.now(), sender: 'USER', text: input };
-    setMessages(prev => [...prev, userMsg]);
-    setInput('');
-    setTimeout(() => {
-      let aiText = `질문하신 [${userMsg.text}]에 대한 답변입니다.\n1. 관련 문서 확인 결과 규정 12조에 해당합니다.`;
-      if (userMsg.text.includes('연봉') && userRole === '사원') {
-        aiText = "해당 정보는 [부서장] 이상 권한만 열람할 수 있습니다. 권한을 확인해 주세요.";
-      }
-      const aiMsg = { 
-        id: Date.now() + 1, sender: 'AI', text: '', fullText: aiText, isTyping: true,
-        showInquiry: aiText.includes('권한') || userMsg.text.includes('모르는 질문')
-      };
-      setMessages(prev => [...prev, aiMsg]);
-      typeEffect(aiMsg.id, aiText);
-    }, 1000);
+
+    // 1. 사용자가 입력한 내용을 화면 말풍선에 먼저 즉시 추가합니다.
+    const userMessageId = Date.now();
+    const newUserMessage = {
+      id: userMessageId,
+      sender: 'USER',
+      text: input.trim()
+    };
+    
+    // 2. AI가 답변을 생각하는 동안 보여줄 임시 '타이핑 중...' 말풍선 추가
+    const aiMessageId = userMessageId + 1;
+    setMessages(prev => [...prev, newUserMessage, { id: aiMessageId, sender: 'AI', text: '데이터를 분석하고 있습니다...', isTyping: true }]);
+    
+    // 3. 백엔드로 보낼 파라미터 구조 정의 (스프링 @RequestParam 스펙 매칭)
+    const chatData = {
+      role: 'USER',
+      content: input.trim()
+    };
+
+    const currentInput = input.trim();
+    setInput(""); // 전송 버튼을 누르는 즉시 입력창 비우기
+
+    // 4. Axios API 호출 실행
+    inputMsg(chatData)
+      .then(resp => {
+        // 백엔드에서 받아온 찐 제미나이 텍스트 답변 데이터 (resp.data)
+        const aiResponseText = resp.data; 
+        
+        // 특정 키워드나 조건(예: '죄송합니다' 등)이 답변에 포함되면 관리자 문의 버튼 띄우기 세팅
+        const needInquiryButton = aiResponseText.includes("찾지 못했습니다") || aiResponseText.includes("죄송합니다");
+
+        // 5. '타이핑 중...' 이었던 봇의 말풍선 내용을 찐 답변 내용으로 변경하고 타이핑 효과 가동
+        setMessages(prev => prev.map(msg => {
+          if (msg.id === aiMessageId) {
+            return { ...msg, text: "", isTyping: true, showInquiry: needInquiryButton };
+          }
+          return msg;
+        }));
+        
+        // 텍스트가 부드럽게 출력되는 타이핑 연출기 실행
+        typeEffect(aiMessageId, aiResponseText);
+      })
+      .catch(err => {
+        console.error("AI 통신 실패:", err);
+        setMessages(prev => prev.map(msg => {
+          if (msg.id === aiMessageId) {
+            return { ...msg, text: "서버와의 연결이 원활하지 않습니다. 잠시 후 다시 시도해주세요.", isTyping: false };
+          }
+          return msg;
+        }));
+      });
   };
 
   const typeEffect = (id, fullText) => {
     let i = 0;
     const interval = setInterval(() => {
       setMessages(prev => prev.map(msg => {
-        if (msg.id === id) return { ...msg, text: fullText.substring(0, i), isTyping: i < fullText.length };
+        if (msg.id === id) {
+          return { 
+            ...msg, 
+            text: fullText.substring(0, i), 
+            isTyping: i < fullText.length 
+          };
+        }
         return msg;
       }));
       i++;
       if (i > fullText.length) clearInterval(interval);
-    }, 30);
+    }, 15); // 출력 속도 최적화
   };
 
+  // --- Sidebar Component ---
   const SidebarContent = () => (
     <div className="flex flex-col h-full p-6 bg-[#f4f7fc]">
       <button className="w-full bg-[#3530B8] text-white rounded-xl py-3 font-bold text-sm mb-8 hover:bg-[#2a2594] transition-all">
@@ -89,16 +138,16 @@ const AiChat = () => {
         {chatHistory.map(chat => (
           <div key={chat.id} className="relative group flex items-center justify-between p-3 rounded-lg hover:bg-white transition-all cursor-pointer">
             <span className="text-sm font-medium text-[#1a1c3d] truncate">{chat.title}</span>
-            <button 
-                onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === chat.id ? null : chat.id); }} 
-                className="md:opacity-0 md:group-hover:opacity-100 text-[#8a92a6]"
-              >
-                <FontAwesomeIcon icon={faEllipsisV} />
-              </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === chat.id ? null : chat.id); }}
+              className="md:opacity-0 md:group-hover:opacity-100 text-[#8a92a6]"
+            >
+              <FontAwesomeIcon icon={faEllipsisV} />
+            </button>
             {activeMenuId === chat.id && (
               <div className="absolute right-0 top-10 w-32 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-20">
                 <button onClick={() => { setDeleteTarget(chat); setActiveMenuId(null); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                  <FontAwesomeIcon icon={faTrashCan }/> 삭제
+                  <FontAwesomeIcon icon={faTrashCan} /> 삭제
                 </button>
               </div>
             )}
@@ -107,7 +156,7 @@ const AiChat = () => {
       </div>
       <div className="mt-auto pt-6">
         <div className="bg-white p-4 rounded-xl shadow-sm border border-[#edf2f9]">
-            <img src={IMAGES.AI_CHAT} alt="AI 검색 안내" className="w-full h-auto" />
+          <img src={IMAGES.AI_CHAT} alt="AI 검색 안내" className="w-full h-auto" />
         </div>
       </div>
     </div>
@@ -120,7 +169,7 @@ const AiChat = () => {
         <SidebarContent />
       </div>
 
-      {/* 2. Mobile Sidebar Overlay (Restricted to parent container) */}
+      {/* 2. Mobile Sidebar Overlay */}
       <div className={`md:hidden absolute inset-0 z-50 transition-opacity duration-300 ${isMobileSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-black/40" onClick={() => setIsMobileSidebarOpen(false)} />
         <div className={`absolute left-0 top-0 w-3/4 h-full transform transition-transform duration-300 ease-in-out ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
@@ -134,23 +183,27 @@ const AiChat = () => {
           <button onClick={() => setIsMobileSidebarOpen(true)} className="md:hidden text-[#3530B8] text-xl mr-4">
             <FontAwesomeIcon icon={faBars} />
           </button>
-          <h2 className="text-2xl font-extrabold text-[#1a1c3d]">AI 챗봇</h2>
+          <h2 className="text-2xl font-extrabold text-[#1a1c3d]">Orbit AI 업무비서</h2>
         </div>
-        
+
         <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
           {messages.map(msg => (
             <div key={msg.id} className={`flex ${msg.sender === 'USER' ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[70%] p-4 rounded-2xl ${msg.sender === 'USER' ? 'bg-[#3530B8] text-white' : 'bg-[#f4f7fc] text-[#1a1c3d]'}`}>
                 <div className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</div>
+                
+                {/* 관리자 문의하기 컴포넌트 유동 제어 */}
                 {msg.showInquiry && (
-                  <button onClick={() => setIsModalOpen(true)} className="mt-3 text-xs bg-white text-[#3530B8] px-3 py-1.5 rounded-lg font-bold border border-[#3530B8]">
-                    관리자에게 문의하기
+                  <button onClick={() => setIsModalOpen(true)} className="mt-3 text-xs bg-white text-[#3530B8] px-3 py-1.5 rounded-lg font-bold border border-[#3530B8] hover:bg-slate-50">
+                    담당 부서에 문의하기
                   </button>
                 )}
-                {!msg.isTyping && msg.sender === 'AI' && (
-                  <div className="mt-4 pt-3 border-t border-[#edf2f9] flex items-center justify-between">
-                    <span className="text-xs font-medium text-[#8a92a6]"><FontAwesomeIcon icon={faFileAlt} className="mr-1.5"/> 사내규정_v2.pdf</span>
-                    <button className="text-[10px] bg-white border border-[#edf2f9] px-2 py-1 rounded hover:bg-slate-50 transition-colors">📄 다운로드</button>
+                
+                {/* 임베딩 출처 메타데이터 바인딩 연동 문서 구역 */}
+                {!msg.isTyping && msg.sender === 'AI' && !msg.showInquiry && (
+                  <div className="mt-4 pt-3 border-t border-[#edf2f9] flex items-center justify-between gap-4">
+                    <span className="text-xs font-medium text-[#8a92a6] truncate"><FontAwesomeIcon icon={faFileAlt} className="mr-1.5" /> 사내_업무_규정_통합본.pdf</span>
+                    <button className="text-[10px] bg-white border border-[#edf2f9] px-2 py-1 rounded hover:bg-slate-50 transition-colors flex-shrink-0">📄 다운로드</button>
                   </div>
                 )}
               </div>
@@ -159,27 +212,30 @@ const AiChat = () => {
           <div ref={scrollRef} />
         </div>
 
+        {/* 입출력 입력창 섹션 */}
         <div className="p-6 border-t border-[#edf2f9] flex-shrink-0">
           <div className="flex items-center gap-3 bg-[#f4f7fc] p-2 rounded-xl">
-            <button className="text-[#8a92a6] px-3"><FontAwesomeIcon icon={faPaperclip}/></button>
-            <input 
-              value={input} 
+            <button className="text-[#8a92a6] px-3"><FontAwesomeIcon icon={faPaperclip} /></button>
+            <input
+              value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
               className="flex-1 bg-transparent py-2 text-sm outline-none"
-              placeholder="질문을 입력하세요..."
+              placeholder="인사, 연차, 회사 복리후생에 대해 질문해보세요..."
             />
-            <button onClick={handleSend} className="bg-[#3530B8] text-white w-10 h-10 rounded-lg"><FontAwesomeIcon icon={faPaperPlane}/></button>
+            <button onClick={handleSend} className="bg-[#3530B8] text-white w-10 h-10 rounded-lg flex items-center justify-center hover:bg-[#2a2594] transition-all">
+              <FontAwesomeIcon icon={faPaperPlane} />
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Modals */}
+      {/* --- Modals (삭제 및 관리자 문의 팝업 마크업 유지) --- */}
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60]">
           <div className="bg-white p-8 rounded-2xl w-[350px] shadow-2xl">
             <h3 className="font-bold text-lg mb-4 text-center">정말 삭제하시겠습니까?</h3>
-            <p className="text-sm text-gray-500 mb-6 text-center">"{deleteTarget.title}" 대화가<br/>영구적으로 삭제됩니다.</p>
+            <p className="text-sm text-gray-500 mb-6 text-center">"{deleteTarget.title}" 대화가<br />영구적으로 삭제됩니다.</p>
             <div className="flex gap-2">
               <button onClick={() => setDeleteTarget(null)} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-slate-100 hover:bg-slate-200 transition-all">취소</button>
               <button onClick={handleDelete} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-red-600 hover:bg-red-700 text-white transition-all">삭제</button>
@@ -202,16 +258,21 @@ const AiChat = () => {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60]">
           <div className="bg-white p-8 rounded-2xl w-[400px] shadow-2xl">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-bold text-lg">관리자에게 문의</h3>
-              <button onClick={() => setIsModalOpen(false)}><FontAwesomeIcon icon={faTimes}/></button>
+              <h3 className="font-bold text-lg">담당 부서(관리자) 문의</h3>
+              <button onClick={() => setIsModalOpen(false)}><FontAwesomeIcon icon={faTimes} /></button>
             </div>
             <select className="w-full p-3 border border-[#edf2f9] rounded-lg mb-4 text-sm">
-              <option>인사</option><option>재무</option><option>기획</option><option>자산</option>
+              <option>개발팀</option>
+              <option>기획팀</option>
+              <option>디자인팀</option>
+              <option>인사팀</option>
+              <option>총무/재무팀</option>
+              <option>IT지원팀</option>
             </select>
-            <textarea className="w-full p-3 border border-[#edf2f9] rounded-lg mb-4 text-sm h-32" placeholder="질문 내용을 입력하세요."></textarea>
+            <textarea className="w-full p-3 border border-[#edf2f9] rounded-lg mb-4 text-sm h-32" placeholder="AI가 답변하지 못한 상세 문의 내용을 작성해주시면 담당자가 검토 후 그룹웨어로 답변을 드립니다."></textarea>
             <div className="flex gap-2">
               <button onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-slate-100">취소</button>
-              <button onClick={() => { alert('제출되었습니다.'); setIsModalOpen(false); }} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-[#3530B8] text-white">제출</button>
+              <button onClick={() => { alert('담당 부서로 문의가 안전하게 접수되었습니다.'); setIsModalOpen(false); }} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-[#3530B8] text-white">제출</button>
             </div>
           </div>
         </div>
