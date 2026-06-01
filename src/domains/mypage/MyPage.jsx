@@ -52,7 +52,6 @@ const MyPage = () => {
     { label: '정상', value: '4일', color: '#3530B8' },
     { label: '지각', value: '1회', color: '#F59E0B' },
     { label: '조퇴', value: '0회', color: '#10B981' },
-    { label: '외출', value: '0회', color: '#6366F1' },
     { label: '연장근무', value: '2시간', color: '#EC4899' },
   ];
 

@@ -237,7 +237,6 @@ const quickActions = [
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
               {/* 달력 */}
               <div className="flex flex-col h-full overflow-hidden">
-                {/* <h3 className="text-s font-extrabold text-indigo-950 mb-3 ml">달력</h3> */}
                  <style>{`
                     /* 테두리 및 전체 */
                     .main-calendar .fc-theme-standard td,
@@ -253,16 +252,15 @@ const quickActions = [
                       font-size: 0.65rem !important;
                       font-weight: 700 !important;
                       color: #94A3B8 !important;
-                      padding: 4px 0 !important;
+                      padding: 2px 0 !important;
                     }
 
                     /* 날짜 숫자 */
                     .main-calendar .fc-daygrid-day-number {
-                      font-size: 0.7rem !important;
+                      font-size: 0.6rem !important;
                       color: #475569 !important;
-                      padding: 2px 6px !important;
+                      padding: 2px 4px !important;
                     }
-
                     /* 오늘 날짜 배경 */
                     .main-calendar .fc-day-today {
                       background-color: #FFFBEB !important;
@@ -271,12 +269,12 @@ const quickActions = [
                       background-color:  transparent !important;
                       color: #475569 !important;
                       border-radius: 50% !important;
-                      width: 1.6rem !important;      /* ← 키움 */
-                      height: 1.6rem !important;     /* ← 키움 */
+                      width: 1.3rem !important;      
+                      height: 1.3rem !important;    
                       display: flex !important;
                       align-items: center !important;
                       justify-content: center !important;
-                      line-height: 1 !important;     /* ← 추가 */
+                      line-height: 1 !important;     
                       padding: 0 !important;         /* ← padding 제거 */
                     }
 
@@ -301,6 +299,16 @@ const quickActions = [
                     .main-calendar .fc-today-button {
                       display: none !important;
                     }
+                    .main-calendar .fc-scroller::-webkit-scrollbar {
+                      width: 3px;
+                    }
+                    .main-calendar .fc-scroller::-webkit-scrollbar-track {
+                      background: transparent;
+                    }
+                    .main-calendar .fc-scroller::-webkit-scrollbar-thumb {
+                      background-color: #E2E8F0;
+                      border-radius: 999px;
+                    }
                       /* 이벤트 텍스트 숨기고 점만 표시 */
                     .main-calendar .fc-daygrid-event .fc-event-title {
                       display: none !important;
@@ -309,10 +317,6 @@ const quickActions = [
                     .main-calendar .fc-daygrid-event {
                       pointer-events: none !important;
                       cursor: default !important;
-                    }
-                    /* 스크롤 제거 */
-                    .main-calendar .fc-scroller {
-                      overflow: hidden !important;
                     }
                       /* +N more 호버 효과 제거 */
                     .main-calendar .fc-daygrid-more-link {
@@ -326,14 +330,15 @@ const quickActions = [
                       initialView="dayGridMonth"
                       locale="ko"
                       headerToolbar={{
-                        left: '',
+                        left: '',   // ← 이전 달 버튼
                         center: 'title',
-                        right: ''
+                        right: ''   // ← 다음 달 버튼
                       }}
                       height="100%"
                       eventDisplay="list-item"   // ← 점으로 표시
                       dayMaxEvents={1}  // true시 셀 높이에 맞춰 자동으로 "+N개" 표시
                       moreLinkClick={() => 'none'} //클릭 막기
+                      fixedWeekCount={false}//당 월 만큼 줄 조절
                       events={calendarEvents}
                       //한 칸 클릭
                       dateClick={handleDateClick}
@@ -413,7 +418,7 @@ const quickActions = [
               </button>
               <img 
                 src={IMAGES.MAIN_AI1} 
-                className="absolute -bottom-4 lg:bottom-14 -right-2 w-28 h-28 lg:w-60 lg:h-60 object-contain opacity-80 lg:opacity-100" 
+                className="absolute -bottom-4 lg:bottom-14 -right-2 w-28 h-28 lg:w-55 lg:h-55 object-contain opacity-80 lg:opacity-100" 
                 alt="" 
               />
             </div>
