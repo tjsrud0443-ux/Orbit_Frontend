@@ -157,9 +157,9 @@ const ApprovalHome = () => {
             className="bg-white w-full max-w-2xl aspect-square md:aspect-auto rounded-[2rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col justify-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-6 md:p-10">
-              <div className="flex justify-between items-center mb-6 md:mb-8">
-                <h2 className="text-base md:text-2xl font-bold text-gray-900">어떤 양식으로 작성하시겠어요?</h2>
+            <div className="p-10 md:p-10 pt-14 pb-14 px-10">
+              <div className="flex justify-between items-center mb-5 md:mb-8">
+                <h2 className="text-lg md:text-2xl font-bold text-gray-900">어떤 양식으로 작성하시겠어요?</h2>
                 <button 
                   onClick={() => setIsDraftModalOpen(false)}
                   className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all"
@@ -170,7 +170,7 @@ const ApprovalHome = () => {
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 md:gap-6">
+              <div className="grid grid-cols-2 gap-5 md:gap-6 max-w-[280px] md:max-w-none mx-auto">
                 {draftForms.map((form, idx) => (
                   <div 
                     key={idx}
@@ -183,7 +183,7 @@ const ApprovalHome = () => {
                     <div className={`${form.iconBg} ${form.iconColor} w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-3xl flex items-center justify-center mb-2 md:mb-5 shadow-sm group-hover:scale-110 transition-transform`}>
                       <div className="scale-75 md:scale-100">{form.icon}</div>
                     </div>
-                    <h3 className="text-xs md:text-lg font-bold text-gray-800 mb-1 md:mb-2">{form.title}</h3>
+                    <h3 className="text-sm md:text-lg font-bold text-gray-800 mb-1 md:mb-2">{form.title}</h3>
                     <p className="hidden md:block text-xs font-bold text-gray-500 leading-relaxed whitespace-pre-line">
                       {form.desc}
                     </p>
