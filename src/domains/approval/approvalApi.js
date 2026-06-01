@@ -20,7 +20,7 @@ export const updateGeneral = (docSeq, payload) => maxios.put(`/approval/update/g
 export const updatePayment = (docSeq, payload) => maxios.put(`/approval/update/payment/${docSeq}`, payload);
 export const updatePurchase = (docSeq, payload) => maxios.put(`/approval/update/purchase/${docSeq}`, payload);
 
-
+export const getApprovalHomeData = () => maxios.get("/approval/home");
 
 
 
