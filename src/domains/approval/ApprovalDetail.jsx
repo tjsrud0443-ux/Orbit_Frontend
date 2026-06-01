@@ -272,18 +272,46 @@ const ApprovalDetail = () => {
         response = await (isNew ? submitGeneral(submitPayload) : updateGeneral(docSeq, submitPayload));
       } else if (doc_type === 'PAYMENT') {
         const formDataObj = new FormData();
-        submitPayload.total_amount = (formData.items || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-        formDataObj.append("dto", new Blob([JSON.stringify(submitPayload)], { type: "application/json" }));
-        const files = formData.items?.map(i => i.receipt);
-        files?.forEach(file => { if (file instanceof File) formDataObj.append("files", file); });
+        // const filesToUpload = [];
+        
+        // items를 순회하며 신규 파일(File 객체)만 추출
+        // const processedItems = (formData.items || []).map(item => {
+        //   if (item.receipt instanceof File) {
+        //     filesToUpload.push(item.receipt);
+        //     return { ...item, receipt: null };
+        //   }
+        //   return item;
+        // });
+        const processedItems = (formData.items || []).map(({receipt, ...rest}) => rest);
+
+        const total_amount = (formData.items || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+        const dto = { ...submitPayload, items: processedItems, total_amount };
+
+        formDataObj.append("dto", new Blob([JSON.stringify(dto)], { type: "application/json" }));
+        // filesToUpload.forEach(file => formDataObj.append("files", file));
+        // 1:1 인덱스, 새 파일 없는 item은 빈 Blob으로 채움
+        (formData.items || []).forEach(item => {
+          if (item.receipt instanceof File){
+            formDataObj.append("files", item.receipt, item.receipt.name);
+          } else {
+            formDataObj.append("files", new Blob([]), ""); // 기존 파일 유지
+          }
+        });
+        
         response = await (isNew ? submitPayment(formDataObj) : updatePayment(docSeq, formDataObj));
       } else if (doc_type === 'PURCHASE') {
         const formDataObj = new FormData();
-        const { attachments, ...payloadWithoutAttachments } = submitPayload;
-        formDataObj.append("dto", new Blob([JSON.stringify(payloadWithoutAttachments)], { type: "application/json" }));
-        formData.attachments?.forEach(file => {
-          if (file instanceof File) formDataObj.append("files", file);
-        });
+        const newFiles = (formData.attachments || []).filter(f => f instanceof File);
+        const keptAttachments = (formData.attachments || [])
+          .filter(f => !(f instanceof File))
+          .map(({oriname, sysname}) => ({oriname, sysname}));
+
+        // 백엔드가 기존 데이터를 DELETE 하므로, 유지할 기존 파일 정보를 DTO에 포함
+        const dto = { ...submitPayload, attachments: keptAttachments };
+
+        formDataObj.append("dto", new Blob([JSON.stringify(dto)], { type: "application/json" }));
+        newFiles.forEach(file => formDataObj.append("files", file, file.name));
+
         response = await (isNew ? submitPurchase(formDataObj) : updatePurchase(docSeq, formDataObj));
       }
 

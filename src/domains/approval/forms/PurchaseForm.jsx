@@ -78,18 +78,20 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
     if (!onChange) return;
     const error = validateField(field, value);
     setErrors(prev => ({ ...prev, [field]: error }));
-    onChange({ ...data, [field]: value });
+    onChange(prev => ({ ...prev, [field]: value }));
   };
 
   const handleItemChange = (index, field, value) => {
-    const newItems = [...(data.items || [])];
-    newItems[index] = { ...newItems[index], [field]: value };
-    
-    const ea = Number(newItems[index].ea) || 0;
-    const unit_price = Number(newItems[index].unit_price) || 0;
-    newItems[index].total_price = ea * unit_price;
+    onChange(prev => {
+      const newItems = [...(prev.items || [])];
+      newItems[index] = { ...newItems[index], [field]: value };
+      const ea = Number(newItems[index].ea) || 0;
+      const unit_price = Number(newItems[index].unit_price) || 0;
+      newItems[index].total_price = ea * unit_price;
+      const total_amount = newItems.reduce((sum, item) => sum + (item.total_price || 0), 0);
+      return { ...prev, items: newItems, total_amount };
+    });
 
-    // 개별 아이템 필드 검증
     const itemErrors = { ...(errors.items || {}) };
     if (!value && (field === 'item_name' || field === 'ea' || field === 'unit_price')) {
       if (field === 'item_name') itemErrors[`${index}-item_name`] = '품목명을 입력해주세요.';
@@ -102,65 +104,65 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
         delete itemErrors[`${index}-${field}`];
       }
     }
-    
     setErrors(prev => ({ ...prev, items: itemErrors }));
-    handleFieldChange('items', newItems);
-    const total_amount = newItems.reduce((sum, item) => sum + (item.total_price || 0), 0);
-    onChange({ 
-      ...data, 
-      items: newItems,
-      total_amount: total_amount
-    });
   };
 
-  const handleRemoveAttachment = (idx) => {
-    const targetFile = data.attachments[idx];
-    
-    if (targetFile.attachment_seq) {
-      const deletedSeqs = data.deletedAttachmentSeqs || [];
-      handleFieldChange('deletedAttachmentSeqs', [...deletedSeqs, targetFile.attachment_seq]);
-    }
+  const handleRemoveAttachment = (targetIdx) => {
+    onChange(prev => {
+      const currentAttachments = prev.attachments || [];
+      // const targetFile = currentAttachments[idx];
+      const filteredFiles = currentAttachments.filter((_, i) => i !== targetIdx);
+      
+      if (filteredFiles.length === 0) {
+        setErrors(err => ({ ...err, attachments: '파일을 첨부해주세요.' }));
+      }
 
-    const filteredFiles = data.attachments.filter((_, i) => i !== idx);
-    handleFieldChange('attachments', filteredFiles);
-    
-    if (filteredFiles.length === 0) {
-      setErrors(prev => ({ ...prev, attachments: '파일을 첨부해주세요.' }));
-    }
+      // if (targetFile && targetFile.attachment_seq) {
+      //   const deletedSeqs = prev.deletedAttachmentSeqs || [];
+      //   return {
+      //     ...prev,
+      //     attachments: filteredFiles,
+      //     deletedAttachmentSeqs: [...deletedSeqs, targetFile.attachment_seq]
+      //   };
+      // }
+      return { ...prev, attachments: filteredFiles };
+    });
   };
 
   const handleAddRow = () => {
-    const currentItems = data.items || [];
-    const nextOrder = currentItems.length > 0 ? Math.max(...currentItems.map(i => i.id)) + 1 : 1;
-    const newItems = [
-      ...currentItems,
-      { item_order: nextOrder, item_name: '', ea: 1, unit_price: 0, note: '' }
-    ];
-    handleFieldChange('items', newItems);
+    onChange(prev => {
+      const currentItems = prev.items || [];
+      const nextOrder = currentItems.length > 0 ? Math.max(...currentItems.map(i => i.item_order || 0)) + 1 : 1;
+      return {
+        ...prev,
+        items: [...currentItems, { item_order: nextOrder, item_name: '', ea: 1, unit_price: 0, note: '' }]
+      };
+    });
   };
 
   const handleRemoveRow = (index) => {
-    const currentItems = [...(data.items || [])];
-    if (currentItems.length <= 1) {
-      setErrors(prev => ({ ...prev, itemMin: '최소 한 개의 품목은 있어야 합니다.' }));
-      setTimeout(() => setErrors(prev => ({ ...prev, itemMin: '' })), 3000);
-      return;
-    }
-    currentItems.splice(index, 1);
-    const reorderedItems = currentItems.map((item, idx) => ({ ...item, item_order: idx + 1 }));
-    
-    // 에러 상태 업데이트
-    const itemErrors = { ...(errors.items || {}) };
-    const newItemErrors = {};
-    Object.keys(itemErrors).forEach(key => {
-      const [idx, field] = key.split('-');
-      const numericIdx = parseInt(idx);
-      if (numericIdx < index) newItemErrors[key] = itemErrors[key];
-      else if (numericIdx > index) newItemErrors[`${numericIdx - 1}-${field}`] = itemErrors[key];
+    onChange(prev => {
+      const currentItems = prev.items || [];
+      if (currentItems.length <= 1) {
+        setErrors(err => ({ ...err, itemMin: '최소 한 개의 품목은 있어야 합니다.' }));
+        setTimeout(() => setErrors(err => ({ ...err, itemMin: '' })), 3000);
+        return prev;
+      }
+      const filteredItems = currentItems.filter((_, i) => i !== index);
+      const reorderedItems = filteredItems.map((item, idx) => ({ ...item, item_order: idx + 1 }));
+      setErrors(err => {
+        const itemErrors = { ...(err.items || {}) };
+        const newItemErrors = {};
+        Object.keys(itemErrors).forEach(key => {
+          const [idxStr, f] = key.split('-');
+          const numericIdx = parseInt(idxStr);
+          if (numericIdx < index) newItemErrors[key] = itemErrors[key];
+          else if (numericIdx > index) newItemErrors[`${numericIdx - 1}-${f}`] = itemErrors[key];
+        });
+        return { ...err, items: newItemErrors };
+      });
+      return { ...prev, items: reorderedItems };
     });
-    
-    setErrors(prev => ({ ...prev, items: newItemErrors }));
-    handleFieldChange('items', reorderedItems);
   };
 
   const calculateTotal = () => {
@@ -170,6 +172,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
 
   const applicant = isEditMode ? user : data;
   const displayDate = isEditMode ? today : (data?.created_at?.substring(0, 10) || '-');
+  const token = sessionStorage.getItem("token");
 
   return (
     <div className="space-y-6">
@@ -459,63 +462,56 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                 multiple
                 className="hidden" 
                 onChange={(e) => {
-                  const newFiles = [...(data.attachments || []), ...Array.from(e.target.files)];
-                  handleFieldChange('attachments', newFiles);
+                  const newFiles = Array.from(e.target.files);
+                  onChange(prev => ({
+                    ...prev,
+                    attachments: [...(prev.attachments || []), ...newFiles]
+                  }));
                   if (newFiles.length > 0) setErrors(prev => ({ ...prev, attachments: '' }));
+                  e.target.value = '';
                 }}
               />
             </label>
           )}
         </div>
         <div className="p-4 border border-dashed border-gray-300 rounded-xl bg-gray-50/50 min-h-[60px] flex items-center">
-          {isEditMode ? (
-            <div className="flex flex-wrap gap-2 w-full">
-              {data.attachments && data.attachments.length > 0 ? (
-                data.attachments.map((file, idx) => (
-                  <div key={idx} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-100 text-[10px] text-gray-600 shadow-sm">
-                    <span className="truncate max-w-[150px]">{file.oriname || file.name}</span>
-                    <button 
-                      onClick={() => handleRemoveAttachment(idx)}
-                      className="text-gray-400 hover:text-red-500 transition-colors"
-                    >✕</button>
-                  </div>
-                ))
-              ) : (
-                <p className="text-xs text-gray-400">선택된 파일이 없습니다.</p>
-              )}
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-4 w-full">
-              {data.attachments && data.attachments.length > 0 ? (
-                data.attachments.map((file, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-xs text-[#3530B8] cursor-pointer hover:underline">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                    </svg>
-                    {/* <span>{typeof file === 'string' ? file : file.oriname}</span> */}
-                    {/* 💡 변경: 상세조회(isEditMode가 아닐 때) 시 다운로드 링크 연동 및 파일명 출력 */}
+          <div className="flex flex-wrap gap-4 w-full">
+            {data.attachments && data.attachments.length > 0 ? (
+              data.attachments.map((file, idx) => (
+                <div key={file.sysname || file.name || idx} className="flex items-center gap-2 text-xs text-[#3530B8] group">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                  </svg>
+                  {file.sysname ? (
                     <a 
-                      href={file.fileUrl || `/api/download/${file.sysname}`} // 실제 파일 다운로드나 GCS URL이 있다면 매핑
-                      target="_blank" 
-                      rel="noreferrer"
+                      href={`http://localhost/file/download/${file.sysname}?token=${token}`} 
+                      download 
                       className="hover:underline"
                     >
-                      {file.oriname || file.name || (typeof file === 'string' ? file : '')}
+                      {file.oriname}
                     </a>
-                  </div>
-                ))
-              ) : (
-                <p className="text-xs text-gray-400">첨부된 파일이 없습니다.</p>
-              )}
-            </div>
-          )}
+                  ) : (
+                    <span className="text-gray-500">{file.name}</span>
+                  )}
+                  {isEditMode && (
+                    <button 
+                      onClick={() => handleRemoveAttachment(idx)}
+                      className="text-gray-400 hover:text-red-500 ml-1 font-bold"
+                    >✕</button>
+                  )}
+                </div>
+              ))
+            ) : (
+              <p className="text-xs text-gray-400">첨부된 파일이 없습니다.</p>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Referrer Selection Section */}
       <ReferrerSelector 
         value={data.referrers} 
-        onChange={(val) => onChange({ ...data, referrers: val })} 
+        onChange={(val) => onChange(prev => ({ ...prev, referrers: val }))} 
         isEditMode={isEditMode} 
       />
     </div>

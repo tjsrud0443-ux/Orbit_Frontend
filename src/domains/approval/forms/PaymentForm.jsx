@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Calendar from '../../../components/common/Calendar';
 import ReferrerSelector from '../components/ReferrerSelector';
+import useAuthStore from '../../../store/authStore';
 
 const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveClicked }) => {
   const isEditMode = mode === 'EDIT';
@@ -8,6 +9,8 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
 
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [errors, setErrors] = useState({});
+
+  const token = useAuthStore(state => state.token);
 
   // 초기 데이터 설정 (items가 없을 경우 기본 1행 추가)
   useEffect(() => {
@@ -77,72 +80,81 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
       const error = validateField(field, value);
       setErrors(prev => ({ ...prev, [field]: error }));
     }
-    onChange({ ...data, [field]: value });
+    onChange(prev => ({ ...prev, [field]: value }));
   };
 
   const handleItemChange = (index, field, value) => {
-    const newItems = [...(data.items || [])];
-    newItems[index] = { ...newItems[index], [field]: value };
-    
-    // 개별 아이템 필드 검증
-    const itemErrors = { ...(errors.items || {}) };
-    
-    if (field === 'receipt') {
-      if (!value) {
-        itemErrors[`${index}-receipt`] = '영수증을 첨부해주세요.';
-      } else {
-        delete itemErrors[`${index}-receipt`];
+    onChange(prev => {
+      const newItems = [...(prev.items || [])];
+      const updatedItem = { ...newItems[index], [field]: value };
+      if (field === 'receipt' && value instanceof File) {
+        updatedItem.sysname = null;
+        updatedItem.oriname = null;
       }
+      newItems[index] = updatedItem;
+      return { ...prev, items: newItems };
+    });
+
+    const itemErrors = { ...(errors.items || {}) };
+    if (field === 'receipt') {
+      if (!value) itemErrors[`${index}-receipt`] = '영수증을 첨부해주세요.';
+      else delete itemErrors[`${index}-receipt`];
     } else if (!value && (field === 'item_name' || field === 'amount')) {
       itemErrors[`${index}-${field}`] = field === 'item_name' ? '품목명을 입력해주세요.' : '금액을 입력해주세요.';
     } else {
-      if (field === 'item_name' && value.length > 30) {
-        itemErrors[`${index}-item_name`] = '글자 수 초과 (30자 이하)';
-      } else if (field === 'note' && value.length > 100) {
-        itemErrors[`${index}-note`] = '글자 수 초과 (100자 이하)';
-      } else {
+      if (field === 'item_name' && value.length > 30) itemErrors[`${index}-item_name`] = '글자 수 초과 (30자 이하)';
+      else if (field === 'note' && value.length > 100) itemErrors[`${index}-note`] = '글자 수 초과 (100자 이하)';
+      else {
         delete itemErrors[`${index}-${field}`];
-        if (field === 'note') delete itemErrors[`${index}-note`]; // 명시적으로 note 에러 삭제
+        if (field === 'note') delete itemErrors[`${index}-note`];
       }
     }
-    
     setErrors(prev => ({ ...prev, items: itemErrors }));
-    handleFieldChange('items', newItems);
   };
 
   const handleAddRow = () => {
-    const currentItems = data.items || [];
-    const nextId = currentItems.length > 0 ? Math.max(...currentItems.map(i => i.id)) + 1 : 1;
-    const newItems = [
-      ...currentItems,
-      { id: nextId, item_name: '', amount: 0, receipt: null, note: '' }
-    ];
-    handleFieldChange('items', newItems);
+    onChange(prev => {
+      const currentItems = prev.items || [];
+      const nextId = currentItems.length > 0 ? Math.max(...currentItems.map(i => i.id)) + 1 : 1;
+      return {
+        ...prev,
+        items: [...currentItems, { id: nextId, item_name: '', amount: 0, receipt: null, note: '' }]
+      };
+    });
   };
 
   const handleRemoveRow = (index) => {
-    const currentItems = [...(data.items || [])];
-    if (currentItems.length <= 1) {
-      setErrors(prev => ({ ...prev, itemMin: '최소 한 개의 항목은 있어야 합니다.' }));
-      setTimeout(() => setErrors(prev => ({ ...prev, itemMin: '' })), 3000);
-      return;
-    }
-    currentItems.splice(index, 1);
-    // No. 재정렬
-    const reorderedItems = currentItems.map((item, idx) => ({ ...item, id: idx + 1 }));
-    
-    // 에러 상태도 같이 업데이트
-    const itemErrors = { ...(errors.items || {}) };
-    const newItemErrors = {};
-    Object.keys(itemErrors).forEach(key => {
-      const [idx, field] = key.split('-');
-      const numericIdx = parseInt(idx);
-      if (numericIdx < index) newItemErrors[key] = itemErrors[key];
-      else if (numericIdx > index) newItemErrors[`${numericIdx - 1}-${field}`] = itemErrors[key];
+    onChange(prev => {
+      const currentItems = prev.items || [];
+      if (currentItems.length <= 1) {
+        setErrors(err => ({ ...err, itemMin: '최소 한 개의 항목은 있어야 합니다.' }));
+        setTimeout(() => setErrors(err => ({ ...err, itemMin: '' })), 3000);
+        return prev;
+      }
+      const filteredItems = currentItems.filter((_, i) => i !== index);
+      const reorderedItems = filteredItems.map((item, idx) => ({ ...item, id: idx + 1 }));
+      setErrors(err => {
+        const itemErrors = { ...(err.items || {}) };
+        const newItemErrors = {};
+        Object.keys(itemErrors).forEach(key => {
+          const [idxStr, f] = key.split('-');
+          const numericIdx = parseInt(idxStr);
+          if (numericIdx < index) newItemErrors[key] = itemErrors[key];
+          else if (numericIdx > index) newItemErrors[`${numericIdx - 1}-${f}`] = itemErrors[key];
+        });
+        return { ...err, items: newItemErrors };
+      });
+      return { ...prev, items: reorderedItems };
     });
-    
-    setErrors(prev => ({ ...prev, items: newItemErrors }));
-    handleFieldChange('items', reorderedItems);
+  };
+
+  const handleRemoveFile = (itemIndex) => {
+    onChange(prev => ({
+      ...prev,
+      items: (prev.items || []).map((it, i) => 
+        i === itemIndex ? { ...it, sysname: null, oriname: null, receipt: null } : it
+      )
+    }));
   };
 
   const calculateTotal = () => {
@@ -372,17 +384,22 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                             className="hidden" 
                             onChange={(e) => {
                               handleItemChange(index, 'receipt', e.target.files[0]);
+                              e.target.value = '';
                             }}
                           />
                         </label>
-                        {item.receipt && <span className="text-[9px] text-gray-500 truncate max-w-[80px]">{item.receipt.name}</span>}
-                        {errors.items?.[`${index}-receipt`] && !item.receipt && (
+                        {(item.receipt?.name || item.oriname) && (
+                          <span className="text-[9px] text-gray-500 truncate max-w-[80px]">
+                            {item.receipt?.name || item.oriname}
+                          </span>
+                        )}
+                        {errors.items?.[`${index}-receipt`] && !item.receipt && !item.oriname && (
                           <p className="text-[9px] text-red-500 mt-0.5 whitespace-nowrap">{errors.items[`${index}-receipt`]}</p>
                         )}
                       </div>
                     ) : (
-                      <span className="text-[10px] text-[#3530B8] cursor-pointer hover:underline">
-                        {item.receipt ? (typeof item.receipt === 'string' ? '영수증 보기' : item.receipt.name) : '-'}
+                      <span className="text-[10px] text-[#3530B8]">
+                        {item.oriname || (item.receipt instanceof File ? item.receipt.name : '-')}
                       </span>
                     )}
                   </td>
@@ -428,10 +445,54 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
         </div>
       </div>
 
+      {/* 첨부파일 Section */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="w-1 h-3.5 bg-[#3530B8] rounded-full"></div>
+          <h2 className="text-xs font-bold text-gray-800">첨부파일</h2>
+        </div>
+        <div className="p-4 border border-dashed border-gray-300 rounded-xl bg-gray-50/50 min-h-[60px] flex items-center">
+          <div className="flex flex-wrap gap-4 w-full">
+            {/* {data.items?.some(it => it.oriname || it.receipt instanceof File) ? ( */}
+            {data.items?.map((item, originalIdx) => {
+              if(!(item.oriname || item.receipt instanceof File)) return null;
+              return (
+              // data.items.filter(it => it.oriname || it.receipt instanceof File).map((item, idx) => (
+                <div key={item.sysname || item.receipt?.name || originalIdx} className="flex items-center gap-2 text-xs text-[#3530B8] group">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                  </svg>
+                  {item.sysname ? (
+                    <a 
+                      href={`http://localhost/file/download/${item.sysname}?token=${token}`} 
+                      download 
+                      className="hover:underline"
+                    >
+                      {item.oriname}
+                    </a>
+                  ) : (
+                    <span className="text-gray-500">{item.receipt?.name}</span>
+                  )}
+                  {isEditMode && (
+                    <button 
+                      onClick={() => handleRemoveFile(originalIdx)}
+                      className="text-gray-400 hover:text-red-500 ml-1 font-bold"
+                    >✕</button>
+                  )}
+                </div>
+              );
+            })}
+            {!data.items?.some(it => it.oriname || it.receipt instanceof File) && (
+              <p className="text-xs text-gray-400">첨부된 파일이 없습니다.</p>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Referrer Selection Section */}
       <ReferrerSelector 
         value={data.referrers} 
-        onChange={(val) => onChange({ ...data, referrers: val })} 
+        onChange={(val) => onChange(prev => ({ ...prev, referrers: val }))} 
         isEditMode={isEditMode} 
       />
     </div>
