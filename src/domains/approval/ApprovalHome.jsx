@@ -154,23 +154,23 @@ const ApprovalHome = () => {
       {isDraftModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
           <div 
-            className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300"
+            className="bg-white w-full max-w-2xl aspect-square md:aspect-auto rounded-[2rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col justify-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-10">
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-bold text-gray-900">어떤 양식으로 작성하시겠어요?</h2>
+            <div className="p-6 md:p-10">
+              <div className="flex justify-between items-center mb-6 md:mb-8">
+                <h2 className="text-base md:text-2xl font-bold text-gray-900">어떤 양식으로 작성하시겠어요?</h2>
                 <button 
                   onClick={() => setIsDraftModalOpen(false)}
-                  className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all"
+                  className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-4 md:gap-6">
                 {draftForms.map((form, idx) => (
                   <div 
                     key={idx}
@@ -178,13 +178,13 @@ const ApprovalHome = () => {
                       setIsDraftModalOpen(false);
                       navi(form.path);
                     }}
-                    className={`${form.color} p-8 rounded-[2rem] cursor-pointer hover:scale-[1.03] hover:shadow-xl transition-all border border-black/5 flex flex-col items-center text-center aspect-square justify-center group`}
+                    className={`${form.color} p-4 md:p-8 rounded-2xl md:rounded-[2rem] cursor-pointer hover:scale-[1.03] hover:shadow-xl transition-all border border-black/5 flex flex-col items-center text-center aspect-square justify-center group`}
                   >
-                    <div className={`${form.iconBg} ${form.iconColor} w-16 h-16 rounded-3xl flex items-center justify-center mb-5 shadow-sm group-hover:scale-110 transition-transform`}>
-                      {form.icon}
+                    <div className={`${form.iconBg} ${form.iconColor} w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-3xl flex items-center justify-center mb-2 md:mb-5 shadow-sm group-hover:scale-110 transition-transform`}>
+                      <div className="scale-75 md:scale-100">{form.icon}</div>
                     </div>
-                    <h3 className="text-lg font-bold text-gray-800 mb-2">{form.title}</h3>
-                    <p className="text-xs font-bold text-gray-500 leading-relaxed whitespace-pre-line">
+                    <h3 className="text-xs md:text-lg font-bold text-gray-800 mb-1 md:mb-2">{form.title}</h3>
+                    <p className="hidden md:block text-xs font-bold text-gray-500 leading-relaxed whitespace-pre-line">
                       {form.desc}
                     </p>
                   </div>
@@ -262,7 +262,7 @@ const ApprovalHome = () => {
         </div>
 
         {/* Recent Documents Area */}
-        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex-1 h-[28.5rem] flex flex-col">
+        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex-1 flex flex-col">
           <div className="p-6 px-10 border-b border-gray-50 flex items-center justify-between bg-gray-50/30 flex-shrink-0">
             <h2 className="text-lg font-bold text-gray-900">최근 문서 목록</h2>
             <button 
@@ -286,7 +286,7 @@ const ApprovalHome = () => {
                 </div>
 
                 {/* List Content */}
-                <div className="flex-1 overflow-y-auto custom-scrollbar max-h-[20rem]">
+                <div className="flex-1 custom-scrollbar">
                   {
                     homeData.recentDocs.map((doc, idx) => (
                       <div key={doc.doc_seq || idx} className="grid grid-cols-12 px-10 py-5 border-b border-gray-50 items-center hover:bg-gray-50/50 transition-colors cursor-pointer group whitespace-nowrap">
