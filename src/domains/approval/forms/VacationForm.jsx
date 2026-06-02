@@ -151,7 +151,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
             <tbody>
               <tr className="border-b border-gray-200">
                 <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">성명</th>
-                <td className="p-2 border-r border-gray-200">{applicant?.name || '-'}</td>
+                <td className="p-2 border-r border-gray-200 w-120">{applicant?.name || '-'}</td>
                 <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">사번</th>
                 <td className="p-2">{applicant?.users_seq || '-'}</td>
               </tr>
@@ -406,10 +406,10 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                       type="text" readOnly value={data.start_date || ''} 
                       onClick={() => setIsStartCalendarOpen(!isStartCalendarOpen)} 
                       placeholder="시작일"
-                      className="w-full p-2 text-xs border border-gray-200 rounded bg-gray-50"
+                      className="w-full p-2 text-xs border border-gray-200 rounded bg-gray-50 outline-none"
                     />
                     {isStartCalendarOpen && (
-                      <div className="absolute z-50 left-0 scale-90 origin-top-left">
+                      <div className="absolute z-50 left-0 w-full">
                         <Calendar value={data.start_date} onChange={(d) => { handleFieldChange('start_date', d); setIsStartCalendarOpen(false); }} onClose={() => setIsStartCalendarOpen(false)} />
                       </div>
                     )}
@@ -420,10 +420,10 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                         type="text" readOnly value={data.end_date || ''} 
                         onClick={() => setIsEndCalendarOpen(!isEndCalendarOpen)} 
                         placeholder="종료일"
-                        className="w-full p-2 text-xs border border-gray-200 rounded bg-gray-50"
+                        className="w-full p-2 text-xs border border-gray-200 rounded bg-gray-50 outline-none"
                       />
                       {isEndCalendarOpen && (
-                        <div className="absolute z-50 left-0 scale-90 origin-top-left">
+                        <div className="absolute z-50 left-0 w-full">
                           <Calendar value={data.end_date} onChange={(d) => { handleFieldChange('end_date', d); setIsEndCalendarOpen(false); }} onClose={() => setIsEndCalendarOpen(false)} />
                         </div>
                       )}

@@ -529,7 +529,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
             <div className="w-1 h-3.5 bg-[#3530B8] rounded-full"></div>
             <h2 className="text-xs font-bold text-gray-800">신청 정보</h2>
           </div>
-          <div className="border border-gray-200 rounded-lg overflow-hidden text-xs">
+          <div className="border border-gray-200 rounded-lg text-xs">
             <div className="flex border-b border-gray-100">
               <div className="w-20 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100">성명</div>
               <div className="flex-grow p-2">{applicant?.name || '-'}</div>
@@ -546,9 +546,9 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
               <div className="w-20 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100">직급</div>
               <div className="flex-grow p-2">{applicant?.rank_name || '-'}</div>
             </div>
-            <div className="flex border-b border-gray-100">
+            <div className="flex border-b border-gray-100 relative overflow-visible">
               <div className="w-20 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100">지출일</div>
-              <div className="flex-grow p-2">
+              <div className="flex-grow p-2 overflow-visible">
                 {isEditMode ? (
                   <div className="relative">
                     <input 
@@ -557,10 +557,10 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                       value={data.pay_date || ''} 
                       onClick={() => setIsCalendarOpen(!isCalendarOpen)} 
                       placeholder="날짜 선택" 
-                      className="w-full p-1 border border-gray-200 rounded outline-none"
+                      className="w-full p-1 border border-gray-200 rounded outline-none text-xs"
                     />
                     {isCalendarOpen && (
-                      <div className="absolute z-50 left-0 mt-1 scale-90 origin-top-left">
+                      <div className="absolute z-50 left-0 w-full">
                         <Calendar 
                           value={data.pay_date} 
                           onChange={(d) => { handleFieldChange('pay_date', d); setIsCalendarOpen(false); }} 
@@ -647,7 +647,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                         type="text"
                         value={item.item_name || ''}
                         onChange={(e) => handleItemChange(index, 'item_name', e.target.value)}
-                        className="w-full p-1.5 text-xs border border-gray-200 rounded"
+                        className="w-full p-1.5 text-xs border border-gray-200 rounded outline-none"
                       />
                     ) : (
                       <div className="text-xs font-bold">{item.item_name || '-'}</div>
@@ -661,7 +661,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                           type="number"
                           value={item.amount || ''}
                           onChange={(e) => handleItemChange(index, 'amount', Number(e.target.value))}
-                          className="w-full p-1.5 text-xs border border-gray-200 rounded text-right"
+                          className="w-full p-1.5 text-xs border border-gray-200 rounded text-right outline-none"
                         />
                       ) : (
                         <div className="text-xs font-bold text-[#3530B8]">{(Number(item.amount) || 0).toLocaleString()}원</div>
@@ -692,7 +692,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                         type="text"
                         value={item.note || ''}
                         onChange={(e) => handleItemChange(index, 'note', e.target.value)}
-                        className="w-full p-1.5 text-xs border border-gray-200 rounded"
+                        className="w-full p-1.5 text-xs border border-gray-200 rounded outline-none"
                       />
                     ) : (
                       <div className="text-xs text-gray-600">{item.note || '-'}</div>

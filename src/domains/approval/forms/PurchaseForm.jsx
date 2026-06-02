@@ -539,7 +539,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
             <div className="w-1 h-3.5 bg-[#3530B8] rounded-full"></div>
             <h2 className="text-xs font-bold text-gray-800">신청 정보</h2>
           </div>
-          <div className="border border-gray-200 rounded-lg overflow-hidden text-xs">
+          <div className="border border-gray-200 rounded-lg text-xs">
             <div className="flex border-b border-gray-100">
               <div className="w-24 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100">성명</div>
               <div className="flex-grow p-2">{applicant?.name || '-'}</div>
@@ -567,10 +567,10 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                       value={data.purchase_date || ''} 
                       onClick={() => setIsCalendarOpen(!isCalendarOpen)} 
                       placeholder="날짜 선택" 
-                      className="w-full p-1 border border-gray-200 rounded outline-none"
+                      className="w-full p-1 border border-gray-200 rounded outline-none text-xs"
                     />
                     {isCalendarOpen && (
-                      <div className="absolute z-50 left-0 mt-1 scale-90 origin-top-left">
+                      <div className="absolute z-50 left-0 w-full">
                         <Calendar 
                           value={data.purchase_date} 
                           onChange={(d) => { handleFieldChange('purchase_date', d); setIsCalendarOpen(false); }} 
@@ -659,7 +659,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                           type="text"
                           value={item.item_name || ''}
                           onChange={(e) => handleItemChange(index, 'item_name', e.target.value)}
-                          className="w-full p-1.5 text-xs border border-gray-200 rounded"
+                          className="w-full p-1.5 text-xs border border-gray-200 rounded outline-none"
                         />
                       ) : (
                         <div className="text-xs font-bold">{item.item_name || '-'}</div>
@@ -673,20 +673,20 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                             type="number"
                             value={item.ea || ''}
                             onChange={(e) => handleItemChange(index, 'ea', Number(e.target.value))}
-                            className="w-full p-1.5 text-xs border border-gray-200 rounded text-center"
+                            className="w-full p-1.5 text-xs border border-gray-200 rounded text-center outline-none"
                           />
                         ) : (
                           <div className="text-xs font-bold">{item.ea}개</div>
                         )}
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-1 mt-1">
                         <label className="text-[10px] font-bold text-gray-400 uppercase text-right block">단가(원)</label>
                         {isEditMode ? (
                           <input 
                             type="number"
                             value={item.unit_price || ''}
                             onChange={(e) => handleItemChange(index, 'unit_price', Number(e.target.value))}
-                            className="w-full p-1.5 text-xs border border-gray-200 rounded text-right"
+                            className="w-full p-1.5 text-xs border border-gray-200 rounded text-right outline-none"
                           />
                         ) : (
                           <div className="text-xs font-bold text-right">{(Number(item.unit_price) || 0).toLocaleString()}</div>
@@ -704,7 +704,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                           type="text"
                           value={item.note || ''}
                           onChange={(e) => handleItemChange(index, 'note', e.target.value)}
-                          className="w-full p-1.5 text-xs border border-gray-200 rounded"
+                          className="w-full p-1.5 text-xs border border-gray-200 rounded outline-none"
                         />
                       ) : (
                         <div className="text-xs text-gray-600">{item.note || '-'}</div>

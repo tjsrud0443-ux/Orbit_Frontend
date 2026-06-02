@@ -30,8 +30,8 @@ const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
     : baseFiltered;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl w-[400px] shadow-2xl overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] animate-in fade-in duration-200 p-6">
+      <div className="bg-white rounded-2xl w-full max-w-[400px] shadow-2xl overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-200">
         <div className="bg-[#3530B8] px-6 py-4 flex justify-between items-center">
           <h2 className="text-sm font-bold text-white">결재자 추가</h2>
           <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">✕</button>
