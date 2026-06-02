@@ -7,7 +7,7 @@ import VacationForm from './forms/VacationForm';
 import PaymentForm from './forms/PaymentForm';
 import GeneralForm from './forms/GeneralForm';
 import PurchaseForm from './forms/PurchaseForm';
-import { submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail, approveDraft, rejectApproval, updateVacation, updateGeneral, updatePayment, updatePurchase, deleteTempDoc } from './approvalApi';
+import { submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail, approveDraft, rejectApproval, updateVacation, updateGeneral, updatePayment, updatePurchase, deleteDoc } from './approvalApi';
 
 // 결재자 선택 모달 컴포넌트
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
@@ -358,7 +358,7 @@ const ApprovalDetail = () => {
     if (actionType === 'SUBMIT_CANCEL') {
       if (!window.confirm('상신을 취소하시겠습니까?')) return;
       try {
-        const response = await deleteTempDoc(docSeq, doc_type);
+        const response = await deleteDoc(docSeq, doc_type);
         alert('상신 취소가 완료되었습니다.');
         navigate('/approvalMypage');
       } catch (error) {
