@@ -7,6 +7,9 @@ const FindId = () => {
   const [formData, setFormData] = useState({ name: "", email: "", verificationCode: "" });
   const [showVerification, setShowVerification] = useState(false);
 
+  const [isVerified, setIsVerified] = useState(false);
+  const [foundId, setFoundId] = useState("");
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -21,6 +24,8 @@ const FindId = () => {
   const handleVerify = () => {
     // 인증번호 검증 로직 들어갈 자리
     alert("인증되었습니다.");
+    setIsVerified(true);
+    setFoundId("user123"); // 예시 ID
   };
 
   return (
@@ -37,66 +42,77 @@ const FindId = () => {
 
         {/* Right Side: Form Area */}
         <div className="w-full h-2/3 md:h-full md:w-1/2 p-4 md:p-12 flex flex-col justify-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-800 text-center mb-4 md:mb-13">Forgot your ID?</h2>
+          {!isVerified ? (
+            <>
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-800 text-center mb-4 md:mb-13">Forgot your ID?</h2>
 
-          <div className="space-y-4">
-            {/* Name Input */}
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-600 ml-1">성함</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="성함을 입력하세요"
-                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3530B8]"
-              />
-            </div>
-
-            {/* Email Input */}
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-600 ml-1">이메일</label>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="가입 시 등록한 이메일"
-                  className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3530B8]"
-                />
-                <button
-                  onClick={handleSendCode}
-                  className="px-2 md:px-4 py-2 bg-[#3530B8] text-white text-xs font-bold rounded-xl whitespace-nowrap hover:bg-[#28248a]"
-                >
-                  인증번호 전송
-                </button>
-              </div>
-            </div>
-
-            {/* Conditional Verification Inputs */}
-            {showVerification && (
-              <div className="space-y-1 pt-2 animate-fadeIn">
-                <label className="text-xs font-bold text-gray-600 ml-1">인증번호</label>
-                <div className="flex gap-2">
+              <div className="space-y-4">
+                {/* Name Input */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-600 ml-1">성함</label>
                   <input
                     type="text"
-                    name="verificationCode"
-                    value={formData.verificationCode}
+                    name="name"
+                    value={formData.name}
                     onChange={handleChange}
-                    placeholder="인증번호 6자리"
+                    placeholder="성함을 입력하세요"
                     className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3530B8]"
                   />
-                  <button
-                    onClick={handleVerify}
-                    className="px-7 md:px-9 py-2 bg-[#3530B8] text-white text-xs font-bold rounded-xl whitespace-nowrap hover:bg-[#28248a]"
-                  >
-                    인증
-                  </button>
                 </div>
+
+                {/* Email Input */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-600 ml-1">이메일</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="가입 시 등록한 이메일"
+                      className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3530B8]"
+                    />
+                    <button
+                      onClick={handleSendCode}
+                      className="px-2 md:px-4 py-2 bg-[#3530B8] text-white text-xs font-bold rounded-xl whitespace-nowrap hover:bg-[#28248a]"
+                    >
+                      인증번호 전송
+                    </button>
+                  </div>
+                </div>
+
+                {/* Conditional Verification Inputs */}
+                {showVerification && (
+                  <div className="space-y-1 pt-2 animate-fadeIn">
+                    <label className="text-xs font-bold text-gray-600 ml-1">인증번호</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        name="verificationCode"
+                        value={formData.verificationCode}
+                        onChange={handleChange}
+                        placeholder="인증번호 6자리"
+                        className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3530B8]"
+                      />
+                      <button
+                        onClick={handleVerify}
+                        className="px-7 md:px-9 py-2 bg-[#3530B8] text-white text-xs font-bold rounded-xl whitespace-nowrap hover:bg-[#28248a]"
+                      >
+                        인증
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center animate-fadeIn">
+              <h2 className="text-2xl md:text-2xl font-bold text-gray-800 text-center mb-8">Here's your ID!</h2>
+              <div className="w-full px-4 py-4 bg-[#F0F4FF] rounded-xl border border-gray-200 text-center text-xl font-bold text-[#3530B8]">
+                {foundId}
+              </div>
+            </div>
+          )}
 
           {/* Navigation Buttons */}
           <div className="flex gap-3 mt-8">
