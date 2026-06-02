@@ -222,7 +222,7 @@ const ApprovalHome = () => {
                     <div className={`${cardStyles[item.color].icon} scale-90 md:scale-100`}>{item.icon}</div>
                   </div>
                   <div className="flex flex-col items-start translate-x-1">
-                    <span className="text-[0.75rem] md:text-[0.8125rem] font-bold text-gray-800 mb-0.5 md:mb-1">{item.label}</span>
+                    <span className="text-[0.75rem] md:text-[0.8125rem] font-bold text-gray-800 mb-0.5 md:mb-1 whitespace-nowrap">{item.label}</span>
                     <span className={`text-2xl md:text-3xl font-bold ${cardStyles[item.color].text}`}>
                       {item.count}<span className="text-xs md:text-sm font-bold ml-1">건</span>
                     </span>
