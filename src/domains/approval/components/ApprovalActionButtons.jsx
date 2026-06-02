@@ -64,8 +64,8 @@ const ApprovalActionButtons = ({
 
   return (
     <div className="flex flex-col items-center w-full gap-3 pt-8 pb-2 border-t border-gray-100 flex-shrink-0">
-      <div className="flex justify-center gap-3 w-full">
-        {/* [기안 모드] - 기존 로직 유지 (명시적으로 작성되지 않은 경우) */}
+      {/* [Desktop View] - 기존 스타일 완벽 유지 */}
+      <div className="hidden md:flex justify-center gap-3 w-full">
         {mode === 'EDIT' && userRole === 'DRAFTER' && (
           <>
             <CloseButton />
@@ -84,10 +84,8 @@ const ApprovalActionButtons = ({
           </>
         )}
 
-        {/* [VIEW 모드] - 요구사항에 따른 분기 */}
         {mode === 'VIEW' && (
           <>
-            {/* 반려 진행 중인 결재자용 버튼 세트 */}
             {isRejecting ? (
               <div className="flex gap-3 animate-in fade-in zoom-in-95 duration-200">
                 <button 
@@ -106,8 +104,6 @@ const ApprovalActionButtons = ({
             ) : (
               <>
                 <CloseButton />
-
-                {/* 수정 가능한 기안자: 상신취소 추가 */}
                 {isEditableDrafter && (
                   <button 
                     className="px-6 py-2 bg-white border border-red-200 text-red-500 font-bold text-xs rounded-xl hover:bg-red-50 transition-all active:scale-95"
@@ -116,8 +112,6 @@ const ApprovalActionButtons = ({
                     상신취소
                   </button>
                 )}
-
-                {/* 현재 결재자: 반려, 승인 추가 */}
                 {isCurrentApprover && (
                   <>
                     <button 
@@ -135,6 +129,86 @@ const ApprovalActionButtons = ({
                   </>
                 )}
               </>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* [Mobile View] - 한 줄에 모든 버튼 배치 */}
+      <div className="md:hidden flex justify-center gap-2 w-full px-2">
+        {mode === 'EDIT' && userRole === 'DRAFTER' && (
+          <>
+            <button 
+              className="flex-1 py-2.5 border border-gray-200 text-gray-500 font-bold text-[11px] rounded-lg active:scale-95 whitespace-nowrap"
+              onClick={() => navigate(-1)}
+            >
+              닫기
+            </button>
+            <button 
+              className="flex-1 py-2.5 bg-[#F0F4FF] text-[#3530B8] font-bold text-[11px] rounded-lg active:scale-95 whitespace-nowrap"
+              onClick={() => onAction('TEMP_SAVE')}
+            >
+              임시저장
+            </button>
+            <button 
+              className="flex-1 py-2.5 bg-[#3530B8] text-white font-bold text-[11px] rounded-lg active:scale-95 whitespace-nowrap shadow-md"
+              onClick={() => onAction('SUBMIT')}
+            >
+              결재상신
+            </button>
+          </>
+        )}
+
+        {mode === 'VIEW' && (
+          <>
+            {isRejecting ? (
+              <div className="flex gap-2 w-full">
+                <button 
+                  className="flex-1 py-2.5 bg-red-500 text-white font-bold text-[11px] rounded-lg active:scale-95 whitespace-nowrap shadow-md"
+                  onClick={handleRejectConfirm}
+                >
+                  반려 확정
+                </button>
+                <button 
+                  className="flex-1 py-2.5 bg-gray-100 text-gray-500 font-bold text-[11px] rounded-lg active:scale-95 whitespace-nowrap"
+                  onClick={handleRejectCancel}
+                >
+                  취소
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2 w-full">
+                <button 
+                  className="flex-1 py-2.5 border border-gray-200 text-gray-500 font-bold text-[11px] rounded-lg active:scale-95 whitespace-nowrap"
+                  onClick={() => navigate(-1)}
+                >
+                  닫기
+                </button>
+                {isEditableDrafter && (
+                  <button 
+                    className="flex-1 py-2.5 bg-white border border-red-200 text-red-500 font-bold text-[11px] rounded-lg active:scale-95 whitespace-nowrap"
+                    onClick={() => onAction('SUBMIT_CANCEL')}
+                  >
+                    상신취소
+                  </button>
+                )}
+                {isCurrentApprover && (
+                  <>
+                    <button 
+                      className="flex-1 py-2.5 bg-red-50 text-red-600 border border-red-100 font-bold text-[11px] rounded-lg active:scale-95 whitespace-nowrap"
+                      onClick={() => setIsRejecting(true)}
+                    >
+                      반려
+                    </button>
+                    <button 
+                      className="flex-1 py-2.5 bg-[#3530B8] text-white font-bold text-[11px] rounded-lg active:scale-95 whitespace-nowrap shadow-md"
+                      onClick={() => onAction('APPROVE')}
+                    >
+                      승인
+                    </button>
+                  </>
+                )}
+              </div>
             )}
           </>
         )}
