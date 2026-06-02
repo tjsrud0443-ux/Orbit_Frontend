@@ -30,14 +30,14 @@ const FindId = () => {
         
         {/* Left Side: Image Area */}
         <div className="w-full h-1/3 md:h-full md:w-1/2 bg-gradient-to-br from-[#DDE8FF] via-[#F0F4FF] to-[#FFFFFF] p-4 md:p-8 flex flex-col items-center justify-center">
-            <div className="w-full h-full bg-white/60 rounded-2xl flex items-center justify-center border-2 border-dashed border-[#DDE8FF]">
-                <img src={IMAGES.FIND_ACCOUNT} alt="Orbit Logo" className="max-h-24 md:max-h-32" />
+            <div className="w-45 h-45 md:w-90 md:h-90 bg-white/60 rounded-2xl flex items-center justify-center border-2 border-dashed border-[#DDE8FF]">
+                <img src={IMAGES.LOGIN_LOGO} className="max-h-50 md:max-h-100 object-contain rounded-2xl" />
             </div>
         </div>
 
         {/* Right Side: Form Area */}
         <div className="w-full h-2/3 md:h-full md:w-1/2 p-4 md:p-12 flex flex-col justify-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-800 text-center mb-15">Forgot your ID?</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-800 text-center mb-4 md:mb-13">Forgot your ID?</h2>
 
           <div className="space-y-4">
             {/* Name Input */}
@@ -67,7 +67,7 @@ const FindId = () => {
                 />
                 <button
                   onClick={handleSendCode}
-                  className="px-4 py-2 bg-[#3530B8] text-white text-xs font-bold rounded-xl whitespace-nowrap hover:bg-[#28248a]"
+                  className="px-2 md:px-4 py-2 bg-[#3530B8] text-white text-xs font-bold rounded-xl whitespace-nowrap hover:bg-[#28248a]"
                 >
                   인증번호 전송
                 </button>
@@ -89,7 +89,7 @@ const FindId = () => {
                   />
                   <button
                     onClick={handleVerify}
-                    className="px-9 py-2 bg-[#3530B8] text-white text-xs font-bold rounded-xl whitespace-nowrap hover:bg-[#28248a]"
+                    className="px-7 md:px-9 py-2 bg-[#3530B8] text-white text-xs font-bold rounded-xl whitespace-nowrap hover:bg-[#28248a]"
                   >
                     인증
                   </button>
