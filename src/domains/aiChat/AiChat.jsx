@@ -21,10 +21,10 @@ const AiChat = () => {
   const [messages, setMessages] = useState([
     { id: 1, sender: 'AI', text: '안녕하세요! Orbit 사내 업무지원 AI 비서입니다. 인사, 규정, 복리후생 등 궁금하신 내용을 질문해주세요.', isTyping: false }
   ]);
-  
+
   // 🔥 구조 변경: input 상태는 단순 문자열(String)로 관리하는 것이 정석입니다!
   const [input, setInput] = useState("");
-  
+  const [currentChatSeq, setCurrentChatSeq] = useState(null);
   const [chatHistory, setChatHistory] = useState([
     { id: 1, title: '연차 신청 방법 문의' },
     { id: 2, title: '프로젝트 A 일정 관련' }
@@ -87,13 +87,14 @@ const AiChat = () => {
       sender: 'USER',
       text: input.trim()
     };
-    
+
     // 2. AI가 답변을 생각하는 동안 보여줄 임시 '타이핑 중...' 말풍선 추가
     const aiMessageId = userMessageId + 1;
     setMessages(prev => [...prev, newUserMessage, { id: aiMessageId, sender: 'AI', text: '데이터를 분석하고 있습니다...', isTyping: true }]);
-    
+
     // 3. 백엔드로 보낼 파라미터 구조 정의 (스프링 @RequestParam 스펙 매칭)
     const chatData = {
+      chat_seq: currentChatSeq !== null ? currentChatSeq : 0,
       role: 'USER',
       content: input.trim()
     };
@@ -105,8 +106,10 @@ const AiChat = () => {
     inputMsg(chatData)
       .then(resp => {
         // 백엔드에서 받아온 찐 제미나이 텍스트 답변 데이터 (resp.data)
-        const aiResponseText = resp.data; 
-        
+        const aiResponseText = resp.data.aiAnswer;
+        if (!currentChatSeq) {
+          setCurrentChatSeq(resp.data.chat_seq);
+        }
         // 특정 키워드나 조건(예: '죄송합니다' 등)이 답변에 포함되면 관리자 문의 버튼 띄우기 세팅
         const needInquiryButton = aiResponseText.includes("찾지 못했습니다") || aiResponseText.includes("죄송합니다");
 
@@ -117,7 +120,7 @@ const AiChat = () => {
           }
           return msg;
         }));
-        
+
         // 텍스트가 부드럽게 출력되는 타이핑 연출기 실행
         typeEffect(aiMessageId, aiResponseText);
       })
@@ -137,10 +140,10 @@ const AiChat = () => {
     const interval = setInterval(() => {
       setMessages(prev => prev.map(msg => {
         if (msg.id === id) {
-          return { 
-            ...msg, 
-            text: fullText.substring(0, i), 
-            isTyping: i < fullText.length 
+          return {
+            ...msg,
+            text: fullText.substring(0, i),
+            isTyping: i < fullText.length
           };
         }
         return msg;
@@ -214,14 +217,14 @@ const AiChat = () => {
             <div key={msg.id} className={`flex ${msg.sender === 'USER' ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[70%] p-4 rounded-2xl ${msg.sender === 'USER' ? 'bg-[#3530B8] text-white' : 'bg-[#f4f7fc] text-[#1a1c3d]'}`}>
                 <div className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</div>
-                
+
                 {/* 관리자 문의하기 컴포넌트 유동 제어 */}
                 {msg.showInquiry && (
                   <button onClick={() => setIsModalOpen(true)} className="mt-3 text-xs bg-white text-[#3530B8] px-3 py-1.5 rounded-lg font-bold border border-[#3530B8] hover:bg-slate-50">
                     담당 부서에 문의하기
                   </button>
                 )}
-                
+
                 {/* 임베딩 출처 메타데이터 바인딩 연동 문서 구역 */}
                 {!msg.isTyping && msg.sender === 'AI' && !msg.showInquiry && (
                   <div className="mt-4 pt-3 border-t border-[#edf2f9] flex items-center justify-between gap-4">
@@ -284,10 +287,10 @@ const AiChat = () => {
               <h3 className="font-bold text-lg">담당 부서(관리자) 문의</h3>
               <button onClick={() => { setIsModalOpen(false); setIsDropdownOpen(false); }}><FontAwesomeIcon icon={faTimes} /></button>
             </div>
-            
+
             {/* Custom Dropdown */}
             <div className="relative mb-4">
-              <div 
+              <div
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsDropdownOpen(!isDropdownOpen);
@@ -302,7 +305,7 @@ const AiChat = () => {
               {isDropdownOpen && (
                 <div className="absolute top-full left-0 w-full bg-white border border-[#edf2f9] rounded-lg mt-1 shadow-lg z-[70] max-h-48 overflow-y-auto">
                   {deptList.map(dept => (
-                    <div 
+                    <div
                       key={dept.deptSeq}
                       onClick={(e) => {
                         e.stopPropagation();
