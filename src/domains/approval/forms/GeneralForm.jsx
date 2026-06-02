@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReferrerSelector from '../components/ReferrerSelector';
 
-const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
+const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveClicked }) => {
 
   const isEditMode = mode === 'EDIT';
   const today = new Date().toLocaleDateString('sv-SE');
@@ -10,12 +10,23 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
   useEffect(() => {
     if (isSubmitClicked) {
       const newErrors = {};
-      newErrors.title = validateField('title', data.title || data?.TITLE);
-      newErrors.purpose = validateField('purpose', data.purpose || data?.PURPOSE);
-      newErrors.content = validateField('content', data.content || data?.CONTENT);
+      newErrors.title = validateField('title', data.title);
+      newErrors.purpose = validateField('purpose', data.purpose);
+      newErrors.content = validateField('content', data.content);
       setErrors(newErrors);
+    } else {
+      setErrors({});
     }
   }, [isSubmitClicked]);
+
+  useEffect(() => {
+    if (isTempSaveClicked){
+      setErrors(prev => ({
+        ...prev,
+        title: validateField('title', data.title, data)
+      }));
+    }
+  }, [isTempSaveClicked]);
 
   const validateField = (field, value) => {
     let error = '';
@@ -41,9 +52,9 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
     onChange({ ...data, [field]: value });
   };
 
-  const title = data?.title || data?.TITLE || '';
-  const purpose = data?.purpose || data?.PURPOSE || '';
-  const content = data?.content || data?.CONTENT || '';
+  const title = data?.title || '';
+  const purpose = data?.purpose || '';
+  const content = data?.content || '';
 
   const applicant = isEditMode ? user : data;
   const displayDate = isEditMode ? today : (data?.created_at?.substring(0, 10) || '-');

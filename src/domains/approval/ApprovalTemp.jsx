@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import Pagination from '../../components/common/Pagination';
-import { deleteTempDoc, getTempDoc } from './approvalApi';
+import { deleteDoc, getTempDoc } from './approvalApi';
 
 
 const ApprovalTemp = () => {
@@ -48,7 +48,7 @@ const ApprovalTemp = () => {
     if(!window.confirm("정말 삭제하시겠습니까? 삭제 후에는 복구가 불가합니다. ")) {
       return;
     }
-    deleteTempDoc(doc.doc_seq, doc.doc_type).then(resp => {
+    deleteDoc(doc.doc_seq, doc.doc_type).then(resp => {
       alert("삭제가 완료되었습니다.");
       getTempDoc().then(resp => {
         setDocuments(resp.data);

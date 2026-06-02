@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Calendar from '../../../components/common/Calendar';
 import ReferrerSelector from '../components/ReferrerSelector';
 
-const VacationForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
+const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveClicked }) => {
   const isEditMode = mode === 'EDIT';
   const today = new Date().toLocaleDateString('sv-SE');
   
@@ -21,8 +21,18 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
       }
       newErrors.reason = validateField('reason', data.reason, data);
       setErrors(newErrors);
+    } else {
+      setErrors({});
     }
   }, [isSubmitClicked]);
+
+  useEffect(() => {
+    if (isTempSaveClicked){
+      const newErrors= {};
+      newErrors.title = validateField('title', data.title);
+      setErrors(newErrors);
+    }
+  }, [isTempSaveClicked]);
 
   const validateField = (field, value, currentData) => {
     let error = '';
@@ -58,6 +68,10 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked }) => {
     let updatedData = { ...data, [key]: value };
     const error = validateField(key, value, updatedData);
     setErrors(prev => ({ ...prev, [key]: error }));
+
+    if(key === 'vac_type' && value !== '연차'){
+      setErrors(prev => ({...prev, end_date: ''}));
+    }
 
     if (key === 'start_date') {
       if (data.end_date && value > data.end_date) {

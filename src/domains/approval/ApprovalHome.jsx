@@ -1,24 +1,42 @@
-import React from 'react';
+import React, { useState, useEffect} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IMAGES } from '../../images/images';
+import { getApprovalHomeData } from './approvalApi';
+import useAuthStore from '../../store/authStore';
 
 const ApprovalHome = () => {
-
   const navi = useNavigate();
+  const { token } = useAuthStore();
+  const [homeData, setHomeData] = useState({
+    pendingCount: 0,
+    inProgressCount: 0,
+    approvedCount: 0,
+    rejectedCount: 0,
+    recentDocs: []
+  });
+  
   const [isDraftModalOpen, setIsDraftModalOpen] = React.useState(false);
 
-  const recentDocuments = [
-    { title: '2026년 상반기 성과급 지급 신청의 건', type: '지출결의서', date: '2026-05-25', status: '진행 중', approver: '김철수 팀장' },
-    { title: '신규 프로젝트 "오르빗" 서버 도입 기안', type: '품의서', date: '2026-05-24', status: '결재 대기', approver: '이영희 본부장' },
-    { title: '6월 부서 운영비 정기 집행 요청', type: '지출결의서', date: '2026-05-24', status: '결재 완료', approver: '박지민 대표' },
-    { title: '비품(노트북 및 모니터) 교체 신청', type: '품의서', date: '2026-05-23', status: '반려', approver: '최유진 팀장' },
-    { title: '여름 시즌 마케팅 캠페인 예산 상신', type: '지출결의서', date: '2026-05-21', status: '결재 완료', approver: '박지민 대표' }
-  ];
+  useEffect(() => {
+    getApprovalHomeData().then(resp => {
+      setHomeData(resp.data);
+    })
+  }, []);
+
+  const getDocTypeLabel = (doc_type) => {
+    const map = { VACATION: '휴가신청서', PAYMENT: '지출결의서', GENERAL: '일반품의서', PURCHASE: '구매신청서'};
+    return map[doc_type] || doc_type;
+  };
+
+  const getStatusLabel = (status) => {
+    const map = { DRAFT: '결재 대기', IN_PROGRESS: '진행 중', APPROVED: '결재 완료', REJECTED: '반려'};
+    return map[status] || status;
+  }
 
   const statusItems = [
     { 
       label: '결재 대기', 
-      count: 5, 
+      count: homeData.pendingCount, 
       desc: '내가 결재할 문서', 
       color: 'amber',
       icon: (
@@ -29,7 +47,7 @@ const ApprovalHome = () => {
     },
     { 
       label: '진행 중', 
-      count: 3, 
+      count: homeData.inProgressCount, 
       desc: '결재 진행 중인 문서', 
       color: 'blue',
       icon: (
@@ -40,7 +58,7 @@ const ApprovalHome = () => {
     },
     { 
       label: '결재 완료', 
-      count: 12, 
+      count: homeData.approvedCount, 
       desc: '최종 승인된 문서', 
       color: 'green',
       icon: (
@@ -51,7 +69,7 @@ const ApprovalHome = () => {
     },
     { 
       label: '반려', 
-      count: 1, 
+      count: homeData.rejectedCount, 
       desc: '반려 처리된 문서', 
       color: 'red',
       icon: (
@@ -136,23 +154,23 @@ const ApprovalHome = () => {
       {isDraftModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
           <div 
-            className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300"
+            className="bg-white w-full max-w-2xl aspect-square md:aspect-auto rounded-[2rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col justify-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-10">
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-bold text-gray-900">어떤 양식으로 작성하시겠어요?</h2>
+            <div className="p-10 md:p-10 pt-14 pb-14 px-10">
+              <div className="flex justify-between items-center mb-5 md:mb-8">
+                <h2 className="text-lg md:text-2xl font-bold text-gray-900">어떤 양식으로 작성하시겠어요?</h2>
                 <button 
                   onClick={() => setIsDraftModalOpen(false)}
-                  className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all"
+                  className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-5 md:gap-6 max-w-[280px] md:max-w-none mx-auto">
                 {draftForms.map((form, idx) => (
                   <div 
                     key={idx}
@@ -160,13 +178,13 @@ const ApprovalHome = () => {
                       setIsDraftModalOpen(false);
                       navi(form.path);
                     }}
-                    className={`${form.color} p-8 rounded-[2rem] cursor-pointer hover:scale-[1.03] hover:shadow-xl transition-all border border-black/5 flex flex-col items-center text-center aspect-square justify-center group`}
+                    className={`${form.color} p-4 md:p-8 rounded-2xl md:rounded-[2rem] cursor-pointer hover:scale-[1.03] hover:shadow-xl transition-all border border-black/5 flex flex-col items-center text-center aspect-square justify-center group`}
                   >
-                    <div className={`${form.iconBg} ${form.iconColor} w-16 h-16 rounded-3xl flex items-center justify-center mb-5 shadow-sm group-hover:scale-110 transition-transform`}>
-                      {form.icon}
+                    <div className={`${form.iconBg} ${form.iconColor} w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-3xl flex items-center justify-center mb-2 md:mb-5 shadow-sm group-hover:scale-110 transition-transform`}>
+                      <div className="scale-75 md:scale-100">{form.icon}</div>
                     </div>
-                    <h3 className="text-lg font-bold text-gray-800 mb-2">{form.title}</h3>
-                    <p className="text-xs font-bold text-gray-500 leading-relaxed whitespace-pre-line">
+                    <h3 className="text-sm md:text-lg font-bold text-gray-800 mb-1 md:mb-2">{form.title}</h3>
+                    <p className="hidden md:block text-xs font-bold text-gray-500 leading-relaxed whitespace-pre-line">
                       {form.desc}
                     </p>
                   </div>
@@ -192,34 +210,32 @@ const ApprovalHome = () => {
         {/* Dashboard Top Area */}
         <div className="flex flex-col xl:flex-row gap-4 items-stretch">
           
-          {/* Status Grid (75%) */}
-          <div className="xl:w-3/4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="xl:w-3/4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {statusItems.map((item, idx) => (
               <div 
                 key={idx} 
                 onClick={() => navi(item.label === '결재 대기' ? '/approvalInbox' : '/approvalMypage')}
-                className={`${cardStyles[item.color].bg} ${cardStyles[item.color].border} p-5 rounded-[2rem] border-2 shadow-sm flex flex-col justify-between transition-all hover:shadow-md cursor-pointer group`}
+                className={`${cardStyles[item.color].bg} ${cardStyles[item.color].border} p-5 rounded-[2rem] border-2 shadow-sm flex flex-col justify-between transition-all hover:shadow-md cursor-pointer group aspect-square md:aspect-auto`}
               >
                 <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-full ${cardStyles[item.color].iconBg} flex items-center justify-center flex-shrink-0`}>
-                    <div className={cardStyles[item.color].icon}>{item.icon}</div>
+                  <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full ${cardStyles[item.color].iconBg} flex items-center justify-center flex-shrink-0`}>
+                    <div className={`${cardStyles[item.color].icon} scale-90 md:scale-100`}>{item.icon}</div>
                   </div>
                   <div className="flex flex-col items-start translate-x-1">
-                    <span className="text-[0.8125rem] font-bold text-gray-800 mb-1">{item.label}</span>
-                    <span className={`text-3xl font-bold ${cardStyles[item.color].text}`}>
-                      {item.count}<span className="text-sm font-bold ml-1">건</span>
+                    <span className="text-[0.75rem] md:text-[0.8125rem] font-bold text-gray-800 mb-0.5 md:mb-1">{item.label}</span>
+                    <span className={`text-2xl md:text-3xl font-bold ${cardStyles[item.color].text}`}>
+                      {item.count}<span className="text-xs md:text-sm font-bold ml-1">건</span>
                     </span>
                   </div>
                 </div>
-                <div className="mt-4 pt-3 border-t border-black/5 flex justify-between items-center">
-                  <p className="text-[0.6875rem] font-bold text-gray-400">{item.desc}</p>
-                  <span className="text-gray-300 font-bold text-base group-hover:text-gray-500 transition-colors">&gt;</span>
+                <div className="mt-2 md:mt-4 pt-2 md:pt-3 border-t border-black/5 flex justify-between items-center">
+                  <p className="text-[0.625rem] md:text-[0.6875rem] font-bold text-gray-400 truncate pr-2">{item.desc}</p>
+                  <span className="text-gray-300 font-bold text-sm md:text-base group-hover:text-gray-500 transition-colors">&gt;</span>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* New Draft Box (25%) */}
           <div className="xl:w-1/4 bg-[#3530B8] rounded-[2rem] p-6 shadow-xl shadow-[#3530B8]/20 flex relative overflow-hidden group hover:bg-[#2a2594] transition-all min-h-[160px]">
              <div className="flex flex-col justify-between h-full z-10 w-full">
                 <div>
@@ -230,7 +246,7 @@ const ApprovalHome = () => {
                 </div>
                 <button 
                   onClick={() => setIsDraftModalOpen(true)}
-                  className="bg-white text-[#3530B8] py-2 px-4 rounded-xl font-bold text-[0.6875rem] flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors w-fit shadow-lg"
+                  className="bg-white text-[#3530B8] py-2 px-4 rounded-xl font-bold text-[0.6875rem] flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors w-fit shadow-lg mt-4 xl:mt-0"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -246,7 +262,7 @@ const ApprovalHome = () => {
         </div>
 
         {/* Recent Documents Area */}
-        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex-1 h-[28.5rem] flex flex-col">
+        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex-1 flex flex-col">
           <div className="p-6 px-10 border-b border-gray-50 flex items-center justify-between bg-gray-50/30 flex-shrink-0">
             <h2 className="text-lg font-bold text-gray-900">최근 문서 목록</h2>
             <button 
@@ -256,64 +272,77 @@ const ApprovalHome = () => {
             </button>
           </div>
 
-          {/* Table Header */}
-          <div className="grid grid-cols-12 px-10 py-4 border-b border-gray-50 text-[0.8125rem] font-bold text-gray-400 bg-gray-50/10 flex-shrink-0">
-            <div className="col-span-4">제목</div>
-            <div className="col-span-2 text-center">문서 종류</div>
-            <div className="col-span-2 text-center">기안일</div>
-            <div className="col-span-2 text-center">결재 상태</div>
-            <div className="col-span-2 text-center">현재 결재자</div>
-          </div>
+          {/* Table Area - Scrollable on Mobile */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="overflow-x-auto custom-scrollbar">
+              <div className="min-w-[900px]">
+                {/* Table Header */}
+                <div className="grid grid-cols-12 px-10 py-4 border-b border-gray-50 text-[0.8125rem] font-bold text-gray-400 bg-gray-50/10 flex-shrink-0">
+                  <div className="col-span-4">제목</div>
+                  <div className="col-span-2 text-center">문서 종류</div>
+                  <div className="col-span-2 text-center">기안일</div>
+                  <div className="col-span-2 text-center">결재 상태</div>
+                  <div className="col-span-2 text-center">현재 결재자</div>
+                </div>
 
-          {/* List Content */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-            {/* --- 데이터 매핑 시작 위치 --- */}
-            {
-              recentDocuments.map((doc, idx) => (
-                <div key={idx} className="grid grid-cols-12 px-10 py-5 border-b border-gray-50 items-center hover:bg-gray-50/50 transition-colors cursor-pointer group">
-                  <div className="col-span-4 text-sm font-bold text-gray-700 group-hover:text-[#3530B8] transition-colors truncate pr-4">
-                    {doc.title}
-                  </div>
-                  <div className="col-span-2 text-center text-xs font-medium text-gray-500">
-                    {doc.type}
-                  </div>
-                  <div className="col-span-2 text-center text-xs font-medium text-gray-400">
-                    {doc.date}
-                  </div>
-                  <div className="col-span-2 text-center">
-                    <span className={`px-2.5 py-0.5 text-[0.625rem] font-bold rounded-full ${
-                      doc.status === '진행 중' ? 'bg-[#F0F7FF] text-[#007BFF]' :
-                      doc.status === '결재 대기' ? 'bg-[#FFF9F0] text-[#FF9800]' :
-                      doc.status === '결재 완료' ? 'bg-[#F0FDF4] text-[#10B981]' :
-                      'bg-[#FFF0F0] text-[#FF4D4F]'
-                    }`}>
-                      {doc.status}
-                    </span>
-                  </div>
-                  <div className="col-span-2 flex items-center justify-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex-shrink-0">
-                      <svg className="w-full h-full text-gray-300" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
-                      </svg>
+                {/* List Content */}
+                <div className="flex-1 custom-scrollbar">
+                  {
+                    homeData.recentDocs.map((doc, idx) => (
+                      <div key={doc.doc_seq || idx} className="grid grid-cols-12 px-10 py-5 border-b border-gray-50 items-center hover:bg-gray-50/50 transition-colors cursor-pointer group whitespace-nowrap">
+                        <div className="col-span-4 text-sm font-bold text-gray-700 truncate pr-4">
+                          {doc.title}
+                        </div>
+                        <div className="col-span-2 text-center text-xs font-medium text-gray-500">
+                          {getDocTypeLabel(doc.doc_type)}
+                        </div>
+                        <div className="col-span-2 text-center text-xs font-medium text-gray-400">
+                          {doc.created_at}
+                        </div>
+                        <div className="col-span-2 text-center">
+                          <span className={`px-2.5 py-0.5 text-[0.625rem] font-bold rounded-full ${
+                            doc.status === 'IN_PROGRESS' ? 'bg-[#F0F7FF] text-[#007BFF]' :
+                            doc.status === 'DRAFT' ? 'bg-[#FFF9F0] text-[#FF9800]' :
+                            doc.status === 'APPROVED' ? 'bg-[#F0FDF4] text-[#10B981]' :
+                            'bg-[#FFF0F0] text-[#FF4D4F]'
+                          }`}>
+                            {getStatusLabel(doc.status)}
+                          </span>
+                        </div>
+                        <div className="col-span-2 flex items-center justify-center gap-2">
+                          {doc.sysname ? (
+                            <div className="w-6 h-6 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex-shrink-0">
+                              <img 
+                                src={`http://localhost/file/profile/view?sysname=${doc.sysname}&token=${token}`} 
+                                className="w-full h-full object-cover" 
+                                alt="Profile" 
+                              />
+                            </div>
+                          ) : (
+                            ''
+                          )}
+                          <span className="text-xs font-bold text-gray-600 truncate">
+                            {doc.approver_name ? `${doc.approver_name} ${doc.approver_rank}` : '-'}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  }
+                  
+                  {/* Empty State (데이터가 없을 때만 표시) */}
+                  {homeData.recentDocs.length === 0 && (
+                    <div className="p-20 flex flex-col items-center justify-center text-gray-400">
+                      <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-5">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
+                      <p className="text-sm font-bold text-gray-300 tracking-tight">최근에 상신하거나 수신한 문서가 없습니다.</p>
                     </div>
-                    <span className="text-xs font-bold text-gray-600 truncate">{doc.approver}</span>
-                  </div>
+                  )}
                 </div>
-              ))
-            }
-            
-            {/* Empty State (데이터가 없을 때만 표시) */}
-            {recentDocuments.length === 0 && (
-              <div className="p-20 flex flex-col items-center justify-center text-gray-400">
-                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-5">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <p className="text-sm font-bold text-gray-300 tracking-tight">최근에 상신하거나 수신한 문서가 없습니다.</p>
               </div>
-            )}
-            {/* --- 데이터 매핑 끝 위치 --- */}
+            </div>
           </div>
         </div>
 
