@@ -66,10 +66,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
       if (field === 'title' && value.length > 50) error = '글자 수 초과 (50자 이하)';
       if (field === 'purpose' && value.length > 300) error = '글자 수 초과 (300자 이하)';
       if (field === 'vendor' && value.length > 50) error = '글자 수 초과 (50자 이하)';
-    }
-
-    if (field === 'purchase_date' && value && value < today) {
-      error = '구매 요청일은 오늘 이후여야 합니다.';
+      if (field === 'purchase_date' && value < today) error = '구매 요청일은 오늘 이후여야 합니다.';
     }
 
     return error;
@@ -565,15 +562,16 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
               <div className="w-24 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100">요청일</div>
               <div className="flex-grow p-2">
                 {isEditMode ? (
-                  <div className="relative">
+                  <div className="relative space-y-1">
                     <input 
                       type="text" 
                       readOnly 
                       value={data.purchase_date || ''} 
                       onClick={() => setIsCalendarOpen(!isCalendarOpen)} 
                       placeholder="날짜 선택" 
-                      className="w-full p-1 border border-gray-200 rounded outline-none text-xs"
+                      className={`w-full p-1 border ${errors.purchase_date ? 'border-red-500' : 'border-gray-200'} rounded outline-none text-xs`}
                     />
+                    {errors.purchase_date && <p className="text-[10px] text-red-500">{errors.purchase_date}</p>}
                     {isCalendarOpen && (
                       <div className="absolute z-50 left-0 w-full">
                         <Calendar 
@@ -697,12 +695,13 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                             <input 
                               type="number"
                               value={item.unit_price || ''}
+                              min="0"
                               onKeyDown={(e) => {
-                                if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
+                                if (['e', 'E', '+', '-', '.'].includes(e.key)) {
                                   e.preventDefault();
                                 }
                               }}
-                              onChange={(e) => handleItemChange(index, 'unit_price', Number(e.target.value))}
+                              onChange={(e) => handleItemChange(index, 'unit_price', Math.max(0, parseInt(e.target.value) || 0))}
                               className={`w-full p-1.5 text-xs border ${errors.items?.[`${index}-unit_price`] ? 'border-red-500' : 'border-gray-200'} rounded text-right outline-none`}
                             />
                             {errors.items?.[`${index}-unit_price`] && <p className="text-[10px] text-red-500">{errors.items[`${index}-unit_price`]}</p>}
@@ -754,7 +753,12 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                   파일 추가
                   <input type="file" multiple className="hidden" onChange={(e) => {
                     const newFiles = Array.from(e.target.files);
-                    onChange(prev => ({ ...prev, attachments: [...(prev.attachments || []), ...newFiles] }));
+                    onChange(prev => ({
+                      ...prev,
+                      attachments: [...(prev.attachments || []), ...newFiles]
+                    }));
+                    if (newFiles.length > 0) setErrors(prev => ({ ...prev, attachments: '' }));
+                    e.target.value = '';
                   }} />
                 </label>
               )}

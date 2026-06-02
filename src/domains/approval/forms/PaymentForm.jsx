@@ -654,12 +654,15 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase">항목명</label>
                   {isEditMode ? (
-                    <input 
-                      type="text"
-                      value={item.item_name || ''}
-                      onChange={(e) => handleItemChange(index, 'item_name', e.target.value)}
-                      className="w-full p-1.5 text-xs border border-gray-200 rounded outline-none"
-                    />
+                    <div>
+                      <input 
+                        type="text"
+                        value={item.item_name || ''}
+                        onChange={(e) => handleItemChange(index, 'item_name', e.target.value)}
+                        className={`w-full p-1.5 text-xs border ${errors.items?.[`${index}-item_name`] ? 'border-red-500' : 'border-gray-200'} rounded outline-none`}
+                      />
+                      {errors.items?.[`${index}-item_name`] && <p className="text-[10px] text-red-500">{errors.items[`${index}-item_name`]}</p>}
+                    </div>
                   ) : (
                     <div className="text-xs font-bold">{item.item_name || '-'}</div>
                   )}
@@ -668,33 +671,45 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-gray-400 uppercase">금액(원)</label>
                     {isEditMode ? (
-                      <input 
-                        type="number"
-                        value={item.amount || ''}
-                        onKeyDown={(e) => {
-                          if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
-                            e.preventDefault();
-                          }
-                        }}
-                        onChange={(e) => handleItemChange(index, 'amount', Number(e.target.value))}
-                        className="w-full p-1.5 text-xs border border-gray-200 rounded text-right outline-none"
-                      />
+                      <div>
+                        <input 
+                          type="number"
+                          min="0"
+                          value={item.amount || ''}
+                          onKeyDown={(e) => {
+                            if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                              e.preventDefault();
+                            }
+                          }}
+                          onChange={(e) => handleItemChange(index, 'amount', Math.max(0, parseInt(e.target.value) || 0))}
+                          className={`w-full p-1.5 text-xs border ${errors.items?.[`${index}-amount`] ? 'border-red-500' : 'border-gray-200'} rounded text-right outline-none`}
+                        />
+                        {errors.items?.[`${index}-amount`] && <p className="text-[10px] text-red-500">{errors.items[`${index}-amount`]}</p>}
+                      </div>
                     ) : (
                       <div className="text-xs font-bold text-[#3530B8]">{(Number(item.amount) || 0).toLocaleString()}원</div>
                     )}
                   </div>
                     <div className="space-y-1">
                       <label className="text-[10px] font-bold text-gray-400 uppercase text-right block">영수증</label>
-                      <div className="flex justify-end">
+                      <div className="flex justify-end flex-col items-end">
                         {isEditMode ? (
-                          <label className="cursor-pointer bg-gray-100 px-2 py-1 rounded text-[10px] hover:bg-gray-200">
-                            파일 선택
-                            <input 
-                              type="file" 
-                              className="hidden" 
-                              onChange={(e) => handleItemChange(index, 'receipt', e.target.files[0])}
-                            />
-                          </label>
+                          <div className="flex flex-col items-end gap-1">
+                            <label className={`cursor-pointer bg-gray-100 px-2 py-1 rounded text-[10px] hover:bg-gray-200 ${errors.items?.[`${index}-receipt`] ? 'border border-red-500' : ''}`}>
+                              파일 선택
+                              <input 
+                                type="file" 
+                                className="hidden" 
+                                onChange={(e) => {
+                                  handleItemChange(index, 'receipt', e.target.files[0]);
+                                  e.target.value = '';
+                                }}
+                              />
+                            </label>
+                            {errors.items?.[`${index}-receipt`] && !item.receipt && !item.oriname && (
+                                <p className="text-[10px] text-red-500">{errors.items[`${index}-receipt`]}</p>
+                            )}
+                          </div>
                         ) : (
                           <div className="text-[10px] text-gray-500 truncate max-w-[80px]">{item.oriname || '-'}</div>
                         )}
