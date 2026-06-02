@@ -7,7 +7,7 @@ import VacationForm from './forms/VacationForm';
 import PaymentForm from './forms/PaymentForm';
 import GeneralForm from './forms/GeneralForm';
 import PurchaseForm from './forms/PurchaseForm';
-import { submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail, updateApproval, approveDraft } from './approvalApi';
+import { submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail, approveDraft, rejectApproval, updateVacation, updateGeneral, updatePayment, updatePurchase, deleteDoc } from './approvalApi';
 
 // 결재자 선택 모달 컴포넌트
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
@@ -78,6 +78,7 @@ const ApprovalDetail = () => {
   const [approvers, setApprovers] = useState([]);
   const [formData, setFormData] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [refresh, setRefresh] = useState(0);
   
   // 반려 관련 상태
   const [isRejecting, setIsRejecting] = useState(false);
@@ -121,7 +122,7 @@ const ApprovalDetail = () => {
     } else {
       fetchDocumentData(type, docSeq);
     }
-  }, [type, docSeq, user?.id]);
+  }, [type, docSeq, user?.id, refresh]);
 
   const fetchDocumentData = async (type, docSeq) => {
     try {
@@ -158,77 +159,81 @@ const ApprovalDetail = () => {
   };
 
   const [isSubmitClicked, setIsSubmitClicked] = useState(false);
+  const [isTempSaveClicked, setIsTempSaveClicked] = useState(false);
 
-  // [통합 전송 핸들러] 상신 vs 임시저장
+  // 상신 vs 임시저장
   const handleSave = async (actionType) => {
     const isTempSave = actionType === 'TEMP_SAVE';
     const isSubmit = actionType === 'SUBMIT';
     const isNew = !docSeq;
 
-    // 1. 유효성 검사 분기
-    setIsSubmitClicked(isSubmit);
+    // 유효성 검사 분기
+    if (isSubmit) setIsSubmitClicked(true);
+    if (isTempSave) setIsTempSaveClicked(true);
+    if (isSubmit) setIsTempSaveClicked(false);
+    if (isTempSave) setIsSubmitClicked(false);
 
-    if (isSubmit) {
+    if (!formData.title?.trim() || formData.title.length > 50) return false;
+
+    if(isSubmit){
       const isFormValid = () => {
         const today = new Date().toLocaleDateString('sv-SE');
-        if (!formData.title?.trim() || formData.title.length > 50) return false;
 
-        if (doc_type === 'VACATION') {
+        if (doc_type === 'VACATION') { 
           if (!formData.start_date || formData.start_date < today) return false;
           if (formData.vac_type === '연차') {
             if (!formData.end_date || formData.end_date < formData.start_date) return false;
           }
           if (!formData.reason?.trim() || formData.reason.length > 300) return false;
         } else if (doc_type === 'PAYMENT') {
+          if (formData.items && formData.items.length > 0) {
+            const itemsValid = formData.items.every(item => 
+              item.item_name?.trim() && 
+              item.item_name.length <= 30 &&
+              Number(item.amount) > 0 && 
+              item.receipt &&
+              (!item.note || item.note.length <= 100)
+            );
+
+            if (!itemsValid) {
+              alert("지출 항목 내 비고 외 모든 정보는 필수 입력 사항입니다.");
+              return false;
+            }
+          }
+          
           if (!formData.pay_date || !formData.pay_reason?.trim() || !formData.account_info?.trim()) return false;
           if (!formData.items || formData.items.length === 0) return false;
-          
-          const itemsValid = formData.items.every(item => 
-            item.item_name?.trim() && 
-            item.item_name.length <= 30 &&
-            Number(item.amount) > 0 && 
-            item.receipt &&
-            (!item.note || item.note.length <= 100)
-          );
-
-          if (!itemsValid) {
-            alert("지출 항목 내 비고 외 모든 정보는 필수 입력 사항입니다.");
-            return false;
-          }
-          return true;
         } else if (doc_type === 'GENERAL') {
           if (!formData.purpose?.trim() || formData.purpose.length > 300) return false;
           if (!formData.content?.trim() || formData.content.length > 1000) return false;
         } else if (doc_type === 'PURCHASE') {
-          if (!formData.purchase_date || formData.purchase_date < today) return false;
-          if (!formData.purpose?.trim() || formData.purpose.length > 300) return false;
-          if (!formData.vendor?.trim() || formData.vendor.length > 50) return false;
-          if (!formData.items || formData.items.length === 0) return false;
-          if (!formData.attachments || formData.attachments.length === 0) return false;
-
-          const itemsValid = formData.items.every(item => 
+          if (formData.items && formData.items.length > 0) {
+            const itemsValid = formData.items.every(item => 
             item.item_name?.trim() && 
             item.item_name.length <= 50 &&
             Number(item.ea) > 0 && 
             Number(item.unit_price) > 0
           );
-
           if (!itemsValid) {
             alert("구매 품목 내 비고 외 모든 정보는 필수 입력 사항입니다.");
             return false;
           }
-          return true;
+        }
+          if (!formData.purchase_date || formData.purchase_date < today) return false;
+          if (!formData.purpose?.trim() || formData.purpose.length > 300) return false;
+          if (!formData.vendor?.trim() || formData.vendor.length > 50) return false;
+          if (!formData.items || formData.items.length === 0) return false;
+          if (!formData.attachments || formData.attachments.length === 0) return false;
         }
         return true;
       };
-
       if (!isFormValid()) return;
+
       if (!approvers || approvers.length === 0) {
         alert('최소 한 명 이상의 결재자를 추가해야 합니다.');
         return;
       }
     }
-
     // 2. 데이터 가공 및 Payload 조립
     try {
       const { referrers, title, ...restOfData } = formData;
@@ -244,74 +249,89 @@ const ApprovalDetail = () => {
         : restOfData;
 
       const submitPayload = {
+        ...finalDocData,
         title: formData.title,
         doc_type: doc_type,
         users_id: user?.id,
         status: isTempSave ? 'TEMP' : 'DRAFT',
         is_temp: isTempSave ? 1 : 0,
-        // actionType: actionType, // 백엔드 분기 처리용/
         approvers: approvers.map((app, index) => ({
           users_id: app.id || app.users_id,
           step_order: index + 1
         })),
         referrers: (referrers || []).map(ref => ({
           users_id: ref.id || ref.users_id
-        })),
-        ...finalDocData
+        }))
       };
 
       let response;
 
-      // 3. API 호출 (신규: POST / 임시저장 재작성: PUT)
-      if (isNew) {
-        if (doc_type === 'VACATION') response = await submitVacation(submitPayload);
-        else if (doc_type === 'GENERAL') response = await submitGeneral(submitPayload);
-        else if (doc_type === 'PAYMENT' || doc_type === 'PURCHASE') {
-          const formDataObj = new FormData();
-          if (doc_type === 'PAYMENT') {
-            submitPayload.total_amount = (formData.items || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+      // 신규: POST / 임시저장 재작성: PUT
+      if (doc_type === 'VACATION') {
+        response = await (isNew ? submitVacation(submitPayload) : updateVacation(docSeq, submitPayload));
+      } else if (doc_type === 'GENERAL') {
+        response = await (isNew ? submitGeneral(submitPayload) : updateGeneral(docSeq, submitPayload));
+      } else if (doc_type === 'PAYMENT') {
+        const formDataObj = new FormData();
+        const processedItems = (formData.items || []).map(({receipt, ...rest}) => rest);
+
+        const total_amount = (formData.items || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+        const dto = { ...submitPayload, items: processedItems, total_amount };
+
+        formDataObj.append("dto", new Blob([JSON.stringify(dto)], { type: "application/json" }));
+        // 1:1 인덱스, 새 파일 없는 item은 빈 Blob으로 채움
+        (formData.items || []).forEach(item => {
+          if (item.receipt instanceof File){
+            formDataObj.append("files", item.receipt, item.receipt.name);
+          } else {
+            formDataObj.append("files", new Blob([]), ""); // 기존 파일 유지
           }
-          formDataObj.append("dto", new Blob([JSON.stringify(submitPayload)], { type: "application/json" }));
-          const files = doc_type === 'PAYMENT' ? formData.items?.map(i => i.receipt) : formData.attachments;
-          files?.forEach(file => { if (file instanceof File) formDataObj.append("files", file); });
-          response = (doc_type === 'PAYMENT') ? await submitPayment(formDataObj) : await submitPurchase(formDataObj);
-        }
-      } else {
-        // 임시 저장된 문서 수정 (PUT /api/approval/update/${docSeq})
-        if (doc_type === 'PAYMENT' || doc_type === 'PURCHASE') {
-          const formDataObj = new FormData();
-          if (doc_type === 'PAYMENT') {
-            submitPayload.total_amount = (formData.items || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-          }
-          formDataObj.append("dto", new Blob([JSON.stringify(submitPayload)], { type: "application/json" }));
-          const files = doc_type === 'PAYMENT' ? formData.items?.map(i => i.receipt) : formData.attachments;
-          files?.forEach(file => { if (file instanceof File) formDataObj.append("files", file); });
-          response = await updateApproval(docSeq, formDataObj);
-        } else {
-          response = await updateApproval(docSeq, submitPayload);
-        }
+        });
+        
+        response = await (isNew ? submitPayment(formDataObj) : updatePayment(docSeq, formDataObj));
+      } else if (doc_type === 'PURCHASE') {
+        const formDataObj = new FormData();
+        const newFiles = (formData.attachments || []).filter(f => f instanceof File);
+        const keptAttachments = (formData.attachments || [])
+          .filter(f => !(f instanceof File))
+          .map(({oriname, sysname}) => ({oriname, sysname}));
+
+        // 백엔드가 기존 데이터를 DELETE 하므로, 유지할 기존 파일 정보를 DTO에 포함
+        const dto = { ...submitPayload, attachments: keptAttachments };
+
+        formDataObj.append("dto", new Blob([JSON.stringify(dto)], { type: "application/json" }));
+        newFiles.forEach(file => formDataObj.append("files", file, file.name));
+
+        response = await (isNew ? submitPurchase(formDataObj) : updatePurchase(docSeq, formDataObj));
       }
 
       if (response && (response.status === 200 || response.status === 201 || response.data)) {
-        alert(isTempSave ? '임시저장이 완료되었습니다.' : '결재 문서가 성공적으로 상신되었습니다.');
-        navigate('/approval');
+        alert(isTempSave ? '임시저장이 완료되었습니다.' : '기안이 성공적으로 상신되었습니다.');
+        if(isTempSave){
+          navigate('/approvalTemp');
+        }else {
+          navigate('/approvalMypage');
+        }
       }
     } catch (error) {
-      console.error('문서 처리 중 에러 발생:', error);
-      alert('처리 중 오류가 발생했습니다.');
+      if(error.response && error.response.data){
+        alert(error.response.data);
+      }else{
+        alert("기안 문서 처리 중 오류가 발생했습니다.");
+      }
     }
   };
 
   // 버튼 액션
   const handleAction = async (actionType, payload) => {
     const isTempSave = actionType === 'TEMP_SAVE';
-
+    
     if (actionType === 'APPROVE') {
-      if (!window.confirm('문서를 승인하시겠습니까?')) return;
+      if (!window.confirm('기안을 승인하시겠습니까?')) return;
       try {
-        const response = await approveDraft(docSeq, user?.id);
-        alert('결재 승인이 완료되었습니다.');
-        navigate('/approvalInbox');
+        const response = await approveDraft(docSeq, doc_type);
+        alert('승인이 완료되었습니다.');
+        setRefresh(prev => prev + 1);
       } catch (error) {
         alert('승인 처리 중 오류가 발생했습니다.');
       }
@@ -323,12 +343,12 @@ const ApprovalDetail = () => {
         setRejectError(true);
         return;
       }
-      if (!window.confirm('문서를 반려하시겠습니까?')) return;
+      if (!window.confirm('기안을 반려하시겠습니까?')) return;
       try {
-        // API 연동 (상세 구현은 백엔드 스펙에 맞게 조정 필요)
-        // const response = await rejectApproval(docSeq, { reject_reason: payload });
-        alert('결재 반려가 완료되었습니다.');
-        navigate('/approval');
+        console.log(rejectReason);
+        const response = await rejectApproval(docSeq, rejectReason);
+        alert('반려가 완료되었습니다.');
+        setRefresh(prev => prev + 1);
       } catch (error) {
         alert('반려 처리 중 오류가 발생했습니다.');
       }
@@ -338,9 +358,9 @@ const ApprovalDetail = () => {
     if (actionType === 'SUBMIT_CANCEL') {
       if (!window.confirm('상신을 취소하시겠습니까?')) return;
       try {
-        // API 연동
+        const response = await deleteDoc(docSeq, doc_type);
         alert('상신 취소가 완료되었습니다.');
-        navigate('/approval');
+        navigate('/approvalMypage');
       } catch (error) {
         alert('상신 취소 중 오류가 발생했습니다.');
       }
@@ -377,7 +397,8 @@ const ApprovalDetail = () => {
       onChange: setFormData,
       mode: mode,
       user: user,
-      isSubmitClicked: isSubmitClicked
+      isSubmitClicked: isSubmitClicked,
+      isTempSaveClicked: isTempSaveClicked
     };
 
     switch (doc_type) {
@@ -462,7 +483,7 @@ const ApprovalDetail = () => {
                     setRejectReason(e.target.value);
                     if (e.target.value.trim()) setRejectError(false);
                   }}
-                  placeholder="반려 사유를 상세히 입력해주세요."
+                  placeholder="반려 사유를 입력해주세요."
                   autoFocus
                 />
                 {rejectError && (
