@@ -369,6 +369,11 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                             type="number"
                             min="0"
                             value={item.amount || ''}
+                            onKeyDown={(e) => {
+                              if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
+                                e.preventDefault();
+                              }
+                            }}
                             onChange={(e) => handleItemChange(index, 'amount', Math.max(0, Number(e.target.value)))}
                             className={`w-full p-1 bg-white border ${errors.items?.[`${index}-amount`] ? 'border-red-500' : 'border-gray-300'} rounded outline-none focus:border-[#3530B8] text-right`}
                           />
@@ -589,11 +594,14 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
               <h2 className="text-xs font-bold text-gray-800">지출 목적</h2>
             </div>
             {isEditMode ? (
-              <textarea 
-                value={data.pay_reason || ''}
-                onChange={(e) => handleFieldChange('pay_reason', e.target.value)}
-                className="w-full h-20 p-2.5 text-xs border border-gray-200 rounded-lg outline-none"
-              ></textarea>
+              <div className="space-y-1">
+                <textarea 
+                  value={data.pay_reason || ''}
+                  onChange={(e) => handleFieldChange('pay_reason', e.target.value)}
+                  className={`w-full h-20 p-2.5 text-xs border ${errors.pay_reason ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none`}
+                ></textarea>
+                {errors.pay_reason && <p className="text-[10px] text-red-500">{errors.pay_reason}</p>}
+              </div>
             ) : (
               <div className="p-2.5 bg-gray-50 rounded-lg text-xs border border-gray-100 min-h-[5rem] whitespace-pre-wrap">{data.pay_reason || '-'}</div>
             )}
@@ -604,11 +612,14 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
               <h2 className="text-xs font-bold text-gray-800">계좌 정보</h2>
             </div>
             {isEditMode ? (
-              <textarea 
-                value={data.account_info || ''}
-                onChange={(e) => handleFieldChange('account_info', e.target.value)}
-                className="w-full h-20 p-2.5 text-xs border border-gray-200 rounded-lg outline-none"
-              ></textarea>
+              <div className="space-y-1">
+                <textarea 
+                  value={data.account_info || ''}
+                  onChange={(e) => handleFieldChange('account_info', e.target.value)}
+                  className={`w-full h-20 p-2.5 text-xs border ${errors.account_info ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none`}
+                ></textarea>
+                {errors.account_info && <p className="text-[10px] text-red-500">{errors.account_info}</p>}
+              </div>
             ) : (
               <div className="p-2.5 bg-gray-50 rounded-lg text-xs border border-gray-100 min-h-[5rem] whitespace-pre-wrap">{data.account_info || '-'}</div>
             )}
@@ -640,33 +651,38 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                   >✕</button>
                 )}
                 <div className="grid grid-cols-1 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase">항목명</label>
+                  {isEditMode ? (
+                    <input 
+                      type="text"
+                      value={item.item_name || ''}
+                      onChange={(e) => handleItemChange(index, 'item_name', e.target.value)}
+                      className="w-full p-1.5 text-xs border border-gray-200 rounded outline-none"
+                    />
+                  ) : (
+                    <div className="text-xs font-bold">{item.item_name || '-'}</div>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase">항목명</label>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase">금액(원)</label>
                     {isEditMode ? (
                       <input 
-                        type="text"
-                        value={item.item_name || ''}
-                        onChange={(e) => handleItemChange(index, 'item_name', e.target.value)}
-                        className="w-full p-1.5 text-xs border border-gray-200 rounded outline-none"
+                        type="number"
+                        value={item.amount || ''}
+                        onKeyDown={(e) => {
+                          if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
+                            e.preventDefault();
+                          }
+                        }}
+                        onChange={(e) => handleItemChange(index, 'amount', Number(e.target.value))}
+                        className="w-full p-1.5 text-xs border border-gray-200 rounded text-right outline-none"
                       />
                     ) : (
-                      <div className="text-xs font-bold">{item.item_name || '-'}</div>
+                      <div className="text-xs font-bold text-[#3530B8]">{(Number(item.amount) || 0).toLocaleString()}원</div>
                     )}
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase">금액(원)</label>
-                      {isEditMode ? (
-                        <input 
-                          type="number"
-                          value={item.amount || ''}
-                          onChange={(e) => handleItemChange(index, 'amount', Number(e.target.value))}
-                          className="w-full p-1.5 text-xs border border-gray-200 rounded text-right outline-none"
-                        />
-                      ) : (
-                        <div className="text-xs font-bold text-[#3530B8]">{(Number(item.amount) || 0).toLocaleString()}원</div>
-                      )}
-                    </div>
                     <div className="space-y-1">
                       <label className="text-[10px] font-bold text-gray-400 uppercase text-right block">영수증</label>
                       <div className="flex justify-end">

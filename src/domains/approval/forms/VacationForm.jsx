@@ -401,13 +401,14 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
               <label className="text-[10px] font-bold text-gray-400">신청 기간</label>
               {isEditMode ? (
                 <div className="flex flex-col gap-2">
-                  <div className="relative">
+                  <div className="relative space-y-1">
                     <input 
                       type="text" readOnly value={data.start_date || ''} 
                       onClick={() => setIsStartCalendarOpen(!isStartCalendarOpen)} 
                       placeholder="시작일"
-                      className="w-full p-2 text-xs border border-gray-200 rounded bg-gray-50 outline-none"
+                      className={`w-full p-2 text-xs border ${errors.start_date ? 'border-red-500' : 'border-gray-200'} rounded bg-gray-50 outline-none`}
                     />
+                    {errors.start_date && <p className="text-[10px] text-red-500">{errors.start_date}</p>}
                     {isStartCalendarOpen && (
                       <div className="absolute z-50 left-0 w-full">
                         <Calendar value={data.start_date} onChange={(d) => { handleFieldChange('start_date', d); setIsStartCalendarOpen(false); }} onClose={() => setIsStartCalendarOpen(false)} />
@@ -415,13 +416,14 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                     )}
                   </div>
                   {data.vac_type === '연차' && (
-                    <div className="relative">
+                    <div className="relative space-y-1">
                       <input 
                         type="text" readOnly value={data.end_date || ''} 
                         onClick={() => setIsEndCalendarOpen(!isEndCalendarOpen)} 
                         placeholder="종료일"
-                        className="w-full p-2 text-xs border border-gray-200 rounded bg-gray-50 outline-none"
+                        className={`w-full p-2 text-xs border ${errors.end_date ? 'border-red-500' : 'border-gray-200'} rounded bg-gray-50 outline-none`}
                       />
+                      {errors.end_date && <p className="text-[10px] text-red-500">{errors.end_date}</p>}
                       {isEndCalendarOpen && (
                         <div className="absolute z-50 left-0 w-full">
                           <Calendar value={data.end_date} onChange={(d) => { handleFieldChange('end_date', d); setIsEndCalendarOpen(false); }} onClose={() => setIsEndCalendarOpen(false)} />
@@ -445,11 +447,14 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-gray-400">신청 사유</label>
               {isEditMode ? (
-                <textarea 
-                  value={data.reason || ''}
-                  onChange={(e) => handleFieldChange('reason', e.target.value)}
-                  className="w-full h-24 p-2 text-xs border border-gray-200 rounded bg-gray-50 resize-none outline-none"
-                ></textarea>
+                <div className="space-y-1">
+                  <textarea 
+                    value={data.reason || ''}
+                    onChange={(e) => handleFieldChange('reason', e.target.value)}
+                    className={`w-full h-24 p-2 text-xs border ${errors.reason ? 'border-red-500' : 'border-gray-200'} rounded bg-gray-50 resize-none outline-none`}
+                  ></textarea>
+                  {errors.reason && <p className="text-[10px] text-red-500">{errors.reason}</p>}
+                </div>
               ) : (
                 <div className="text-xs text-gray-700 whitespace-pre-wrap min-h-[4rem]">{data.reason}</div>
               )}

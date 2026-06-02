@@ -379,20 +379,25 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                         )}
                       </td>
                       <td className="p-2 border-r border-gray-200">
-                        {isEditMode ? (
-                          <div>
-                            <input 
-                              type="number"
-                              value={item.unit_price || ''}
-                              min="0"
-                              onChange={(e) => handleItemChange(index, 'unit_price', Math.max(0, Number(e.target.value)))}
-                              className={`w-full p-1 bg-white border ${errors.items?.[`${index}-unit_price`] ? 'border-red-500' : 'border-gray-300'} rounded outline-none focus:border-[#3530B8] text-right`}
-                            />
-                            {errors.items?.[`${index}-unit_price`] && <p className="text-[9px] text-red-500 mt-0.5">{errors.items[`${index}-unit_price`]}</p>}
-                          </div>
-                        ) : (
-                          <div className="text-right">{(Number(item.unit_price) || 0).toLocaleString()}</div>
-                        )}
+                      {isEditMode ? (
+                        <div>
+                          <input 
+                            type="number"
+                            value={item.unit_price || ''}
+                            min="0"
+                            onKeyDown={(e) => {
+                              if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
+                                e.preventDefault();
+                              }
+                            }}
+                            onChange={(e) => handleItemChange(index, 'unit_price', Math.max(0, Number(e.target.value)))}
+                            className={`w-full p-1 bg-white border ${errors.items?.[`${index}-unit_price`] ? 'border-red-500' : 'border-gray-300'} rounded outline-none focus:border-[#3530B8] text-right`}
+                          />
+                          {errors.items?.[`${index}-unit_price`] && <p className="text-[9px] text-red-500 mt-0.5">{errors.items[`${index}-unit_price`]}</p>}
+                        </div>
+                      ) : (
+                        <div className="text-right">{(Number(item.unit_price) || 0).toLocaleString()}</div>
+                      )}
                       </td>
                       <td className="p-2 border-r border-gray-200 text-right bg-gray-50/30">
                         {itemTotal.toLocaleString()}
@@ -655,12 +660,15 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                     <div className="space-y-1">
                       <label className="text-[10px] font-bold text-gray-400 uppercase">품목명</label>
                       {isEditMode ? (
-                        <input 
-                          type="text"
-                          value={item.item_name || ''}
-                          onChange={(e) => handleItemChange(index, 'item_name', e.target.value)}
-                          className="w-full p-1.5 text-xs border border-gray-200 rounded outline-none"
-                        />
+                        <div className="space-y-1">
+                          <input 
+                            type="text"
+                            value={item.item_name || ''}
+                            onChange={(e) => handleItemChange(index, 'item_name', e.target.value)}
+                            className={`w-full p-1.5 text-xs border ${errors.items?.[`${index}-item_name`] ? 'border-red-500' : 'border-gray-200'} rounded outline-none`}
+                          />
+                          {errors.items?.[`${index}-item_name`] && <p className="text-[10px] text-red-500">{errors.items[`${index}-item_name`]}</p>}
+                        </div>
                       ) : (
                         <div className="text-xs font-bold">{item.item_name || '-'}</div>
                       )}
@@ -669,12 +677,15 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                       <div className="space-y-1">
                         <label className="text-[10px] font-bold text-gray-400 uppercase">수량</label>
                         {isEditMode ? (
-                          <input 
-                            type="number"
-                            value={item.ea || ''}
-                            onChange={(e) => handleItemChange(index, 'ea', Number(e.target.value))}
-                            className="w-full p-1.5 text-xs border border-gray-200 rounded text-center outline-none"
-                          />
+                          <div className="space-y-1">
+                            <input 
+                              type="number"
+                              value={item.ea || ''}
+                              onChange={(e) => handleItemChange(index, 'ea', Number(e.target.value))}
+                              className={`w-full p-1.5 text-xs border ${errors.items?.[`${index}-ea`] ? 'border-red-500' : 'border-gray-200'} rounded text-center outline-none`}
+                            />
+                            {errors.items?.[`${index}-ea`] && <p className="text-[10px] text-red-500">{errors.items[`${index}-ea`]}</p>}
+                          </div>
                         ) : (
                           <div className="text-xs font-bold">{item.ea}개</div>
                         )}
@@ -682,12 +693,20 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                       <div className="space-y-1 mt-1">
                         <label className="text-[10px] font-bold text-gray-400 uppercase text-right block">단가(원)</label>
                         {isEditMode ? (
-                          <input 
-                            type="number"
-                            value={item.unit_price || ''}
-                            onChange={(e) => handleItemChange(index, 'unit_price', Number(e.target.value))}
-                            className="w-full p-1.5 text-xs border border-gray-200 rounded text-right outline-none"
-                          />
+                          <div className="space-y-1">
+                            <input 
+                              type="number"
+                              value={item.unit_price || ''}
+                              onKeyDown={(e) => {
+                                if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
+                                  e.preventDefault();
+                                }
+                              }}
+                              onChange={(e) => handleItemChange(index, 'unit_price', Number(e.target.value))}
+                              className={`w-full p-1.5 text-xs border ${errors.items?.[`${index}-unit_price`] ? 'border-red-500' : 'border-gray-200'} rounded text-right outline-none`}
+                            />
+                            {errors.items?.[`${index}-unit_price`] && <p className="text-[10px] text-red-500">{errors.items[`${index}-unit_price`]}</p>}
+                          </div>
                         ) : (
                           <div className="text-xs font-bold text-right">{(Number(item.unit_price) || 0).toLocaleString()}</div>
                         )}
@@ -752,6 +771,9 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                 ))}
                 {!data.attachments?.length && (
                   <p className="text-[11px] text-gray-400 text-center">첨부된 파일이 없습니다.</p>
+                )}
+                {errors.attachments && (!data.attachments || data.attachments.length === 0) && (
+                    <p className="text-[10px] text-red-500 text-center">{errors.attachments}</p>
                 )}
               </div>
             </div>

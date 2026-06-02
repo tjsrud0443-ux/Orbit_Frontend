@@ -178,6 +178,7 @@ const ApprovalDetail = () => {
     if(isSubmit){
       const isFormValid = () => {
         const today = new Date().toLocaleDateString('sv-SE');
+        const isMobile = window.innerWidth < 768;
 
         if (doc_type === 'VACATION') { 
           if (!formData.start_date || formData.start_date < today) return false;
@@ -186,6 +187,14 @@ const ApprovalDetail = () => {
           }
           if (!formData.reason?.trim() || formData.reason.length > 300) return false;
         } else if (doc_type === 'PAYMENT') {
+          // 모바일 필수 입력 체크
+          if (isMobile) {
+            if (!formData.pay_date || !formData.pay_reason?.trim() || !formData.account_info?.trim()) {
+              alert("필수 항목을 입력해 주세요.");
+              return false;
+            }
+          }
+          
           if (formData.items && formData.items.length > 0) {
             const itemsValid = formData.items.every(item => 
               item.item_name?.trim() && 
@@ -207,6 +216,14 @@ const ApprovalDetail = () => {
           if (!formData.purpose?.trim() || formData.purpose.length > 300) return false;
           if (!formData.content?.trim() || formData.content.length > 1000) return false;
         } else if (doc_type === 'PURCHASE') {
+          // 모바일 필수 입력 체크
+          if (isMobile) {
+            if (!formData.purchase_date || !formData.purpose?.trim() || !formData.vendor?.trim() || (!formData.attachments || formData.attachments.length === 0)) {
+              alert("필수 항목을 입력해 주세요.");
+              return false;
+            }
+          }
+
           if (formData.items && formData.items.length > 0) {
             const itemsValid = formData.items.every(item => 
             item.item_name?.trim() && 
