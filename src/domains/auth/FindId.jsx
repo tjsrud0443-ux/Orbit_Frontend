@@ -31,7 +31,7 @@ const FindId = () => {
         {/* Left Side: Image Area */}
         <div className="w-full h-1/3 md:h-full md:w-1/2 bg-gradient-to-br from-[#DDE8FF] via-[#F0F4FF] to-[#FFFFFF] p-4 md:p-8 flex flex-col items-center justify-center">
             <div className="w-45 h-45 md:w-90 md:h-90 bg-white/60 rounded-2xl flex items-center justify-center border-2 border-dashed border-[#DDE8FF]">
-                <img src={IMAGES.LOGIN_LOGO} className="max-h-50 md:max-h-100 object-contain rounded-2xl" />
+                <img src={IMAGES.FIND_ACCOUNT} className="max-h-50 md:max-h-100 object-contain rounded-2xl" />
             </div>
         </div>
 
@@ -62,7 +62,7 @@ const FindId = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="이메일을 입력하세요"
+                  placeholder="가입 시 등록한 이메일"
                   className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3530B8]"
                 />
                 <button
@@ -98,13 +98,21 @@ const FindId = () => {
             )}
           </div>
 
-          {/* Back Button */}
-          <button
-            onClick={() => navigate("/")}
-            className="mt-8 w-full border border-gray-200 text-gray-600 font-bold py-2.5 rounded-xl hover:bg-gray-100 transition-all"
-          >
-            뒤로가기
-          </button>
+          {/* Navigation Buttons */}
+          <div className="flex gap-3 mt-8">
+            <button
+              onClick={() => navigate("/")}
+              className="flex-1 border border-gray-200 text-gray-600 font-bold py-2.5 rounded-xl hover:bg-gray-100 transition-all"
+            >
+              로그인하러 가기
+            </button>
+            <button
+              onClick={() => navigate("/findPw")}
+              className="flex-1 border border-gray-200 text-gray-600 font-bold py-2.5 rounded-xl hover:bg-gray-100 transition-all"
+            >
+              비밀번호 찾기
+            </button>
+          </div>
         </div>
       </div>
     </div>
