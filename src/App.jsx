@@ -33,6 +33,7 @@ import BoardWrite from './domains/board/BoardWrite';
 import BoardDetail from './domains/board/BoardDetail';
 import AiChat from './domains/aiChat/AiChat';
 import MyPage from './domains/mypage/MyPage';
+import MyPageEdit from './domains/mypage/MyPageEdit';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import ApprovalDetail from './domains/approval/ApprovalDetail';
 
@@ -50,6 +51,7 @@ function App() {
         {/* 레이아웃(사이드바+헤더) 내부 페이지 */}
         <Route element={<Layout />}>
           <Route path="/mypage" element={<MyPage />} />
+          <Route path="/mypage/edit" element={<MyPageEdit />} />
           <Route path="/main" element={<Main />} />
           <Route path="/departments" element={<Departments />} />
 
