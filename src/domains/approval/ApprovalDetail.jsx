@@ -191,7 +191,7 @@ const ApprovalDetail = () => {
               item.item_name?.trim() && 
               item.item_name.length <= 30 &&
               Number(item.amount) > 0 && 
-              item.receipt &&
+              (item.receipt instanceof File || item.oriname) &&
               (!item.note || item.note.length <= 100)
             );
 

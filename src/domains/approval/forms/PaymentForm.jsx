@@ -32,11 +32,11 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
       
       const itemErrors = {};
       data.items?.forEach((item, index) => {
-        if (!item.item_name?.trim()) itemErrors[`${index}-item_name`] = '품목명을 입력해주세요.';
+        if (!item.item_name?.trim()) itemErrors[`${index}-item_name`] = '항목명을 입력해주세요.';
         else if (item.item_name.length > 30) itemErrors[`${index}-item_name`] = '글자 수 초과 (30자 이하)';
         
         if (!item.amount || item.amount <= 0) itemErrors[`${index}-amount`] = '금액을 입력해주세요.';
-        if (!item.receipt) itemErrors[`${index}-receipt`] = '영수증을 첨부해주세요.';
+        if (!item.receipt && !item.oriname) itemErrors[`${index}-receipt`] = '영수증을 첨부해주세요.';
         
         if (item.note && item.note.length > 100) itemErrors[`${index}-note`] = '글자 수 초과 (100자 이하)';
       });
@@ -100,7 +100,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
       if (!value) itemErrors[`${index}-receipt`] = '영수증을 첨부해주세요.';
       else delete itemErrors[`${index}-receipt`];
     } else if (!value && (field === 'item_name' || field === 'amount')) {
-      itemErrors[`${index}-${field}`] = field === 'item_name' ? '품목명을 입력해주세요.' : '금액을 입력해주세요.';
+      itemErrors[`${index}-${field}`] = field === 'item_name' ? '항목명을 입력해주세요.' : '금액을 입력해주세요.';
     } else {
       if (field === 'item_name' && value.length > 30) itemErrors[`${index}-item_name`] = '글자 수 초과 (30자 이하)';
       else if (field === 'note' && value.length > 100) itemErrors[`${index}-note`] = '글자 수 초과 (100자 이하)';
@@ -124,26 +124,28 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
   };
 
   const handleRemoveRow = (index) => {
+    const currentItems = data.items || [];
+    if (currentItems.length <= 1) {
+      setErrors(err => ({ ...err, itemMin: '최소 한 개의 항목은 있어야 합니다.' }));
+      setTimeout(() => setErrors(err => ({ ...err, itemMin: '' })), 3000);
+      return prev;
+    }
+    setErrors(err => {
+      const itemErrors = { ...(err.items || {}) };
+      const newItemErrors = {};
+      Object.keys(itemErrors).forEach(key => {
+        const [idxStr, f] = key.split('-');
+        const numericIdx = parseInt(idxStr);
+        if (numericIdx < index) newItemErrors[key] = itemErrors[key];
+        else if (numericIdx > index) newItemErrors[`${numericIdx - 1}-${f}`] = itemErrors[key];
+      });
+      return { ...err, items: newItemErrors };
+    });
+
     onChange(prev => {
       const currentItems = prev.items || [];
-      if (currentItems.length <= 1) {
-        setErrors(err => ({ ...err, itemMin: '최소 한 개의 항목은 있어야 합니다.' }));
-        setTimeout(() => setErrors(err => ({ ...err, itemMin: '' })), 3000);
-        return prev;
-      }
       const filteredItems = currentItems.filter((_, i) => i !== index);
       const reorderedItems = filteredItems.map((item, idx) => ({ ...item, id: idx + 1 }));
-      setErrors(err => {
-        const itemErrors = { ...(err.items || {}) };
-        const newItemErrors = {};
-        Object.keys(itemErrors).forEach(key => {
-          const [idxStr, f] = key.split('-');
-          const numericIdx = parseInt(idxStr);
-          if (numericIdx < index) newItemErrors[key] = itemErrors[key];
-          else if (numericIdx > index) newItemErrors[`${numericIdx - 1}-${f}`] = itemErrors[key];
-        });
-        return { ...err, items: newItemErrors };
-      });
       return { ...prev, items: reorderedItems };
     });
   };
