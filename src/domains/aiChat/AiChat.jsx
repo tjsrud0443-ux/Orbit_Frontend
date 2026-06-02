@@ -13,22 +13,19 @@ import {
   faChevronUp
 } from '@fortawesome/free-solid-svg-icons';
 import { IMAGES } from '../../images/images';
-import { inputMsg } from './aiChatApi';
+import { getDetailChat, inputMsg, sideChatTitleList } from './aiChatApi';
 import { getGroup } from '../departments/departmentsApi';
 
 const AiChat = () => {
   // --- 1. States ---
   const [messages, setMessages] = useState([
-    { id: 1, sender: 'AI', text: '안녕하세요! Orbit 사내 업무지원 AI 비서입니다. 인사, 규정, 복리후생 등 궁금하신 내용을 질문해주세요.', isTyping: false }
+    { id: Date.now(), role: 'AI', content: '안녕하세요! Orbit 사내 업무지원 AI 비서입니다. 인사, 규정, 복리후생 등 궁금하신 내용을 질문해주세요.', isTyping: false }
   ]);
 
   // 🔥 구조 변경: input 상태는 단순 문자열(String)로 관리하는 것이 정석입니다!
   const [input, setInput] = useState("");
   const [currentChatSeq, setCurrentChatSeq] = useState(null);
-  const [chatHistory, setChatHistory] = useState([
-    { id: 1, title: '연차 신청 방법 문의' },
-    { id: 2, title: '프로젝트 A 일정 관련' }
-  ]);
+  const [chatHistory, setChatHistory] = useState([]);
   const [activeMenuId, setActiveMenuId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -67,6 +64,12 @@ const AiChat = () => {
     });
   }, []);
 
+  useEffect(() => {
+    sideChatTitleList().then(resp => {
+      setChatHistory(resp.data);
+    })
+  }, []);
+
   // --- 3. Handlers ---
   const handleDelete = () => {
     if (deleteTarget) {
@@ -76,6 +79,20 @@ const AiChat = () => {
     }
   };
 
+  const handleNewChat = () => {
+    setCurrentChatSeq(null);
+    setMessages([
+      {
+        id: Date.now(),
+        role: 'AI',
+        content: '안녕하세요! Orbit 사내 업무지원 AI 비서입니다. 인사, 규정, 복리후생 등 궁금하신 내용을 질문해주세요.',
+        isTyping: false
+      }
+    ]);
+
+    setIsMobileSidebarOpen(false)
+  }
+
   // 🔥 백엔드 릴레이션 매핑의 핵심 핸들러 리팩토링
   const handleSend = () => {
     if (!input.trim()) return;
@@ -84,13 +101,13 @@ const AiChat = () => {
     const userMessageId = Date.now();
     const newUserMessage = {
       id: userMessageId,
-      sender: 'USER',
-      text: input.trim()
+      role: 'USER',
+      content: input.trim()
     };
 
     // 2. AI가 답변을 생각하는 동안 보여줄 임시 '타이핑 중...' 말풍선 추가
     const aiMessageId = userMessageId + 1;
-    setMessages(prev => [...prev, newUserMessage, { id: aiMessageId, sender: 'AI', text: '데이터를 분석하고 있습니다...', isTyping: true }]);
+    setMessages(prev => [...prev, newUserMessage, { id: aiMessageId, role: 'AI', content: '데이터를 분석하고 있습니다...', isTyping: true }]);
 
     // 3. 백엔드로 보낼 파라미터 구조 정의 (스프링 @RequestParam 스펙 매칭)
     const chatData = {
@@ -107,6 +124,7 @@ const AiChat = () => {
       .then(resp => {
         // 백엔드에서 받아온 찐 제미나이 텍스트 답변 데이터 (resp.data)
         const aiResponseText = resp.data.aiAnswer;
+
         if (!currentChatSeq) {
           setCurrentChatSeq(resp.data.chat_seq);
         }
@@ -116,61 +134,85 @@ const AiChat = () => {
         // 5. '타이핑 중...' 이었던 봇의 말풍선 내용을 찐 답변 내용으로 변경하고 타이핑 효과 가동
         setMessages(prev => prev.map(msg => {
           if (msg.id === aiMessageId) {
-            return { ...msg, text: "", isTyping: true, showInquiry: needInquiryButton };
+            return { ...msg, content: "", isTyping: true, showInquiry: needInquiryButton };
           }
           return msg;
         }));
 
         // 텍스트가 부드럽게 출력되는 타이핑 연출기 실행
-        typeEffect(aiMessageId, aiResponseText);
+        typeEffect(aiMessageId, aiResponseText, needInquiryButton);
       })
       .catch(err => {
         console.error("AI 통신 실패:", err);
         setMessages(prev => prev.map(msg => {
           if (msg.id === aiMessageId) {
-            return { ...msg, text: "서버와의 연결이 원활하지 않습니다. 잠시 후 다시 시도해주세요.", isTyping: false };
+            return { ...msg, content: "서버와의 연결이 원활하지 않습니다. 잠시 후 다시 시도해주세요.", isTyping: false };
           }
           return msg;
         }));
       });
   };
 
-  const typeEffect = (id, fullText) => {
+  const detailChat = (chat_seq) => {
+    getDetailChat(chat_seq).then(resp => {
+      setCurrentChatSeq(chat_seq);
+      setMessages(resp.data);
+    })
+      .catch(err => {
+        console.error("과거 대화 이력 로딩 실패", err);
+      });
+  };
+
+
+  const typeEffect = (id, fullText, showInquiry) => {
     let i = 0;
     const interval = setInterval(() => {
       setMessages(prev => prev.map(msg => {
         if (msg.id === id) {
           return {
             ...msg,
-            text: fullText.substring(0, i),
-            isTyping: i < fullText.length
+            content: fullText.substring(0, i),
+            isTyping: true
           };
         }
         return msg;
       }));
       i++;
-      if (i > fullText.length) clearInterval(interval);
-    }, 15); // 출력 속도 최적화
+      if (i > fullText.length) {
+        clearInterval(interval);
+        setMessages(prev => prev.map(msg => {
+          if (msg.id === id) {
+            return {
+              ...msg,
+              content: fullText,      // 찐 최종 텍스트 강제 고정
+              isTyping: false,     // 타이핑 종료 마크 
+              showInquiry: showInquiry // 관리자 문의 버튼 유무 바인딩
+            };
+          }
+          return msg;
+        }));
+      }
+    }, 10); // 타다닥 박히는 부드러운 속도감
   };
 
   // --- Sidebar Component ---
   const SidebarContent = () => (
     <div className="flex flex-col h-full p-6 bg-[#f4f7fc]">
-      <button className="w-full bg-[#3530B8] text-white rounded-xl py-3 font-bold text-sm mb-8 hover:bg-[#2a2594] transition-all">
+      <button onClick={handleNewChat} className="w-full bg-[#3530B8] text-white rounded-xl py-3 font-bold text-sm mb-8 hover:bg-[#2a2594] transition-all">
         <FontAwesomeIcon icon={faPlus} className="mr-2" /> 새 대화 시작
       </button>
       <div className="flex-1 overflow-y-auto">
         <h3 className="text-xs font-bold text-[#8a92a6] uppercase mb-4 px-2">최근 대화</h3>
         {chatHistory.map(chat => (
-          <div key={chat.id} className="relative group flex items-center justify-between p-3 rounded-lg hover:bg-white transition-all cursor-pointer">
-            <span className="text-sm font-medium text-[#1a1c3d] truncate">{chat.title}</span>
+          <div key={chat.chat_seq} className="relative group flex items-center justify-between p-3 rounded-lg hover:bg-white transition-all cursor-pointer">
+            <span onClick={() => detailChat(chat.chat_seq)} className="text-sm font-medium text-[#1a1c3d] truncate">{chat.title}</span>
             <button
-              onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === chat.id ? null : chat.id); }}
+              onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === chat.chat_seq ? null : chat.chat_seq); }}
               className="md:opacity-0 md:group-hover:opacity-100 text-[#8a92a6]"
             >
               <FontAwesomeIcon icon={faEllipsisV} />
             </button>
-            {activeMenuId === chat.id && (
+            {activeMenuId === chat.chat_seq && (
               <div className="absolute right-0 top-10 w-32 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-20">
                 <button onClick={() => { setDeleteTarget(chat); setActiveMenuId(null); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
                   <FontAwesomeIcon icon={faTrashCan} /> 삭제
@@ -213,10 +255,10 @@ const AiChat = () => {
         </div>
 
         <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
-          {messages.map(msg => (
-            <div key={msg.id} className={`flex ${msg.sender === 'USER' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[70%] p-4 rounded-2xl ${msg.sender === 'USER' ? 'bg-[#3530B8] text-white' : 'bg-[#f4f7fc] text-[#1a1c3d]'}`}>
-                <div className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</div>
+          {messages.map((msg, index) => (
+            <div key={index} className={`flex ${msg.role === 'USER' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[70%] p-4 rounded-2xl ${msg.role === 'USER' ? 'bg-[#3530B8] text-white' : 'bg-[#f4f7fc] text-[#1a1c3d]'}`}>
+                <div className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</div>
 
                 {/* 관리자 문의하기 컴포넌트 유동 제어 */}
                 {msg.showInquiry && (
@@ -226,7 +268,7 @@ const AiChat = () => {
                 )}
 
                 {/* 임베딩 출처 메타데이터 바인딩 연동 문서 구역 */}
-                {!msg.isTyping && msg.sender === 'AI' && !msg.showInquiry && (
+                {!msg.isTyping && msg.role === 'AI' && !msg.showInquiry && (
                   <div className="mt-4 pt-3 border-t border-[#edf2f9] flex items-center justify-between gap-4">
                     <span className="text-xs font-medium text-[#8a92a6] truncate"><FontAwesomeIcon icon={faFileAlt} className="mr-1.5" /> 사내_업무_규정_통합본.pdf</span>
                     <button className="text-[10px] bg-white border border-[#edf2f9] px-2 py-1 rounded hover:bg-slate-50 transition-colors flex-shrink-0">📄 다운로드</button>
