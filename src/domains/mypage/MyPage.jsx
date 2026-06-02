@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCntMonth, getCntWeek, getProfileInfo } from '../mypage/mypageApi';
+import { getAnuualSummary, getCntMonth, getCntWeek, getProfileInfo } from '../mypage/mypageApi';
 import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
 
@@ -75,7 +75,8 @@ const handleDateClick = (info) => {
        ...prev, 
        lateCnt: resp.data.late_cnt,
        workDays:resp.data.work_days,
-       totalHours:resp.data.total_hours 
+       totalHours:resp.data.total_hours,
+       usedLeave: resp.data.vac_cnt
       })))
     .catch(err => console.log(err));
 }, []);
@@ -84,7 +85,7 @@ const handleDateClick = (info) => {
     { label: '근무일수', value: `${monthSummary.workDays}일` },
     { label: '총 근무시간', value: `${monthSummary.totalHours}시간` },
     { label: '지각', value: `${monthSummary.lateCnt}회` },
-    { label: '연차 사용', value: `${monthSummary.usedLeave}일` },
+    { label: '이번달 연차', value: `${monthSummary.usedLeave}일` },
   ];
 
   const [weekSummary, setWeekSummary] = useState({
@@ -101,28 +102,32 @@ const handleDateClick = (info) => {
       lateCnt: resp.data.late_cnt,
       workDays: resp.data.work_days,
       overtimeHours: resp.data.overtime_hours,
+      usedLeave: resp.data.vac_cnt
       })))
     .catch(err => console.log(err));
 }, []);
 
 const weeklyAttendance = [
-  { label: '정상', value: `${weekSummary.workDays}일`, text: '#22c55e', bg: '#f0fdf4', border: '#dcfce7' },
+  { label: '근무일수', value: `${weekSummary.workDays}일`, text: '#0bbf4d', bg: '#f0fdf4', border: '#c9fcda' },
   { label: '지각', value: `${weekSummary.lateCnt}회`, text: '#ef4444', bg: '#fef2f2', border: '#fee2e2' },
   { label: '연차', value: `${weekSummary.usedLeave}일`, text: '#f59e0b', bg: '#fffbeb', border: '#fef3c7' },
   { label: '연장근무', value: `${weekSummary.overtimeHours}시간`, text: '#3b82f6', bg: '#eff6ff', border: '#dbeafe' },
 ];
+  const [leaveData, setLeaveData] = useState({total_days: 0, used_days: 0, remaining_days: 0 });
 
-  const leaveTotal = 15;
-  const leaveUsed = 1;
-  const leaveRemain = leaveTotal - leaveUsed - 0.5;
-
+  useEffect(()=>{
+    getAnuualSummary().then(resp=>{
+      setLeaveData(resp.data)
+    }).catch(err=>console.log("연차 불러오기 실패",err));
+  })
   const donutData = {
-    labels: ['잔여', '사용', '반차'],
+    labels: ['잔여', '사용'],
     datasets: [{
-      data: [leaveRemain, leaveUsed, 0.5],
-      backgroundColor: ['#3F51B5', '#757de8', '#d9d9fe'],
-      borderWidth: 0,
-    }]
+      data: [leaveData.remaining_days, leaveData.used_days],
+      backgroundColor: ['#d9d9fe', '#3F51B5'],
+      borderWidth: 1,
+      borderColor: [ '#d9d9fe','#3F51B5',],
+    }]// '#757de8', leaveData.total_days,
   };
 
   return (
@@ -161,15 +166,15 @@ const weeklyAttendance = [
               <h3 className="text-[0.8rem] font-extrabold text-slate-900 mb-3">내 정보</h3>
               <div className="flex items-center gap-4 mb-4 flex-1">
                 <div className="w-14 h-14 rounded-full bg-slate-50 border-2 border-slate-100 overflow-hidden shrink-0">
+                  {user?.sysname && token ? (
                   <img
                     src={`http://localhost/file/profile/view?sysname=${user?.sysname}&token=${token}`}
                     alt={profileData?.name}
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.parentNode.innerHTML = `<div class="w-full h-full flex items-center justify-center text-xl font-bold text-[#3530B8]">${profileData?.name?.charAt(0) || '김'}</div>`;
-                    }}
                   />
+                  ):(
+                    <div className="w-full h-full flex items-center justify-center text-xl font-bold text-[#3530B8]">김</div>
+                  )}
                 </div>
                 <div className="grid grid-cols-[3rem_1fr] gap-x-2 gap-y-0.5 text-xs">
                   {[
@@ -210,14 +215,15 @@ const weeklyAttendance = [
                   />
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className="text-[0.6rem] color-[#8a95a5] font-bold">총 연차</span>
-                    <span className="text-sm text-slate-900 font-extrabold">{leaveTotal}일</span>
+                    <span className="text-sm text-slate-900 font-extrabold">{leaveData.total_days}일</span>
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 w-full sm:w-auto">
-                  {[
-                    { label: '연차', value: `${leaveTotal}일`, color: '#d9d9fe'},
-                    { label: '사용', value: `${leaveUsed + 0.5}일`, color: '#7b83ee'},
-                    { label: '잔여', value: `${leaveRemain}일`, color: '#3F51B5' },
+                  {[  
+                    // { label: '연차', value: `${leaveData.total_days}일`, color:  '#7b83ee'},
+                    { label: '잔여', value: `${leaveData.remaining_days}일`, color:'#d9d9fe'},
+                    { label: '사용', value: `${leaveData.used_days}일`, color: '#3F51B5'},
+                    
                   ].map(({ label, value, color }) => (
                     <div key={label} className="flex items-center justify-between sm:justify-start gap-2">
                       <div className="flex items-center gap-2">
@@ -293,7 +299,7 @@ const weeklyAttendance = [
             <h3 className="text-[0.8rem] font-extrabold text-slate-900 mb-4">이번 달 요약</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {attendanceSummary.map(({ label, value }) => (
-                <div key={label} className="rounded-2xl p-3 text-center border transition-all hover:bg-white hover:shadow-sm" style={{ background: '#F0F4FF', borderColor: '#DDE8FF' }}>
+                <div key={label} className="rounded-2xl p-3 text-center border transition-all " style={{ background: '#F0F4FF', borderColor: '#DDE8FF' }}>
                   <p className="text-[0.65rem] text-slate-500 font-bold mb-1.5">{label}</p>
                   <p className="text-lg font-extrabold text-[#3530B8]">{value}</p>
                 </div>
@@ -343,7 +349,7 @@ const weeklyAttendance = [
             <p className="text-[0.6rem] text-slate-400 font-bold mb-3">이번 주 근태</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               {weeklyAttendance.map(({ label, value, text, bg, border }) => (
-                <div key={label} className="rounded-2xl p-3 text-center transition-all hover:shadow-md border" style={{ background: bg, borderColor: border }}>
+                <div key={label} className="rounded-2xl p-3 text-center transition-all  border" style={{ background: bg, borderColor: border }}>
                   <p className="text-[0.65rem] font-bold mb-1" style={{ color: text }}>{label}</p>
                   <p className="text-base font-extrabold" style={{ color: text }}>{value}</p>
                 </div>
