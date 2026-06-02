@@ -26,7 +26,7 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, drafter }) => {
   };
 
   return (
-    <div className="flex flex-col items-end gap-1.5">
+    <div className="flex flex-col items-start md:items-end gap-1.5 w-full md:w-auto">
       {isEditMode && (
         <button 
           onClick={onAdd}
@@ -36,7 +36,8 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, drafter }) => {
         </button>
       )}
       
-      <div className="flex">
+      {/* [Desktop View] - 기존 스타일 완벽 유지 */}
+      <div className="hidden md:flex">
         {/* 기안자 영역 */}
         <div className="w-16 border border-white/30 flex flex-col">
           <div className="bg-white/10 text-[0.7rem] py-0.5 text-center font-bold border-b border-white/30">기안</div>
@@ -82,6 +83,59 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, drafter }) => {
                 <div className="h-7 border-t border-white/30 flex items-center justify-center text-[9px] font-medium text-white/60 bg-white/5">
                   {(showDetails && approver.handle_at) ? approver.handle_at.slice(0, 10) : '-'}
                 </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* [Mobile View] - 새로운 모바일용 세로형 결재선 */}
+      <div className="md:hidden flex flex-col w-full border border-white/20 rounded-lg overflow-hidden">
+        {/* 기안자 (모바일) */}
+        <div className="flex items-center bg-white/5 border-b border-white/10">
+          <div className="w-16 bg-white/10 py-2 text-[0.7rem] text-center font-bold border-r border-white/10">기안</div>
+          <div className="flex-grow flex items-center justify-between px-3 py-2 text-[0.75rem]">
+            <span className="font-bold">{drafter?.name || '-'}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[0.7rem] text-white/60">기안</span>
+              {!isEditMode && (
+                <span className="text-[0.7rem] text-white/40">{drafter?.created_at?.slice(0, 10)}</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 결재자들 (모바일) */}
+        {approvers.map((approver, idx) => {
+          const hasRejectionBefore = approvers.slice(0, idx).some(a => a.status === 'REJECTED');
+          const statusText = hasRejectionBefore ? '' : getStatusText(approver, idx);
+          const showDetails = !hasRejectionBefore;
+
+          return (
+            <div key={idx} className="flex items-center bg-white/5 border-b border-white/10 last:border-0 relative">
+              <div className="w-16 bg-white/10 py-2 text-[0.7rem] text-center font-bold border-r border-white/10">
+                {approver.rank_name || approver.rank || '결재'}
+              </div>
+              <div className="flex-grow flex items-center justify-between px-3 py-2 text-[0.75rem]">
+                <span className="font-bold">{showDetails ? (approver.name || '-') : '-'}</span>
+                <div className="flex items-center gap-2">
+                  {!isEditMode && statusText && showDetails && (
+                    <span className={`text-[0.7rem] font-bold ${getStatusColor(approver.status)}`}>
+                      {statusText}
+                    </span>
+                  )}
+                  {!isEditMode && showDetails && approver.handle_at && (
+                    <span className="text-[0.7rem] text-white/40">{approver.handle_at.slice(0, 10)}</span>
+                  )}
+                </div>
+              </div>
+              {isEditMode && (
+                <button 
+                  onClick={() => onRemove(idx)}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 text-white/30 hover:text-white p-1"
+                >
+                  ✕
+                </button>
               )}
             </div>
           );

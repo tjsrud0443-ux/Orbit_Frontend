@@ -64,7 +64,7 @@ const ApprovalActionButtons = ({
 
   return (
     <div className="flex flex-col items-center w-full gap-3 pt-8 pb-2 border-t border-gray-100 flex-shrink-0">
-      <div className="flex justify-center gap-3 w-full">
+      <div className="flex flex-wrap justify-center gap-3 w-full">
         {/* [기안 모드] - 기존 로직 유지 (명시적으로 작성되지 않은 경우) */}
         {mode === 'EDIT' && userRole === 'DRAFTER' && (
           <>
