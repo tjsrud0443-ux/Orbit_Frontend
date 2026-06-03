@@ -208,8 +208,8 @@ const AiChat = () => {
       dept_seq: selectedDept.deptSeq
     };
     insertQuestion(dept).then(resp => {
-      alert('담당 부서로 문의가 안전하게 접수되었습니다.'); 
-      setIsModalOpen(false); 
+      alert('담당 부서로 문의가 안전하게 접수되었습니다.');
+      setIsModalOpen(false);
       setIsDropdownOpen(false);
     })
   }
