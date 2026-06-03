@@ -13,6 +13,8 @@ const AdminDocuments = () => {
   
   // 모달 관련 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [newDocTitle, setNewDocTitle] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
@@ -56,7 +58,14 @@ const AdminDocuments = () => {
   };
 
   const handleEdit = (id) => {
-    alert(`문서 ID ${id}를 수정합니다.`);
+    const docToEdit = documents.find(d => d.id === id);
+    if (docToEdit) {
+      setIsEditMode(true);
+      setEditingId(id);
+      setNewDocTitle(docToEdit.title);
+      setUploadedFiles([]); // 실제로는 기존 파일을 표시하거나 가져오는 로직이 필요함
+      setIsModalOpen(true);
+    }
   };
 
   const handleDelete = (id) => {
@@ -66,11 +75,15 @@ const AdminDocuments = () => {
   };
 
   const handleCreate = () => {
+    setIsEditMode(false);
+    setEditingId(null);
     setIsModalOpen(true);
   };
 
   const handleModalClose = () => {
     setIsModalOpen(false);
+    setIsEditMode(false);
+    setEditingId(null);
     setNewDocTitle('');
     setUploadedFiles([]);
   };
@@ -80,11 +93,16 @@ const AdminDocuments = () => {
       alert('제목을 입력해주세요.');
       return;
     }
-    if (uploadedFiles.length === 0) {
-      alert('파일을 등록해주세요.');
-      return;
+    
+    if (isEditMode) {
+      alert(`문서 ID ${editingId}가 수정되었습니다.\n새 제목: ${newDocTitle}`);
+    } else {
+      if (uploadedFiles.length === 0) {
+        alert('파일을 등록해주세요.');
+        return;
+      }
+      alert(`제목: ${newDocTitle}\n파일: ${uploadedFiles[0].name}\n문서가 등록되었습니다.`);
     }
-    alert(`제목: ${newDocTitle}\n파일: ${uploadedFiles[0].name}\n문서가 등록되었습니다.`);
     handleModalClose();
   };
 
@@ -208,7 +226,7 @@ const AdminDocuments = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-md rounded-[2rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900">새 문서 등록</h2>
+              <h2 className="text-lg font-bold text-gray-900">{isEditMode ? '문서 수정' : '새 문서 등록'}</h2>
               <button onClick={handleModalClose} className="text-gray-300 hover:text-gray-500 transition-colors cursor-pointer">
                 <FontAwesomeIcon icon={faTimes} />
               </button>
@@ -227,7 +245,7 @@ const AdminDocuments = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-400 uppercase ml-1">파일 업로드</label>
+                <label className="text-xs font-bold text-gray-400 uppercase ml-1">{isEditMode ? '파일 변경 (선택)' : '파일 업로드'}</label>
                 <div 
                   {...getRootProps()} 
                   className={`border-2 border-dashed rounded-2xl p-8 transition-all flex flex-col items-center justify-center gap-3 cursor-pointer
@@ -239,7 +257,7 @@ const AdminDocuments = () => {
                   </div>
                   <div className="text-center">
                     <p className="text-sm font-bold text-gray-700">
-                      {uploadedFiles.length > 0 ? uploadedFiles[0].name : '파일을 드래그하거나 클릭하세요'}
+                      {uploadedFiles.length > 0 ? uploadedFiles[0].name : isEditMode ? '기존 파일을 유지하려면 비워두세요' : '파일을 드래그하거나 클릭하세요'}
                     </p>
                     <p className="text-[0.625rem] text-gray-400 mt-1">최대 20MB까지 업로드 가능</p>
                   </div>
@@ -256,7 +274,7 @@ const AdminDocuments = () => {
               <button 
                 onClick={handleRegister}
                 className="flex-[2] py-3 bg-[#3530B8] text-white text-sm font-bold rounded-xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all cursor-pointer">
-                등록
+                {isEditMode ? '수정 완료' : '등록'}
               </button>
             </div>
           </div>
