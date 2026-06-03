@@ -127,6 +127,10 @@ const AiChat = () => {
 
         if (!currentChatSeq) {
           setCurrentChatSeq(resp.data.chat_seq);
+
+          sideChatTitleList().then(resp => {
+            setChatHistory(resp.data);
+          });
         }
         // 특정 키워드나 조건(예: '죄송합니다' 등)이 답변에 포함되면 관리자 문의 버튼 띄우기 세팅
         const needInquiryButton = aiResponseText.includes("찾지 못했습니다") || aiResponseText.includes("죄송합니다");
