@@ -177,7 +177,7 @@ const Signup = () => {
     if (!formData.pw) {
       newErrors.pw = '비밀번호를 입력해주세요.';
     } else if (!pwRegex.test(formData.pw)) {
-      newErrors.pw = '영문 대/소문자와 특수문자(!@#$%^&*)로 8~20자 입력 가능합니다.';
+      newErrors.pw = '영문 대/소문자와 숫자, 특수문자(!@#$%^&*)로 8~20자 입력 가능합니다.';
     }
     if (!confirmPw) {
       newErrors.confirmPw = '비밀번호를 한 번 더 입력해주세요.';

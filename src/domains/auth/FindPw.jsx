@@ -17,12 +17,12 @@ const FindPw = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const passwordRegex = /^[a-zA-Z!@#$%^&*]{8,20}$/;
+  const passwordRegex = /^[a-zA-Z\d!@#$%^&*]{8,20}$/;
 
   const getPasswordPlaceholder = () => {
     return windowWidth < 768 
       ? "비밀번호 입력" 
-      : "영문 대/소문자와 특수문자(!@#$%^&*)로 8~20자 입력 가능합니다.";
+      : "영문 대/소문자와 숫자, 특수문자(!@#$%^&*)로 8~20자";
   };
 
   const handleChange = (e) => {
@@ -80,7 +80,7 @@ const FindPw = () => {
     if (!formData.newPw) {
       newErrors.newPw = "새 비밀번호를 입력하세요.";
     } else if (!passwordRegex.test(formData.newPw)) {
-      newErrors.newPw = "영문 대/소문자와 특수문자(!@#$%^&*)로 8~20자 입력 가능합니다.";
+      newErrors.newPw = "영문 대/소문자와 숫자, 특수문자(!@#$%^&*)로 8~20자 입력 가능합니다.";
     }
 
     if (!formData.confirmPw) {
