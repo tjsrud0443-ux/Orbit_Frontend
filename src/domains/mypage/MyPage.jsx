@@ -311,7 +311,12 @@ const weeklyAttendance = [
           <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm flex-1 min-h-[20rem]">
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-[0.8rem] font-extrabold text-slate-900">신청 내역</h3>
-              <button className="text-[0.65rem] text-slate-400 font-bold hover:text-[#3530B8]">
+              <button 
+                onClick={() => {
+                  if (activeTab === '관리자 문의') navigate('/qnaHistory');
+                }}
+                className="text-[0.65rem] text-slate-400 font-bold hover:text-[#3530B8]"
+              >
                 {activeTab} 신청 내역 →
               </button>
             </div>

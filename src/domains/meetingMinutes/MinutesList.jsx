@@ -6,7 +6,7 @@ import useEmployeeStore from '../../store/useEmployeeStore';
 import useAuthStore from '../../store/authStore';
 import useUserStore from '../../store/userStore';
 import { maxios } from '../../api/axiosConfig';
-import { getMinutesList, insertMinutes } from './meetingMinutesApi';
+import { delMinutes, getMinutesDetail, getMinutesList, insertMinutes } from './meetingMinutesApi';
 
 // 참여자 프로필 스택 컴포넌트
 const ParticipantStack = ({ attendees = [] }) => {
@@ -52,12 +52,59 @@ const ParticipantStack = ({ attendees = [] }) => {
 
 const MinutesList = () => {
   const [minutesList, setMinutesList] = useState([]);
+  const [activeDetail, setActiveDetail] = useState(null);
   const [activeId, setActiveId] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [isEditing, setIsEditing] = useState(false); // 수정 모드 상태
+  const [editMinutes, setEditMinutes] = useState(null); // 수정 중인 데이터 상태
   const { user } = useUserStore();
   const token = useAuthStore(state => state.token);
 
   const active = minutesList.find((m) => m.minute_seq === activeId);
+
+  // 수정 시작/취소/완료 핸들러
+  const handleToggleEdit = () => {
+    setIsEditing(true);
+    setEditMinutes({
+      ...activeDetail,
+      start_time: formatTime(activeDetail.start_time),  // "09:00"으로 잘라줌
+      end_time: formatTime(activeDetail.end_time)        // "09:00"으로 잘라줌
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditMinutes(null);
+  };
+
+  const handleCompleteEdit = () => {
+    const minuteData = {
+      minute_seq: editMinutes.minute_seq,          // 어떤 회의록인지
+      title: editMinutes.title,
+      meeting_dt: editMinutes.meeting_dt,
+      start_time: `${editMinutes.meeting_dt}T${editMinutes.start_time}:00`,
+      end_time: `${editMinutes.meeting_dt}T${editMinutes.end_time}:00`,
+      main_content: editMinutes.main_content,
+      decisions: editMinutes.decisions,
+      todos: editMinutes.todos,
+      attendees: editMinutes.attendees.map(emp => ({
+        users_id: emp.users_seq || emp.users_id || emp.id
+      }))
+    };
+
+      upMinutes(minuteData).then(() => {
+        alert('수정되었습니다.');
+        setIsEditing(false);
+        setEditMinutes(null);
+        fetchMinutesList();                              // 목록 새로고침
+        handleSelectMinutes(editMinutes.minute_seq);     // 상세 새로고침
+      }).catch((error) => {
+        console.error('수정 실패:', error);
+        alert('수정에 실패했습니다.');
+      });
+    setIsEditing(false);
+    setEditMinutes(null);
+  };
 
   // 작성 폼 상태
   const [newMinutes, setNewMinutes] = useState({
@@ -159,14 +206,17 @@ const MinutesList = () => {
       main_content: newMinutes.main_content,
       decisions: newMinutes.decisions,
       todos: newMinutes.todos,
-      attendees: newMinutes.attendees
+      attendees: newMinutes.attendees.map((emp) => ({
+        users_id: emp.id
+}))
     };
 
   insertMinutes(payload) .then(() => {
       // 서버 저장에 성공했을 때 실행할 로직들을 이 안에 모아둡니다.
       alert('회의록이 저장되었습니다.');
       setIsCreating(false);
-      fetchMinutesList(); 
+      setActiveId(null); // 이 부분이 추가되면 창이 완전히 닫힙니다!
+      fetchMinutesList(); // 목록 새로고침
     }).catch((error) => {
       console.error('회의록 저장 실패:', error);
       alert('저장에 실패했습니다.');
@@ -196,22 +246,21 @@ const MinutesList = () => {
       window.removeEventListener('scroll', updateDropdownPos, true);
     };
   }, [showResults, updateDropdownPos]);
+const filteredEmployees = searchQuery && searchQuery.trim() !== ''
+  ? allEmployees.filter(emp => {
+      // 백엔드에서 반환하는 실제 필드명을 기반으로 검색 수행
+      const name = emp?.name || '';
+      const deptName = emp?.deptName || emp?.dept_name || '';
+      const rankName = emp?.rankName || emp?.rank_name || '';
+      const query = searchQuery.toLowerCase();
 
-    const filteredEmployees = searchQuery && searchQuery.trim() !== ''
-      ? allEmployees.filter(emp => {
-          const name = emp?.name || '';
-          const deptName = emp?.deptName || emp?.dept_name || '';
-          const rankName = emp?.rankName || emp?.rank_name || '';
-          const query = searchQuery.toLowerCase();
-          
-          return name.toLowerCase().includes(query) || 
-                 deptName.toLowerCase().includes(query) || 
-                 rankName.toLowerCase().includes(query);
-        }) 
-      : [];
+      return name.toLowerCase().includes(query) || 
+             deptName.toLowerCase().includes(query) || 
+             rankName.toLowerCase().includes(query);
+    }) 
+  : [];
 
     const handleAddAttendee = (emp) => {
-      console.log(emp);
       const attendeeId = emp.users_seq || emp.users_id || emp.id;
       
       if (newMinutes.attendees.some(a => (a.users_seq || a.users_id || a.id) === attendeeId)) {
@@ -230,7 +279,7 @@ const MinutesList = () => {
     }));
   };
   const renderAttendeeDropdown = () => {
-    if (!showResults || !searchQuery) return null;
+    if (!showResults) return null;
 
     const dropdown = (
       <div 
@@ -240,12 +289,57 @@ const MinutesList = () => {
           left: `${dropdownPos.left}px`, 
           width: `${dropdownPos.width}px` 
         }}
+        onMouseDown={(e) => e.preventDefault()}
       >
         {filteredEmployees.length > 0 ? (
           filteredEmployees.map(emp => (
             <div 
               key={emp.users_seq || emp.id} 
               onClick={() => handleAddAttendee(emp)}
+              className="p-3 hover:bg-indigo-50 cursor-pointer flex justify-between items-center border-b border-gray-50 last:border-0"
+            >
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-gray-700">{emp.name}</span>
+                <span className="text-[10px] text-gray-400">{emp.dept_name}</span>
+              </div>
+              <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">{emp.rank_name}</span>
+            </div>
+          ))
+        ) : (
+          <div className="p-4 text-center text-xs text-gray-400">검색 결과가 없습니다.</div>
+        )}
+      </div>
+    );
+
+    return createPortal(dropdown, document.body);
+  };
+
+  const renderAttendeeDropdownForEdit = () => {
+    if (!showResults) return null;
+    const dropdown = (
+      <div 
+        className="fixed z-[9999] bg-white border border-gray-100 rounded-2xl shadow-2xl max-h-48 overflow-y-auto custom-scrollbar"
+        style={{ 
+          top: `${dropdownPos.top + 4}px`, 
+          left: `${dropdownPos.left}px`, 
+          width: `${dropdownPos.width}px` 
+        }}
+        onMouseDown={(e) => e.preventDefault()}
+      >
+        {filteredEmployees.length > 0 ? (
+          filteredEmployees.map(emp => (
+            <div 
+              key={emp.users_seq || emp.id} 
+              onClick={() => {
+                const attendeeId = emp.users_seq || emp.users_id || emp.id;
+                if (!editMinutes.attendees.some(a => (a.users_seq || a.users_id || a.id) === attendeeId)) {
+                  setEditMinutes({...editMinutes, attendees: [...editMinutes.attendees, emp]});
+                } else {
+                  alert('이미 추가된 참석자입니다.');
+                }
+                setSearchQuery('');
+                setShowResults(false);
+              }}
               className="p-3 hover:bg-indigo-50 cursor-pointer flex justify-between items-center border-b border-gray-50 last:border-0"
             >
               <div className="flex flex-col">
@@ -303,12 +397,16 @@ const MinutesList = () => {
 
   const handleClosePanel = () => {
     setActiveId(null);
+    setActiveDetail(null);
     setIsCreating(false);
   };
 
   const handleSelectMinutes = (id) => {
     setIsCreating(false);
     setActiveId(id);
+    getMinutesDetail(id).then(resp => {
+      setActiveDetail(resp.data);
+    });
   };
 
   // 날짜/시간 포맷팅 함수
@@ -412,7 +510,7 @@ const MinutesList = () => {
                         </div>
                       </td>
                       <td className="py-4 text-xs text-gray-500 font-medium whitespace-nowrap">
-                        {item.meeting_dt} {formatTime(item.startTime)}
+                        {item.meeting_dt} {formatTime(item.start_time)} – {formatTime(item.end_time)}
                       </td>
                       <td className="py-4 text-center">
                         <ParticipantStack attendees={item.attendees} />
@@ -443,75 +541,225 @@ const MinutesList = () => {
         <div className={`transition-all duration-500 ease-in-out bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full
           ${(activeId || isCreating) 
             ? 'flex-1 lg:max-w-[55%] translate-x-0 opacity-100 visible' 
-            : 'w-0 translate-x-full opacity-0 invisible absolute right-0 inset-y-0 lg:relative lg:translate-x-0 lg:w-0'}`}>
-          
-          {active && !isCreating && (
+            : 'w-0 translate-x-full opacity-0 invisible absolute right-0 inset-y-0 lg:relative lg:translate-x-0 lg:w-0'}`}>       
+          {activeDetail && !isCreating && (
             <div className="flex-1 flex flex-col min-h-0">
-              <div className="py-6 md:py-8 px-5 md:px-6 border-b border-gray-50 shrink-0 flex justify-between items-start">
-                <div>
-                  <h2 className="text-xl md:text-2xl font-bold text-indigo-950 mb-1">{active.title}</h2>
-                  <p className="text-sm text-gray-500 font-medium">
-                    {active.meeting_dt} | {formatTime(active.startTime)} – {formatTime(active.endTime)}
-                  </p>
+                <div className="py-6 md:py-8 px-5 md:px-6 border-b border-gray-50 shrink-0 flex justify-between items-start">
+                  {isEditing ? (
+                    <div className="w-full space-y-4">
+                      <input 
+                        type="text"
+                        value={editMinutes.title}
+                        onChange={(e) => setEditMinutes({...editMinutes, title: e.target.value})}
+                        className="w-full text-xl md:text-2xl font-bold text-indigo-950 border border-gray-300 rounded-xl p-2"
+                      />
+                      <div className="flex gap-2">
+                        <input 
+                          type="date"
+                          value={editMinutes.meeting_dt}
+                          onChange={(e) => setEditMinutes({...editMinutes, meeting_dt: e.target.value})}
+                          className="border border-gray-300 rounded-xl p-2"
+                        />
+                        <input 
+                          type="time"
+                          value={editMinutes.start_time}
+                          onChange={(e) => setEditMinutes({...editMinutes, start_time: e.target.value})}
+                          className="border border-gray-300 rounded-xl p-2"
+                        />
+                        <input 
+                          type="time"
+                          value={editMinutes.end_time}
+                          onChange={(e) => setEditMinutes({...editMinutes, end_time: e.target.value})}
+                          className="border border-gray-300 rounded-xl p-2"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <h2 className="text-xl md:text-2xl font-bold text-indigo-950 mb-1">{activeDetail.title}</h2>
+                      <p className="text-sm text-gray-500 font-medium">
+                        {activeDetail.meeting_dt} | {formatTime(activeDetail.start_time)} – {formatTime(activeDetail.end_time)}
+                      </p>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={handleClosePanel}
+                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={handleClosePanel}
-                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
 
               <div className="flex-1 overflow-y-auto p-6 md:p-8 pt-0 custom-scrollbar">
+                <div className="max-w-3xl space-y-8 mt-6">
                 <div className="max-w-3xl space-y-8 mt-6">
                   {/* 참석자 */}
                   <div>
                     <h4 className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-4">참석자</h4>
-                    <div className="flex flex-wrap items-center gap-3">
-                      {(active.attendees || []).map((a, i) => (
-                        <div key={i} className="flex flex-col items-center gap-1">
-                          <div 
-                            className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm border-2 border-white"
-                            style={{ backgroundColor: a.color || '#6366F1' }}
-                          >
-                            {a.name ? a.name.slice(0, 1) : '?'}
+                    {isEditing ? (
+                      <div className="relative">
+                        <div className="flex items-center gap-2 p-1.5 bg-white border border-gray-300 rounded-2xl focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+                          <div className="flex flex-wrap gap-2 flex-1 items-center px-2">
+                            {editMinutes.attendees.map((emp, idx) => (
+                              <div key={idx} className="flex items-center gap-1.5 bg-white border border-indigo-100 px-2.5 py-1 rounded-full text-[11px] font-bold text-indigo-700 shadow-sm">
+                                <span>{emp.name}</span>
+                                <button onClick={() => setEditMinutes({...editMinutes, attendees: editMinutes.attendees.filter((_, i) => i !== idx)})} className="text-indigo-300 hover:text-indigo-500 transition-colors">✕</button>
+                              </div>
+                            ))}
+                            <input 
+                              ref={attendeeInputRef} 
+                              type="text" 
+                              placeholder={editMinutes.attendees.length === 0 ? "참석자 검색..." : ""}
+                              className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-xs font-bold text-gray-700 p-1"
+                              value={searchQuery}
+                              onChange={(e) => {
+                                setSearchQuery(e.target.value);
+                                setShowResults(true);
+                                updateDropdownPos();
+                              }}
+                              onFocus={() => {
+                                setShowResults(true);
+                                updateDropdownPos();
+                              }}
+                            />
                           </div>
-                          <span className="text-[10px] font-bold text-gray-500">{a.name}</span>
                         </div>
-                      ))}
-                    </div>
+                        {renderAttendeeDropdownForEdit()}
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap items-center gap-3">
+                        {(activeDetail.attendees || []).map((a, i) => (
+                          <div key={i} className="flex flex-col items-center gap-1.5">
+                            <div 
+                              className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm border-2 border-white overflow-hidden bg-slate-100"
+                              title={a.name}
+                            >
+                              {/* 프로필 이미지/이니셜 로직 유지 */}
+                              {a.sysname && token ? (
+                                <img
+                                  src={`http://localhost/file/profile/view?sysname=${a.sysname}&token=${token}`}
+                                  alt={a.name}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.parentNode.style.backgroundColor = a.color || '#6366F1';
+                                    e.target.parentNode.innerText = a.name ? a.name.slice(0, 1) : '?';
+                                  }}
+                                />
+                              ) : (
+                                <div 
+                                  className="w-full h-full flex items-center justify-center text-xs font-bold text-white"
+                                  style={{ backgroundColor: a.color || '#6366F1' }}
+                                >
+                                  {a.name ? a.name.slice(0, 1) : '?'}
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-[11px] font-bold text-gray-600">{a.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* 주요 내용 (CLOB - 줄바꿈 처리) */}
                   <div>
                     <h4 className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-4">주요 내용</h4>
-                    <div className="text-[0.9rem] text-gray-700 leading-relaxed whitespace-pre-wrap bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
-                      {active.mainContent}
-                    </div>
+                    {isEditing ? (
+                      <textarea 
+                        rows="5"
+                        value={editMinutes.main_content}
+                        onChange={(e) => setEditMinutes({...editMinutes, main_content: e.target.value})}
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-2xl text-sm text-gray-900 resize-none"
+                      />
+                    ) : (
+                      <div className="text-[0.9rem] text-gray-700 leading-relaxed whitespace-pre-wrap bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
+                        {activeDetail.main_content}
+                      </div>
+                    )}
                   </div>
 
                   {/* 결정 사항 */}
                   <div>
                     <h4 className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-4">결정 사항</h4>
-                    <div className="text-[0.85rem] font-bold text-gray-700 whitespace-pre-wrap bg-indigo-50/30 p-4 rounded-2xl border border-indigo-100/50">
-                      {active.decisions}
-                    </div>
+                    {isEditing ? (
+                      <textarea 
+                        rows="3"
+                        value={editMinutes.decisions}
+                        onChange={(e) => setEditMinutes({...editMinutes, decisions: e.target.value})}
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-2xl text-sm text-gray-900 resize-none"
+                      />
+                    ) : (
+                      <div className="text-[0.85rem] font-bold text-gray-700 whitespace-pre-wrap bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
+                        {activeDetail.decisions}
+                      </div>
+                    )}
                   </div>
 
                   {/* 할 일 */}
                   <div>
                     <h4 className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-4">할 일</h4>
-                    <div className="text-[0.9rem] text-gray-700 whitespace-pre-wrap bg-white border border-gray-100 p-4 rounded-2xl shadow-sm">
-                      {active.todos}
-                    </div>
+                    {isEditing ? (
+                      <textarea 
+                        rows="3"
+                        value={editMinutes.todos}
+                        onChange={(e) => setEditMinutes({...editMinutes, todos: e.target.value})}
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-2xl text-sm text-gray-900 resize-none"
+                      />
+                    ) : (
+                      <div className="text-[0.9rem] text-gray-700 whitespace-pre-wrap bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
+                        {activeDetail.todos}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 수정 및 삭제/완료 및 취소 버튼 */}
+                  <div className="pt-8 flex gap-3">
+                    {isEditing ? (
+                      <>
+                        <button 
+                          onClick={handleCompleteEdit}
+                          className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all"
+                        >
+                          완료
+                        </button>
+                        <button 
+                          onClick={handleCancelEdit}
+                          className="flex-1 py-3 bg-white border border-gray-200 text-gray-600 font-bold rounded-2xl hover:bg-gray-50 transition-all"
+                        >
+                          취소
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button 
+                          onClick={handleToggleEdit}
+                          className="flex-1 py-3 bg-white border border-indigo-200 text-indigo-600 font-bold rounded-2xl hover:bg-indigo-50 transition-all"
+                        >
+                          수정
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm("정말 이 회의록을 삭제하시겠습니까?")) {
+                              // delMinutes 호출 (로직 존재 가정)
+                              alert("삭제 기능 구현 예정");
+                            }
+                          }}
+                          className="flex-1 py-3 bg-white border border-red-200 text-red-500 font-bold rounded-2xl hover:bg-red-50 transition-all"
+                        >
+                          삭제
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
+          </div>
           )}
 
           {isCreating && (
@@ -604,39 +852,43 @@ const MinutesList = () => {
                     </div>
                   </div>
 
-                  {/* 참석자 (UI 유지) */}
-                  <div className="space-y-3">
-                    <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">참석자</label>
-                    <div className="relative">
-                      <div className="flex items-center gap-2 p-1.5 bg-white border border-gray-300 rounded-2xl focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
-                        <div className="flex flex-wrap gap-2 flex-1 items-center px-2">
-                          {newMinutes.attendees.map((emp, idx) => (
-                            <div key={idx} className="flex items-center gap-1.5 bg-white border border-indigo-100 px-2.5 py-1 rounded-full text-[11px] font-bold text-indigo-700 shadow-sm animate-in zoom-in-95">
-                              <span>{emp.name}</span>
-                              <button onClick={() => handleRemoveAttendee(idx)} className="text-indigo-300 hover:text-indigo-500 transition-colors">✕</button>
+                      {/* 참석자 (작성용) */}
+                      <div className="space-y-3">
+                        <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">참석자</label>
+                        <div className="relative">
+                          <div className="flex items-center gap-2 p-1.5 bg-white border border-gray-300 rounded-2xl focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+                            <div className="flex flex-wrap gap-2 flex-1 items-center px-2">
+                              {newMinutes.attendees.map((emp, idx) => (   
+                                <div key={idx} className="flex items-center gap-1.5 bg-white border border-indigo-100 px-2.5 py-1 rounded-full text-[11px] font-bold text-indigo-700 shadow-sm animate-in zoom-in-95">
+                                  <span>{emp.name}</span>
+                                  <button 
+                                    onClick={() => handleRemoveAttendee(idx)}
+                                    className="text-indigo-300 hover:text-indigo-500 transition-colors"
+                                  >✕</button>
+                                </div>
+                              ))}
+                              <input 
+                                ref={attendeeInputRef}                          
+                                type="text" 
+                                placeholder={newMinutes.attendees.length === 0 ? "참석자 검색..." : ""}
+                                className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-xs font-bold text-gray-700 p-1"
+                                value={searchQuery}
+                                onChange={(e) => {
+                                  setSearchQuery(e.target.value);
+                                  setShowResults(true);
+                                  updateDropdownPos();
+                                }}
+                                onFocus={() => {
+                                  setShowResults(true);
+                                  updateDropdownPos();
+                                }}
+                              />
                             </div>
-                          ))}
-                          <input 
-                            ref={attendeeInputRef}
-                            type="text" 
-                            placeholder={newMinutes.attendees.length === 0 ? "참석자 검색..." : ""}
-                            className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-xs font-bold text-gray-700 p-1"
-                            value={searchQuery}
-                            onChange={(e) => {
-                              setSearchQuery(e.target.value);
-                              setShowResults(true);
-                              updateDropdownPos();
-                            }}
-                            onFocus={() => {
-                              setShowResults(true);
-                              updateDropdownPos();
-                            }}
-                          />
+                          </div>
+                          {renderAttendeeDropdown()}  {/* 작성용 드롭다운 */}
                         </div>
                       </div>
-                      {renderAttendeeDropdown()}
-                    </div>
-                  </div>
+
 
                   {/* 주요 내용 (MAIN_CONTENT) */}
                   <div>
