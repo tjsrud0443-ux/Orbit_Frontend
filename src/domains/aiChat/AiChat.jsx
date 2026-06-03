@@ -13,7 +13,7 @@ import {
   faChevronUp
 } from '@fortawesome/free-solid-svg-icons';
 import { IMAGES } from '../../images/images';
-import { getDetailChat, inputMsg, sideChatTitleList } from './aiChatApi';
+import { getDetailChat, inputMsg, insertQuestion, sideChatTitleList } from './aiChatApi';
 import { getGroup } from '../departments/departmentsApi';
 
 const AiChat = () => {
@@ -35,7 +35,7 @@ const AiChat = () => {
 
   // 커스텀 드롭다운 상태
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [selectedDept, setSelectedDept] = useState("부서 선택");
+  const [selectedDept, setSelectedDept] = useState(null);
   const [deptList, setDeptList] = useState([]);
 
   // --- 2. Effects ---
@@ -56,7 +56,8 @@ const AiChat = () => {
   useEffect(() => {
     getGroup().then(resp => {
       if (resp.data && resp.data.nodeMap) {
-        const depts = Object.values(resp.data.nodeMap);
+        const depts = Object.values(resp.data.nodeMap)
+          .filter(dept => dept.deptName.endsWith("팀"));
         setDeptList(depts);
       }
     }).catch(err => {
@@ -199,6 +200,11 @@ const AiChat = () => {
     }, 10); // 타다닥 박히는 부드러운 속도감
   };
 
+  const handleInsertQuestion = () => {
+    insertQuestion(setSelectedDept).then(resp => {
+      console.log("DB insert 완료")
+    })
+  }
   // --- Sidebar Component ---
   const SidebarContent = () => (
     <div className="flex flex-col h-full p-6 bg-[#f4f7fc]">
@@ -343,8 +349,8 @@ const AiChat = () => {
                 }}
                 className="w-full p-3 border border-[#edf2f9] rounded-lg text-sm cursor-pointer flex justify-between items-center bg-white"
               >
-                <span className={selectedDept === "부서 선택" ? "text-slate-400" : "text-slate-700"}>
-                  {selectedDept}
+                <span className={selectedDept ? "text-slate-700" : "text-slate-400"}>
+                  {selectedDept?.deptName || "부서 선택"}
                 </span>
                 <FontAwesomeIcon icon={isDropdownOpen ? faChevronUp : faChevronDown} className="text-slate-400 text-xs" />
               </div>
@@ -355,7 +361,7 @@ const AiChat = () => {
                       key={dept.deptSeq}
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedDept(dept.deptName);
+                        setSelectedDept(dept);
                         setIsDropdownOpen(false);
                       }}
                       className="px-3 py-1.5 text-xs text-slate-400 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
@@ -370,7 +376,7 @@ const AiChat = () => {
             <textarea className="w-full p-3 border border-[#edf2f9] rounded-lg mb-4 text-sm h-32" placeholder="AI가 답변하지 못한 상세 문의 내용을 작성해주시면 담당자가 검토 후 그룹웨어로 답변을 드립니다."></textarea>
             <div className="flex gap-2">
               <button onClick={() => { setIsModalOpen(false); setIsDropdownOpen(false); }} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-slate-100">취소</button>
-              <button onClick={() => { alert('담당 부서로 문의가 안전하게 접수되었습니다.'); setIsModalOpen(false); setIsDropdownOpen(false); }} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-[#3530B8] text-white">제출</button>
+              <button onClick={handleInsertQuestion} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-[#3530B8] text-white">제출</button>
             </div>
           </div>
         </div>
