@@ -1,2 +1,3 @@
-﻿// meetingMinutesApi API or configuration
-export const meetingMinutesApi = {};
+﻿import { maxios } from "../../api/axiosConfig";
+
+export const insertMinutes = () => maxios.post("/minutes");
