@@ -9,8 +9,21 @@ const FindPw = () => {
   const [errors, setErrors] = useState({});
   const [isEmailSent, setIsEmailSent] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  React.useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const passwordRegex = /^[a-zA-Z!@#$%^&*]{8,20}$/;
+
+  const getPasswordPlaceholder = () => {
+    return windowWidth < 768 
+      ? "비밀번호 입력" 
+      : "영문 대/소문자와 특수문자(!@#$%^&*)로 8~20자 입력 가능합니다.";
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -143,7 +156,7 @@ const FindPw = () => {
               <div className="space-y-3 pt-4 border-t border-gray-100 animate-fadeIn">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-gray-600 ml-1">새 비밀번호</label>
-                  <input type="password" name="newPw" value={formData.newPw} onChange={handleChange} placeholder="영문 대/소문자와 특수문자(!@#$%^&*)로 8~20자 입력 가능합니다." className={`w-full px-4 py-2 rounded-xl border ${errors.newPw ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`} />
+                  <input type="password" name="newPw" value={formData.newPw} onChange={handleChange} placeholder={getPasswordPlaceholder()} className={`w-full px-4 py-2 rounded-xl border ${errors.newPw ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`} />
                   {errors.newPw && <p className="text-red-500 text-[10px] ml-1 mt-1 font-bold">{errors.newPw}</p>}
                 </div>
                 <div className="space-y-1">

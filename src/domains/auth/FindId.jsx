@@ -6,6 +6,7 @@ import { sendMailForId, verifyForFindId } from './authApi';
 const FindId = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ name: "", email: "", code: "" });
+  const [errors, setErrors] = useState({});
   const [isEmailSent, setIsEmailSent] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [foundId, setFoundId] = useState("");
@@ -13,9 +14,21 @@ const FindId = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
+    }
   };
 
   const handleSendCode = async () => {
+    const newErrors = {};
+    if (!formData.name) newErrors.name = "성함을 입력하세요.";
+    if (!formData.email) newErrors.email = "이메일을 입력하세요.";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     try{
       const response = await sendMailForId(formData);
       if (response.data.success) {
@@ -29,6 +42,11 @@ const FindId = () => {
   };
 
   const handleVerify = async () => {
+    if (!formData.code) {
+      setErrors(prev => ({ ...prev, code: "인증번호를 입력하세요." }));
+      return;
+    }
+
     try{
       const response = await verifyForFindId(formData);
       if(response.data.success){
@@ -70,8 +88,9 @@ const FindId = () => {
                     value={formData.name}
                     onChange={handleChange}
                     placeholder="성함을 입력하세요"
-                    className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3530B8]"
+                    className={`w-full px-4 py-2 rounded-xl border ${errors.name ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`}
                   />
+                  {errors.name && <p className="text-red-500 text-[10px] ml-1 mt-1 font-bold">{errors.name}</p>}
                 </div>
 
                 {/* Email Input */}
@@ -84,7 +103,7 @@ const FindId = () => {
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="가입 시 등록한 이메일"
-                      className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3530B8]"
+                      className={`w-full px-4 py-2 rounded-xl border ${errors.email ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`}
                     />
                     <button
                       onClick={handleSendCode}
@@ -93,6 +112,7 @@ const FindId = () => {
                       인증번호 전송
                     </button>
                   </div>
+                  {errors.email && <p className="text-red-500 text-[10px] ml-1 mt-1 font-bold">{errors.email}</p>}
                 </div>
 
                 {/* Conditional Verification Inputs */}
@@ -106,7 +126,7 @@ const FindId = () => {
                         value={formData.code}
                         onChange={handleChange}
                         placeholder="인증번호 6자리"
-                        className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3530B8]"
+                        className={`w-full px-4 py-2 rounded-xl border ${errors.code ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`}
                       />
                       <button
                         onClick={handleVerify}
@@ -115,6 +135,7 @@ const FindId = () => {
                         인증
                       </button>
                     </div>
+                    {errors.code && <p className="text-red-500 text-[10px] ml-1 mt-1 font-bold">{errors.code}</p>}
                   </div>
                 )}
               </div>
