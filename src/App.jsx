@@ -36,6 +36,8 @@ import MyPage from './domains/mypage/MyPage';
 import MyPageEdit from './domains/mypage/MyPageEdit';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import ApprovalDetail from './domains/approval/ApprovalDetail';
+import FindId from './domains/auth/FindId';
+import FindPw from './domains/auth/FindPw';
 
 
 
@@ -47,6 +49,8 @@ function App() {
 
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/findId" element={<FindId />} />
+        <Route path="/findPw" element={<FindPw />} />
 
         {/* 레이아웃(사이드바+헤더) 내부 페이지 */}
         <Route element={<Layout />}>
