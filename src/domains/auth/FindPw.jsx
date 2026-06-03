@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IMAGES } from '../../images/images';
+import { sendMailForPw, sendNewPw, verifyForFindPw } from './authApi';
 
 const FindPw = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ name: "", id: "", email: "", verificationCode: "", newPw: "", confirmPw: "" });
-  const [showVerification, setShowVerification] = useState(false);
+  const [formData, setFormData] = useState({ name: "", id: "", email: "", code: "", newPw: "", confirmPw: "", token: ""});
+  const [isEmailSent, setIsEmailSent] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
 
   const handleChange = (e) => {
@@ -13,15 +14,45 @@ const FindPw = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSendCode = () => {
-    setShowVerification(true);
-    alert("인증번호가 전송되었습니다.");
+  const handleSendCode = async () => {
+    try{
+      const response = await sendMailForPw(formData);
+      if (response.data.success) {
+        alert(response.data.message);
+        setIsEmailSent(true);
+      }
+    }catch (error){
+      const msg = error.response?.data?.message || "인증번호 발송에 실패했습니다.";
+      alert(msg);
+    }
   };
 
-  const handleVerify = () => {
-    setIsVerified(true);
-    alert("인증되었습니다.");
+  const handleVerify = async () => {
+    try{
+      const response = await verifyForFindPw(formData);
+      if(response.data.success){
+        alert("인증에 성공했습니다.");
+        setIsVerified(true);
+        setFormData(prev => ({...prev, token: response.data.resetToken}));
+      }
+    }catch (error){
+      const msg = error.response?.data?.message || "인증에 실패했습니다.";
+      alert(msg);
+    }
   };
+
+  const handleNewPw = async () => {
+    try{
+      const response = await sendNewPw(formData);
+      if(response.data.success){
+        alert(response.data.message);
+        navigate("/");
+      }
+    }catch (error){
+      const msg = error.response?.data?.message || "비밀번호 변경을 실패했습니다.";
+      alert(msg);
+    }
+  }
 
   const passwordMatch = formData.newPw === formData.confirmPw && formData.newPw !== "";
 
@@ -57,11 +88,11 @@ const FindPw = () => {
               </div>
             </div>
 
-            {showVerification && (
+            {isEmailSent && (
               <div className="space-y-1 pt-2">
                 <label className="text-xs font-bold text-gray-600 ml-1">인증번호</label>
                 <div className="flex gap-2">
-                  <input type="text" name="verificationCode" value={formData.verificationCode} onChange={handleChange} placeholder="인증번호 6자리" className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3530B8]" />
+                  <input type="text" name="code" value={formData.code} onChange={handleChange} placeholder="인증번호 6자리" className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3530B8]" />
                   <button onClick={handleVerify} className="px-7 md:px-9 py-2 bg-[#3530B8] text-white text-xs font-bold rounded-xl whitespace-nowrap hover:bg-[#28248a]">인증</button>
                 </div>
               </div>
@@ -95,6 +126,7 @@ const FindPw = () => {
             </button>
             {isVerified && (
               <button 
+                onClick={handleNewPw}
                 className="flex-1 bg-[#3530B8] text-white font-bold py-2.5 rounded-xl hover:bg-[#28248a] transition-all"
               >
                 변경완료
