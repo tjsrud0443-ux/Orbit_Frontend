@@ -1,15 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown, faTrashCan } from '@fortawesome/free-solid-svg-icons';
-
-const MOCK_QNA = [
-  { id: 1, category: '인사', question: '연차 산정 방식이 궁금합니다.', writer: '김철수', regDate: '2026.05.20', status: '답변 완료', answer: '연차는 근로기준법에 의거하여 1년 미만 입사자의 경우 1개월 개근 시 1일, 1년 이상 근무 시 15일이 발생합니다.' },
-  { id: 2, category: '급여', question: '이번 달 상여금 포함 여부 확인 부탁드립니다.', writer: '김철수', regDate: '2026.05.25', status: '답변 대기', answer: '' },
-  { id: 3, category: '복지', question: '사내 동호회 지원금 신청 방법이 어떻게 되나요?', writer: '김철수', regDate: '2026.05.28', status: '답변 완료', answer: '동호회 지원금은 매월 25일까지 운영위원회로 지출 증빙 서류를 제출하시면 다음 달 초에 지급됩니다.' },
-  { id: 4, category: 'IT 지원', question: '새로 지급받은 노트북의 도킹 스테이션이 인식이 안 됩니다.', writer: '김철수', regDate: '2026.06.01', status: '답변 대기', answer: '' },
-  { id: 5, category: '기타', question: '사내 주차장 이용 수칙 개정안은 어디서 볼 수 있나요?', writer: '김철수', regDate: '2026.06.02', status: '답변 완료', answer: '공지사항 게시판의 124번 게시물을 확인해 주시기 바랍니다.' },
-  { id: 6, category: '인사', question: '재직증명서 발급은 어디서 신청하나요?', writer: '김철수', regDate: '2026.06.03', status: '답변 대기', answer: '' },
-];
+import { getMyQuestions } from './mypageApi';
 
 const QnaHistory = () => {
   const [filter, setFilter] = useState('전체');
@@ -31,15 +23,22 @@ const QnaHistory = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  const [qnaList, setQnaList] = useState(MOCK_QNA);
+  const [qnaList, setQnaList] = useState([]);
   const [selectedQna, setSelectedQna] = useState(null);
 
+  useEffect(() => {
+    getMyQuestions().then(resp => {
+      console.log(resp.data)
+      setQnaList(resp.data);
+    })
+  },[]);
+
   const filteredQna = useMemo(() => {
-    return qnaList.filter(q => {
-      const matchesFilter = filter === '전체' || q.status === filter;
+    return qnaList.filter(item => {
+      const matchesFilter = filter === '전체' || item.status === filter;
       const matchesSearch = searchBy === '질문 내용'
-        ? q.question.includes(search)
-        : q.category.includes(search);
+        ? item.question.includes(search)
+        : item.category.includes(search);
       return matchesFilter && matchesSearch;
     });
   }, [filter, search, searchBy, qnaList]);
@@ -119,32 +118,32 @@ const QnaHistory = () => {
                 </tr>
               </thead>
               <tbody>
-                {paginatedQna.map(q => (
-                  <tr key={q.id} className="border-b border-gray-100 hover:bg-[#f8fbff] transition-colors block md:table-row w-full mb-4 md:mb-0">
+                {filteredQna.map(item => (
+                  <tr key={item.question_seq} className="border-b border-gray-100 hover:bg-[#f8fbff] transition-colors block md:table-row w-full mb-4 md:mb-0">
                     <td className="py-2 px-2 block md:table-cell text-sm font-bold md:font-medium text-[#1a1c3d]">
-                      <span className="md:hidden text-[#8a92a6] mr-2">카테고리:</span>{q.category}
+                      <span className="md:hidden text-[#8a92a6] mr-2">카테고리:</span>{item.category}
                     </td>
                     <td className="py-2 px-2 block md:table-cell text-sm text-[#1a1c3d] truncate max-w-[200px] md:max-w-none">
-                      <span className="md:hidden text-[#8a92a6] mr-2">질문:</span>{q.question}
+                      <span className="md:hidden text-[#8a92a6] mr-2">질문:</span>{item.question}
                     </td>
                     <td className="py-2 px-2 block md:table-cell text-sm text-gray-500">
-                      <span className="md:hidden text-[#8a92a6] mr-2">질문자:</span>{q.writer}
+                      <span className="md:hidden text-[#8a92a6] mr-2">질문자:</span>{item.users_id}
                     </td>
                     <td className="py-2 px-2 block md:table-cell text-sm text-gray-500">
-                      <span className="md:hidden text-[#8a92a6] mr-2">등록일:</span>{q.regDate}
+                      <span className="md:hidden text-[#8a92a6] mr-2">등록일:</span>{item.created_at}
                     </td>
                     <td className="py-2 px-2 block md:table-cell">
-                      <span className={`inline-block px-4 py-1.5 rounded-full text-[11px] font-bold ${q.status === '답변 완료' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
-                        {q.status}
+                      <span className={`inline-block px-4 py-1.5 rounded-full text-[11px] font-bold ${item.status === '답변 완료' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
+                        {item.status}
                       </span>
                     </td>
                     <td className="py-2 px-2 block md:table-cell">
                       <div className="flex gap-2">
-                        <button onClick={() => setSelectedQna(q)} className="text-[11px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-3 py-1.5 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all">
+                        <button onClick={() => setSelectedQna(item)} className="text-[11px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-3 py-1.5 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all">
                           상세보기
                         </button>
-                        {q.status === '답변 대기' && (
-                          <button onClick={() => handleDelete(q.id)} className="text-[11px] font-bold text-red-600 border border-red-50 bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-600 hover:text-white transition-all">
+                        {item.status === '답변 대기' && (
+                          <button onClick={() => handleDelete(item.id)} className="text-[11px] font-bold text-red-600 border border-red-50 bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-600 hover:text-white transition-all">
                             <FontAwesomeIcon icon={faTrashCan} />
                           </button>
                         )}
@@ -181,7 +180,7 @@ const QnaHistory = () => {
             <h3 className="text-lg font-bold mb-2 text-[#1a1c3d]">Q. 질문 내용</h3>
             <div className="bg-[#f4f7fc] p-6 rounded-2xl mb-8">
               <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedQna.question}</p>
-              <p className="text-xs text-[#8a92a6] mt-4">{selectedQna.regDate} | {selectedQna.writer}</p>
+              <p className="text-xs text-[#8a92a6] mt-4">{selectedQna.created_at} | {selectedQna.users_id}</p>
             </div>
             
             <h3 className="text-lg font-bold mb-2 text-[#3530B8]">A. 관리자 답변</h3>

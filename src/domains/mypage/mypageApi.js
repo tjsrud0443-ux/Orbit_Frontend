@@ -10,3 +10,6 @@ export const getCntMonth = () => maxios.get("/Attendance/monthCount");
 export const getCntWeek = () => maxios.get("/Attendance/weekCount");
 /*연차 현황 도넛 차트 */
 export const getAnuualSummary = () => maxios.get("/mypage/annualSummary");
+
+// 내 관리자 문의 내역
+export const getMyQuestions = () => maxios.get("/mypage/myQuestions");
