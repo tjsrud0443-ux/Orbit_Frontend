@@ -73,10 +73,10 @@ const handleDateClick = (info) => {
   getCntMonth()
     .then(resp => setMonthSummary(prev => ({
        ...prev, 
-       lateCnt: resp.data.late_cnt,
-       workDays:resp.data.work_days,
-       totalHours:resp.data.total_hours,
-       usedLeave: resp.data.vac_cnt
+          lateCnt: resp.data.late_cnt ?? 0,
+          workDays: resp.data.work_days ?? 0,
+          totalHours: resp.data.total_hours ?? 0,
+          usedLeave: resp.data.vac_cnt ?? 0
       })))
     .catch(err => console.log(err));
 }, []);
@@ -99,10 +99,10 @@ const handleDateClick = (info) => {
   getCntWeek()
     .then(resp => setWeekSummary(prev => ({
        ...prev, 
-      lateCnt: resp.data.late_cnt,
-      workDays: resp.data.work_days,
-      overtimeHours: resp.data.overtime_hours,
-      usedLeave: resp.data.vac_cnt
+      lateCnt: resp.data.late_cnt ?? 0,
+      workDays: resp.data.work_days ?? 0,
+      overtimeHours: resp.data.overtime_hours ?? 0,
+      usedLeave: resp.data.vac_cnt ?? 0
       })))
     .catch(err => console.log(err));
 }, []);

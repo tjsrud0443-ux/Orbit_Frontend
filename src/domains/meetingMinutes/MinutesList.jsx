@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+﻿import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Calendar from '../../components/common/Calendar';
 import Pagination from '../../components/common/Pagination';
@@ -6,6 +6,7 @@ import useEmployeeStore from '../../store/useEmployeeStore';
 import useAuthStore from '../../store/authStore';
 import useUserStore from '../../store/userStore';
 import { maxios } from '../../api/axiosConfig';
+import { getMinutesList, insertMinutes } from './meetingMinutesApi';
 
 // 참여자 프로필 스택 컴포넌트
 const ParticipantStack = ({ attendees = [] }) => {
@@ -23,20 +24,20 @@ const ParticipantStack = ({ attendees = [] }) => {
             className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center shadow-sm overflow-hidden relative group"
             title={user.name}
           >
-            {user.sysname ? (
-              <img 
-                src={`http://localhost/file/profile/view?sysname=${user.sysname}&token=${token}`}
-                alt={user.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div 
-                className="w-full h-full flex items-center justify-center text-[10px] md:text-[11px] font-bold text-white uppercase"
-                style={{ backgroundColor: user.color || '#6366F1' }}
-              >
-                {user.name ? user.name.slice(0, 1) : '?'}
-              </div>
-            )}
+          {user?.sysname && token ? (
+            <img
+              src={`http://localhost/file/profile/view?sysname=${user.sysname}&token=${token}`}
+              alt={user?.name || "프로필"}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div
+              className="w-full h-full flex items-center justify-center text-[10px] md:text-[11px] font-bold text-white uppercase"
+              style={{ backgroundColor: user?.color || '#6366F1' }}
+            >
+              {user?.name ? user.name.slice(0, 1) : '?'}
+            </div>
+          )}
           </div>
         ))}
         {remainingCount > 0 && (
@@ -97,19 +98,28 @@ const MinutesList = () => {
 
   useEffect(() => {
     fetchEmployees();
-    // fetchMinutesList(); // 주석 처리: 조회 로직 미사용
+    fetchMinutesList(); // 주석 해제: 조회 로직 활성화
   }, [fetchEmployees]);
 
-  /* 
-  const fetchMinutesList = async () => {
-    // ... (조회 로직)
+  const fetchMinutesList = () => {
+    getMinutesList().then((resp) => {
+      setMinutesList(resp.data);
+    })
+    .catch((error) => {
+      console.error('회의록 목록 조회 실패:', error);
+    });
   };
 
   // 검색 필터링 로직
-  const filteredMinutes = minutesList.filter(item => 
-    item.title.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-    (item.meetingDt && item.meetingDt.includes(searchKeyword))
-  );
+  /*백엔드에서 데이터가 리스트로 잘 오면 정상적으로 검색 필터를 돌리고, 
+  혹시라도 에러 객체나 엉뚱한 데이터가 오더라도 에러 내지 말고 그냥 빈 목록([])을 보여줘 */
+  const filteredMinutes = Array.isArray(minutesList) ? minutesList.filter(item => {
+    const title = item?.title || '';
+      // 백엔드 DTO 변수명이 meetingDt인지 meeting_dt인지 확인 후 통일
+      const meetingDt = item?.meetingDt || item?.meeting_dt || '';      
+      return title.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+             meetingDt.includes(searchKeyword);
+  }):[];
 
   // 페이지네이션 처리
   const totalCount = filteredMinutes.length;
@@ -124,9 +134,8 @@ const MinutesList = () => {
     setSearchKeyword(e.target.value);
     setCurrentPage(1); // 검색 시 1페이지로 리셋
   };
-  */
 
-  const handleSave = async () => {
+  const handleSave = () => {
     // 유효성 검사
     const newErrors = {
       title: !newMinutes.title,
@@ -142,29 +151,84 @@ const MinutesList = () => {
       return;
     }
 
-    try {
-      // 백엔드 MeetingMinutesDTO 필드명(camelCase)에 맞게 매핑
-      // usersId는 백엔드에서 @RequestAttribute로 처리하므로 제외
-      const payload = {
-        title: newMinutes.title,
-        meetingDt: newMinutes.meeting_dt,
-        startTime: `${newMinutes.meeting_dt}T${newMinutes.start_time}:00`,
-        endTime: `${newMinutes.meeting_dt}T${newMinutes.end_time}:00`,
-        mainContent: newMinutes.main_content,
-        decisions: newMinutes.decisions,
-        todos: newMinutes.todos
-      };
+    const payload = {
+      title: newMinutes.title,
+      meeting_dt: newMinutes.meeting_dt,
+      start_time: `${newMinutes.meeting_dt}T${newMinutes.start_time}:00`,
+      end_time: `${newMinutes.meeting_dt}T${newMinutes.end_time}:00`,
+      main_content: newMinutes.main_content,
+      decisions: newMinutes.decisions,
+      todos: newMinutes.todos,
+      attendees: newMinutes.attendees
+    };
 
-      await maxios.post('/minutes', payload);
+  insertMinutes(payload) .then(() => {
+      // 서버 저장에 성공했을 때 실행할 로직들을 이 안에 모아둡니다.
       alert('회의록이 저장되었습니다.');
       setIsCreating(false);
-      fetchMinutesList();
-    } catch (error) {
+      fetchMinutesList(); 
+    }).catch((error) => {
       console.error('회의록 저장 실패:', error);
       alert('저장에 실패했습니다.');
-    }
+    });
   };
 
+  // 드롭다운 위치 계산
+  const updateDropdownPos = useCallback(() => {
+    if (attendeeInputRef.current) {
+      const rect = attendeeInputRef.current.getBoundingClientRect();
+      setDropdownPos({
+        top: rect.bottom,
+        left: rect.left,
+        width: rect.width
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showResults) {
+      updateDropdownPos();
+      window.addEventListener('resize', updateDropdownPos);
+      window.addEventListener('scroll', updateDropdownPos, true);
+    }
+    return () => {
+      window.removeEventListener('resize', updateDropdownPos);
+      window.removeEventListener('scroll', updateDropdownPos, true);
+    };
+  }, [showResults, updateDropdownPos]);
+
+    const filteredEmployees = searchQuery && searchQuery.trim() !== ''
+      ? allEmployees.filter(emp => {
+          const name = emp?.name || '';
+          const deptName = emp?.deptName || emp?.dept_name || '';
+          const rankName = emp?.rankName || emp?.rank_name || '';
+          const query = searchQuery.toLowerCase();
+          
+          return name.toLowerCase().includes(query) || 
+                 deptName.toLowerCase().includes(query) || 
+                 rankName.toLowerCase().includes(query);
+        }) 
+      : [];
+
+    const handleAddAttendee = (emp) => {
+      console.log(emp);
+      const attendeeId = emp.users_seq || emp.users_id || emp.id;
+      
+      if (newMinutes.attendees.some(a => (a.users_seq || a.users_id || a.id) === attendeeId)) {
+        alert('이미 추가된 참석자입니다.');
+        return;
+      }
+      setNewMinutes({ ...newMinutes, attendees: [...newMinutes.attendees, emp] });
+      setSearchQuery('');
+      setShowResults(false);
+    };
+
+  const handleRemoveAttendee = (idx) => {
+    setNewMinutes(prev => ({
+      ...prev,
+      attendees: prev.attendees.filter((_, i) => i !== idx)
+    }));
+  };
   const renderAttendeeDropdown = () => {
     if (!showResults || !searchQuery) return null;
 
@@ -252,6 +316,7 @@ const MinutesList = () => {
     if (!timeStr) return '';
     try {
       const date = new Date(timeStr);
+      if (isNaN(date.getTime())) return timeStr; // 파싱 실패 시 원본 반환
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
     } catch (e) {
       return timeStr;
@@ -293,8 +358,7 @@ const MinutesList = () => {
       </div>
 
       <div className="flex-1 relative flex gap-0 lg:gap-6 px-8 overflow-hidden min-h-0">
-        {/* 목록 섹션 - 주석 처리 */}
-        {/*
+        {/* 목록 섹션 */}
         <div className={`transition-all duration-500 ease-in-out bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full
           ${(activeId || isCreating) ? 'w-0 opacity-0 invisible lg:w-auto lg:flex-1 lg:opacity-100 lg:visible' : 'w-full opacity-100 visible flex-1'}`}>
 
@@ -348,7 +412,7 @@ const MinutesList = () => {
                         </div>
                       </td>
                       <td className="py-4 text-xs text-gray-500 font-medium whitespace-nowrap">
-                        {item.meetingDt} {formatTime(item.startTime)}
+                        {item.meeting_dt} {formatTime(item.startTime)}
                       </td>
                       <td className="py-4 text-center">
                         <ParticipantStack attendees={item.attendees} />
@@ -374,7 +438,6 @@ const MinutesList = () => {
             />
           </div>
         </div>
-        */}
 
         {/* 상세/작성 섹션 */}
         <div className={`transition-all duration-500 ease-in-out bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full
@@ -388,7 +451,7 @@ const MinutesList = () => {
                 <div>
                   <h2 className="text-xl md:text-2xl font-bold text-indigo-950 mb-1">{active.title}</h2>
                   <p className="text-sm text-gray-500 font-medium">
-                    {active.meetingDt} | {formatTime(active.startTime)} – {formatTime(active.endTime)}
+                    {active.meeting_dt} | {formatTime(active.startTime)} – {formatTime(active.endTime)}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
