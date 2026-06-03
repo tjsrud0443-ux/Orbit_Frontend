@@ -284,8 +284,8 @@ const AiChat = () => {
               <FontAwesomeIcon icon={faEllipsisV} />
             </button>
             {activeMenuId === chat.chat_seq && (
-              <div className="absolute right-0 top-10 w-32 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-20">
-                <button onClick={() => { setDeleteTarget(chat.chat_seq); setActiveMenuId(null); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+              <div onClick={(e) => e.stopPropagation()} className="absolute right-0 top-10 w-32 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-20">
+                <button onClick={() => { setDeleteTarget(chat); setActiveMenuId(null); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
                   <FontAwesomeIcon icon={faTrashCan} /> 삭제
                 </button>
               </div>
