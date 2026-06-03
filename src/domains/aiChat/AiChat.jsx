@@ -373,7 +373,7 @@ const AiChat = () => {
               )}
             </div>
 
-            <textarea className="w-full p-3 border border-[#edf2f9] rounded-lg mb-4 text-sm h-32" placeholder="AI가 답변하지 못한 상세 문의 내용을 작성해주시면 담당자가 검토 후 그룹웨어로 답변을 드립니다."></textarea>
+            <textarea onChange={(e) => setSelectedDept(e.target.value)} className="w-full p-3 border border-[#edf2f9] rounded-lg mb-4 text-sm h-32" placeholder="AI가 답변하지 못한 상세 문의 내용을 작성해주시면 담당자가 검토 후 그룹웨어로 답변을 드립니다."></textarea>
             <div className="flex gap-2">
               <button onClick={() => { setIsModalOpen(false); setIsDropdownOpen(false); }} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-slate-100">취소</button>
               <button onClick={handleInsertQuestion} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-[#3530B8] text-white">제출</button>
