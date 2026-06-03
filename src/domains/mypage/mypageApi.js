@@ -8,3 +8,5 @@ export const updateUserInfo = (userData) => maxios.put("/users/myPage/edit", use
 export const getCntMonth = () => maxios.get("/Attendance/monthCount");
 /*이번 주 근태 요약 */
 export const getCntWeek = () => maxios.get("/Attendance/weekCount");
+/*연차 현황 도넛 차트 */
+export const getAnuualSummary = () => maxios.get("/mypage/annualSummary");
