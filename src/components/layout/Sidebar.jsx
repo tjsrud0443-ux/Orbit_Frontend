@@ -176,8 +176,8 @@ const Sidebar = ({ isOpen, onClose }) => {
 
           <div className="relative flex items-center justify-between mb-1 py-2 pl-1">
             <div className="flex items-center gap-2">
-              <img src={IMAGES.ORBTI_LOGO} alt="Orbit Logo" className="w-12 h-12 object-contain" />
-              <img src={IMAGES.ORBTI_TITLE} alt="Orbit" className="h-6 object-contain mt-1" />
+              <Link to="/main"><img src={IMAGES.ORBTI_LOGO} alt="Orbit Logo" className="w-12 h-12 object-contain" /></Link>
+              <Link to="/main"><img src={IMAGES.ORBTI_TITLE} alt="Orbit" className="h-6 object-contain mt-1" /></Link>
             </div>
             {isAdminMode && (
               <span className="text-[10px] bg-red-50 text-red-600 font-bold px-2 py-0.5 rounded border border-red-200 mr-1">
