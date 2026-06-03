@@ -19,6 +19,9 @@ const MyPageEdit = () => {
     address1: '',
     address2: '',
   });
+  const [errors, setErrors] = useState({});
+  const phoneRegex = /^010-\d{4}-\d{4}$/;
+  const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 
 useEffect(() => {
   getProfileInfo()
@@ -55,6 +58,7 @@ useEffect(() => {
       ...prev,
       [name]: value
     }));
+    setErrors(prev => ({ ...prev, [name]: '' })); 
   };
 
   const handleSearch = () => {
@@ -63,6 +67,22 @@ useEffect(() => {
 
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
+    setErrors({});
+    const newErrors = {};
+
+    if (formData.email && !emailRegex.test(formData.email)) {
+      newErrors.email = 'example@email.com(또는 co.kr) 등 알맞은 형식으로 입력해주세요.';
+    }
+    if (formData.phone && !phoneRegex.test(formData.phone)) {
+      newErrors.phone = '010-0000-0000 형식으로 입력해주세요.';
+    }
+
+      // ✅ 이게 없으면 에러가 있어도 그냥 저장됨
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     try {
       updateUserInfo(formData).then(()=>{
         setProfileData({ ...profileData, ...formData });
@@ -92,7 +112,7 @@ useEffect(() => {
     display: 'grid',
     gridTemplateColumns: '8rem 1fr',
     alignItems: 'center',
-    height: '3.5rem',
+    minHeight: '3.5rem', 
     borderBottom: '1px solid #F1F5F9',
     boxSizing: 'border-box'
   };
@@ -133,12 +153,23 @@ useEffect(() => {
   };
 
   return (
-    <div style={{ width: '100%', height: '100%', padding: '1rem 1.5rem', boxSizing: 'border-box', background: 'white', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ width: '100%', minHeight: '100%', padding: '1rem 1.5rem 2.5rem', boxSizing: 'border-box', background: 'white', overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
       <style>{`
         .info-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 0 2rem;
+        }
+            /* 스크롤바 스타일 추가 */
+        ::-webkit-scrollbar {
+          width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: #CBD5E1;
+          border-radius: 999px;
         }
         @media (max-width: 767px) {
           .info-grid {
@@ -184,8 +215,8 @@ useEffect(() => {
             <div style={{...infoRowStyle, height: '2.8rem'}} className="info-row"><span style={labelStyle} className="info-label">아이디</span><span style={valueStyle} className="info-value">{profileData?.id}</span></div>
             <div style={{...infoRowStyle, height: '2.8rem'}} className="info-row"><span style={labelStyle} className="info-label">사번</span><span style={valueStyle} className="info-value">{profileData?.users_seq}</span></div>
             <div style={{...infoRowStyle, height: '2.8rem'}} className="info-row"><span style={labelStyle} className="info-label">부서</span><span style={valueStyle} className="info-value">{profileData?.dept_name}</span></div>
-            <div style={{...infoRowStyle, height: '2.8rem'}} className="info-row"><span style={labelStyle} className="info-label">직급</span><span style={valueStyle} className="info-value">{profileData?.rank_name}</span></div>
-            <div style={{...infoRowStyle, height: '2.8rem'}} className="info-row"><span style={labelStyle} className="info-label">입사일</span><span style={valueStyle} className="info-value">{profileData?.hire_date?.split(' ')[0]}</span></div>
+            <div style={{...infoRowStyle, height: '2.8rem',border:'none'}} className="info-row"><span style={labelStyle} className="info-label">직급</span><span style={valueStyle} className="info-value">{profileData?.rank_name}</span></div>
+            <div style={{...infoRowStyle, height: '2.8rem',border:'none'}} className="info-row"><span style={labelStyle} className="info-label">입사일</span><span style={valueStyle} className="info-value">{profileData?.hire_date?.split(' ')[0]}</span></div>
           </div>
         </div>
 
@@ -198,18 +229,24 @@ useEffect(() => {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-            <div style={{...infoRowStyle, height: '2.8rem'}} className="info-row">
+            <div style={{...infoRowStyle, minHeight: '2.8rem'}} className="info-row">
               <label style={labelStyle} className="info-label">이메일</label>
               {isEditing ? (
-                <input type="email" name="email" value={formData.email} onChange={handleChange} style={{...inputStyle, height: '2.2rem'}} />
+                 <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <input type="email" name="email" value={formData.email} onChange={handleChange} style={{...inputStyle, height: '2.2rem', border: errors.email ? '1px solid #EF4444' : '1px solid #3530B8'}} />
+                  {errors.email && <span style={{ fontSize: '0.7rem', color: '#EF4444', marginTop: '2px' }}>{errors.email}</span>}
+                </div>
               ) : (
                 <span style={valueStyle} className="info-value">{profileData?.email || '-'}</span>
               )}
             </div>
-            <div style={{...infoRowStyle, height: '2.8rem'}} className="info-row">
+            <div style={{...infoRowStyle, minHeight: '2.8rem'}} className="info-row">
               <label style={labelStyle} className="info-label">휴대전화</label>
               {isEditing ? (
-                <input type="text" name="phone" value={formData.phone} onChange={handleChange} style={{...inputStyle, height: '2.2rem'}} />
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <input type="text" name="phone" value={formData.phone} onChange={handleChange} style={{...inputStyle, height: '2.2rem', border: errors.phone ? '1px solid #EF4444' : '1px solid #3530B8'}} />
+                    {errors.phone && <span style={{ fontSize: '0.7rem', color: '#EF4444', marginTop: '2px' }}>{errors.phone}</span>}
+                  </div>
               ) : (
                 <span style={valueStyle} className="info-value">{profileData?.phone || '-'}</span>
               )}
@@ -249,7 +286,7 @@ useEffect(() => {
             </div>
           </div>
             
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid #F1F5F9' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.25rem', paddingTop: '1rem',  }}>
             {isEditing ? (
               <>
                 <button
