@@ -203,7 +203,7 @@ const ApprovalHome = () => {
         <div className="flex-shrink-0 px-2">
           <h1 className="text-2xl font-bold text-gray-900 mb-1">전자결재 홈</h1>
           <p className="text-sm text-gray-500 font-medium">
-            전자결재 현황을 한눈에 확인하고 빠르게 업무를 처리하세요.
+            당월 전자결재 현황을 한눈에 확인하고 빠르게 업무를 처리하세요.
           </p>
         </div>
 
