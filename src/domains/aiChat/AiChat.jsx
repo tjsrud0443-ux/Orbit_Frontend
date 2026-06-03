@@ -13,7 +13,7 @@ import {
   faChevronUp
 } from '@fortawesome/free-solid-svg-icons';
 import { IMAGES } from '../../images/images';
-import { getDetailChat, inputMsg, insertQuestion, sideChatTitleList } from './aiChatApi';
+import { deleteChat, getDetailChat, inputMsg, insertQuestion, sideChatTitleList } from './aiChatApi';
 import { getGroup } from '../departments/departmentsApi';
 
 const AiChat = () => {
@@ -73,11 +73,26 @@ const AiChat = () => {
 
   // --- 3. Handlers ---
   const handleDelete = () => {
-    if (deleteTarget) {
-      setChatHistory(prev => prev.filter(c => c.id !== deleteTarget.id));
+    deleteChat(deleteTarget.chat_seq).then(resp => {
       setDeleteTarget(null);
       setIsDeleteConfirmOpen(true);
-    }
+
+      sideChatTitleList().then(resp => {
+        setChatHistory(resp.data);
+      })
+
+      if (deleteTarget.chat_seq === currentChatSeq) {
+        setMessages([
+          {
+            id: Date.now(),
+            role: 'AI',
+            content: '안녕하세요! Orbit 사내 업무지원 AI 비서입니다. 인사, 규정, 복리후생 등 궁금하신 내용을 질문해주세요.',
+            isTyping: false
+          }
+        ]);
+        setIsMobileSidebarOpen(false)
+      }
+    });
   };
 
   const handleNewChat = () => {
@@ -154,11 +169,11 @@ const AiChat = () => {
   const detailChat = (chat_seq) => {
     getDetailChat(chat_seq).then(resp => {
       setCurrentChatSeq(chat_seq);
-      
+
       const mappedMessages = resp.data.map(msg => {
         if (msg.role === 'AI' && msg.content) {
           const needInquiryButton = msg.content.includes("찾지 못했습니다") || msg.content.includes("죄송합니다");
-          
+
           return {
             ...msg,
             showInquiry: needInquiryButton,
@@ -256,8 +271,8 @@ const AiChat = () => {
       <div className="flex-1 overflow-y-auto">
         <h3 className="text-xs font-bold text-[#8a92a6] uppercase mb-4 px-2">최근 대화</h3>
         {chatHistory.map(chat => (
-          <div 
-            key={chat.chat_seq} 
+          <div
+            key={chat.chat_seq}
             onClick={() => detailChat(chat.chat_seq)}
             className="relative group flex items-center justify-between p-3 rounded-lg hover:bg-white transition-all cursor-pointer"
           >
@@ -270,7 +285,7 @@ const AiChat = () => {
             </button>
             {activeMenuId === chat.chat_seq && (
               <div className="absolute right-0 top-10 w-32 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-20">
-                <button onClick={() => { setDeleteTarget(chat); setActiveMenuId(null); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                <button onClick={() => { setDeleteTarget(chat.chat_seq); setActiveMenuId(null); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
                   <FontAwesomeIcon icon={faTrashCan} /> 삭제
                 </button>
               </div>
@@ -279,7 +294,7 @@ const AiChat = () => {
         ))}
       </div>
       <div className="mt-auto pt-6">
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-[#edf2f9]">
+        <div className="bg-white p-1 rounded-xl shadow-sm border border-[#edf2f9]">
           <img src={IMAGES.AI_CHAT} alt="AI 검색 안내" className="w-full h-auto" />
         </div>
       </div>
