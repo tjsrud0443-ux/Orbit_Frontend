@@ -261,10 +261,10 @@ const AiChat = () => {
             onClick={() => detailChat(chat.chat_seq)}
             className="relative group flex items-center justify-between p-3 rounded-lg hover:bg-white transition-all cursor-pointer"
           >
-            <span className="text-sm font-medium text-[#1a1c3d] truncate">{chat.title}</span>
+            <span className="text-sm font-medium text-[#1a1c3d] truncate flex-1 min-w-0 mr-2">{chat.title}</span>
             <button
               onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === chat.chat_seq ? null : chat.chat_seq); }}
-              className="md:opacity-0 md:group-hover:opacity-100 text-[#8a92a6]"
+              className="md:opacity-0 md:group-hover:opacity-100 text-[#8a92a6] flex-shrink-0"
             >
               <FontAwesomeIcon icon={faEllipsisV} />
             </button>
@@ -298,7 +298,7 @@ const AiChat = () => {
         }
       `}</style>
       {/* 1. Desktop Sidebar */}
-      <div className="hidden md:flex w-1/4 h-full border-r border-[#edf2f9]">
+      <div className="hidden md:flex md:w-80 flex-shrink-0 h-full border-r border-[#edf2f9]">
         <SidebarContent />
       </div>
 
@@ -343,7 +343,7 @@ const AiChat = () => {
                 {/* 임베딩 출처 메타데이터 바인딩 연동 문서 구역 */}
                 {!msg.isTyping && msg.role === 'AI' && !msg.showInquiry && (
                   <div className="mt-4 pt-3 border-t border-[#edf2f9] flex items-center justify-between gap-4">
-                    <span className="text-xs font-medium text-[#8a92a6] truncate"><FontAwesomeIcon icon={faFileAlt} className="mr-1.5" /> 사내_업무_규정_통합본.pdf</span>
+                    <span className="text-xs font-medium text-[#8a92a6] truncate min-w-0"><FontAwesomeIcon icon={faFileAlt} className="mr-1.5" /> 사내_업무_규정_통합본.pdf</span>
                     <button className="text-[10px] bg-white border border-[#edf2f9] px-2 py-1 rounded hover:bg-slate-50 transition-colors flex-shrink-0">📄 다운로드</button>
                   </div>
                 )}
