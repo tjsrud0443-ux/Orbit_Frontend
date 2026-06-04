@@ -35,7 +35,9 @@ const QnaHistory = () => {
 
   const filteredQna = useMemo(() => {
     return qnaList.filter(item => {
-      const matchesFilter = filter === '전체' || item.status === filter;
+      const matchesFilter = filter === '전체' || (
+        filter === '답변 대기' ? item.status === 'PENDING' : filter === '답변완료' ? item.status === 'ANSWERED' : item.status === filter
+      );
       const matchesSearch = searchBy === '질문 내용'
         ? item.question.includes(search)
         : item.category.includes(search);
@@ -64,11 +66,11 @@ const QnaHistory = () => {
         <p className="text-xs md:text-sm text-[#8a92a6] mt-1">내가 작성한 문의 내역과 관리자의 답변을 확인할 수 있습니다.</p>
       </div>
 
-      <div className="flex flex-col md:flex-row h-auto gap-6">
-        <div className={`bg-white rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-4 md:p-8 flex flex-col transition-all duration-300 ${selectedQna ? 'md:w-[65%] w-full' : 'w-full'}`}>
+      <div className="flex flex-col md:flex-row h-auto gap-6 min-h-0">
+        <div className={`bg-white rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-4 md:p-8 flex flex-col transition-all duration-300 overflow-hidden min-w-0 ${selectedQna ? 'md:w-[65%] w-full' : 'w-full'}`}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
-            <div className="flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit overflow-x-auto items-center">
-              {['전체', '답변 대기', '답변 완료'].map(tab => (
+            <div className="flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit overflow-x-auto items-center flex-shrink-0">
+              {['전체', '답변 대기', '답변완료'].map(tab => (
                 <button key={tab} onClick={() => { setFilter(tab); setCurrentPage(1); }}
                   className={`flex-1 md:flex-none px-6 py-1.5 rounded-xl text-sm font-bold transition-all ${filter === tab ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>
                   {tab}
@@ -105,44 +107,50 @@ const QnaHistory = () => {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-visible">
-            <table className="w-full text-left border-collapse">
+          <div className="flex-1 min-h-0">
+            <table className="w-full text-left border-collapse table-auto">
               <thead className="hidden md:table-header-group">
                 <tr className="text-[#8a92a6] text-sm border-b border-gray-100">
-                  <th className="pb-4 font-medium px-2 text-left w-[15%]">카테고리</th>
-                  <th className="pb-4 font-medium px-2 text-left w-[35%]">질문 내용</th>
-                  <th className="pb-4 font-medium px-2 text-left w-[10%]">질문자</th>
-                  <th className="pb-4 font-medium px-2 text-left w-[15%]">등록일</th>
-                  <th className="pb-4 font-medium px-2 text-left w-[15%]">상태</th>
-                  <th className="pb-4 font-medium px-2 text-left w-[10%]">상세보기</th>
+                  <th className="pb-4 font-medium px-2 text-left whitespace-nowrap">카테고리</th>
+                  <th className="pb-4 font-medium px-2 text-left w-full">질문 내용</th>
+                  <th className="pb-4 font-medium px-2 text-left whitespace-nowrap">질문자</th>
+                  <th className="pb-4 font-medium px-2 text-left whitespace-nowrap">등록일</th>
+                  <th className="pb-4 font-medium px-2 text-left whitespace-nowrap">상태</th>
+                  <th className="pb-4 font-medium px-2 text-left whitespace-nowrap">상세보기</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredQna.map(item => (
                   <tr key={item.question_seq} className="border-b border-gray-100 hover:bg-[#f8fbff] transition-colors block md:table-row w-full mb-4 md:mb-0">
-                    <td className="py-2 px-2 block md:table-cell text-sm font-bold md:font-medium text-[#1a1c3d]">
-                      <span className="md:hidden text-[#8a92a6] mr-2">카테고리:</span><span className="px-3 py-1 bg-[#F0F4FF] text-[#3530B8] rounded-lg text-xs font-bold">{item.category.replace("팀","")}</span>
-                    </td>
-                    <td className="py-2 px-2 block md:table-cell text-sm text-[#1a1c3d] truncate max-w-[200px] md:max-w-none">
-                      <span className="md:hidden text-[#8a92a6] mr-2">질문:</span>{item.question}
-                    </td>
-                    <td className="py-2 px-2 block md:table-cell text-sm text-gray-500">
-                      <span className="md:hidden text-[#8a92a6] mr-2">질문자:</span>{item.users_id}
-                    </td>
-                    <td className="py-2 px-2 block md:table-cell text-sm text-gray-500">
-                      <span className="md:hidden text-[#8a92a6] mr-2">등록일:</span>{item.created_at}
-                    </td>
-                    <td className="py-2 px-2 block md:table-cell">
-                      <span className={`inline-block px-4 py-1.5 rounded-full text-[11px] font-bold ${item.status === '답변 완료' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
-                        {item.status}
+                    <td className="py-4 px-2 block md:table-cell text-sm font-bold md:font-medium text-[#1a1c3d] whitespace-nowrap">
+                      <span className="md:hidden text-[#8a92a6] mr-2">카테고리:</span>
+                      <span className="inline-flex items-center px-3 py-1 bg-[#F0F4FF] text-[#3530B8] rounded-lg text-xs font-bold">
+                        {item.category.replace("팀","")}
                       </span>
                     </td>
-                    <td className="py-2 px-2 block md:table-cell">
+                    <td className="py-4 px-2 block md:table-cell text-sm text-[#1a1c3d] max-w-0 w-full">
+                      <div className="flex items-center">
+                        <span className="md:hidden text-[#8a92a6] mr-2 flex-shrink-0">질문:</span>
+                        <span className="truncate">{item.question}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-2 block md:table-cell text-sm text-gray-500 whitespace-nowrap">
+                      <span className="md:hidden text-[#8a92a6] mr-2">질문자:</span>{item.users_id}
+                    </td>
+                    <td className="py-4 px-2 block md:table-cell text-sm text-gray-500 whitespace-nowrap">
+                      <span className="md:hidden text-[#8a92a6] mr-2">등록일:</span>{item.created_at}
+                    </td>
+                    <td className="py-4 px-2 block md:table-cell whitespace-nowrap">
+                      <span className={`inline-block px-4 py-1.5 rounded-full text-[11px] font-bold ${item.status === 'ANSWERED' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
+                        {item.status === 'ANSWERED' ? '답변완료' : '답변 대기'}
+                      </span>
+                    </td>
+                    <td className="py-4 px-2 block md:table-cell whitespace-nowrap">
                       <div className="flex gap-2">
                         <button onClick={() => setSelectedQna(item)} className="text-[11px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-3 py-1.5 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all">
                           상세보기
                         </button>
-                        {item.status === '답변 대기' && (
+                        {item.status === 'PENDING' && (
                           <button onClick={() => handleDelete(item.id)} className="text-[11px] font-bold text-red-600 border border-red-50 bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-600 hover:text-white transition-all">
                             <FontAwesomeIcon icon={faTrashCan} />
                           </button>
@@ -173,8 +181,8 @@ const QnaHistory = () => {
             </div>
             <div className="flex items-center gap-3 mb-4">
               <span className="px-3 py-1 bg-[#F0F4FF] text-[#3530B8] rounded-lg text-xs font-bold">{selectedQna.category.replace("팀","")}</span>
-              <span className={`px-3 py-1 rounded-lg text-xs font-bold ${selectedQna.status === '답변 완료' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
-                {selectedQna.status}
+              <span className={`px-3 py-1 rounded-lg text-xs font-bold ${selectedQna.status === 'ANSWERED' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
+                {selectedQna.status === 'ANSWERED' ? '답변완료' : '답변 대기'}
               </span>
             </div>
             <h3 className="text-lg font-bold mb-2 text-[#1a1c3d]">Q. 질문 내용</h3>
@@ -184,8 +192,8 @@ const QnaHistory = () => {
             </div>
             
             <h3 className="text-lg font-bold mb-2 text-[#3530B8]">A. 관리자 답변</h3>
-            <div className={`p-6 rounded-2xl border ${selectedQna.status === '답변 완료' ? 'bg-white border-[#edf2f9]' : 'bg-gray-50 border-dashed border-gray-200'}`}>
-              {selectedQna.status === '답변 완료' ? (
+            <div className={`p-6 rounded-2xl border ${selectedQna.status === 'ANSWERED' ? 'bg-white border-[#edf2f9]' : 'bg-gray-50 border-dashed border-gray-200'}`}>
+              {selectedQna.status === 'ANSWERED' ? (
                 <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedQna.answer}</p>
               ) : (
                 <p className="text-sm font-bold text-gray-400 text-center py-4">답변을 기다리는 중입니다.</p>
@@ -208,16 +216,16 @@ const QnaHistory = () => {
               </div>
               <div className="flex gap-2 mb-4">
                 <span className="px-2 py-1 bg-[#F0F4FF] text-[#3530B8] rounded-md text-[10px] font-bold">{selectedQna.category.replace("팀","")}</span>
-                <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${selectedQna.status === '답변 완료' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
-                  {selectedQna.status}
+                <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${selectedQna.status === 'ANSWERED' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
+                  {selectedQna.status === 'ANSWERED' ? '답변완료' : '답변 대기'}
                 </span>
               </div>
               <h4 className="text-[11px] font-bold text-[#8a92a6] uppercase mb-2">질문 내용</h4>
               <p className="text-xs text-gray-700 mb-4 bg-[#f4f7fc] p-4 rounded-xl whitespace-pre-wrap">{selectedQna.question}</p>
               
               <h4 className="text-[11px] font-bold text-[#3530B8] uppercase mb-2">관리자 답변</h4>
-              <div className={`p-4 rounded-xl border ${selectedQna.status === '답변 완료' ? 'bg-white border-[#edf2f9]' : 'bg-gray-50 border-dashed border-gray-200'}`}>
-                {selectedQna.status === '답변 완료' ? (
+              <div className={`p-4 rounded-xl border ${selectedQna.status === 'ANSWERED' ? 'bg-white border-[#edf2f9]' : 'bg-gray-50 border-dashed border-gray-200'}`}>
+                {selectedQna.status === 'ANSWERED' ? (
                   <p className="text-xs text-gray-700 whitespace-pre-wrap">{selectedQna.answer}</p>
                 ) : (
                   <p className="text-xs text-gray-400 italic text-center">답변을 기다리는 중입니다.</p>
