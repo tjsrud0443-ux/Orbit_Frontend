@@ -4,6 +4,7 @@ import useUserStore from '../../store/userStore';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt, faCloudUploadAlt, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { useDropzone } from 'react-dropzone';
+import { createDocument, getAllDocs } from './adminApi';
 
 const AdminDocuments = () => {
   const { user } = useUserStore();
@@ -14,20 +15,15 @@ const AdminDocuments = () => {
   // 모달 관련 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editingId, setEditingId] = useState(null);
+  const [editingSeq, setEditingSeq] = useState(null);
   const [newDocTitle, setNewDocTitle] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
-  // 더미 데이터 생성
+  // 문서 불러오기
   useEffect(() => {
-    const dummyData = Array.from({ length: 15 }, (_, i) => ({
-      id: i + 1,
-      title: `[공지] ${2024 - i}년도 하반기 업무 보고 양식.docx`,
-      author: i % 3 === 0 ? '관리자' : `작성자${i}`,
-      authorId: i % 3 === 0 ? 'admin' : `user${i}`, // 작성자 ID (권한 체크용)
-      date: `2024-06-${String(15 - i).padStart(2, '0')}`,
-    }));
-    setDocuments(dummyData);
+    getAllDocs().then(resp => {
+      setDocuments(resp.data);
+    })
   }, []);
 
   // Dropzone 설정
@@ -37,6 +33,32 @@ const AdminDocuments = () => {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
     onDrop,
+    accept: {
+    // 이미지
+    'image/*': ['.png', '.jpg', '.jpeg', '.gif'],
+    
+    // PDF
+    'application/pdf': ['.pdf'],
+    
+    // MS Word
+    'application/msword': ['.doc'],
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+    
+    // MS Excel
+    'application/vnd.ms-excel': ['.xls'],
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+    
+    // MS PowerPoint
+    'application/vnd.ms-powerpoint': ['.ppt'],
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx'],
+  
+    // 한글 파일
+    'application/x-hwp': ['.hwp'],
+
+    // 텍스트 파일
+    'text/plain': ['.txt']
+  },
+    maxFiles: 1,
     multiple: false
   });
 
@@ -57,60 +79,78 @@ const AdminDocuments = () => {
     setCurrentPage(value);
   };
 
-  const handleEdit = (id) => {
-    const docToEdit = documents.find(d => d.id === id);
+  const handleEdit = (document_seq) => {
+    const docToEdit = documents.find(d => d.document_seq === document_seq);
     if (docToEdit) {
       setIsEditMode(true);
-      setEditingId(id);
+      setEditingSeq(document_seq);
       setNewDocTitle(docToEdit.title);
       setUploadedFiles([]); // 실제로는 기존 파일을 표시하거나 가져오는 로직이 필요함
       setIsModalOpen(true);
     }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = (document_seq) => {
     if (window.confirm('정말 삭제하시겠습니까?')) {
-      alert(`문서 ID ${id}가 삭제되었습니다.`);
+      alert(`문서 ID ${document_seq}가 삭제되었습니다.`);
     }
   };
 
   const handleCreate = () => {
     setIsEditMode(false);
-    setEditingId(null);
+    setEditingSeq(null);
     setIsModalOpen(true);
   };
 
   const handleModalClose = () => {
     setIsModalOpen(false);
     setIsEditMode(false);
-    setEditingId(null);
+    setEditingSeq(null);
     setNewDocTitle('');
     setUploadedFiles([]);
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!newDocTitle.trim()) {
       alert('제목을 입력해주세요.');
       return;
     }
     
     if (isEditMode) {
-      alert(`문서 ID ${editingId}가 수정되었습니다.\n새 제목: ${newDocTitle}`);
+      alert(`문서 Seq ${editingSeq}가 수정되었습니다.\n새 제목: ${newDocTitle}`);
     } else {
       if (uploadedFiles.length === 0) {
         alert('파일을 등록해주세요.');
         return;
       }
-      alert(`제목: ${newDocTitle}\n파일: ${uploadedFiles[0].name}\n문서가 등록되었습니다.`);
+
+      try {
+        const formData = new FormData();
+        formData.append('title', newDocTitle);
+        if (user && user.id) {
+          formData.append('users_id', user.id);
+        }
+        formData.append('file', uploadedFiles[0]);
+
+        await createDocument(formData);
+        alert('문서가 성공적으로 등록되었습니다.');
+        handleModalClose();
+        
+        const resp = await getAllDocs();
+        setDocuments(resp.data);
+        
+      } catch (error) {
+        console.error('문서 등록 실패:', error);
+        alert('문서 등록 중 오류가 발생했습니다.');
+      }
     }
-    handleModalClose();
   };
 
   // 권한 체크 함수
-  const canManage = (authorId) => {
+  const canManage = (users_id) => {
     if (!user) return false;
     // 슈퍼 어드민이거나, 본인이 작성한 문서인 경우
-    return user.auth_group === 'ROLE_SUPER_ADMIN' || user.id === authorId;
+    return user.auth_group === 'ROLE_SUPER_ADMIN' || user.id === users_id;
   };
 
   return (
@@ -173,28 +213,28 @@ const AdminDocuments = () => {
                 </tr>
               ) : (
                 displayedDocs.map((doc) => (
-                  <tr key={doc.id} className="hover:bg-slate-50/40 transition-colors">
+                  <tr key={doc.document_seq} className="hover:bg-slate-50/40 transition-colors">
                     <td className="py-4 text-sm font-semibold text-slate-800">
                       {doc.title}
                     </td>
                     <td className="py-4 text-xs text-slate-500 font-medium">
-                      {doc.author}
+                      {doc.users_id}
                     </td>
                     <td className="py-4 text-[0.6875rem] text-slate-400 font-mono">
-                      {doc.date}
+                      {doc.created_at?.substring(0, 10)}
                     </td>
                     <td className="py-4 text-center">
-                      {canManage(doc.authorId) ? (
+                      {canManage(doc.users_id) ? (
                         <div className="flex justify-center gap-2">
                           <button 
-                            onClick={() => handleEdit(doc.id)}
+                            onClick={() => handleEdit(doc.document_seq)}
                             className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-[#3530B8] transition-all flex items-center justify-center cursor-pointer"
                             title="수정"
                           >
                             <FontAwesomeIcon icon={faEdit} className="text-xs" />
                           </button>
                           <button 
-                            onClick={() => handleDelete(doc.id)}
+                            onClick={() => handleDelete(doc.document_seq)}
                             className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center cursor-pointer"
                             title="삭제"
                           >

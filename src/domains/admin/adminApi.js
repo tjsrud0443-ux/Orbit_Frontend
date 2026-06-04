@@ -1,6 +1,7 @@
 ﻿import { makeStyles } from "@mui/material";
 import { maxios } from "../../api/axiosConfig";
 
+// 회원가입 관리
 export const getAllRequest = (page, status, searchTerm) => maxios.get("/admin/hr/allRequest", {params: {cPage: page, status: status, searchTerm: searchTerm}});
 export const getUserInfo = (seq) => maxios.get(`/admin/hr/${seq}`);
 export const getDeptList = () => maxios.get("/admin/hr/getDeptList");
@@ -32,3 +33,11 @@ export const getDeptEmployeeCount = () => maxios.get("/admin/deptEmployeeCount")
 export const getDeptLeave = () => maxios.get("/admin/deptLeave");
 export const getJoinResign = () => maxios.get("/admin/joinResign");
 export const getAiQuestions = () => maxios.get("/admin/aiQuestions")
+
+// 문서 관리
+export const getAllDocs = () => maxios.get("/admin/getAllDocs");
+export const createDocument = (formData) => maxios.post('/admin/addDocument', formData, {
+    headers: {
+        'Content-Type': 'multipart/form-data',
+    },
+});
