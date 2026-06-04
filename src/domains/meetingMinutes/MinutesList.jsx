@@ -199,11 +199,20 @@ const MinutesList = () => {
   혹시라도 에러 객체나 엉뚱한 데이터가 오더라도 에러 내지 말고 그냥 빈 목록([])을 보여줘 */
   const filteredMinutes = Array.isArray(minutesList) ? minutesList.filter(item => {
     const title = item?.title || '';
-      // 백엔드 DTO 변수명이 meetingDt인지 meeting_dt인지 확인 후 통일
-      const meetingDt = item?.meetingDt || item?.meeting_dt || '';      
-      return title.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-             meetingDt.includes(searchKeyword);
-  }):[];
+    // 백엔드 DTO 변수명이 meetingDt인지 meeting_dt인지 확인 후 통일
+    const meetingDt =  item?.meeting_dt || '';      
+     // 검색어 매칭
+    const matchesSearch = title.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      meetingDt.includes(searchKeyword);
+    // 내가 작성자이거나, 참석자 목록에 내가 포함된 경우
+    const isAuthor = item?.users_id === user?.id;
+    const isAttendee = (item?.attendees || []).some(a => a.users_id === user?.id);
+
+    return matchesSearch && (isAuthor || isAttendee);
+  }).map(item => ({
+    ...item,
+    badgeType: item?.users_id === user?.id ? 'author' : 'attendee'
+  })) : [];
 
   // 페이지네이션 처리
   const totalCount = filteredMinutes.length;
@@ -600,16 +609,25 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
                     className={`cursor-pointer hover:bg-indigo-50/50 transition-colors group px-4 py-5 md:py-4 flex flex-col md:grid md:grid-cols-12 md:items-center gap-3 md:gap-4 ${activeId === item.minute_seq ? 'bg-indigo-50/50' : ''}`}
                   >
                     {/* 제목 */}
-                    <div className="md:col-span-5 flex items-center min-w-0">
+                    <div className="md:col-span-5 flex items-center gap-2 min-w-0">
                       <span className={`text-sm font-bold group-hover:text-indigo-600 transition-colors ${activeId === item.minute_seq ? 'text-indigo-600' : 'text-gray-700'} truncate`}>
                         {item.title}
                       </span>
+                      {item.badgeType === 'author' ? (
+                        <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-600">
+                          내가 작성
+                        </span>
+                      ) : (
+                        <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
+                          참석자
+                        </span>
+                      )}
                     </div>
                     
                     {/* 일시 */}
                     <div className="md:col-span-4 text-xs text-gray-500 font-medium">
                       <span className="md:hidden text-gray-400 mr-2 font-bold uppercase text-[10px]">일시</span>
-                      {item.meeting_dt} {formatTime(item.start_time)} – {formatTime(item.end_time)}
+                      {item.meeting_dt} | {formatTime(item.start_time)} – {formatTime(item.end_time)}
                     </div>
                     
                     {/* 참여자 */}
@@ -650,14 +668,14 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
                         type="text"
                         value={editMinutes.title}
                         onChange={(e) => setEditMinutes({...editMinutes, title: e.target.value})}
-                        className="w-full text-xl md:text-2xl font-bold text-indigo-950 border border-gray-300 rounded-xl p-2"
+                        className="w-full text-xl md:text-2xl font-bold text-indigo-950 border border-gray-300 rounded-xl p-3 focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-300 transition-all"
                       />
                       <div className="flex flex-col md:flex-row gap-2">
                         <input 
                           type="date"
                           value={editMinutes.meeting_dt}
                           onChange={(e) => setEditMinutes({...editMinutes, meeting_dt: e.target.value})}
-                          className="w-full md:w-auto border border-gray-300 rounded-xl p-2 text-sm"
+                          className="w-full md:w-auto border border-gray-300 rounded-xl p-2 text-sm focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-300 transition-all"
                         />
                         <div className="flex flex-col gap-1">  {/* ← flex-col 추가 */}
                           <div className="flex gap-2">
@@ -668,8 +686,8 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
                                 setEditMinutes({...editMinutes, start_time: e.target.value});
                                 setErrors(prev => ({...prev, time_order: false}));  // ← 추가
                               }}
-                              className={`flex-1 md:w-32 border rounded-xl p-2 text-sm
-                                ${errors.time_order ? 'border-red-400' : 'border-gray-300'}`}
+                              className={`flex-1 md:w-32 border rounded-xl p-2 text-sm focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all
+                                ${errors.time_order ? 'border-red-400 focus:ring-red-100' : 'border-gray-300 focus:border-indigo-300'}`}
                             />
                             <input 
                               type="time"
@@ -678,8 +696,8 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
                                 setEditMinutes({...editMinutes, end_time: e.target.value});
                                 setErrors(prev => ({...prev, time_order: false}));  // ← 추가
                               }}
-                              className={`flex-1 md:w-32 border rounded-xl p-2 text-sm
-                                ${errors.time_order ? 'border-red-400' : 'border-gray-300'}`}
+                              className={`flex-1 md:w-32 border rounded-xl p-2 text-sm focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all
+                                ${errors.time_order ? 'border-red-400 focus:ring-red-100' : 'border-gray-300 focus:border-indigo-300'}`}
                             />
                           </div>                        
                         </div>
@@ -801,8 +819,8 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
                           setEditMinutes({...editMinutes, main_content: e.target.value})
                         if(e.target.value) setErrors(prev => ({...prev, main_content: false}));
                         }}
-                        className={`w-full px-4 py-3 bg-white border rounded-2xl text-sm text-gray-900 resize-none
-                          ${errors.main_content ? 'border-red-400 ring-4 ring-red-100 shadow-[0_0_15px_rgba(248,113,113,0.15)]' : 'border-gray-300'}`}
+                        className={`w-full px-4 py-3 bg-white border rounded-2xl text-sm text-gray-900 resize-none focus:outline-none focus:ring-4 transition-all
+                          ${errors.main_content ? 'border-red-400 ring-4 ring-red-100 shadow-[0_0_15px_rgba(248,113,113,0.15)]' : 'border-gray-300 focus:ring-indigo-100 focus:border-indigo-300'}`}
                       />
                     ) : (
                       <div className="text-[0.9rem] text-gray-700 leading-relaxed whitespace-pre-wrap bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
@@ -824,7 +842,7 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
                         rows="3"
                         value={editMinutes.decisions}
                         onChange={(e) => setEditMinutes({...editMinutes, decisions: e.target.value})}
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-2xl text-sm text-gray-900 resize-none"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-2xl text-sm text-gray-900 resize-none focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-300 transition-all"
                       />
                     ) : (
                       <div className="text-[0.85rem] font-bold text-gray-700 whitespace-pre-wrap bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
@@ -841,7 +859,7 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
                         rows="3"
                         value={editMinutes.todos}
                         onChange={(e) => setEditMinutes({...editMinutes, todos: e.target.value})}
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-2xl text-sm text-gray-900 resize-none"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-2xl text-sm text-gray-900 resize-none focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-300 transition-all"
                       />
                     ) : (
                       <div className="text-[0.9rem] text-gray-700 whitespace-pre-wrap bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
