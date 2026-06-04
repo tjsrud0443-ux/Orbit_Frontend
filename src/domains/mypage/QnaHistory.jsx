@@ -173,7 +173,6 @@ const QnaHistory = () => {
                   </div>
                   <div className="flex justify-between items-center pt-3 border-t border-gray-100">
                     <div className="flex flex-col gap-0.5">
-                      <span className="text-[10px] text-gray-400">{item.users_id}</span>
                       <span className="text-[10px] text-gray-400">{item.created_at}</span>
                     </div>
                     <div className="flex gap-2">
