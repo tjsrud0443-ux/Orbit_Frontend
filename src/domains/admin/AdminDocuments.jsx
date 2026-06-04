@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import Pagination from '../../components/common/Pagination';
 import useUserStore from '../../store/userStore';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt, faCloudUploadAlt, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { useDropzone } from 'react-dropzone';
-import { createDocument, getAllDocs } from './adminApi';
+import { createDocument, deleteDocument, editDocument, getAllDocs } from './adminApi';
+import useAuthStore from '../../store/authStore';
 
 const AdminDocuments = () => {
   const { user } = useUserStore();
@@ -21,11 +22,18 @@ const AdminDocuments = () => {
   const [titleError, setTitleError] = useState('');
   const [fileError, setFileError] = useState('');
 
+  const token = useAuthStore(state => state.token);
+
   // 문서 불러오기
-  useEffect(() => {
+  const loadDocuments = () => {
     getAllDocs().then(resp => {
+      console.log(resp.data[0]);
       setDocuments(resp.data);
-    })
+    }).catch(err => console.error("목록 로드 실패:", err));
+  };
+
+  useEffect(() => {
+    loadDocuments();
   }, []);
 
   // Dropzone 설정
@@ -90,14 +98,21 @@ const AdminDocuments = () => {
       setIsEditMode(true);
       setEditingSeq(document_seq);
       setNewDocTitle(docToEdit.title);
-      setUploadedFiles([]); // 실제로는 기존 파일을 표시하거나 가져오는 로직이 필요함
+      setUploadedFiles([]);
       setIsModalOpen(true);
     }
   };
 
-  const handleDelete = (document_seq) => {
-    if (window.confirm('정말 삭제하시겠습니까?')) {
-      alert(`문서 ID ${document_seq}가 삭제되었습니다.`);
+  const handleDelete = async (document_seq) => {
+    if (window.confirm('정말 삭제하시겠습니까?\n삭제 시 복구가 불가합니다.')) {
+      try {
+        await deleteDocument(document_seq);
+        alert('문서가 삭제되었습니다.');
+        loadDocuments();
+      } catch (error) {
+        console.error('문서 삭제 실패:', error);
+        alert('문서 삭제 중 오류가 발생했습니다.');
+      }
     }
   };
 
@@ -136,29 +151,31 @@ const AdminDocuments = () => {
 
     if (hasError) return;
     
-    if (isEditMode) {
-      alert(`문서 Seq ${editingSeq}가 수정되었습니다.\n새 제목: ${newDocTitle}`);
-    } else {
-      try {
-        const formData = new FormData();
-        formData.append('title', newDocTitle);
-        if (user && user.id) {
-          formData.append('users_id', user.id);
+    const formData = new FormData();
+    formData.append('title', newDocTitle);
+    
+    try{
+      if (isEditMode) {
+        formData.append('document_seq', editingSeq);
+        if (uploadedFiles.length > 0) {
+          formData.append('file', uploadedFiles[0]);
         }
-        formData.append('file', uploadedFiles[0]);
-
-        await createDocument(formData);
-        alert('문서가 성공적으로 등록되었습니다.');
-        handleModalClose();
-        
-        const resp = await getAllDocs();
-        setDocuments(resp.data);
-        
-      } catch (error) {
-        console.error('문서 등록 실패:', error);
-        alert('문서 등록 중 오류가 발생했습니다.');
+        await editDocument(formData);
+        alert('문서가 수정되었습니다.');
+      } else {
+          if (user && user.id) {
+            formData.append('users_id', user.id);
+          }
+          formData.append('file', uploadedFiles[0]);
+          await createDocument(formData);
+          alert('문서가 등록되었습니다.');
+        }
+          handleModalClose();
+          loadDocuments();
+      }catch (error) {
+          console.error('문서 등록 실패:', error);
+          alert('문서 등록 중 오류가 발생했습니다.');
       }
-    }
   };
 
   // 권한 체크 함수
@@ -166,6 +183,18 @@ const AdminDocuments = () => {
     if (!user) return false;
     // 슈퍼 어드민이거나, 본인이 작성한 문서인 경우
     return user.auth_group === 'ROLE_SUPER_ADMIN' || user.id === users_id;
+  };
+
+  const handlePreview = (sysname, mimeType) => {
+    const fileUrl = `http://localhost/file/preview/${sysname}?token=${token}`;
+    
+    // PDF, 이미지는 바로 열기
+    if (mimeType?.startsWith('image/') || mimeType === 'application/pdf') {
+      window.open(fileUrl, '_blank');
+    } else {
+      // Office 파일은 Google Docs Viewer로
+      window.open(`https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}`, '_blank');
+    }
   };
 
   return (
@@ -230,7 +259,20 @@ const AdminDocuments = () => {
                 displayedDocs.map((doc) => (
                   <tr key={doc.document_seq} className="hover:bg-slate-50/40 transition-colors">
                     <td className="py-4 text-sm font-semibold text-slate-800">
-                      {doc.title}
+                      {/* <a 
+                        href={`http://localhost/file/preview/${doc.file_sysname}?token=${token}`}
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="hover:text-[#3530B8] hover:underline cursor-pointer"
+                      >
+                        {doc.title}
+                      </a> */}
+                      <button
+                        onClick={() => handlePreview(doc.file_sysname, doc.mime_type)}
+                        className="hover:text-[#3530B8] hover:underline cursor-pointer text-left"
+                      >
+                        {doc.title}
+                      </button>
                     </td>
                     <td className="py-4 text-xs text-slate-500 font-medium">
                       {doc.users_id}

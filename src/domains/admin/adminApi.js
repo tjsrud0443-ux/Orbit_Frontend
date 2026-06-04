@@ -41,3 +41,5 @@ export const createDocument = (formData) => maxios.post('/admin/addDocument', fo
         'Content-Type': 'multipart/form-data',
     },
 });
+export const editDocument = (formData) => maxios.put('/admin/editDocument', formData);
+export const deleteDocument = (document_seq) => maxios.delete(`/admin/deleteDocument/${document_seq}`);
