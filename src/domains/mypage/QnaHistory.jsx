@@ -31,7 +31,7 @@ const QnaHistory = () => {
       console.log(resp.data)
       setQnaList(resp.data);
     })
-  },[]);
+  }, []);
 
   const filteredQna = useMemo(() => {
     return qnaList.filter(item => {
@@ -113,12 +113,12 @@ const QnaHistory = () => {
               <table className="w-full text-left border-collapse table-auto">
                 <thead className="md:table-header-group">
                   <tr className="text-[#8a92a6] text-sm border-b border-gray-100">
-                    <th className="pb-4 font-medium px-2 text-left whitespace-nowrap">카테고리</th>
-                    <th className="pb-4 font-medium px-2 text-left w-full">질문 내용</th>
-                    <th className="pb-4 font-medium px-2 text-left whitespace-nowrap">질문자</th>
-                    <th className="pb-4 font-medium px-2 text-left whitespace-nowrap">등록일</th>
-                    <th className="pb-4 font-medium px-2 text-left whitespace-nowrap">상태</th>
-                    <th className="pb-4 font-medium px-2 text-left whitespace-nowrap">상세보기</th>
+                    <th className="pb-4 font-medium px-2 text-left w-[10%] whitespace-nowrap">카테고리</th>
+                    <th className="pb-4 font-medium px-2 text-left w-[25%] whitespace-nowrap">질문 내용</th>
+                    <th className="pb-4 font-medium px-2 text-left w-[22%] whitespace-nowrap">질문자</th>
+                    <th className="pb-4 font-medium px-2 text-left w-[15%] whitespace-nowrap">등록일</th>
+                    <th className="pb-4 font-medium px-2 text-left w-[12%] whitespace-nowrap">상태</th>
+                    <th className="pb-4 font-medium px-2 text-left w-[16%] whitespace-nowrap">상세보기</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -126,10 +126,10 @@ const QnaHistory = () => {
                     <tr key={item.question_seq} className="border-b border-gray-100 hover:bg-[#f8fbff] transition-colors md:table-row">
                       <td className="py-4 px-2 md:table-cell text-sm font-medium text-[#1a1c3d] whitespace-nowrap">
                         <span className="inline-flex items-center px-3 py-1 bg-[#F0F4FF] text-[#3530B8] rounded-lg text-xs font-bold">
-                          {item.category.replace("팀","")}
+                          {item.category.replace("팀", "")}
                         </span>
                       </td>
-                      <td className="py-4 px-2 md:table-cell text-sm text-[#1a1c3d] max-w-0 w-full">
+                      <td className="py-4 px-2 md:table-cell text-sm text-[#1a1c3d] max-w-0">
                         <div className="truncate">{item.question}</div>
                       </td>
                       <td className="py-4 px-2 md:table-cell text-sm text-gray-500 whitespace-nowrap">{item.users_id}</td>
@@ -163,7 +163,7 @@ const QnaHistory = () => {
                 <div key={item.question_seq} className="bg-[#f8fbff] rounded-2xl p-5 border border-[#edf2f9] shadow-sm">
                   <div className="flex justify-between items-start mb-3">
                     <span className="px-3 py-1 bg-[#F0F4FF] text-[#3530B8] rounded-lg text-xs font-bold whitespace-nowrap">
-                      {item.category.replace("팀","")}
+                      {item.category.replace("팀", "")}
                     </span>
                     <span className={`px-3 py-1 rounded-full text-[10px] font-bold whitespace-nowrap ${item.status === 'ANSWERED' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
                       {item.status === 'ANSWERED' ? '답변완료' : '답변 대기'}
@@ -211,7 +211,7 @@ const QnaHistory = () => {
               <button onClick={() => setSelectedQna(null)}><FontAwesomeIcon icon={faTimes} /></button>
             </div>
             <div className="flex items-center gap-3 mb-4">
-              <span className="px-3 py-1 bg-[#F0F4FF] text-[#3530B8] rounded-lg text-xs font-bold">{selectedQna.category.replace("팀","")}</span>
+              <span className="px-3 py-1 bg-[#F0F4FF] text-[#3530B8] rounded-lg text-xs font-bold">{selectedQna.category.replace("팀", "")}</span>
               <span className={`px-3 py-1 rounded-lg text-xs font-bold ${selectedQna.status === 'ANSWERED' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
                 {selectedQna.status === 'ANSWERED' ? '답변완료' : '답변 대기'}
               </span>
@@ -219,18 +219,21 @@ const QnaHistory = () => {
             <h3 className="text-lg font-bold mb-2 text-[#1a1c3d]">Q. 질문 내용</h3>
             <div className="bg-[#f4f7fc] p-6 rounded-2xl mb-8">
               <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedQna.question}</p>
-              <p className="text-xs text-[#8a92a6] mt-4">{selectedQna.created_at} | {selectedQna.users_id}</p>
+              <p className="text-xs text-[#8a92a6] mt-4">{selectedQna.created_at}</p>
             </div>
-            
+
             <h3 className="text-lg font-bold mb-2 text-[#3530B8]">A. 관리자 답변</h3>
             <div className={`p-6 rounded-2xl border ${selectedQna.status === 'ANSWERED' ? 'bg-white border-[#edf2f9]' : 'bg-gray-50 border-dashed border-gray-200'}`}>
               {selectedQna.status === 'ANSWERED' ? (
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedQna.answer}</p>
+                <div>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedQna.handle_answer}</p>
+                  <p className="text-xs text-[#8a92a6] mt-4">{selectedQna.answer_at} | {selectedQna.name}</p>
+                </div>
               ) : (
                 <p className="text-sm font-bold text-gray-400 text-center py-4">답변을 기다리는 중입니다.</p>
               )}
             </div>
-            
+
             <button onClick={() => setSelectedQna(null)} className="mt-auto w-full py-4 bg-[#3530B8] text-white rounded-xl font-bold hover:bg-[#2a2594] transition-all">
               닫기
             </button>
@@ -246,20 +249,23 @@ const QnaHistory = () => {
                 <button onClick={() => setSelectedQna(null)}><FontAwesomeIcon icon={faTimes} /></button>
               </div>
               <div className="flex gap-2 mb-4">
-                <span className="px-2 py-1 bg-[#F0F4FF] text-[#3530B8] rounded-md text-[10px] font-bold">{selectedQna.category.replace("팀","")}</span>
+                <span className="px-2 py-1 bg-[#F0F4FF] text-[#3530B8] rounded-md text-[10px] font-bold">{selectedQna.category.replace("팀", "")}</span>
                 <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${selectedQna.status === 'ANSWERED' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
                   {selectedQna.status === 'ANSWERED' ? '답변완료' : '답변 대기'}
                 </span>
               </div>
               <h4 className="text-[11px] font-bold text-[#8a92a6] uppercase mb-2">질문 내용</h4>
               <p className="text-xs text-gray-700 mb-4 bg-[#f4f7fc] p-4 rounded-xl whitespace-pre-wrap">{selectedQna.question}</p>
-              
+
               <h4 className="text-[11px] font-bold text-[#3530B8] uppercase mb-2">관리자 답변</h4>
               <div className={`p-4 rounded-xl border ${selectedQna.status === 'ANSWERED' ? 'bg-white border-[#edf2f9]' : 'bg-gray-50 border-dashed border-gray-200'}`}>
                 {selectedQna.status === 'ANSWERED' ? (
-                  <p className="text-xs text-gray-700 whitespace-pre-wrap">{selectedQna.answer}</p>
+                  <div>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedQna.handle_answer}</p>
+                  <p className="text-xs text-[#8a92a6] mt-4">{selectedQna.answer_at} | {selectedQna.name}</p>
+                </div>
                 ) : (
-                  <p className="text-xs text-gray-400 italic text-center">답변을 기다리는 중입니다.</p>
+                  <p className="text-xs text-gray-400 text-center">답변을 기다리는 중입니다.</p>
                 )}
               </div>
               <button onClick={() => setSelectedQna(null)} className="w-full mt-6 py-3 bg-[#3530B8] text-white rounded-xl font-bold">
