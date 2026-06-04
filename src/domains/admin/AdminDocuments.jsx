@@ -27,7 +27,6 @@ const AdminDocuments = () => {
   // 문서 불러오기
   const loadDocuments = () => {
     getAllDocs().then(resp => {
-      console.log(resp.data[0]);
       setDocuments(resp.data);
     }).catch(err => console.error("목록 로드 실패:", err));
   };
