@@ -108,7 +108,7 @@ const AdminQna = () => {
       handle_answer: answerText
     };
 
-    const apiCall = selectedQna.status === 'PENDING' 
+    const apiCall = selectedQna.status === 'PENDING'
       ? maxios.post('/admin/qna/answer', payload)
       : maxios.put('/admin/qna/answer', payload);
 
@@ -182,6 +182,7 @@ const AdminQna = () => {
                   <tr className="text-[#8a92a6] text-sm border-b border-gray-100">
                     <th className="pb-4 font-medium px-6 text-left w-[10%] whitespace-nowrap">카테고리</th>
                     <th className="pb-4 font-medium px-4 text-left w-[30%] whitespace-nowrap">질문 내용</th>
+                    <th className="pb-4 font-medium px-4 text-left w-[10%] whitespace-nowrap">질문자</th>
                     <th className="pb-4 font-medium px-4 text-left w-[15%] whitespace-nowrap">등록일</th>
                     <th className="pb-4 font-medium px-5 text-left w-[10%] whitespace-nowrap">상태</th>
                     <th className="pb-4 font-medium px-5 text-left w-[10%] whitespace-nowrap">관리</th>
@@ -198,6 +199,7 @@ const AdminQna = () => {
                       <td className="py-4 px-4 md:table-cell text-sm text-[#1a1c3d] max-w-0 align-middle">
                         <div className="truncate">{item.question}</div>
                       </td>
+                      <td className="py-4 px-4 md:table-cell text-sm text-gray-500 whitespace-nowrap align-middle">{item.user_name}</td>
                       <td className="py-4 px-4 md:table-cell text-sm text-gray-500 whitespace-nowrap align-middle">{item.created_at}</td>
                       <td className="py-4 px-4 md:table-cell whitespace-nowrap align-middle">
                         <span className={`inline-block px-4 py-1.5 rounded-full text-[11px] font-bold ${item.status === 'ANSWERED' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
@@ -246,6 +248,7 @@ const AdminQna = () => {
                   </div>
                   <div className="flex justify-between items-center pt-3 border-t border-gray-100">
                     <div className="flex flex-col gap-0.5">
+                      <span className="text-[10px] text-gray-400">{item.user_name}</span>
                       <span className="text-[10px] text-gray-400">{item.created_at}</span>
                     </div>
                     <div className="flex gap-2">
@@ -372,7 +375,7 @@ const AdminQna = () => {
                 ) : selectedQna.status === 'ANSWERED' ? (
                   <div>
                     <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedQna.handle_answer}</p>
-                    <p className="text-xs text-[#8a92a6] mt-4">{selectedQna.answer_at} | {selectedQna.name}</p>
+                    <p className="text-xs text-[#8a92a6] mt-4">{selectedQna.answer_at} | {selectedQna.admin_name}</p>
                   </div>
                 ) : (
                   <p className="text-xs text-gray-400 text-center">답변을 기다리는 중입니다.</p>
