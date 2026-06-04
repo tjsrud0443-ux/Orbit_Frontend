@@ -60,19 +60,19 @@ const QnaHistory = () => {
   };
 
   return (
-    <div className="flex flex-col h-full py-9 px-7 overflow-y-auto ">
-      <div className="mb-6 px-2">
+    <div className="flex flex-col h-full py-8 px-1 md:px-7 overflow-y-auto">
+      <div className="mb-6 px-4 md:px-2">
         <h1 className="text-xl md:text-2xl font-bold text-[#121331]">문의 내역</h1>
         <p className="text-xs md:text-sm text-[#8a92a6] mt-1">내가 작성한 문의 내역과 관리자의 답변을 확인할 수 있습니다.</p>
       </div>
 
-      <div className="flex flex-col md:flex-row h-[1100px] gap-6 min-h-0 max-w-[1450px] mx-auto w-full">
-        <div className={`bg-white rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-4 md:p-8 flex flex-col transition-all duration-300 md:overflow-hidden min-w-0 ${selectedQna ? 'md:w-[65%] w-full' : 'w-full'}`}>
+      <div className="flex flex-col md:flex-row h-auto md:h-[1100px] gap-6 min-h-0 max-w-[1450px] mx-auto w-full">
+        <div className={`bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-3 md:p-8 flex flex-col transition-all duration-300 md:overflow-hidden min-w-0 ${selectedQna ? 'md:w-[65%] w-full' : 'w-full'}`}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
-            <div className="flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit overflow-x-auto items-center flex-shrink-0">
+            <div className="flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit items-center flex-shrink-0">
               {['전체', '답변 대기', '답변완료'].map(tab => (
                 <button key={tab} onClick={() => { setFilter(tab); setCurrentPage(1); }}
-                  className={`flex-1 md:flex-none px-6 py-1.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${filter === tab ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>
+                  className={`flex-1 md:flex-none px-2 md:px-6 py-1.5 rounded-xl text-[11px] md:text-sm font-bold transition-all whitespace-nowrap ${filter === tab ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>
                   {tab}
                 </button>
               ))}
