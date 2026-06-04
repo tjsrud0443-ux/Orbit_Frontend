@@ -73,10 +73,10 @@ const handleDateClick = (info) => {
   getCntMonth()
     .then(resp => setMonthSummary(prev => ({
        ...prev, 
-       lateCnt: resp.data.late_cnt,
-       workDays:resp.data.work_days,
-       totalHours:resp.data.total_hours,
-       usedLeave: resp.data.vac_cnt
+          lateCnt: resp.data.late_cnt ?? 0,
+          workDays: resp.data.work_days ?? 0,
+          totalHours: resp.data.total_hours ?? 0,
+          usedLeave: resp.data.vac_cnt ?? 0
       })))
     .catch(err => console.log(err));
 }, []);
@@ -99,10 +99,10 @@ const handleDateClick = (info) => {
   getCntWeek()
     .then(resp => setWeekSummary(prev => ({
        ...prev, 
-      lateCnt: resp.data.late_cnt,
-      workDays: resp.data.work_days,
-      overtimeHours: resp.data.overtime_hours,
-      usedLeave: resp.data.vac_cnt
+      lateCnt: resp.data.late_cnt ?? 0,
+      workDays: resp.data.work_days ?? 0,
+      overtimeHours: resp.data.overtime_hours ?? 0,
+      usedLeave: resp.data.vac_cnt ?? 0
       })))
     .catch(err => console.log(err));
 }, []);
@@ -311,7 +311,12 @@ const weeklyAttendance = [
           <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm flex-1 min-h-[20rem]">
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-[0.8rem] font-extrabold text-slate-900">신청 내역</h3>
-              <button className="text-[0.65rem] text-slate-400 font-bold hover:text-[#3530B8]">
+              <button 
+                onClick={() => {
+                  if (activeTab === '관리자 문의') navigate('/qnaHistory');
+                }}
+                className="text-[0.65rem] text-slate-400 font-bold hover:text-[#3530B8]"
+              >
                 {activeTab} 신청 내역 →
               </button>
             </div>
