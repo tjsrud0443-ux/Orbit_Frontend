@@ -60,13 +60,13 @@ const QnaHistory = () => {
   };
 
   return (
-    <div className="flex flex-col h-full py-8 px-2 overflow-y-auto">
+    <div className="flex flex-col h-full py-9 px-7 overflow-y-auto ">
       <div className="mb-6 px-2">
         <h1 className="text-xl md:text-2xl font-bold text-[#121331]">문의 내역</h1>
         <p className="text-xs md:text-sm text-[#8a92a6] mt-1">내가 작성한 문의 내역과 관리자의 답변을 확인할 수 있습니다.</p>
       </div>
 
-      <div className="flex flex-col md:flex-row h-auto gap-6 min-h-0">
+      <div className="flex flex-col md:flex-row h-[1100px] gap-6 min-h-0 max-w-[1450px] mx-auto w-full">
         <div className={`bg-white rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-4 md:p-8 flex flex-col transition-all duration-300 md:overflow-hidden min-w-0 ${selectedQna ? 'md:w-[65%] w-full' : 'w-full'}`}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
             <div className="flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit overflow-x-auto items-center flex-shrink-0">
@@ -113,33 +113,31 @@ const QnaHistory = () => {
               <table className="w-full text-left border-collapse table-auto">
                 <thead className="md:table-header-group">
                   <tr className="text-[#8a92a6] text-sm border-b border-gray-100">
-                    <th className="pb-4 font-medium px-2 text-left w-[10%] whitespace-nowrap">카테고리</th>
-                    <th className="pb-4 font-medium px-2 text-left w-[25%] whitespace-nowrap">질문 내용</th>
-                    <th className="pb-4 font-medium px-2 text-left w-[22%] whitespace-nowrap">질문자</th>
-                    <th className="pb-4 font-medium px-2 text-left w-[15%] whitespace-nowrap">등록일</th>
-                    <th className="pb-4 font-medium px-2 text-left w-[12%] whitespace-nowrap">상태</th>
-                    <th className="pb-4 font-medium px-2 text-left w-[16%] whitespace-nowrap">상세보기</th>
+                    <th className="pb-4 font-medium px-6 text-left w-[10%] whitespace-nowrap">카테고리</th>
+                    <th className="pb-4 font-medium px-4 text-left w-[30%] whitespace-nowrap">질문 내용</th>
+                    <th className="pb-4 font-medium px-4 text-left w-[15%] whitespace-nowrap">등록일</th>
+                    <th className="pb-4 font-medium px-5 text-left w-[10%] whitespace-nowrap">상태</th>
+                    <th className="pb-4 font-medium px-5 text-left w-[10%] whitespace-nowrap">상세보기</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedQna.map(item => (
-                    <tr key={item.question_seq} className="border-b border-gray-100 hover:bg-[#f8fbff] transition-colors md:table-row">
-                      <td className="py-4 px-2 md:table-cell text-sm font-medium text-[#1a1c3d] whitespace-nowrap">
+                    <tr key={item.question_seq} className="border-b border-gray-100 hover:bg-[#f8fbff] transition-colors md:table-row align-middle">
+                      <td className="py-7 px-6 md:table-cell text-sm font-medium text-[#1a1c3d] whitespace-nowrap align-middle">
                         <span className="inline-flex items-center px-3 py-1 bg-[#F0F4FF] text-[#3530B8] rounded-lg text-xs font-bold">
                           {item.category.replace("팀", "")}
                         </span>
                       </td>
-                      <td className="py-4 px-2 md:table-cell text-sm text-[#1a1c3d] max-w-0">
+                      <td className="py-4 px-4 md:table-cell text-sm text-[#1a1c3d] max-w-0 align-middle">
                         <div className="truncate">{item.question}</div>
                       </td>
-                      <td className="py-4 px-2 md:table-cell text-sm text-gray-500 whitespace-nowrap">{item.users_id}</td>
-                      <td className="py-4 px-2 md:table-cell text-sm text-gray-500 whitespace-nowrap">{item.created_at}</td>
-                      <td className="py-4 px-2 md:table-cell whitespace-nowrap">
+                      <td className="py-4 px-4 md:table-cell text-sm text-gray-500 whitespace-nowrap align-middle">{item.created_at}</td>
+                      <td className="py-4 px-4 md:table-cell whitespace-nowrap align-middle">
                         <span className={`inline-block px-4 py-1.5 rounded-full text-[11px] font-bold ${item.status === 'ANSWERED' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
                           {item.status === 'ANSWERED' ? '답변완료' : '답변 대기'}
                         </span>
                       </td>
-                      <td className="py-4 px-2 md:table-cell whitespace-nowrap">
+                      <td className="py-4 px-4 md:table-cell whitespace-nowrap align-middle">
                         <div className="flex gap-2">
                           <button onClick={() => setSelectedQna(item)} className="text-[11px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-3 py-1.5 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all">
                             상세보기
