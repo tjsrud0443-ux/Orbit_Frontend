@@ -18,6 +18,8 @@ const AdminDocuments = () => {
   const [editingSeq, setEditingSeq] = useState(null);
   const [newDocTitle, setNewDocTitle] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [titleError, setTitleError] = useState('');
+  const [fileError, setFileError] = useState('');
 
   // 문서 불러오기
   useEffect(() => {
@@ -29,6 +31,9 @@ const AdminDocuments = () => {
   // Dropzone 설정
   const onDrop = useCallback(acceptedFiles => {
     setUploadedFiles(acceptedFiles);
+    if (acceptedFiles.length > 0) {
+      setFileError('');
+    }
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
@@ -108,22 +113,32 @@ const AdminDocuments = () => {
     setEditingSeq(null);
     setNewDocTitle('');
     setUploadedFiles([]);
+    setTitleError('');
+    setFileError('');
   };
 
   const handleRegister = async () => {
+    let hasError = false;
+
     if (!newDocTitle.trim()) {
-      alert('제목을 입력해주세요.');
-      return;
+      setTitleError('제목을 입력해주세요.');
+      hasError = true;
+    } else {
+      setTitleError('');
     }
+    
+    if (!isEditMode && uploadedFiles.length === 0) {
+      setFileError('파일을 첨부해주세요.');
+      hasError = true;
+    } else {
+      setFileError('');
+    }
+
+    if (hasError) return;
     
     if (isEditMode) {
       alert(`문서 Seq ${editingSeq}가 수정되었습니다.\n새 제목: ${newDocTitle}`);
     } else {
-      if (uploadedFiles.length === 0) {
-        alert('파일을 등록해주세요.');
-        return;
-      }
-
       try {
         const formData = new FormData();
         formData.append('title', newDocTitle);
@@ -278,10 +293,14 @@ const AdminDocuments = () => {
                 <input 
                   type="text" 
                   value={newDocTitle}
-                  onChange={(e) => setNewDocTitle(e.target.value)}
+                  onChange={(e) => {
+                    setNewDocTitle(e.target.value);
+                    if (e.target.value.trim()) setTitleError('');
+                  }}
                   placeholder="제목을 입력하세요"
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all text-sm font-medium"
+                  className={`w-full px-4 py-3 bg-gray-50 border ${titleError ? 'border-red-500' : 'border-gray-100'} rounded-xl focus:bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all text-sm font-medium`}
                 />
+                {titleError && <p className="text-red-500 text-[11px] mt-1 ml-1">{titleError}</p>}
               </div>
 
               <div className="space-y-1.5">
@@ -289,19 +308,20 @@ const AdminDocuments = () => {
                 <div 
                   {...getRootProps()} 
                   className={`border-2 border-dashed rounded-2xl p-8 transition-all flex flex-col items-center justify-center gap-3 cursor-pointer
-                    ${isDragActive ? 'border-[#3530B8] bg-[#3530B8]/5' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
+                    ${isDragActive ? 'border-[#3530B8] bg-[#3530B8]/5' : fileError ? 'border-red-500 bg-red-50/30' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
                 >
                   <input {...getInputProps()} />
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDragActive ? 'bg-[#3530B8] text-white' : 'bg-gray-100 text-gray-400'}`}>
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDragActive ? 'bg-[#3530B8] text-white' : fileError ? 'bg-red-100 text-red-500' : 'bg-gray-100 text-gray-400'}`}>
                     <FontAwesomeIcon icon={faCloudUploadAlt} className="text-xl" />
                   </div>
                   <div className="text-center">
-                    <p className="text-sm font-bold text-gray-700">
+                    <p className={`text-sm font-bold ${fileError ? 'text-red-600' : 'text-gray-700'}`}>
                       {uploadedFiles.length > 0 ? uploadedFiles[0].name : isEditMode ? '기존 파일을 유지하려면 비워두세요' : '파일을 드래그하거나 클릭하세요'}
                     </p>
-                    <p className="text-[0.625rem] text-gray-400 mt-1">최대 20MB까지 업로드 가능</p>
+                    <p className={`text-[0.625rem] mt-1 ${fileError ? 'text-red-400' : 'text-gray-400'}`}>최대 20MB까지 업로드 가능</p>
                   </div>
                 </div>
+                {fileError && <p className="text-red-500 text-[11px] mt-1 ml-1">{fileError}</p>}
               </div>
             </div>
 
