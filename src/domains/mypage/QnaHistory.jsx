@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown, faTrashCan } from '@fortawesome/free-solid-svg-icons';
-import { getMyQuestions } from './mypageApi';
+import { deleteMyQuestions, getMyQuestions } from './mypageApi';
 
 const QnaHistory = () => {
   const [filter, setFilter] = useState('전체');
@@ -28,7 +28,6 @@ const QnaHistory = () => {
 
   useEffect(() => {
     getMyQuestions().then(resp => {
-      console.log(resp.data)
       setQnaList(resp.data);
     })
   }, []);
@@ -52,10 +51,15 @@ const QnaHistory = () => {
 
   const totalPages = Math.ceil(filteredQna.length / itemsPerPage);
 
-  const handleDelete = (id) => {
+  const handleDelete = (question_seq) => {
     if (window.confirm('정말 삭제하시겠습니까?')) {
-      setQnaList(prev => prev.filter(q => q.id !== id));
-      alert('삭제되었습니다.');
+      deleteMyQuestions(question_seq).then(resp => {
+        console.log("DB 삭제 완료");
+        alert('삭제되었습니다.');
+        getMyQuestions().then(resp => {
+          setQnaList(resp.data);
+        })
+      })
     }
   };
 
@@ -143,7 +147,7 @@ const QnaHistory = () => {
                             상세보기
                           </button>
                           {item.status === 'PENDING' && (
-                            <button onClick={() => handleDelete(item.id)} className="text-[11px] font-bold text-red-600 border border-red-50 bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-600 hover:text-white transition-all">
+                            <button onClick={() => handleDelete(item.question_seq)} className="text-[11px] font-bold text-red-600 border border-red-50 bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-600 hover:text-white transition-all">
                               <FontAwesomeIcon icon={faTrashCan} />
                             </button>
                           )}
@@ -180,7 +184,7 @@ const QnaHistory = () => {
                         상세보기
                       </button>
                       {item.status === 'PENDING' && (
-                        <button onClick={() => handleDelete(item.id)} className="text-[11px] font-bold text-red-600 border border-red-50 bg-red-50 px-3 py-1.5 rounded-lg active:bg-red-600 active:text-white">
+                        <button onClick={() => handleDelete(item.question_seq)} className="text-[11px] font-bold text-red-600 border border-red-50 bg-red-50 px-3 py-1.5 rounded-lg active:bg-red-600 active:text-white">
                           <FontAwesomeIcon icon={faTrashCan} />
                         </button>
                       )}
@@ -258,9 +262,9 @@ const QnaHistory = () => {
               <div className={`p-4 rounded-xl border ${selectedQna.status === 'ANSWERED' ? 'bg-white border-[#edf2f9]' : 'bg-gray-50 border-dashed border-gray-200'}`}>
                 {selectedQna.status === 'ANSWERED' ? (
                   <div>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedQna.handle_answer}</p>
-                  <p className="text-xs text-[#8a92a6] mt-4">{selectedQna.answer_at} | {selectedQna.name}</p>
-                </div>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedQna.handle_answer}</p>
+                    <p className="text-xs text-[#8a92a6] mt-4">{selectedQna.answer_at} | {selectedQna.name}</p>
+                  </div>
                 ) : (
                   <p className="text-xs text-gray-400 text-center">답변을 기다리는 중입니다.</p>
                 )}
