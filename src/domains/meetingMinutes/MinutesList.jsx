@@ -6,7 +6,7 @@ import useEmployeeStore from '../../store/useEmployeeStore';
 import useAuthStore from '../../store/authStore';
 import useUserStore from '../../store/userStore';
 import { maxios } from '../../api/axiosConfig';
-import { delMinutes, getMinutesDetail, getMinutesList, insertMinutes } from './meetingMinutesApi';
+import { delMinutes, getMinutesDetail, getMinutesList, insertMinutes, upMinutes } from './meetingMinutesApi';
 
 // 참여자 프로필 스택 컴포넌트
 const ParticipantStack = ({ attendees = [] }) => {
@@ -65,6 +65,7 @@ const MinutesList = () => {
   // 수정 시작/취소/완료 핸들러
   const handleToggleEdit = () => {
     setIsEditing(true);
+    setErrors(prev => ({...prev, time_order: false}));
     setEditMinutes({
       ...activeDetail,
       start_time: formatTime(activeDetail.start_time),  // "09:00"으로 잘라줌
@@ -78,8 +79,43 @@ const MinutesList = () => {
   };
 
   const handleCompleteEdit = () => {
+    // 유효성 검사
+    if (!editMinutes.title?.trim()) {
+      alert('회의 제목을 입력해주세요.');
+      return;
+    }
+    if (!editMinutes.meeting_dt) {
+      alert('회의 일자를 선택해주세요.');
+      return;
+    }
+    if (!editMinutes.start_time) {
+      alert('시작 시간을 입력해주세요.');
+      return;
+    }
+    if (!editMinutes.end_time) {
+      alert('종료 시간을 입력해주세요.');
+      return;
+    }
+    
+    // 시간 비교 로직 강화 (분 단위 변환)
+    const [sH, sM] = editMinutes.start_time.split(':').map(Number);
+    const [eH, eM] = editMinutes.end_time.split(':').map(Number);
+    if (sH * 60 + sM >= eH * 60 + eM) {
+      setErrors(prev => ({ ...prev, time_order: true }));
+      return;
+    }
+    
+    if (!editMinutes.attendees || editMinutes.attendees.length === 0) {
+      setErrors(prev => ({ ...prev, attendees: true }));
+      return;
+    }
+    if (!editMinutes.main_content?.trim()) {
+      setErrors(prev => ({ ...prev, main_content: true }));
+      return;
+    }
+
     const minuteData = {
-      minute_seq: editMinutes.minute_seq,          // 어떤 회의록인지
+      minute_seq: editMinutes.minute_seq,
       title: editMinutes.title,
       meeting_dt: editMinutes.meeting_dt,
       start_time: `${editMinutes.meeting_dt}T${editMinutes.start_time}:00`,
@@ -88,22 +124,20 @@ const MinutesList = () => {
       decisions: editMinutes.decisions,
       todos: editMinutes.todos,
       attendees: editMinutes.attendees.map(emp => ({
-        users_id: emp.users_seq || emp.users_id || emp.id
+        users_id: emp.users_id || emp.id
       }))
     };
 
-      upMinutes(minuteData).then(() => {
-        alert('수정되었습니다.');
-        setIsEditing(false);
-        setEditMinutes(null);
-        fetchMinutesList();                              // 목록 새로고침
-        handleSelectMinutes(editMinutes.minute_seq);     // 상세 새로고침
-      }).catch((error) => {
-        console.error('수정 실패:', error);
-        alert('수정에 실패했습니다.');
-      });
-    setIsEditing(false);
-    setEditMinutes(null);
+    upMinutes(minuteData).then(() => {
+      alert('수정되었습니다.');
+      setIsEditing(false);
+      setEditMinutes(null);
+      fetchMinutesList();
+      handleSelectMinutes(editMinutes.minute_seq);
+    }).catch((error) => {
+      console.error('수정 실패:', error);
+      alert('수정에 실패했습니다.');
+    });
   };
 
   // 작성 폼 상태
@@ -123,9 +157,11 @@ const MinutesList = () => {
   const [errors, setErrors] = useState({
     title: false,
     meeting_dt: false,
-    start_time: false,
+    start_time: false, 
     end_time: false,
-    main_content: false
+    time_order: false ,
+    main_content: false,
+    attendees: false
   });
 
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -136,6 +172,7 @@ const MinutesList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
   const attendeeInputRef = useRef(null);
+  const dropdownRef = useRef(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
 
   // 검색 및 페이지네이션 상태
@@ -189,12 +226,30 @@ const MinutesList = () => {
       meeting_dt: !newMinutes.meeting_dt,
       start_time: !newMinutes.start_time,
       end_time: !newMinutes.end_time,
-      main_content: !newMinutes.main_content
+      time_order: false,
+      main_content: !newMinutes.main_content,
+      attendees: newMinutes.attendees.length === 0
     };
 
+    if (newMinutes.start_time && newMinutes.end_time) {
+      const [sH, sM] = newMinutes.start_time.split(':').map(Number);
+      const [eH, eM] = newMinutes.end_time.split(':').map(Number);
+      if (sH * 60 + sM >= eH * 60 + eM) {
+        newErrors.time_order = true;
+      }
+    }
     setErrors(newErrors);
 
     if (Object.values(newErrors).some(error => error)) {
+      return;
+    }
+
+    // 시간 비교 로직 강화 (분 단위 변환)
+    const [sH, sM] = newMinutes.start_time.split(':').map(Number);
+    const [eH, eM] = newMinutes.end_time.split(':').map(Number);
+    if (sH * 60 + sM >= eH * 60 + eM) {
+       setErrors(prev => ({ ...prev, end_time: true })); 
+      alert('종료 시간은 시작 시간보다 이후여야 합니다.');
       return;
     }
 
@@ -261,13 +316,18 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
   : [];
 
     const handleAddAttendee = (emp) => {
-      const attendeeId = emp.users_seq || emp.users_id || emp.id;
-      
-      if (newMinutes.attendees.some(a => (a.users_seq || a.users_id || a.id) === attendeeId)) {
+      const isDuplicate = newMinutes.attendees.some(a => {
+        const aId = String(a.users_seq || a.users_id || a.id || '');
+        const empId = String(emp.users_seq || emp.users_id || emp.id || '');
+        return aId === empId && empId !== '';
+      });
+
+      if (isDuplicate) {
         alert('이미 추가된 참석자입니다.');
         return;
       }
       setNewMinutes({ ...newMinutes, attendees: [...newMinutes.attendees, emp] });
+      setErrors(prev => ({ ...prev, attendees: false }));
       setSearchQuery('');
       setShowResults(false);
     };
@@ -283,13 +343,13 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
 
     const dropdown = (
       <div 
+        ref={dropdownRef}
         className="fixed z-[9999] bg-white border border-gray-100 rounded-2xl shadow-2xl max-h-48 overflow-y-auto custom-scrollbar"
         style={{ 
           top: `${dropdownPos.top + 4}px`, 
           left: `${dropdownPos.left}px`, 
           width: `${dropdownPos.width}px` 
         }}
-        onMouseDown={(e) => e.preventDefault()}
       >
         {filteredEmployees.length > 0 ? (
           filteredEmployees.map(emp => (
@@ -318,22 +378,25 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
     if (!showResults) return null;
     const dropdown = (
       <div 
+        ref={dropdownRef}
         className="fixed z-[9999] bg-white border border-gray-100 rounded-2xl shadow-2xl max-h-48 overflow-y-auto custom-scrollbar"
         style={{ 
           top: `${dropdownPos.top + 4}px`, 
           left: `${dropdownPos.left}px`, 
           width: `${dropdownPos.width}px` 
         }}
-        onMouseDown={(e) => e.preventDefault()}
       >
         {filteredEmployees.length > 0 ? (
           filteredEmployees.map(emp => (
             <div 
               key={emp.users_seq || emp.id} 
               onClick={() => {
-                const attendeeId = emp.users_seq || emp.users_id || emp.id;
-                if (!editMinutes.attendees.some(a => (a.users_seq || a.users_id || a.id) === attendeeId)) {
+                const empId = emp.users_id || emp.id;
+                const isDuplicate = editMinutes.attendees.some(a => (a.users_id || a.id) === empId);
+
+                if (!isDuplicate) {
                   setEditMinutes({...editMinutes, attendees: [...editMinutes.attendees, emp]});
+                  setErrors(prev => ({...prev, attendees: false}));  // ← 추가
                 } else {
                   alert('이미 추가된 참석자입니다.');
                 }
@@ -372,6 +435,25 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
     };
   }, [isCalendarOpen]);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const isInsideInput = attendeeInputRef.current?.contains(event.target);
+      const isInsideDropdown = dropdownRef.current?.contains(event.target);
+      
+      if (!isInsideInput && !isInsideDropdown) {
+        setShowResults(false);
+        setSearchQuery('');
+      }
+    };
+
+    if (showResults) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showResults]);
+
   const handleOpenCreate = () => {
     setActiveId(null);
     setNewMinutes({
@@ -390,7 +472,9 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
       meeting_dt: false,
       start_time: false,
       end_time: false,
-      main_content: false
+      time_order: false,
+      main_content: false,
+      attendees: false 
     });
     setIsCreating(true);
   };
@@ -412,9 +496,13 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
   // 날짜/시간 포맷팅 함수
   const formatTime = (timeStr) => {
     if (!timeStr) return '';
+    // 정규식을 사용하여 HH:mm 형식만 안정적으로 추출 (수정 모드 input type="time" 호환성)
+    const timeMatch = timeStr.match(/(\d{2}:\d{2})/);
+    if (timeMatch) return timeMatch[1];
+
     try {
       const date = new Date(timeStr);
-      if (isNaN(date.getTime())) return timeStr; // 파싱 실패 시 원본 반환
+      if (isNaN(date.getTime())) return timeStr;
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
     } catch (e) {
       return timeStr;
@@ -422,7 +510,7 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
   };
 
   return (
-    <div className="w-full h-auto lg:h-full flex flex-col p-4 md:p-6 lg:p-7 box-border bg-white font-sans overflow-hidden">
+    <div className="w-full h-auto lg:h-full flex flex-col p-6 md:p-8 lg:px-10 box-border bg-white font-sans overflow-hidden">
       <style>{`
         @media (min-width: 64rem) {
           main.flex-1 { overflow: hidden !important; }
@@ -442,20 +530,30 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
         }
       `}</style>
 
-      <div className="mb-4 px-3 py-1 shrink-0 flex justify-between items-end">
+      <div className="mb-4 px-0 py-1 shrink-0 flex justify-between items-end">
         <div>
           <h1 className="text-2xl md:text-2xl font-bold text-gray-900 mb-1">회의록</h1>
           <p className="text-[0.85rem] text-gray-500 font-medium">회의 내용을 기록하고 참여자와 공유하세요</p>
         </div>
         <button 
           onClick={handleOpenCreate}
-          className="bg-indigo-600 text-white text-[0.75rem] font-bold px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-100 mb-1"
+          className="hidden md:block bg-indigo-600 text-white text-[0.75rem] font-bold px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-100 mb-1"
         >
           + 회의록 작성
         </button>
       </div>
 
-      <div className="flex-1 relative flex gap-0 lg:gap-6 px-8 overflow-hidden min-h-0">
+      {/* 모바일용 + 버튼 */}
+      <div className="md:hidden flex justify-end px-0 mb-4">
+        <button 
+          onClick={handleOpenCreate}
+          className="bg-indigo-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100 hover:bg-indigo-700 active:scale-95 transition-all text-xl font-bold"
+        >
+          +
+        </button>
+      </div>
+
+      <div className="flex-1 relative flex gap-0 lg:gap-6 px-0 overflow-hidden min-h-0">
         {/* 목록 섹션 */}
         <div className={`transition-all duration-500 ease-in-out bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full
           ${(activeId || isCreating) ? 'w-0 opacity-0 invisible lg:w-auto lg:flex-1 lg:opacity-100 lg:visible' : 'w-full opacity-100 visible flex-1'}`}>
@@ -485,47 +583,48 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
             </div>
           </div>
           
-          <div className="flex-1 overflow-y-auto px-6 md:px-8 py-2 custom-scrollbar">
-            <table className="w-full text-left border-separate border-spacing-0">
-              <thead>
-                <tr className="sticky top-0 bg-white z-10">
-                  <th className="py-4 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider border-b border-gray-100">회의 제목</th>
-                  <th className="py-4 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider border-b border-gray-100">일시</th>
-                  <th className="py-4 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider border-b border-gray-100 text-center">참여자</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {paginatedMinutes.length > 0 ? (
-                  paginatedMinutes.map((item) => (
-                    <tr 
-                      key={item.minute_seq} 
-                      onClick={() => handleSelectMinutes(item.minute_seq)}
-                      className={`cursor-pointer hover:bg-indigo-50/50 transition-colors group ${activeId === item.minute_seq ? 'bg-indigo-50/50' : ''}`}
-                    >
-                      <td className="py-4">
-                        <div className="flex items-center gap-3">
-                          <span className={`text-sm font-bold group-hover:text-indigo-600 transition-colors ${activeId === item.minute_seq ? 'text-indigo-600' : 'text-gray-700'} truncate max-w-[120px] md:max-w-none`}>
-                            {item.title}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-4 text-xs text-gray-500 font-medium whitespace-nowrap">
-                        {item.meeting_dt} {formatTime(item.start_time)} – {formatTime(item.end_time)}
-                      </td>
-                      <td className="py-4 text-center">
-                        <ParticipantStack attendees={item.attendees} />
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={3} className="py-20 text-center text-gray-400 text-sm font-bold">
-                      회의록이 없습니다.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+          <div className="flex-1 overflow-y-auto px-4 md:px-8 py-2 custom-scrollbar">
+            {/* 헤더 - 데스크톱에서만 표시 */}
+            <div className="hidden md:grid md:grid-cols-12 gap-4 px-4 py-4 sticky top-0 bg-white z-10 border-b border-gray-100">
+              <div className="md:col-span-5 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider">회의 제목</div>
+              <div className="md:col-span-4 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider">일시</div>
+              <div className="md:col-span-3 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider text-center">참여자</div>
+            </div>
+
+            <div className="divide-y divide-gray-50">
+              {paginatedMinutes.length > 0 ? (
+                paginatedMinutes.map((item) => (
+                  <div 
+                    key={item.minute_seq} 
+                    onClick={() => handleSelectMinutes(item.minute_seq)}
+                    className={`cursor-pointer hover:bg-indigo-50/50 transition-colors group px-4 py-5 md:py-4 flex flex-col md:grid md:grid-cols-12 md:items-center gap-3 md:gap-4 ${activeId === item.minute_seq ? 'bg-indigo-50/50' : ''}`}
+                  >
+                    {/* 제목 */}
+                    <div className="md:col-span-5 flex items-center min-w-0">
+                      <span className={`text-sm font-bold group-hover:text-indigo-600 transition-colors ${activeId === item.minute_seq ? 'text-indigo-600' : 'text-gray-700'} truncate`}>
+                        {item.title}
+                      </span>
+                    </div>
+                    
+                    {/* 일시 */}
+                    <div className="md:col-span-4 text-xs text-gray-500 font-medium">
+                      <span className="md:hidden text-gray-400 mr-2 font-bold uppercase text-[10px]">일시</span>
+                      {item.meeting_dt} {formatTime(item.start_time)} – {formatTime(item.end_time)}
+                    </div>
+                    
+                    {/* 참여자 */}
+                    <div className="md:col-span-3 flex justify-start md:justify-center">
+                      <div className="md:hidden text-gray-400 mr-4 font-bold uppercase text-[10px] self-center">참여자</div>
+                      <ParticipantStack attendees={item.attendees} />
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="py-20 text-center text-gray-400 text-sm font-bold">
+                  회의록이 없습니다.
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="border-t border-gray-50 bg-white py-2 shrink-0">
@@ -540,11 +639,11 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
         {/* 상세/작성 섹션 */}
         <div className={`transition-all duration-500 ease-in-out bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full
           ${(activeId || isCreating) 
-            ? 'flex-1 lg:max-w-[55%] translate-x-0 opacity-100 visible' 
-            : 'w-0 translate-x-full opacity-0 invisible absolute right-0 inset-y-0 lg:relative lg:translate-x-0 lg:w-0'}`}>       
+            ? 'flex-1 lg:max-w-[45%] translate-x-0 opacity-100 visible' 
+            : 'w-0 translate-x-full opacity-0 invisible'}`}>       
           {activeDetail && !isCreating && (
             <div className="flex-1 flex flex-col min-h-0">
-                <div className="py-6 md:py-8 px-5 md:px-6 border-b border-gray-50 shrink-0 flex justify-between items-start">
+                <div className="py-6 md:py-8 px-6 md:px-8 border-b border-gray-50 shrink-0 flex justify-between items-start">
                   {isEditing ? (
                     <div className="w-full space-y-4">
                       <input 
@@ -553,26 +652,43 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
                         onChange={(e) => setEditMinutes({...editMinutes, title: e.target.value})}
                         className="w-full text-xl md:text-2xl font-bold text-indigo-950 border border-gray-300 rounded-xl p-2"
                       />
-                      <div className="flex gap-2">
+                      <div className="flex flex-col md:flex-row gap-2">
                         <input 
                           type="date"
                           value={editMinutes.meeting_dt}
                           onChange={(e) => setEditMinutes({...editMinutes, meeting_dt: e.target.value})}
-                          className="border border-gray-300 rounded-xl p-2"
+                          className="w-full md:w-auto border border-gray-300 rounded-xl p-2 text-sm"
                         />
-                        <input 
-                          type="time"
-                          value={editMinutes.start_time}
-                          onChange={(e) => setEditMinutes({...editMinutes, start_time: e.target.value})}
-                          className="border border-gray-300 rounded-xl p-2"
-                        />
-                        <input 
-                          type="time"
-                          value={editMinutes.end_time}
-                          onChange={(e) => setEditMinutes({...editMinutes, end_time: e.target.value})}
-                          className="border border-gray-300 rounded-xl p-2"
-                        />
+                        <div className="flex flex-col gap-1">  {/* ← flex-col 추가 */}
+                          <div className="flex gap-2">
+                            <input 
+                              type="time"
+                              value={editMinutes.start_time}
+                              onChange={(e) => {
+                                setEditMinutes({...editMinutes, start_time: e.target.value});
+                                setErrors(prev => ({...prev, time_order: false}));  // ← 추가
+                              }}
+                              className={`flex-1 md:w-32 border rounded-xl p-2 text-sm
+                                ${errors.time_order ? 'border-red-400' : 'border-gray-300'}`}
+                            />
+                            <input 
+                              type="time"
+                              value={editMinutes.end_time}
+                              onChange={(e) => {
+                                setEditMinutes({...editMinutes, end_time: e.target.value});
+                                setErrors(prev => ({...prev, time_order: false}));  // ← 추가
+                              }}
+                              className={`flex-1 md:w-32 border rounded-xl p-2 text-sm
+                                ${errors.time_order ? 'border-red-400' : 'border-gray-300'}`}
+                            />
+                          </div>                        
+                        </div>
                       </div>
+                       {errors.time_order && (
+                            <p className="text-[11px] text-red-500 font-bold ml-1">
+                              {"종료 시간은 시작 시간보다 \n이후여야 합니다."}
+                            </p>
+                          )}
                     </div>
                   ) : (
                     <div>
@@ -602,7 +718,10 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
                     <h4 className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-4">참석자</h4>
                     {isEditing ? (
                       <div className="relative">
-                        <div className="flex items-center gap-2 p-1.5 bg-white border border-gray-300 rounded-2xl focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+                        <div className={`flex items-center gap-2 p-1.5 bg-white border rounded-2xl transition-all
+                          ${errors.attendees 
+                            ? 'border-red-400 ring-2 ring-red-100' 
+                            : 'border-gray-300 focus-within:ring-2 focus-within:ring-indigo-100'}`}>
                           <div className="flex flex-wrap gap-2 flex-1 items-center px-2">
                             {editMinutes.attendees.map((emp, idx) => (
                               <div key={idx} className="flex items-center gap-1.5 bg-white border border-indigo-100 px-2.5 py-1 rounded-full text-[11px] font-bold text-indigo-700 shadow-sm">
@@ -628,6 +747,11 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
                             />
                           </div>
                         </div>
+                        {errors.attendees && (
+                          <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">
+                            참석자를 한 명 이상 추가해주세요.
+                          </p>
+                        )}
                         {renderAttendeeDropdownForEdit()}
                       </div>
                     ) : (
@@ -673,13 +797,22 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
                       <textarea 
                         rows="5"
                         value={editMinutes.main_content}
-                        onChange={(e) => setEditMinutes({...editMinutes, main_content: e.target.value})}
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-2xl text-sm text-gray-900 resize-none"
+                        onChange={(e) =>{ 
+                          setEditMinutes({...editMinutes, main_content: e.target.value})
+                        if(e.target.value) setErrors(prev => ({...prev, main_content: false}));
+                        }}
+                        className={`w-full px-4 py-3 bg-white border rounded-2xl text-sm text-gray-900 resize-none
+                          ${errors.main_content ? 'border-red-400 ring-4 ring-red-100 shadow-[0_0_15px_rgba(248,113,113,0.15)]' : 'border-gray-300'}`}
                       />
                     ) : (
                       <div className="text-[0.9rem] text-gray-700 leading-relaxed whitespace-pre-wrap bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
                         {activeDetail.main_content}
                       </div>
+                    )}
+                    {isEditing && errors.main_content && (
+                      <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">
+                        회의 내용을 입력해주세요.
+                      </p>
                     )}
                   </div>
 
@@ -745,8 +878,15 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
                         <button
                           onClick={() => {
                             if (window.confirm("정말 이 회의록을 삭제하시겠습니까?")) {
-                              // delMinutes 호출 (로직 존재 가정)
-                              alert("삭제 기능 구현 예정");
+                             delMinutes(activeDetail.minute_seq).then(() => {
+                                alert('삭제되었습니다.');
+                                handleClosePanel();   // 상세 패널 닫기
+                                fetchMinutesList();   // 목록 새로고침
+                              })
+                              .catch((error) => {
+                                console.error('삭제 실패:', error);
+                                alert('삭제에 실패했습니다.');
+                              });
                             }
                           }}
                           className="flex-1 py-3 bg-white border border-red-200 text-red-500 font-bold rounded-2xl hover:bg-red-50 transition-all"
@@ -764,7 +904,7 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
 
           {isCreating && (
             <div className="flex-1 flex flex-col min-h-0">
-              <div className="py-6 md:py-8 px-5 md:px-6 border-b border-gray-50 shrink-0 flex justify-between items-start">
+              <div className="py-6 md:py-8 px-6 md:px-8 border-b border-gray-50 shrink-0 flex justify-between items-start">
                 <div>
                   <h2 className="text-xl md:text-2xl font-bold text-indigo-950 mb-1">회의록 작성</h2>
                 </div>
@@ -829,7 +969,7 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
                         value={newMinutes.start_time}
                         onChange={(e) => {
                           setNewMinutes({...newMinutes, start_time: e.target.value});
-                          if(e.target.value) setErrors(prev => ({...prev, start_time: false}));
+                          if(e.target.value) setErrors(prev => ({...prev, start_time: false, time_order: false}));
                         }}
                         className={`w-full px-4 py-3 bg-white border rounded-2xl text-sm focus:outline-none focus:ring-4 transition-all font-bold 
                           ${errors.start_time ? 'border-red-400 ring-4 ring-red-100 shadow-[0_0_15px_rgba(248,113,113,0.15)] text-red-400' : 'border-gray-300 text-gray-600 focus:ring-indigo-100'}`}
@@ -843,12 +983,13 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
                         value={newMinutes.end_time}
                         onChange={(e) => {
                           setNewMinutes({...newMinutes, end_time: e.target.value});
-                          if(e.target.value) setErrors(prev => ({...prev, end_time: false}));
+                          if(e.target.value) setErrors(prev => ({...prev, end_time: false, time_order: false}));
                         }}
                         className={`w-full px-4 py-3 bg-white border rounded-2xl text-sm focus:outline-none focus:ring-4 transition-all font-bold 
                           ${errors.end_time ? 'border-red-400 ring-4 ring-red-100 shadow-[0_0_15px_rgba(248,113,113,0.15)] text-red-400' : 'border-gray-300 text-gray-600 focus:ring-indigo-100'}`}
                       />
                       {errors.end_time && <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1 animate-in fade-in slide-in-from-top-1">종료 시간을 입력해주세요.</p>}
+                      {errors.time_order && <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1 whitespace-pre-wrap">{"종료 시간은 시작 시간보다 \n이후여야 합니다."}</p>}
                     </div>
                   </div>
 
@@ -856,7 +997,10 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
                       <div className="space-y-3">
                         <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">참석자</label>
                         <div className="relative">
-                          <div className="flex items-center gap-2 p-1.5 bg-white border border-gray-300 rounded-2xl focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+                           <div className={`flex items-center gap-2 p-1.5 bg-white border rounded-2xl transition-all
+                            ${errors.attendees 
+                              ? 'border-red-400 ring-4 ring-red-100 shadow-[0_0_15px_rgba(248,113,113,0.15)]' 
+                              : 'border-gray-300 focus-within:ring-2 focus-within:ring-indigo-100'}`}>
                             <div className="flex flex-wrap gap-2 flex-1 items-center px-2">
                               {newMinutes.attendees.map((emp, idx) => (   
                                 <div key={idx} className="flex items-center gap-1.5 bg-white border border-indigo-100 px-2.5 py-1 rounded-full text-[11px] font-bold text-indigo-700 shadow-sm animate-in zoom-in-95">
@@ -885,7 +1029,12 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
                               />
                             </div>
                           </div>
-                          {renderAttendeeDropdown()}  {/* 작성용 드롭다운 */}
+                          {errors.attendees && (
+                            <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1 animate-in fade-in slide-in-from-top-1">
+                              참석자를 한 명 이상 추가해주세요.
+                            </p>
+                          )}
+                          {renderAttendeeDropdown()}
                         </div>
                       </div>
 
