@@ -95,6 +95,12 @@ const AdminQna = () => {
     }
   };
 
+  const hasPermission = (item) => {
+    if (!item || !user) return false;
+    if (user.auth_group === 'ROLE_SUPER_ADMIN') return true;
+    return item.users_handle_id === user.id;
+  };
+
   // selectedQna가 null일 때 렌더링 에러를 방지하기 위한 안전장치 추가
   const payload = selectedQna ? {
     question_seq: selectedQna.question_seq,
@@ -320,7 +326,7 @@ const AdminQna = () => {
                   취소
                 </button>
               </div>
-            ) : selectedQna.status === 'ANSWERED' ? (
+            ) : (selectedQna.status === 'ANSWERED' && hasPermission(selectedQna)) ? (
               <div className="flex gap-2 mt-auto">
                 <button onClick={handleEditClick} className="flex-1 py-4 bg-[#3530B8] text-white rounded-xl font-bold hover:bg-[#2a2594] transition-all">
                   수정
@@ -382,7 +388,7 @@ const AdminQna = () => {
                     취소
                   </button>
                 </div>
-              ) : selectedQna.status === 'ANSWERED' ? (
+              ) : (selectedQna.status === 'ANSWERED' && hasPermission(selectedQna)) ? (
                 <div className="flex gap-2 mt-6">
                   <button onClick={handleEditClick} className="flex-1 py-3 bg-[#3530B8] text-white rounded-xl font-bold">
                     수정
