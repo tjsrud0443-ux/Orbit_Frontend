@@ -38,6 +38,7 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import ApprovalDetail from './domains/approval/ApprovalDetail';
 import FindId from './domains/auth/FindId';
 import FindPw from './domains/auth/FindPw';
+import QnaHistory from './domains/mypage/QnaHistory';
 
 
 
@@ -56,6 +57,7 @@ function App() {
         <Route element={<Layout />}>
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/mypage/edit" element={<MyPageEdit />} />
+          <Route path="/qnaHistory" element={<QnaHistory />} />
           <Route path="/main" element={<Main />} />
           <Route path="/departments" element={<Departments />} />
 
