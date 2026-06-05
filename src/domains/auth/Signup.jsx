@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { duplCheck, signupRequest } from './authApi';
+import { emailDuplCheck, idDuplCheck, signupRequest } from './authApi';
 import { IMAGES } from '../../images/images';
 
 const Signup = () => {
@@ -25,6 +25,7 @@ const Signup = () => {
   const [profileImgFile, setProfileImgFile] = useState(null); // 실제 파일 객체
   const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
   const [isIdChecked, setIsIdChecked] = useState(false);
+  const [isEmailChecked, setIsEmailChecked] = useState(false);
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
@@ -45,6 +46,10 @@ const Signup = () => {
 
     if (name === 'id') {
       setIsIdChecked(false);
+    }
+
+    if (name === 'email') {
+      setIsEmailChecked(false);
     }
 
     if (errors[name]) {
@@ -69,8 +74,8 @@ const Signup = () => {
     }
   };
 
-  const handleDuplCheck = () => {
-    duplCheck(formData.id).then(resp => {
+  const handleIdDuplCheck = () => {
+    idDuplCheck(formData.id).then(resp => {
       if (!formData.id) {
         setErrors(prev => ({ ...prev, id: '아이디를 입력해주세요.' }));
         return;
@@ -82,6 +87,23 @@ const Signup = () => {
       } else {
         setIsIdChecked(true);
         setErrors((prev) => ({ ...prev, idCheck: '' }));
+      }
+    })
+  };
+
+  const handleEmailDuplCheck = () => {
+    emailDuplCheck(formData.email).then(resp => {
+      if (!formData.email) {
+        setErrors(prev => ({ ...prev, email: '이메일을 입력해주세요.' }));
+        return;
+      }
+      if (resp.data === true) {
+        setErrors(prev => ({ ...prev, email: '이미 사용 중인 이메일입니다.' }));
+        setIsEmailChecked(false);
+        setErrors((prev) => ({ ...prev, emailCheck: '' }));
+      } else {
+        setIsEmailChecked(true);
+        setErrors((prev) => ({ ...prev, emailCheck: '' }));
       }
     })
   };
@@ -123,14 +145,22 @@ const Signup = () => {
 
     const genderCode = ssn[7];
 
+    const yearNum = Number(yy);
     let fullYear = '';
 
-    if (genderCode === '1' || genderCode === '2' || genderCode === '5' || genderCode === '6') {
-      fullYear = '19' + yy;
-    } else if (genderCode === '3' || genderCode === '4' || genderCode === '7' || genderCode === '8') {
-      fullYear = '20' + yy;
-    } else {
-      return false;
+    if (yearNum >= 0 && yearNum <= 26) {
+      if (genderCode === '3' || genderCode === '4' || genderCode === '7' || genderCode === '8') {
+        fullYear = '20' + yy;
+      } else {
+        return false;
+      }
+    } 
+    else {
+      if (genderCode === '1' || genderCode === '2' || genderCode === '5' || genderCode === '6') {
+        fullYear = '19' + yy;
+      } else {
+        return false;
+      }
     }
 
     const birthDate = new Date(`${fullYear}-${mm}-${dd}`);
@@ -198,6 +228,8 @@ const Signup = () => {
       newErrors.email = '이메일 주소를 입력해주세요.';
     } else if (!emailRegex.test(formData.email)) {
       newErrors.email = 'example@email.com(또는 co.kr) 등 알맞은 형식으로 입력해주세요.';
+    } else if (!isEmailChecked) {
+      newErrors.emailCheck = '이메일 중복확인을 해주세요.';
     }
 
     setErrors(newErrors);
@@ -331,7 +363,7 @@ const Signup = () => {
                     />
                     <button
                       type="button"
-                      onClick={handleDuplCheck}
+                      onClick={handleIdDuplCheck}
                       className="px-4 py-2 bg-[#F0F4FF] text-[#3530B8] rounded-xl text-xs font-bold hover:bg-[#DDE8FF] transition-all whitespace-nowrap"
                     >
                       중복확인
@@ -339,8 +371,7 @@ const Signup = () => {
                   </div>
                   {errors.id && <p className="text-red-500 text-[10px] mt-0.5 ml-1 font-medium">{errors.id}</p>}
                   {errors.idCheck && <p className="text-red-500 text-[10px] mt-0.5 ml-1 font-medium">{errors.idCheck}</p>}
-                  {isIdChecked && !errors.idCheck && <p className="text-green-500 text-xs mt-1 ml-1 font-medium">사용 가능한
-                    아이디입니다.</p>}
+                  {isIdChecked && !errors.idCheck && <p className="text-green-500 text-xs mt-1 ml-1 font-medium">사용 가능한 아이디입니다.</p>}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
@@ -435,15 +466,26 @@ const Signup = () => {
 
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1 ml-1">이메일 주소</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="example@email.com"
-                    className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-sm text-gray-700 text-sm shadow-sm"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="example@email.com"
+                      className="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-sm text-gray-700 text-sm shadow-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleEmailDuplCheck}
+                      className="px-4 py-2 bg-[#F0F4FF] text-[#3530B8] rounded-xl text-xs font-bold hover:bg-[#DDE8FF] transition-all whitespace-nowrap"
+                    >
+                      중복확인
+                    </button>
+                  </div>
                   {errors.email && <p className="text-red-500 text-[10px] mt-0.5 ml-1 font-medium">{errors.email}</p>}
+                  {errors.emailCheck && <p className="text-red-500 text-[10px] mt-0.5 ml-1 font-medium">{errors.emailCheck}</p>}
+                  {isEmailChecked && !errors.emailCheck && <p className="text-green-500 text-xs mt-1 ml-1 font-medium">사용 가능한 이메일입니다.</p>}
                 </div>
               </div>
 

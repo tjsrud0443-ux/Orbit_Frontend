@@ -1,7 +1,8 @@
 ﻿import { maxios } from "../../api/axiosConfig";
 
 export const loginRequest = (login) => maxios.post("/auth/login", login);
-export const duplCheck = (id) => maxios.get("/signup/duplCheck", {params: {id:id}});
+export const idDuplCheck = (id) => maxios.get("/signup/idDuplCheck", {params: {id:id}});
+export const emailDuplCheck = (email) => maxios.get("/signup/emailDuplCheck", {params: {email:email}});
 export const signupRequest = (data) => maxios.post("/signup", data);
 
 export const sendMailForId = (formData) => maxios.post("/auth/requestMailForId", formData);
