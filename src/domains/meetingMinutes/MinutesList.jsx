@@ -614,9 +614,7 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
                         {item.title}
                       </span>
                       {item.badgeType === 'author' ? (
-                        <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-600">
-                          내가 작성
-                        </span>
+                        <></>
                       ) : (
                         <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
                           참석자
@@ -710,7 +708,14 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
                     </div>
                   ) : (
                     <div>
-                      <h2 className="text-xl md:text-2xl font-bold text-indigo-950 mb-1">{activeDetail.title}</h2>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h2 className="text-xl md:text-2xl font-bold text-indigo-950">{activeDetail.title}</h2>
+                        {activeDetail.users_id !== user?.id && (
+                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
+                            참석자
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-gray-500 font-medium">
                         {activeDetail.meeting_dt} | {formatTime(activeDetail.start_time)} – {formatTime(activeDetail.end_time)}
                       </p>
@@ -869,51 +874,53 @@ const filteredEmployees = searchQuery && searchQuery.trim() !== ''
                   </div>
 
                   {/* 수정 및 삭제/완료 및 취소 버튼 */}
-                  <div className="pt-8 flex gap-3">
-                    {isEditing ? (
-                      <>
-                        <button 
-                          onClick={handleCompleteEdit}
-                          className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all"
-                        >
-                          완료
-                        </button>
-                        <button 
-                          onClick={handleCancelEdit}
-                          className="flex-1 py-3 bg-white border border-gray-200 text-gray-600 font-bold rounded-2xl hover:bg-gray-50 transition-all"
-                        >
-                          취소
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button 
-                          onClick={handleToggleEdit}
-                          className="flex-1 py-3 bg-white border border-indigo-200 text-indigo-600 font-bold rounded-2xl hover:bg-indigo-50 transition-all"
-                        >
-                          수정
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (window.confirm("정말 이 회의록을 삭제하시겠습니까?")) {
-                             delMinutes(activeDetail.minute_seq).then(() => {
-                                alert('삭제되었습니다.');
-                                handleClosePanel();   // 상세 패널 닫기
-                                fetchMinutesList();   // 목록 새로고침
-                              })
-                              .catch((error) => {
-                                console.error('삭제 실패:', error);
-                                alert('삭제에 실패했습니다.');
-                              });
-                            }
-                          }}
-                          className="flex-1 py-3 bg-white border border-red-200 text-red-500 font-bold rounded-2xl hover:bg-red-50 transition-all"
-                        >
-                          삭제
-                        </button>
-                      </>
-                    )}
-                  </div>
+                  {activeDetail.users_id === user?.id && (
+                    <div className="pt-8 flex gap-3">
+                      {isEditing ? (
+                        <>
+                          <button 
+                            onClick={handleCompleteEdit}
+                            className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all"
+                          >
+                            완료
+                          </button>
+                          <button 
+                            onClick={handleCancelEdit}
+                            className="flex-1 py-3 bg-white border border-gray-200 text-gray-600 font-bold rounded-2xl hover:bg-gray-50 transition-all"
+                          >
+                            취소
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button 
+                            onClick={handleToggleEdit}
+                            className="flex-1 py-3 bg-white border border-indigo-200 text-indigo-600 font-bold rounded-2xl hover:bg-indigo-50 transition-all"
+                          >
+                            수정
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (window.confirm("정말 이 회의록을 삭제하시겠습니까?")) {
+                               delMinutes(activeDetail.minute_seq).then(() => {
+                                  alert('삭제되었습니다.');
+                                  handleClosePanel();   // 상세 패널 닫기
+                                  fetchMinutesList();   // 목록 새로고침
+                                })
+                                .catch((error) => {
+                                  console.error('삭제 실패:', error);
+                                  alert('삭제에 실패했습니다.');
+                                });
+                              }
+                            }}
+                            className="flex-1 py-3 bg-white border border-red-200 text-red-500 font-bold rounded-2xl hover:bg-red-50 transition-all"
+                          >
+                            삭제
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
