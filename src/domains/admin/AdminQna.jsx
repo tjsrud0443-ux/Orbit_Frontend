@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import { getMyQuestions, deleteMyQuestions } from '../mypage/mypageApi';
 import { maxios } from '../../api/axiosConfig';
-import { getMyDeptQuestion } from './adminApi';
+import { getMyDeptQuestion, updateAnswer } from './adminApi';
 import useUserStore from '../../store/userStore';
 
 const AdminQna = () => {
@@ -98,7 +98,8 @@ const AdminQna = () => {
   // selectedQna가 null일 때 렌더링 에러를 방지하기 위한 안전장치 추가
   const payload = selectedQna ? {
     question_seq: selectedQna.question_seq,
-    handle_answer: answerText
+    handle_answer: answerText,
+    users_handle_id : user.id
   } : null;
 
   // 🛠️ 중괄호 및 if-return 로직 완벽 수정
@@ -110,7 +111,7 @@ const AdminQna = () => {
 
     // 만약 예전 비동기 함수(insertAnswer)를 사용하시는 거라면 이 주석을 해제하세요.
 
-    insertAnswer(payload).then(resp => {
+    updateAnswer(payload).then(resp => {
       console.log("답변 등록 완료");
       alert(selectedQna.status === 'PENDING' ? '답변이 등록되었습니다.' : '답변이 수정되었습니다.');
       setIsEditing(false);
