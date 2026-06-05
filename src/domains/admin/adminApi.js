@@ -1,7 +1,8 @@
 ﻿import { makeStyles } from "@mui/material";
 import { maxios } from "../../api/axiosConfig";
 
-export const getAllRequest = (page, status, searchTerm) => maxios.get("/admin/hr/allRequest", { params: { cPage: page, status: status, searchTerm: searchTerm } });
+// 회원가입 관리
+export const getAllRequest = (page, status, searchTerm) => maxios.get("/admin/hr/allRequest", {params: {cPage: page, status: status, searchTerm: searchTerm}});
 export const getUserInfo = (seq) => maxios.get(`/admin/hr/${seq}`);
 export const getDeptList = () => maxios.get("/admin/hr/getDeptList");
 export const getRankList = () => maxios.get("/admin/hr/getRankList");
@@ -33,6 +34,15 @@ export const getDeptLeave = () => maxios.get("/admin/deptLeave");
 export const getJoinResign = () => maxios.get("/admin/joinResign");
 export const getAiQuestions = () => maxios.get("/admin/aiQuestions")
 
+// 문서 관리
+export const getAllDocs = () => maxios.get("/admin/getAllDocs");
+export const createDocument = (formData) => maxios.post('/admin/addDocument', formData, {
+    headers: {
+        'Content-Type': 'multipart/form-data',
+    },
+});
+export const editDocument = (formData) => maxios.put('/admin/editDocument', formData);
+export const deleteDocument = (document_seq) => maxios.delete(`/admin/deleteDocument/${document_seq}`);
 
 
 
@@ -99,3 +109,6 @@ export const getAiQuestions = () => maxios.get("/admin/aiQuestions")
 
 export const getMyDeptQuestion = (dept_seq, auth_group) => maxios.get("/admin/ai/myDeptQuestion", { params: { dept_seq: dept_seq, auth_group: auth_group } });
 export const insertAnswer = (question_seq, handle_answer) => maxios.post("/admin/ai/insertAnswer" + {params : {question_seq: question_seq, handle_answer: handle_answer}}) ;
+
+
+
