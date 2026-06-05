@@ -55,17 +55,6 @@ const AdminDocuments = () => {
     // MS Word
     'application/msword': ['.doc'],
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-    
-    // MS Excel
-    'application/vnd.ms-excel': ['.xls'],
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-    
-    // MS PowerPoint
-    'application/vnd.ms-powerpoint': ['.ppt'],
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx'],
-  
-    // 한글 파일
-    'application/x-hwp': ['.hwp'],
 
     // 텍스트 파일
     'text/plain': ['.txt']
