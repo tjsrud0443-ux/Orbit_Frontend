@@ -108,7 +108,7 @@ export const deleteDocument = (document_seq) => maxios.delete(`/admin/deleteDocu
 
 
 export const getMyDeptQuestion = (dept_seq, auth_group) => maxios.get("/admin/ai/myDeptQuestion", { params: { dept_seq: dept_seq, auth_group: auth_group } });
-export const updateAnswer = (payload) => maxios.post("/admin/ai/updateAnswer", payload) ;
-
+export const insertUpdateAnswer = (payload) => maxios.put("/admin/ai/insertUpdateAnswer", payload);
+export const deleteMyAnswer = (question_seq) => maxios.put("/admin/ai/deleteAnswer/"+question_seq);
 
 

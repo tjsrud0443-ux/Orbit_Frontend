@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import { getMyQuestions, deleteMyQuestions } from '../mypage/mypageApi';
 import { maxios } from '../../api/axiosConfig';
-import { getMyDeptQuestion, updateAnswer } from './adminApi';
+import { deleteMyAnswer, getMyDeptQuestion, insertUpdateAnswer } from './adminApi';
 import useUserStore from '../../store/userStore';
 
 const AdminQna = () => {
@@ -59,13 +59,13 @@ const AdminQna = () => {
   const totalPages = Math.ceil(filteredQna.length / itemsPerPage);
 
   const handleDelete = (question_seq) => {
-    if (window.confirm('정말 삭제하시겠습니까?')) {
-      deleteMyQuestions(question_seq).then(resp => {
-        console.log("DB 삭제 완료");
+    if (window.confirm('답변을 삭제하시겠습니까?')) {
+      deleteMyAnswer(question_seq).then(resp => {
         alert('삭제되었습니다.');
-        getMyQuestions().then(resp => {
+        getMyDeptQuestion(user.dept_seq, user.auth_group).then(resp => {
           setQnaList(resp.data);
-          setSelectedQna(null);
+          const updated = resp.data.find(q => q.question_seq === selectedQna.question_seq);
+          setSelectedQna(updated);
         });
       });
     }
@@ -99,51 +99,29 @@ const AdminQna = () => {
   const payload = selectedQna ? {
     question_seq: selectedQna.question_seq,
     handle_answer: answerText,
-    users_handle_id : user.id
+    users_handle_id: user.id
   } : null;
 
   // 🛠️ 중괄호 및 if-return 로직 완벽 수정
   const handleAnswerSubmit = () => {
     if (!answerText.trim()) {
-      alert('답변을 입력해주세요.');
+      alert('답변을 입력해 주세요.');
       return;
     }
-
-    // 만약 예전 비동기 함수(insertAnswer)를 사용하시는 거라면 이 주석을 해제하세요.
-
-    updateAnswer(payload).then(resp => {
-      console.log("답변 등록 완료");
+    insertUpdateAnswer(payload).then(resp => {
       alert(selectedQna.status === 'PENDING' ? '답변이 등록되었습니다.' : '답변이 수정되었습니다.');
       setIsEditing(false);
-      getMyQuestions().then(resp => {
+      getMyDeptQuestion(user.dept_seq, user.auth_group).then(resp => {
         setQnaList(resp.data);
         const updated = resp.data.find(q => q.question_seq === selectedQna.question_seq);
         setSelectedQna(updated);
       });
+
     }).catch(err => {
       console.error(err);
       alert('처리에 실패했습니다.');
     });
   }
-
-  //   // 아래는 기존에 주석 처리되어 있던 maxios 기반의 실제 동작 로직입니다.
-  //   const apiCall = selectedQna.status === 'PENDING'
-  //     ? maxios.post('/admin/qna/answer', payload)
-  //     : maxios.put('/admin/qna/answer', payload);
-
-  //   apiCall.then(() => {
-  //     alert(selectedQna.status === 'PENDING' ? '답변이 등록되었습니다.' : '답변이 수정되었습니다.');
-  //     setIsEditing(false);
-  //     getMyQuestions().then(resp => {
-  //       setQnaList(resp.data);
-  //       const updated = resp.data.find(q => q.question_seq === selectedQna.question_seq);
-  //       setSelectedQna(updated);
-  //     });
-  //   }).catch(err => {
-  //     console.error(err);
-  //     alert('처리에 실패했습니다.');
-  //   });
-  // }; // <--- 닫는 괄호 정상 배치
 
   return (
     <div className="flex flex-col h-full py-8 px-1 md:px-7 overflow-y-auto">
@@ -236,9 +214,6 @@ const AdminQna = () => {
                               <button onClick={() => handleDetailClick(item)} className="text-[11px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-3 py-1.5 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all">
                                 상세보기
                               </button>
-                              <button onClick={() => handleDelete(item.question_seq)} className="text-[11px] font-bold text-red-600 border border-red-50 bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-600 hover:text-white transition-all">
-                                <FontAwesomeIcon icon={faTrashCan} />
-                              </button>
                             </>
                           )}
                         </div>
@@ -279,9 +254,6 @@ const AdminQna = () => {
                         <>
                           <button onClick={() => handleDetailClick(item)} className="text-[11px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-3 py-1.5 rounded-lg active:bg-[#3530B8] active:text-white whitespace-nowrap">
                             상세보기
-                          </button>
-                          <button onClick={() => handleDelete(item.question_seq)} className="text-[11px] font-bold text-red-600 border border-red-50 bg-red-50 px-3 py-1.5 rounded-lg active:bg-red-600 active:text-white">
-                            <FontAwesomeIcon icon={faTrashCan} />
                           </button>
                         </>
                       )}
@@ -325,7 +297,7 @@ const AdminQna = () => {
               {isEditing ? (
                 <textarea
                   className="w-full h-32 p-4 bg-white border border-[#edf2f9] rounded-xl text-sm outline-none resize-none"
-                  placeholder="답변을 입력해주세요."
+                  placeholder="답변을 입력해 주세요."
                   value={answerText}
                   onChange={(e) => setAnswerText(e.target.value)}
                 />
@@ -335,7 +307,7 @@ const AdminQna = () => {
                   <p className="text-xs text-[#8a92a6] mt-4">{selectedQna.answer_at} | {selectedQna.admin_name}</p>
                 </div>
               ) : (
-                <p className="text-sm font-bold text-gray-400 text-center py-4">답변을 기다리는 중입니다.</p>
+                <p className="text-sm font-bold text-gray-400 text-center py-4">답변을 작성해 주세요.</p>
               )}
             </div>
 
@@ -387,7 +359,7 @@ const AdminQna = () => {
                 {isEditing ? (
                   <textarea
                     className="w-full h-24 p-3 bg-white border border-[#edf2f9] rounded-xl text-xs outline-none resize-none"
-                    placeholder="답변을 입력해주세요."
+                    placeholder="답변을 입력해 주세요."
                     value={answerText}
                     onChange={(e) => setAnswerText(e.target.value)}
                   />
@@ -397,7 +369,7 @@ const AdminQna = () => {
                     <p className="text-xs text-[#8a92a6] mt-4">{selectedQna.answer_at} | {selectedQna.admin_name}</p>
                   </div>
                 ) : (
-                  <p className="text-xs text-gray-400 text-center">답변을 기다리는 중입니다.</p>
+                  <p className="text-xs text-gray-400 text-center">답변을 작성해 주세요.</p>
                 )}
               </div>
 

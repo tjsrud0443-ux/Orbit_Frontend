@@ -227,7 +227,7 @@ const QnaHistory = () => {
               {selectedQna.status === 'ANSWERED' ? (
                 <div>
                   <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedQna.handle_answer}</p>
-                  <p className="text-xs text-[#8a92a6] mt-4">{selectedQna.answer_at} | {selectedQna.name}</p>
+                  <p className="text-xs text-[#8a92a6] mt-4">{selectedQna.answer_at} | {selectedQna.admin_name}</p>
                 </div>
               ) : (
                 <p className="text-sm font-bold text-gray-400 text-center py-4">답변을 기다리는 중입니다.</p>
@@ -262,7 +262,7 @@ const QnaHistory = () => {
                 {selectedQna.status === 'ANSWERED' ? (
                   <div>
                     <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedQna.handle_answer}</p>
-                    <p className="text-xs text-[#8a92a6] mt-4">{selectedQna.answer_at} | {selectedQna.name}</p>
+                    <p className="text-xs text-[#8a92a6] mt-4">{selectedQna.answer_at} | {selectedQna.admin_name}</p>
                   </div>
                 ) : (
                   <p className="text-xs text-gray-400 text-center">답변을 기다리는 중입니다.</p>
