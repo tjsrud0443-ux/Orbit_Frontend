@@ -91,13 +91,13 @@ const BoardList = () => {
   };
 
   return (
-    <div className="w-full h-auto lg:h-full flex flex-col p-6 md:p-8 lg:px-10 box-border bg-white font-sans">
+    <div className="w-full h-screen lg:h-full flex flex-col p-6 md:p-8 lg:px-10 box-border bg-white font-sans">
 
       {/* 페이지 헤더 */}
       <div className="mb-4 flex justify-between items-end shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">사내 게시판</h1>
-          <p className="text-[0.85rem] text-gray-500 font-medium">공지사항, 이벤트, 자유게시글을 확인하세요</p>
+          <p className="text-[0.85rem] text-gray-500 font-medium mb-3">공지사항, 이벤트, 게시글을 확인하세요</p>
         </div>
         <button className="hidden md:block bg-indigo-600 text-white text-[0.75rem] font-bold 
         px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-100 mb-1"
@@ -114,7 +114,7 @@ const BoardList = () => {
       </div>
 
       {/* 카드 */}
-      <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-white rounded-3xl border border-gray-200 shadow-sm flex flex-col flex-1 min-h-0 overflow-hidden">
 
         {/* 툴바 */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 md:px-8 border-b border-gray-50 bg-white shrink-0">

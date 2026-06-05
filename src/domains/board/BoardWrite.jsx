@@ -1,18 +1,15 @@
-﻿import { useState, useRef, useMemo } from 'react';
+﻿import { useState, useRef, useMemo, useEffect } from 'react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css'; // 기본 스노우 테마 CSS 로드
+import {useNavigate } from 'react-router-dom';
+import useUserStore from '../../store/userStore';
 
 const CATEGORIES_HR   = ['공지', '경조', '생일', '승진', '부서 이동'];
 const CATEGORIES_ALL  = ['공지', '이벤트', '인사/총무', '자유', '프로젝트'];
 
-// 현재 로그인 유저 (실제로는 store에서)
-const MOCK_USER = { role: 'HR' }; // 'HR' | 'USER'
-
 const BoardWrite = () => {
-  // 실제 사용 시 → const { user } = useUserStore();
-  const user = MOCK_USER;
-  const isHR = user?.role === 'HR' || user?.auth_group === 'ROLE_HR';
-  const categories = isHR ? CATEGORIES_HR : CATEGORIES_ALL;
+  const { user } = useUserStore();
+  const navigate = useNavigate();
 
   // 툴바 설정 (컴포넌트 리렌더링 시 에디터 깜빡임 방지용 useMemo)
   const modules = useMemo(() => ({
@@ -27,16 +24,30 @@ const BoardWrite = () => {
     ],
   }), []);
 
+  const isHR = user?.auth_group?.includes('HR');
+  const categories = useMemo(() => (isHR ? CATEGORIES_HR : CATEGORIES_ALL), [isHR]);
+
   // form 객체 내부에 content를 함께 관리하도록 유지
   const [form, setForm] = useState({
-    category: categories[0],
+    category: CATEGORIES_ALL[0],
     title: '',
     content: '',
   });
   
+  // user 로드 시 카테고리 초기값 설정
+  useEffect(() => {
+    setForm(prev => ({ ...prev, category: categories[0] }));
+  }, [categories]);
+
   const [files, setFiles] = useState([]); // 첨부파일 목록
   const [errors, setErrors] = useState({});// 유효성 검사 에러
   const fileInputRef = useRef(null);
+console.log(user);
+    // 사용자 정보가 로드될 때까지 대기 (Hooks 아래에 위치)
+  if (user === null) {
+    return <div>로딩 중...</div>; 
+  }
+
 //에러가 있던 필드를 수정하면 에러도 같이 지워줌
   const set = (key, val) => {
     setForm(prev => ({ ...prev, [key]: val }));
@@ -94,21 +105,20 @@ const BoardWrite = () => {
   };
 
   const handleCancel = () => {
-    // TODO: navigate(-1)
-    alert('취소');
+    navigate(-1);
   };
 
   return (
     <div className="w-full h-auto lg:h-full flex flex-col p-6 md:p-8 lg:px-10 bg-white font-sans items-center">
 
       {/* 페이지 헤더 */}
-      <div className="w-full max-w-5xl mb-6 shrink-0">
+      <div className="w-full mb-6 shrink-0">
         <h1 className="text-2xl font-bold text-gray-900 mb-1">사내 게시판</h1>
         <p className="text-[0.85rem] text-gray-500 font-medium">공지사항, 이벤트, 자유게시글을 확인하세요</p>
       </div>
 
       {/* 카드 */}
-      <div className="w-full max-w-5xl bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+      <div className="w-full h-[90vh] max-w-7xl bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
 
         {/* 카드 헤더 */}
         <div className="flex items-center justify-between px-6 md:px-8 py-5 border-b border-gray-50">
@@ -127,29 +137,31 @@ const BoardWrite = () => {
 
             {/* 카테고리 + 제목 한 줄 (데스크톱) */}
             <div className="flex flex-col md:flex-row gap-4">
-              {/* 카테고리 */}
-              <div className="md:w-44 shrink-0">
-                <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">
-                  카테고리
-                </label>
-                <div className="relative">
-                  <select
-                    value={form.category}
-                    onChange={e => set('category', e.target.value)}
-                    className="w-full appearance-none px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-indigo-600/5 focus:border-indigo-400 transition-all pr-9"
-                  >
-                    {categories.map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                  <svg className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path d="M6 9l6 6 6-6"/>
-                  </svg>
+              {/* 카테고리 - 인사팀만 노출 */}
+              {isHR && (
+                <div className="md:w-44 shrink-0">
+                  <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">
+                    카테고리
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={form.category}
+                      onChange={e => set('category', e.target.value)}
+                      className="w-full appearance-none px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-indigo-600/5 focus:border-indigo-400 transition-all pr-9"
+                    >
+                      {categories.map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                    <svg className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path d="M6 9l6 6 6-6"/>
+                    </svg>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* 제목 */}
-              <div className="flex-1">
+              <div className={`flex-1 ${!isHR ? 'w-full' : ''}`}>
                 <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">
                   제목
                 </label>
