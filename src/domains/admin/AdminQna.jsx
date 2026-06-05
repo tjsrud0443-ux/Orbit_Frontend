@@ -6,7 +6,6 @@ import { maxios } from '../../api/axiosConfig';
 import { getMyDeptQuestion } from './adminApi';
 import useUserStore from '../../store/userStore';
 
-
 const AdminQna = () => {
   const [filter, setFilter] = useState('전체');
   const [search, setSearch] = useState('');
@@ -36,9 +35,8 @@ const AdminQna = () => {
 
   useEffect(() => {
     getMyDeptQuestion(user.dept_seq, user.auth_group).then(resp => {
-      console.log(resp.data)
-      setQnaList(resp.data)
-    })
+      setQnaList(resp.data);
+    });
   }, []);
 
   const filteredQna = useMemo(() => {
@@ -68,8 +66,8 @@ const AdminQna = () => {
         getMyQuestions().then(resp => {
           setQnaList(resp.data);
           setSelectedQna(null);
-        })
-      })
+        });
+      });
     }
   };
 
@@ -97,22 +95,23 @@ const AdminQna = () => {
     }
   };
 
+  // selectedQna가 null일 때 렌더링 에러를 방지하기 위한 안전장치 추가
+  const payload = selectedQna ? {
+    question_seq: selectedQna.question_seq,
+    handle_answer: answerText
+  } : null;
+
+  // 🛠️ 중괄호 및 if-return 로직 완벽 수정
   const handleAnswerSubmit = () => {
     if (!answerText.trim()) {
       alert('답변을 입력해주세요.');
       return;
     }
 
-    const payload = {
-      question_seq: selectedQna.question_seq,
-      handle_answer: answerText
-    };
+    // 만약 예전 비동기 함수(insertAnswer)를 사용하시는 거라면 이 주석을 해제하세요.
 
-    const apiCall = selectedQna.status === 'PENDING'
-      ? maxios.post('/admin/qna/answer', payload)
-      : maxios.put('/admin/qna/answer', payload);
-
-    apiCall.then(() => {
+    insertAnswer(payload).then(resp => {
+      console.log("답변 등록 완료");
       alert(selectedQna.status === 'PENDING' ? '답변이 등록되었습니다.' : '답변이 수정되었습니다.');
       setIsEditing(false);
       getMyQuestions().then(resp => {
@@ -124,7 +123,26 @@ const AdminQna = () => {
       console.error(err);
       alert('처리에 실패했습니다.');
     });
-  };
+  }
+
+  //   // 아래는 기존에 주석 처리되어 있던 maxios 기반의 실제 동작 로직입니다.
+  //   const apiCall = selectedQna.status === 'PENDING'
+  //     ? maxios.post('/admin/qna/answer', payload)
+  //     : maxios.put('/admin/qna/answer', payload);
+
+  //   apiCall.then(() => {
+  //     alert(selectedQna.status === 'PENDING' ? '답변이 등록되었습니다.' : '답변이 수정되었습니다.');
+  //     setIsEditing(false);
+  //     getMyQuestions().then(resp => {
+  //       setQnaList(resp.data);
+  //       const updated = resp.data.find(q => q.question_seq === selectedQna.question_seq);
+  //       setSelectedQna(updated);
+  //     });
+  //   }).catch(err => {
+  //     console.error(err);
+  //     alert('처리에 실패했습니다.');
+  //   });
+  // }; // <--- 닫는 괄호 정상 배치
 
   return (
     <div className="flex flex-col h-full py-8 px-1 md:px-7 overflow-y-auto">

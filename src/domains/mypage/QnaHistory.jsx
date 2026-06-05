@@ -54,7 +54,6 @@ const QnaHistory = () => {
   const handleDelete = (question_seq) => {
     if (window.confirm('정말 삭제하시겠습니까?')) {
       deleteMyQuestions(question_seq).then(resp => {
-        console.log("DB 삭제 완료");
         alert('삭제되었습니다.');
         getMyQuestions().then(resp => {
           setQnaList(resp.data);
