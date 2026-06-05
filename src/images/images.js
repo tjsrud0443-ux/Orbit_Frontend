@@ -1,7 +1,7 @@
 const GCS_BUCKET_URL = "https://storage.googleapis.com/orbit-public";
 
 export const IMAGES = {
-    AI_CHAT : `${GCS_BUCKET_URL}/AiChat.png`,
+    AI_CHAT : `${GCS_BUCKET_URL}/AiChat3.png`,
     LOGIN_LOGO : `${GCS_BUCKET_URL}/LoginLogo.png`,
     ORBTI_TITLE : `${GCS_BUCKET_URL}/OrbitTitle.png`,
     ORBTI_LOGO : `${GCS_BUCKET_URL}/OrbitLogo.png`,

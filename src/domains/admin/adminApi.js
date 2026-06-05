@@ -8,18 +8,18 @@ export const getDeptList = () => maxios.get("/admin/hr/getDeptList");
 export const getRankList = () => maxios.get("/admin/hr/getRankList");
 export const approveUserSignup = (approvalData) => maxios.post("/admin/hr/userSignup", approvalData);
 export const rejectUserSignup = (seq) => maxios.put(`/admin/hr/rejectSignup?signup_seq=${seq}`);
-export const getHrInfo = (id) => maxios.get("/admin/hr/getHrInfo", {params: {id: id}});
+export const getHrInfo = (id) => maxios.get("/admin/hr/getHrInfo", { params: { id: id } });
 
 /*직원 관리 */
-export const getAllUsers = (page, keyword, status) => maxios.get("/admin/hr/getAllUsers",{
-    params:{page:page, keyword:keyword, status:status}
+export const getAllUsers = (page, keyword, status) => maxios.get("/admin/hr/getAllUsers", {
+    params: { page: page, keyword: keyword, status: status }
 });
-export const updateUsersState = (upUsersSeq, newStatus) => maxios.put("/admin/hr/updateUsersState",{
-    users_seq:upUsersSeq,
-    status:newStatus
+export const updateUsersState = (upUsersSeq, newStatus) => maxios.put("/admin/hr/updateUsersState", {
+    users_seq: upUsersSeq,
+    status: newStatus
 });
-export const updateUsersInfo = (usersSeq, editForm) =>maxios.put("/admin/hr/updateUsersInfo",{
-    users_seq:usersSeq,
+export const updateUsersInfo = (usersSeq, editForm) => maxios.put("/admin/hr/updateUsersInfo", {
+    users_seq: usersSeq,
     ...editForm
 })
 
@@ -43,3 +43,72 @@ export const createDocument = (formData) => maxios.post('/admin/addDocument', fo
 });
 export const editDocument = (formData) => maxios.put('/admin/editDocument', formData);
 export const deleteDocument = (document_seq) => maxios.delete(`/admin/deleteDocument/${document_seq}`);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+export const getMyDeptQuestion = (dept_seq, auth_group) => maxios.get("/admin/ai/myDeptQuestion", { params: { dept_seq: dept_seq, auth_group: auth_group } });
+export const insertAnswer = (question_seq, handle_answer) => maxios.post("/admin/ai/insertAnswer" + {params : {question_seq: question_seq, handle_answer: handle_answer}}) ;
+
+
+
