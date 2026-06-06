@@ -127,16 +127,16 @@ const DocumentsList = () => {
       </div>
 
       {/* 목록 영역 */}
-      <div className="flex-1 flex flex-col bg-white border border-slate-100 rounded-[32px] shadow-sm overflow-hidden min-h-0">
-        <div className="flex-1 overflow-y-auto p-6 pt-0 custom-scrollbar">
-          <table className="w-full text-left border-collapse mt-6">
+      <div className="flex-1 flex flex-col bg-white border border-slate-100 md:rounded-[32px] rounded-xl shadow-sm overflow-hidden min-h-0">
+        <div className="flex-1 overflow-auto p-6 pt-0 custom-scrollbar">
+          <table className="w-full min-w-[800px] md:min-w-full text-left border-collapse mt-6">
             <thead className="sticky top-0 bg-white z-10">
               <tr className="border-b border-slate-100">
-                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-50">다운로드</th>
-                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-110">제목 (클릭 시 미리보기 가능)</th>
-                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-50">작성자</th>
-                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-30">등록일</th>
-                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-50">즐겨찾기</th>
+                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-50 whitespace-nowrap">다운로드</th>
+                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-110 whitespace-nowrap">제목 (클릭 시 미리보기 가능)</th>
+                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-50 whitespace-nowrap">작성자</th>
+                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-30 whitespace-nowrap">등록일</th>
+                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-50 whitespace-nowrap">즐겨찾기</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -160,18 +160,18 @@ const DocumentsList = () => {
                         </svg>
                       </a>
                     </td>
-                    <td className="py-4 text-sm font-semibold text-slate-800 cursor-pointer hover:text-[#3530B8] transition-colors">
+                    <td className="py-4 text-sm font-semibold text-slate-800 cursor-pointer hover:text-[#3530B8] transition-colors whitespace-nowrap">
                       <button onClick={() => setPreviewDoc({ sysname: doc.file_sysname, mimeType: doc.mime_type, title: doc.title })}>
                         {doc.title}
                       </button>
                     </td>
-                    <td className="py-4 text-xs text-slate-500 font-medium">
+                    <td className="py-4 text-xs text-slate-500 font-medium whitespace-nowrap">
                       {doc.users_id}
                     </td>
-                    <td className="py-4 text-[0.6875rem] text-slate-400 font-mono">
+                    <td className="py-4 text-[0.6875rem] text-slate-400 font-mono whitespace-nowrap">
                       {doc.created_at?.substring(0,10)}
                     </td>
-                    <td className="py-4 text-center">
+                    <td className="py-4 text-center whitespace-nowrap">
                       <button 
                         onClick={() => toggleFavorite(doc.document_seq)}
                         className="p-1 hover:scale-110 transition-transform"
@@ -194,7 +194,7 @@ const DocumentsList = () => {
           </table>
         </div>
 
-        <div className="border-t border-gray-50 bg-white rounded-b-[32px] py-2">
+        <div className="border-t border-gray-50 bg-white md:rounded-b-[32px] rounded-b-xl py-2 scale-95 md:scale-100 origin-center">
           <Pagination 
             count={totalPages} 
             page={currentPage} 
