@@ -88,7 +88,7 @@ const DocumentsList = () => {
 
       {/* 필터 탭 & 검색창 라인 */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 flex-shrink-0">
-        <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-[#F0F4FF] overflow-x-auto no-scrollbar sm:w-auto">
+        <div className="flex w-fit bg-white p-1 rounded-2xl shadow-sm border border-[#F0F4FF] overflow-x-auto no-scrollbar sm:w-auto">
           {['전체 문서', '즐겨찾기'].map((tab) => (
             <button
               key={tab}
