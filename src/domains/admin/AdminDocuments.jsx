@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Pagination from '../../components/common/Pagination';
 import useUserStore from '../../store/userStore';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -6,6 +6,8 @@ import { faEdit, faTrashAlt, faCloudUploadAlt, faTimes } from '@fortawesome/free
 import { useDropzone } from 'react-dropzone';
 import { createDocument, deleteDocument, editDocument, getAllDocs } from './adminApi';
 import useAuthStore from '../../store/authStore';
+import { Loader2 } from 'lucide-react';
+import { renderAsync } from 'docx-preview';
 
 const AdminDocuments = () => {
   const { user } = useUserStore();
@@ -22,6 +24,15 @@ const AdminDocuments = () => {
   const [titleError, setTitleError] = useState('');
   const [fileError, setFileError] = useState('');
 
+  // 미리보기 관련 상태
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [previewTitle, setPreviewTitle] = useState('');
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [previewFileBuffer, setPreviewFileBuffer] = useState(null);
+  const docxContainerRef = useRef(null); // 문서를 렌더링할 DOM Ref
+  const [previewType, setPreviewType] = useState('docx');
+  const [previewUrl, setPreviewUrl] = useState('');
+
   const token = useAuthStore(state => state.token);
 
   // 문서 불러오기
@@ -35,7 +46,7 @@ const AdminDocuments = () => {
     loadDocuments();
   }, []);
 
-  // Dropzone 설정
+  // Dropzone
   const onDrop = useCallback(acceptedFiles => {
     setUploadedFiles(acceptedFiles);
     if (acceptedFiles.length > 0) {
@@ -54,21 +65,18 @@ const AdminDocuments = () => {
     
     // MS Word
     'application/msword': ['.doc'],
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-
-    // 텍스트 파일
-    'text/plain': ['.txt']
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
   },
     maxFiles: 1,
     multiple: false
   });
 
-  // 검색 로직
+  // 검색
   const filteredDocuments = documents.filter((doc) =>
     doc.title.toLowerCase().includes(searchKeyword.toLowerCase())
   );
 
-  // 페이지네이션 관련 계산
+  // 페이지네이션
   const itemsPerPage = 10;
   const totalPages = Math.ceil(filteredDocuments.length / itemsPerPage);
   const displayedDocs = filteredDocuments.slice(
@@ -166,28 +174,96 @@ const AdminDocuments = () => {
       }
   };
 
-  // 권한 체크 함수
+  // 권한 체크
   const canManage = (users_id) => {
     if (!user) return false;
-    // 슈퍼 어드민이거나, 본인이 작성한 문서인 경우
     return user.auth_group === 'ROLE_SUPER_ADMIN' || user.id === users_id;
   };
 
-  const handlePreview = (sysname, mimeType) => {
+  const handlePreview = async (sysname, mimeType, title) => {
     const fileUrl = `http://localhost/file/preview/${sysname}?token=${token}`;
-    
-    // PDF, 이미지는 바로 열기
-    if (mimeType?.startsWith('image/') || mimeType === 'application/pdf') {
-      window.open(fileUrl, '_blank');
+    setPreviewTitle(title || "문서 미리보기");
+
+    if (mimeType?.startsWith('image/') || /\.(png|jpe?g|gif)$/i.test(sysname)) {
+      setPreviewType('image');
+      setPreviewUrl(fileUrl);
+      setIsPreviewOpen(true);
+      setIsPreviewLoading(false);
+      return;
+    }
+
+    if (mimeType === 'application/pdf' || sysname?.toLowerCase().endsWith('.pdf')) {
+      setPreviewType('pdf');
+      setPreviewUrl(fileUrl);
+      setIsPreviewOpen(true);
+      setIsPreviewLoading(false); 
+      return;
+    }
+
+    if (sysname?.toLowerCase().endsWith('.docx') || mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      setPreviewTitle(title);
+      setIsPreviewOpen(true);
+      setIsPreviewLoading(true);
+      setPreviewFileBuffer(null);
+
+      try {
+        const response = await fetch(fileUrl);
+        if (!response.ok) throw new Error('파일 로드 실패');
+        
+        const arrayBuffer = await response.arrayBuffer();
+        setPreviewFileBuffer(arrayBuffer);
+      } catch (error) {
+        console.error('docx 미리보기 실패:', error);
+        alert('문서 미리보기를 불러오는 중 오류가 발생했습니다.');
+        setIsPreviewOpen(false);
+        setIsPreviewLoading(false);
+      }
     } else {
-      // Office 파일은 Google Docs Viewer로
       window.open(`https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}`, '_blank');
+    }
+  };
+
+  useEffect(() => {
+    if (isPreviewOpen && previewFileBuffer && docxContainerRef.current) {
+      const renderDocx = async () => {
+        try {
+          docxContainerRef.current.innerHTML = '';
+          await renderAsync(previewFileBuffer, docxContainerRef.current, docxContainerRef.current, {
+            className: "docx-rendered-page",
+            inWrapper: false,
+            ignoreWidth: false,
+            ignoreHeight: false
+          });
+        } catch (err) {
+          console.error("docx-preview 실패:", err);
+          if (docxContainerRef.current) {
+            docxContainerRef.current.innerHTML = `<p class="p-6 text-center text-red-500 text-sm">문서 데이터를 화면에 출력하지 못했습니다.</p>`;
+          }
+        } finally {
+          setIsPreviewLoading(false);
+        }
+      };
+      const timer = setTimeout(renderDocx, 60);
+      return () => clearTimeout(timer);
+    }
+  }, [isPreviewOpen, previewFileBuffer]);
+
+  const handlePreviewClose = () => {
+    setIsPreviewOpen(false);
+    setIsPreviewLoading(false);
+    setPreviewType('docx');
+    setPreviewUrl('');
+    setPreviewFileBuffer(null);
+    setPreviewTitle('');
+    
+    if (docxContainerRef.current) {
+      docxContainerRef.current.innerHTML = '';
     }
   };
 
   return (
     <div className="h-full flex flex-col bg-white font-sans p-6 md:p-8">
-      {/* [1] 헤더 및 검색/버튼 영역 */}
+      {/* 헤더 및 검색/버튼 영역 */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 flex-shrink-0">
         <div className="space-y-1">
           <h1 className="text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">문서 관리</h1>
@@ -224,13 +300,13 @@ const AdminDocuments = () => {
         </div>
       </div>
 
-      {/* [3] 목록 영역 */}
+      {/* 목록 영역 */}
       <div className="flex-1 flex flex-col bg-white border border-slate-100 rounded-[32px] shadow-sm overflow-hidden min-h-0">
         <div className="flex-1 overflow-y-auto p-6 pt-0 custom-scrollbar">
           <table className="w-full text-left border-collapse mt-6">
             <thead className="sticky top-0 bg-white z-10">
               <tr className="border-b border-slate-100">
-                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-130">제목</th>
+                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-130">제목 (클릭 시 미리보기 가능)</th>
                 <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-50">작성자</th>
                 <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-35">등록일</th>
                 <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-50">관리</th>
@@ -247,16 +323,8 @@ const AdminDocuments = () => {
                 displayedDocs.map((doc) => (
                   <tr key={doc.document_seq} className="hover:bg-slate-50/40 transition-colors">
                     <td className="py-4 text-sm font-semibold text-slate-800">
-                      {/* <a 
-                        href={`http://localhost/file/preview/${doc.file_sysname}?token=${token}`}
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="hover:text-[#3530B8] hover:underline cursor-pointer"
-                      >
-                        {doc.title}
-                      </a> */}
                       <button
-                        onClick={() => handlePreview(doc.file_sysname, doc.mime_type)}
+                        onClick={() => handlePreview(doc.file_sysname, doc.mime_type, doc.title)}
                         className="hover:text-[#3530B8] hover:underline cursor-pointer text-left"
                       >
                         {doc.title}
@@ -366,6 +434,58 @@ const AdminDocuments = () => {
                 className="flex-[2] py-3 bg-[#3530B8] text-white text-sm font-bold rounded-xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all cursor-pointer">
                 {isEditMode ? '수정 완료' : '등록'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isPreviewOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-6xl h-[85vh] rounded-[2rem] overflow-hidden shadow-2xl flex flex-col border border-gray-100">
+            {/* 모달 헤더 */}
+            <div className="p-5 border-b flex justify-between items-center bg-slate-50 flex-shrink-0">
+              <div className="flex items-center gap-2 truncate pr-4">
+                <span className="bg-[#3530B8] text-white text-[10px] font-bold px-2 py-0.5 rounded">
+                  {previewType === 'docx' ? 'DOCX 뷰어' : previewType === 'pdf' ? 'PDF 뷰어' : '이미지 뷰어'}
+                </span>
+                <h2 className="text-sm md:text-base font-bold text-gray-800 truncate">{previewTitle}</h2>
+              </div>
+              <button 
+                onClick={handlePreviewClose}
+                className="w-8 h-8 rounded-full bg-white hover:bg-rose-50 hover:text-rose-600 transition-all flex items-center justify-center border border-gray-100 cursor-pointer"
+              >
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+            
+            {/* 문서 출력 영역 (Ref가 바인딩되는 곳) */}
+            <div className="flex-1 overflow-y-auto bg-slate-100 p-4 md:p-6 custom-scrollbar flex justify-center items-start">
+              <div className="w-full max-w-4xl bg-white shadow-md rounded-xl p-4 md:p-8 min-h-full docx-preview-parent overflow-x-hidden break-words relative">
+                {isPreviewLoading && (
+                  <div className="absolute inset-0 bg-white/90 z-10 flex flex-col items-center justify-center rounded-xl min-h-[300px]">
+                    <Loader2 className="w-8 h-8 text-[#3530B8] animate-spin mb-3" />
+                    <p className="text-xs text-gray-400 font-medium">문서를 안전하게 불러오는 중입니다...</p>
+                  </div>
+                )}
+                {
+                  previewType === 'docx' ? (
+                    <div ref={docxContainerRef} className="w-full break-words overflow-x-hidden" />
+                  ) : previewType === 'pdf' ? (
+                    <iframe 
+                      src={previewUrl} 
+                      className="w-full h-[70vh] rounded-xl border-0 bg-white shadow-inner" 
+                      title={previewTitle}
+                    />
+                  ) : (
+                    <div className="w-full flex justify-center items-center bg-gray-50 rounded-xl p-2">
+                      <img 
+                        src={previewUrl} 
+                        alt={previewTitle} 
+                        className="max-w-full max-h-[68vh] object-contain rounded-lg shadow-sm"
+                      />
+                    </div>
+                  )}
+              </div>
             </div>
           </div>
         </div>
