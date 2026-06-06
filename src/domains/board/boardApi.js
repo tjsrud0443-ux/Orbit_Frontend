@@ -1,2 +1,4 @@
 ﻿// boardApi API or configuration
-export const boardApi = {};
+import { maxios } from "../../api/axiosConfig";
+
+
