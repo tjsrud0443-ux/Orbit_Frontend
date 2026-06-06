@@ -174,7 +174,7 @@ const AdminDocuments = () => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-white font-sans p-6 md:p-8">
+    <div className="h-full flex flex-col bg-white font-sans p-3 md:p-8">
       {/* 헤더 및 검색/버튼 영역 */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 flex-shrink-0">
         <div className="space-y-1">
@@ -274,7 +274,7 @@ const AdminDocuments = () => {
           </table>
         </div>
 
-        <div className="border-t border-gray-50 bg-white md:rounded-b-[32px] rounded-b-xl py-2 scale-95 md:scale-100 origin-center">
+        <div className="border-t border-gray-50 bg-white md:rounded-b-[32px] rounded-b-xl py-2 scale-[0.8] md:scale-100 origin-center">
           <Pagination 
             count={totalPages} 
             page={currentPage} 

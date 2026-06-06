@@ -79,7 +79,7 @@ const DocumentsList = () => {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white font-sans p-6 md:p-8">
+    <div className="h-full flex flex-col bg-white font-sans p-3 md:p-8">
       {/* 헤더 영역 */}
       <div className="mb-6 flex-shrink-0">
         <h1 className="text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">자료실</h1>
@@ -194,7 +194,7 @@ const DocumentsList = () => {
           </table>
         </div>
 
-        <div className="border-t border-gray-50 bg-white md:rounded-b-[32px] rounded-b-xl py-2 scale-95 md:scale-100 origin-center">
+        <div className="border-t border-gray-50 bg-white md:rounded-b-[32px] rounded-b-xl py-2 scale-[0.8] md:scale-100 origin-center">
           <Pagination 
             count={totalPages} 
             page={currentPage} 
