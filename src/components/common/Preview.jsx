@@ -15,47 +15,45 @@ const DocumentPreviewModal = ({ sysname, mimeType, title, token, onClose }) => {
         const fileUrl = `http://localhost/file/preview/${sysname}?token=${token}`;
 
         if (mimeType?.startsWith('image/') || /\.(png|jpe?g|gif)$/i.test(sysname)) {
-        setPreviewType('image');
-        setPreviewUrl(fileUrl);
-
+            setPreviewType('image');
+            setPreviewUrl(fileUrl);
         } else if (mimeType === 'application/pdf' || sysname?.toLowerCase().endsWith('.pdf')) {
-        setPreviewType('pdf');
-        setPreviewUrl(fileUrl);
-
+            setPreviewType('pdf');
+            setPreviewUrl(fileUrl);
         } else if (
-        sysname?.toLowerCase().endsWith('.docx') ||
-        mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            sysname?.toLowerCase().endsWith('.docx') ||
+            mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         ) {
-        setPreviewType('docx');
-        setIsLoading(true);
-        fetch(fileUrl)
-            .then(res => res.arrayBuffer())
-            .then(buf => setFileBuffer(buf))
-            .catch(() => {
-            alert('문서 미리보기를 불러오는 중 오류가 발생했습니다.');
-            onClose();
-            });
+            setPreviewType('docx');
+            setIsLoading(true);
+            fetch(fileUrl)
+                .then(res => res.arrayBuffer())
+                .then(buf => setFileBuffer(buf))
+                .catch(() => {
+                alert('문서 미리보기를 불러오는 중 오류가 발생했습니다.');
+                onClose();
+                });
         }
     }, [sysname, mimeType, token]);
 
     useEffect(() => {
         if (previewType === 'docx' && fileBuffer && docxContainerRef.current) {
-        const timer = setTimeout(async () => {
-            try {
-            docxContainerRef.current.innerHTML = '';
-            await renderAsync(fileBuffer, docxContainerRef.current, docxContainerRef.current, {
-                className: 'docx-rendered-page',
-                inWrapper: false,
-                ignoreWidth: false,
-                ignoreHeight: false,
-            });
-            } catch {
-            docxContainerRef.current.innerHTML = `<p class="p-6 text-center text-red-500 text-sm">문서를 출력하지 못했습니다.</p>`;
-            } finally {
-            setIsLoading(false);
-            }
-        }, 60);
-        return () => clearTimeout(timer);
+            const timer = setTimeout(async () => {
+                try {
+                    docxContainerRef.current.innerHTML = '';
+                    await renderAsync(fileBuffer, docxContainerRef.current, docxContainerRef.current, {
+                        className: 'docx-rendered-page',
+                        inWrapper: false,
+                        ignoreWidth: false,
+                        ignoreHeight: false,
+                    });
+                } catch {
+                    docxContainerRef.current.innerHTML = `<p class="p-6 text-center text-red-500 text-sm">문서를 출력하지 못했습니다.</p>`;
+                } finally {
+                    setIsLoading(false);
+                }
+            }, 60);
+            return () => clearTimeout(timer);
         }
     }, [previewType, fileBuffer]);
 
@@ -87,24 +85,23 @@ const DocumentPreviewModal = ({ sysname, mimeType, title, token, onClose }) => {
                     <p className="text-xs text-gray-400 font-medium">문서를 안전하게 불러오는 중입니다...</p>
                   </div>
                 )}
-                {
-                  previewType === 'docx' ? (
+                {previewType === 'docx' ? (
                     <div ref={docxContainerRef} className="w-full break-words overflow-x-hidden" />
-                  ) : previewType === 'pdf' ? (
+                    ) : previewType === 'pdf' && previewUrl ? (
                     <iframe 
-                      src={previewUrl} 
-                      className="w-full h-[70vh] rounded-xl border-0 bg-white shadow-inner" 
-                      title={title}
+                        src={previewUrl} 
+                        className="w-full h-[70vh] rounded-xl border-0 bg-white shadow-inner" 
+                        title={title}
                     />
-                  ) : (
+                    ) : previewType === 'image' && previewUrl ? (
                     <div className="w-full flex justify-center items-center bg-gray-50 rounded-xl p-2">
-                      <img 
+                        <img 
                         src={previewUrl} 
                         alt={title} 
                         className="max-w-full max-h-[68vh] object-contain rounded-lg shadow-sm"
-                      />
+                        />
                     </div>
-                  )}
+                ) : null}
               </div>
             </div>
           </div>

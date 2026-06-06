@@ -2,6 +2,7 @@
 import Pagination from '../../components/common/Pagination';
 import { addFavorite, getAllDocs, getFavorites, removeFavorite } from './documentsApi';
 import useAuthStore from '../../store/authStore';
+import Preview from '../../components/common/Preview';
 
 const DocumentsList = () => {
   const [activeTab, setActiveTab] = useState('전체 문서');
@@ -9,21 +10,22 @@ const DocumentsList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [documents, setDocuments] = useState([]);
   const [favorites, setFavorites] = useState(new Set());
+  const [previewDoc, setPreviewDoc] = useState(null);
 
   const token = useAuthStore(state => state.token);
 
   const loadDocuments = async () => {
     try {
-    const docsResp = await getAllDocs();
-    setDocuments(docsResp.data);
+      const docsResp = await getAllDocs();
+      setDocuments(docsResp.data);
 
-    const favsResp = await getFavorites();
-    const favSeq = new Set(favsResp.data.map(fav => fav.document_seq));
-    setFavorites(favSeq);
+      const favsResp = await getFavorites();
+      const favSeq = new Set(favsResp.data.map(fav => fav.document_seq));
+      setFavorites(favSeq);
 
-  } catch (err) {
-    console.error("데이터 로드 실패:", err);
-  }
+    } catch (err) {
+      console.error("데이터 로드 실패:", err);
+    }
   };
 
   useEffect(() => {
@@ -61,9 +63,6 @@ const DocumentsList = () => {
           newFavorites.delete(document_seq);
           return newFavorites;
         });
-        if (activeTab === '즐겨찾기') {
-          setCurrentPage(1);
-        }
       } else {
         await addFavorite(document_seq);
 
@@ -79,19 +78,15 @@ const DocumentsList = () => {
     }
   }
 
-  const handleDownload = (title) => {
-    alert(`${title} 파일을 다운로드합니다.`);
-  };
-
   return (
     <div className="h-full flex flex-col bg-white font-sans p-6 md:p-8">
-      {/* [1] 헤더 영역 */}
+      {/* 헤더 영역 */}
       <div className="mb-6 flex-shrink-0">
         <h1 className="text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">자료실</h1>
         <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">업무에 필요한 사내 문서를 간편하게 조회하고 다운로드하세요.</p>
       </div>
 
-      {/* [2] 필터 탭 & 검색창 라인 */}
+      {/* 필터 탭 & 검색창 라인 */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 flex-shrink-0">
         <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-[#F0F4FF] overflow-x-auto no-scrollbar sm:w-auto">
           {['전체 문서', '즐겨찾기'].map((tab) => (
@@ -131,7 +126,7 @@ const DocumentsList = () => {
         </div>
       </div>
 
-      {/* [3] 목록 영역 */}
+      {/* 목록 영역 */}
       <div className="flex-1 flex flex-col bg-white border border-slate-100 rounded-[32px] shadow-sm overflow-hidden min-h-0">
         <div className="flex-1 overflow-y-auto p-6 pt-0 custom-scrollbar">
           <table className="w-full text-left border-collapse mt-6">
@@ -166,10 +161,7 @@ const DocumentsList = () => {
                       </a>
                     </td>
                     <td className="py-4 text-sm font-semibold text-slate-800 cursor-pointer hover:text-[#3530B8] transition-colors">
-                      <button
-                        onClick={() => handlePreview(doc.file_sysname, doc.mime_type, doc.title)}
-                        className="hover:text-[#3530B8] hover:underline cursor-pointer text-left"
-                      >
+                      <button onClick={() => setPreviewDoc({ sysname: doc.file_sysname, mimeType: doc.mime_type, title: doc.title })}>
                         {doc.title}
                       </button>
                     </td>
@@ -209,8 +201,18 @@ const DocumentsList = () => {
             onChange={handlePageChange} 
           />
         </div>
-      </div>
 
+        {previewDoc && (
+          <Preview
+            sysname={previewDoc.sysname}
+            mimeType={previewDoc.mimeType}
+            title={previewDoc.title}
+            token={token}
+            onClose={() => setPreviewDoc(null)}
+          />
+        )}
+      </div>
+      
       <style dangerouslySetInnerHTML={{ __html: `
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

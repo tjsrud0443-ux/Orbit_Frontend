@@ -24,15 +24,6 @@ const AdminDocuments = () => {
   const [titleError, setTitleError] = useState('');
   const [fileError, setFileError] = useState('');
 
-  // 미리보기 관련 상태
-  // const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  // const [previewTitle, setPreviewTitle] = useState('');
-  // const [isPreviewLoading, setIsPreviewLoading] = useState(false);
-  // const [previewFileBuffer, setPreviewFileBuffer] = useState(null);
-  // const docxContainerRef = useRef(null); // 문서를 렌더링할 DOM Ref
-  // const [previewType, setPreviewType] = useState('docx');
-  // const [previewUrl, setPreviewUrl] = useState('');
-
   const [previewDoc, setPreviewDoc] = useState(null);
 
   const token = useAuthStore(state => state.token);
@@ -182,87 +173,6 @@ const AdminDocuments = () => {
     return user.auth_group === 'ROLE_SUPER_ADMIN' || user.id === users_id;
   };
 
-  // const handlePreview = async (sysname, mimeType, title) => {
-  //   const fileUrl = `http://localhost/file/preview/${sysname}?token=${token}`;
-  //   setPreviewTitle(title || "문서 미리보기");
-
-  //   if (mimeType?.startsWith('image/') || /\.(png|jpe?g|gif)$/i.test(sysname)) {
-  //     setPreviewType('image');
-  //     setPreviewUrl(fileUrl);
-  //     setIsPreviewOpen(true);
-  //     setIsPreviewLoading(false);
-  //     return;
-  //   }
-
-  //   if (mimeType === 'application/pdf' || sysname?.toLowerCase().endsWith('.pdf')) {
-  //     setPreviewType('pdf');
-  //     setPreviewUrl(fileUrl);
-  //     setIsPreviewOpen(true);
-  //     setIsPreviewLoading(false); 
-  //     return;
-  //   }
-
-  //   if (sysname?.toLowerCase().endsWith('.docx') || mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-  //     setPreviewTitle(title);
-  //     setIsPreviewOpen(true);
-  //     setIsPreviewLoading(true);
-  //     setPreviewFileBuffer(null);
-
-  //     try {
-  //       const response = await fetch(fileUrl);
-  //       if (!response.ok) throw new Error('파일 로드 실패');
-        
-  //       const arrayBuffer = await response.arrayBuffer();
-  //       setPreviewFileBuffer(arrayBuffer);
-  //     } catch (error) {
-  //       console.error('docx 미리보기 실패:', error);
-  //       alert('문서 미리보기를 불러오는 중 오류가 발생했습니다.');
-  //       setIsPreviewOpen(false);
-  //       setIsPreviewLoading(false);
-  //     }
-  //   } else {
-  //     window.open(`https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}`, '_blank');
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   if (isPreviewOpen && previewFileBuffer && docxContainerRef.current) {
-  //     const renderDocx = async () => {
-  //       try {
-  //         docxContainerRef.current.innerHTML = '';
-  //         await renderAsync(previewFileBuffer, docxContainerRef.current, docxContainerRef.current, {
-  //           className: "docx-rendered-page",
-  //           inWrapper: false,
-  //           ignoreWidth: false,
-  //           ignoreHeight: false
-  //         });
-  //       } catch (err) {
-  //         console.error("docx-preview 실패:", err);
-  //         if (docxContainerRef.current) {
-  //           docxContainerRef.current.innerHTML = `<p class="p-6 text-center text-red-500 text-sm">문서 데이터를 화면에 출력하지 못했습니다.</p>`;
-  //         }
-  //       } finally {
-  //         setIsPreviewLoading(false);
-  //       }
-  //     };
-  //     const timer = setTimeout(renderDocx, 60);
-  //     return () => clearTimeout(timer);
-  //   }
-  // }, [isPreviewOpen, previewFileBuffer]);
-
-  // const handlePreviewClose = () => {
-  //   setIsPreviewOpen(false);
-  //   setIsPreviewLoading(false);
-  //   setPreviewType('docx');
-  //   setPreviewUrl('');
-  //   setPreviewFileBuffer(null);
-  //   setPreviewTitle('');
-    
-  //   if (docxContainerRef.current) {
-  //     docxContainerRef.current.innerHTML = '';
-  //   }
-  // };
-
   return (
     <div className="h-full flex flex-col bg-white font-sans p-6 md:p-8">
       {/* 헤더 및 검색/버튼 영역 */}
@@ -325,12 +235,6 @@ const AdminDocuments = () => {
                 displayedDocs.map((doc) => (
                   <tr key={doc.document_seq} className="hover:bg-slate-50/40 transition-colors">
                     <td className="py-4 text-sm font-semibold text-slate-800">
-                      {/* <button
-                        onClick={() => handlePreview(doc.file_sysname, doc.mime_type, doc.title)}
-                        className="hover:text-[#3530B8] hover:underline cursor-pointer text-left"
-                      >
-                        {doc.title}
-                      </button> */}
                       <button onClick={() => setPreviewDoc({ sysname: doc.file_sysname, mimeType: doc.mime_type, title: doc.title })}>
                         {doc.title}
                       </button>
