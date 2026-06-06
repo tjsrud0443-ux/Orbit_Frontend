@@ -406,14 +406,21 @@ const AdminDocuments = () => {
                 <div 
                   {...getRootProps()} 
                   className={`border-2 border-dashed rounded-2xl p-8 transition-all flex flex-col items-center justify-center gap-3 cursor-pointer
-                    ${isDragActive ? 'border-[#3530B8] bg-[#3530B8]/5' : fileError ? 'border-red-500 bg-red-50/30' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
+                    ${isDragActive ? 'border-[#3530B8] bg-[#3530B8]/5' : 
+                      fileError ? 'border-red-500 bg-red-50/30' : 
+                      uploadedFiles.length > 0 ? 'border-green-500 bg-green-50/30' : 
+                      'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
                 >
                   <input {...getInputProps()} />
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDragActive ? 'bg-[#3530B8] text-white' : fileError ? 'bg-red-100 text-red-500' : 'bg-gray-100 text-gray-400'}`}>
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center 
+                    ${isDragActive ? 'bg-[#3530B8] text-white' : 
+                      fileError ? 'bg-red-100 text-red-500' : 
+                      uploadedFiles.length > 0 ? 'bg-green-100 text-green-600' : 
+                      'bg-gray-100 text-gray-400'}`}>
                     <FontAwesomeIcon icon={faCloudUploadAlt} className="text-xl" />
                   </div>
                   <div className="text-center">
-                    <p className={`text-sm font-bold ${fileError ? 'text-red-600' : 'text-gray-700'}`}>
+                    <p className={`text-sm font-bold ${fileError ? 'text-red-600' : uploadedFiles.length > 0 ? 'text-green-700' : 'text-gray-700'}`}>
                       {uploadedFiles.length > 0 ? uploadedFiles[0].name : isEditMode ? '기존 파일을 유지하려면 비워두세요' : '파일을 드래그하거나 클릭하세요'}
                     </p>
                     <p className={`text-[0.625rem] mt-1 ${fileError ? 'text-red-400' : 'text-gray-400'}`}>최대 20MB까지 업로드 가능</p>
