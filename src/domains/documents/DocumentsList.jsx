@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import Pagination from '../../components/common/Pagination';
 import { addFavorite, getAllDocs, getFavorites, removeFavorite } from './documentsApi';
+import useAuthStore from '../../store/authStore';
 
 const DocumentsList = () => {
   const [activeTab, setActiveTab] = useState('전체 문서');
@@ -8,6 +9,8 @@ const DocumentsList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [documents, setDocuments] = useState([]);
   const [favorites, setFavorites] = useState(new Set());
+
+  const token = useAuthStore(state => state.token);
 
   const loadDocuments = async () => {
     try {
@@ -135,7 +138,7 @@ const DocumentsList = () => {
             <thead className="sticky top-0 bg-white z-10">
               <tr className="border-b border-slate-100">
                 <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-50">다운로드</th>
-                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-110">제목</th>
+                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-110">제목 (클릭 시 미리보기 가능)</th>
                 <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-50">작성자</th>
                 <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-30">등록일</th>
                 <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-50">즐겨찾기</th>
@@ -152,17 +155,23 @@ const DocumentsList = () => {
                 displayedDocs.map((doc) => (
                   <tr key={doc.document_seq} className="hover:bg-slate-50/40 transition-colors">
                     <td className="py-4 text-center">
-                      <button 
-                        onClick={() => handleDownload(doc.title)}
-                        className="p-2 border border-[#3530B8]/30 rounded-lg hover:bg-[#F0F4FF] transition-all group"
+                      <a 
+                        href={`http://localhost/file/download/${doc.file_sysname}?token=${token}`} 
+                        download 
+                        className="inline-block p-2 border border-[#3530B8]/30 rounded-lg hover:bg-[#F0F4FF] transition-all group"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#3530B8]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                      </button>
+                      </a>
                     </td>
                     <td className="py-4 text-sm font-semibold text-slate-800 cursor-pointer hover:text-[#3530B8] transition-colors">
-                      {doc.title}
+                      <button
+                        onClick={() => handlePreview(doc.file_sysname, doc.mime_type, doc.title)}
+                        className="hover:text-[#3530B8] hover:underline cursor-pointer text-left"
+                      >
+                        {doc.title}
+                      </button>
                     </td>
                     <td className="py-4 text-xs text-slate-500 font-medium">
                       {doc.users_id}
