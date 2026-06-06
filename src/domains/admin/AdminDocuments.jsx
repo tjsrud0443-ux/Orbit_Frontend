@@ -176,14 +176,14 @@ const AdminDocuments = () => {
   return (
     <div className="h-full flex flex-col bg-white font-sans p-3 md:p-8">
       {/* 헤더 및 검색/버튼 영역 */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 flex-shrink-0">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 md:gap-4 mb-4 md:mb-6 flex-shrink-0">
         <div className="space-y-1">
-          <h1 className="text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">문서 관리</h1>
+          <h1 className="text-[1.25rem] md:text-[1.5rem] font-bold text-slate-900 mb-0 md:mb-1 tracking-tight">문서 관리</h1>
           <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">자료실에 올라와 있는 문서를 관리할 수 있습니다.</p>
         </div>
 
-        <div className="flex flex-col md:flex-row md:items-center gap-4">
-          <div className="relative group w-full md:w-72 flex-shrink-0">
+        <div className="flex flex-row md:items-center gap-2 w-full md:w-auto">
+          <div className="relative group flex-1 md:w-72 flex-shrink-0">
             <input 
               type="text" 
               placeholder="문서 제목으로 검색"
@@ -192,19 +192,19 @@ const AdminDocuments = () => {
                   setSearchKeyword(e.target.value);
                   setCurrentPage(1);
               }}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl 
-              focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-sm text-gray-700 shadow-sm"/>
-            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3530B8] transition-colors cursor-pointer">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              className="w-full pl-9 md:pl-10 pr-4 py-2 md:py-2.5 bg-white border border-gray-200 rounded-xl 
+              focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-xs md:text-sm text-gray-700 shadow-sm"/>
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3530B8] transition-colors cursor-pointer">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 md:h-4 md:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
           </div>
           <button 
             onClick={handleCreate}
-            className="px-6 py-2.5 bg-[#3530B8] text-white text-sm font-bold rounded-xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all flex items-center justify-center gap-2 cursor-pointer self-end md:self-auto"
+            className="px-3 md:px-6 py-2 md:py-2.5 bg-[#3530B8] text-white text-xs md:text-sm font-bold rounded-xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all flex items-center justify-center gap-1.5 md:gap-2 cursor-pointer whitespace-nowrap"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 md:h-4 md:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
             </svg>
             새 문서
