@@ -81,13 +81,13 @@ const DocumentsList = () => {
   return (
     <div className="h-full flex flex-col bg-white font-sans p-3 md:p-8">
       {/* 헤더 영역 */}
-      <div className="mb-6 flex-shrink-0">
-        <h1 className="text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">자료실</h1>
+      <div className="mb-3 md:mb-6 flex-shrink-0">
+        <h1 className="text-[1.25rem] md:text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">자료실</h1>
         <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">업무에 필요한 사내 문서를 간편하게 조회하고 다운로드하세요.</p>
       </div>
 
       {/* 필터 탭 & 검색창 라인 */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 flex-shrink-0">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3 md:mb-6 flex-shrink-0">
         <div className="flex w-fit bg-white p-1 rounded-2xl shadow-sm border border-[#F0F4FF] overflow-x-auto no-scrollbar sm:w-auto">
           {['전체 문서', '즐겨찾기'].map((tab) => (
             <button
