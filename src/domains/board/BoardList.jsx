@@ -1,6 +1,8 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Pagination from '../../components/common/Pagination';
+import { maxios } from "../../api/axiosConfig"; 
+import { getBoardList } from './boardApi';
 
 const CATEGORIES = ['전체', '공지', '이벤트', '인사/총무', '자유', '프로젝트'];
 
@@ -14,55 +16,67 @@ const CategoryTag = ({ label }) => {
   );
 };
 
-const POSTS = [
-  { id: '공지', title: '[필독] 2026년 하반기 보안 정책 업데이트 안내', isNew: true,  category: '공지',     author: '정선경', date: '2026-06-03', views: 312, likes: 18, liked: false },
-  { id: '공지', title: '6월 전사 워크숍 참가 신청 안내',               isNew: true,  category: '이벤트',   author: '김민지', date: '2026-06-02', views: 204, likes: 31, liked: false },
-  { id: '23',   title: '7월 급여 지급일 및 복리후생 변경 사항 안내',   isNew: false, category: '인사/총무', author: '이하준', date: '2026-05-30', views: 177, likes: 8,  liked: false },
-  { id: '22',   title: '사무실 냉난방 사용 규칙 공유합니다',           isNew: false, category: '자유',     author: '박소연', date: '2026-05-28', views: 98,  likes: 14, liked: true  },
-  { id: '21',   title: '2차 스프린트 기능 통합 완료 공유',             isNew: false, category: '프로젝트', author: '최우진', date: '2026-05-25', views: 145, likes: 22, liked: false },
-  { id: '20',   title: '구내식당 메뉴 개선 의견 수렴합니다',           isNew: false, category: '자유',     author: '강다은', date: '2026-05-22', views: 201, likes: 41, liked: true  },
-  { id: '19',   title: '사내 도서 대여 시스템 오픈 안내',             isNew: false, category: '공지',     author: '정선경', date: '2026-05-20', views: 88,  likes: 6,  liked: false },
-  { id: '18',   title: '신규 입사자 OJT 프로그램 일정 공지',          isNew: false, category: '인사/총무', author: '이하준', date: '2026-05-18', views: 134, likes: 9,  liked: false },
-];
+// // HTML 태그 제거 유틸 함수 추가 (컴포넌트 밖에)
+// const stripHtml = (html) => {
+//   if (!html) return '';
+//   return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+// };
 
-const PostRow = ({ post, onLike }) => (
-  <div className="grid grid-cols-12 gap-4 px-4 py-4 items-center cursor-pointer hover:bg-gray-50 transition-colors group border-b border-gray-50 last:border-0">
-    {/* 번호 */}
-    <div className="col-span-1">
+const PostRow = ({ post, onLike, onClick }) => (
+  <div 
+    onClick={onClick}
+    className="relative flex flex-col md:grid md:grid-cols-12 gap-2 md:gap-4 px-6 md:px-8 py-4 items-start md:items-center cursor-pointer hover:bg-gray-50 transition-colors group border-b border-gray-50 last:border-0"
+  >
+    {/* 번호 - 데스크톱 전용 */}
+    <div className="hidden md:block md:col-span-1 text-center">
       {post.id === '공지'
         ? <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">공지</span>
-        : <span className="text-xs text-gray-400">{post.id}</span>
+        : <span className="text-xs text-gray-400">{post.post_seq}</span>
       }
     </div>
 
-    {/* 제목 */}
-    <div className="col-span-5 flex items-center gap-2 min-w-0">
-      <span className="text-sm font-bold text-gray-700 group-hover:text-indigo-600 transition-colors truncate">
-        {post.title}
-      </span>
-      {post.isNew && (
-        <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-500 text-white">N</span>
-      )}
+    {/* 제목 & 모바일용 서브 정보 */}
+    <div className="col-span-12 md:col-span-4 flex flex-col gap-1 min-w-0 w-full">
+      <div className="flex items-center gap-2">
+        {post.id === '공지' && (
+          <span className="md:hidden text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 shrink-0">공지</span>
+        )}
+        <span 
+          className="text-sm font-bold text-gray-700 group-hover:text-indigo-600 transition-colors truncate"
+          title={post.title}
+        >
+          {post.title}
+        </span>
+        {post.isNew && (
+          <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-500 text-white">N</span>
+        )}
+      </div>
+      {/* 모바일에서만 보이는 작성자/작성일 */}
+      <div className="flex items-center gap-2 md:hidden">
+        <span className="text-[11px] text-gray-500 font-medium">{post.author_name}</span>
+        <span className="text-[11px] text-gray-300">|</span>
+        <span className="text-[11px] text-gray-400">{post.created_at.slice(0, 10)}</span>
+      </div>
     </div>
 
     {/* 카테고리 */}
-    <div className="col-span-2">
+    <div className="col-span-6 md:col-span-2 mt-1 md:mt-0">
       <CategoryTag label={post.category} />
     </div>
 
-    {/* 작성자 */}
-    <div className="col-span-2 text-xs text-gray-500 font-medium">{post.author}</div>
+    {/* 작성자 - 데스크톱 */}
+    <div className="hidden md:block md:col-span-2 text-xs text-gray-500 font-medium">{post.author_name}</div>
 
-    {/* 작성일 */}
-    <div className="col-span-1 text-xs text-gray-400">{post.date}</div>
+    {/* 작성일 - 데스크톱 */}
+    <div className="hidden md:block md:col-span-2 text-xs text-gray-400 text-center">{post.created_at.slice(0, 10)}</div>
 
-    {/* 조회 */}
-    <div className="col-span-1 flex items-center justify-center">
+    {/* 조회 - 데스크톱/모바일 공통 (모바일은 우측 상단이나 하단 배치 고민 가능하나 일단 유지) */}
+    <div className="absolute right-4 top-5 md:static md:col-span-1 flex items-center justify-center">
       <span className="flex items-center gap-1 text-[11px] text-gray-400">
         <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
           <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
         </svg>
-        {post.views}
+        {post.view_count}
       </span>
     </div>
   </div>
@@ -70,20 +84,31 @@ const PostRow = ({ post, onLike }) => (
 
 const BoardList = () => {
   const [search, setSearch] = useState('');
-  const [posts, setPosts] = useState(POSTS);
+  const [posts, setPosts] = useState([]);
   const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
   const navigate = useNavigate();
   const nav = () => {
     navigate('/BoardWrite');
   }
-  const filtered = posts.filter(p =>
-    p.title.includes(search) || p.author.includes(search)
-  );
+    // API 호출
+  useEffect(() => {
+    getBoardList({page, size:10, keyword:search}).then(resp=>{
+      setPosts(resp.data.list);
+      setTotalPages(resp.data.totalPages);
+      setTotal(resp.data.total);
+    }).catch (err=> {
+        console.error('게시글 목록 조회 실패', err);
+      })
+    }, [page, search]); // page나 search 바뀔 때마다 재호출
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
-  const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
-
+  // 검색어 바뀌면 1페이지로 초기화
+  const handleSearch = (e) => {
+    setSearch(e.target.value);
+    setPage(1);
+  };
   const handleLike = (idx) => {
     setPosts(prev => prev.map((p, i) =>
       i !== idx ? p : { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 }
@@ -121,7 +146,7 @@ const BoardList = () => {
           <div className="flex items-center gap-3 flex-wrap">
             <h3 className="text-s font-extrabold text-indigo-950">게시글 목록</h3>
             <span className="bg-indigo-50 text-indigo-600 text-[0.7rem] font-bold px-2.5 py-1 rounded-full">
-              총 {filtered.length}건
+              총 {total}건
             </span>
           </div>
 
@@ -145,21 +170,27 @@ const BoardList = () => {
         </div>
 
         {/* 테이블 헤더 — 데스크톱만 */}
-        <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-3 bg-white border-b border-gray-100 sticky top-0 z-10">
-          <div className="col-span-1 ml-5 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider">번호</div>
-          <div className="col-span-5 ml-3 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider">제목</div>
+        <div className="hidden md:grid grid-cols-12 gap-4 px-8 py-3 bg-white border-b border-gray-100 sticky top-0 z-10">
+          <div className="col-span-1 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider text-center">번호</div>
+          <div className="col-span-4 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider">제목</div>
           <div className="col-span-2 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider">카테고리</div>
-          <div className="col-span-2  text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider">작성자</div>
-          <div className="col-span-1 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider">작성일</div>
-          <div className="col-span-1 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider">조회수</div>
+          <div className="col-span-2 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider">작성자</div>
+          <div className="col-span-2 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider text-center">작성일</div>
+          <div className="col-span-1 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider text-center">조회수</div>
         </div>
 
         {/* 목록 */}
-        <div className="divide-y divide-gray-50 px-4 md:px-4">
-          {paginated.length > 0 ? (
-            paginated.map((post, i) => (
-              <PostRow key={i} post={post} onLike={() => handleLike(posts.indexOf(post))} />
-            ))
+        <div className="divide-y divide-gray-50">
+          {posts.length > 0 ? (
+            posts.map((post, i) => {
+              return (
+              <PostRow 
+                key={post.post_seq || i} 
+                post={post} 
+                onLike={() => handleLike(posts.indexOf(post))} 
+                onClick={() => navigate(`/boardDetail/${post.post_seq}`)}
+              />
+            )})
           ) : (
             <div className="py-20 text-center text-gray-400 text-sm font-bold">게시글이 없습니다.</div>
           )}
