@@ -1,34 +1,40 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import Pagination from '../../components/common/Pagination';
+import { addFavorite, getAllDocs, getFavorites, removeFavorite } from './documentsApi';
 
 const DocumentsList = () => {
-  // 상태 관리
   const [activeTab, setActiveTab] = useState('전체 문서');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [documents, setDocuments] = useState([]);
   const [favorites, setFavorites] = useState(new Set());
 
-  // 더미 데이터 생성
+  const loadDocuments = async () => {
+    try {
+    const docsResp = await getAllDocs();
+    setDocuments(docsResp.data);
+
+    const favsResp = await getFavorites();
+    const favSeq = new Set(favsResp.data.map(fav => fav.document_seq));
+    setFavorites(favSeq);
+
+  } catch (err) {
+    console.error("데이터 로드 실패:", err);
+  }
+  };
+
   useEffect(() => {
-    const dummyData = Array.from({ length: 25 }, (_, i) => ({
-      id: i + 1,
-      title: `사내 보안 가이드라인 v${i + 1}.pdf`,
-      author: `관리자${(i % 3) + 1}`,
-      date: `2024-05-${String((i % 30) + 1).padStart(2, '0')}`,
-      isFavorite: false,
-    }));
-    setDocuments(dummyData);
+    loadDocuments();
   }, []);
 
-  // 필터링 및 검색 로직
+  // 필터링 및 검색
   const filteredDocuments = documents.filter((doc) => {
     const matchesSearch = doc.title.toLowerCase().includes(searchKeyword.toLowerCase());
-    const matchesTab = activeTab === '전체 문서' || favorites.has(doc.id);
+    const matchesTab = activeTab === '전체 문서' || favorites.has(doc.document_seq);
     return matchesSearch && matchesTab;
   });
 
-  // 페이지네이션 관련 계산
+  // 페이지네이션
   const itemsPerPage = 10;
   const totalPages = Math.ceil(filteredDocuments.length / itemsPerPage);
   const displayedDocs = filteredDocuments.slice(
@@ -40,17 +46,35 @@ const DocumentsList = () => {
     setCurrentPage(value);
   };
 
-  const toggleFavorite = (id) => {
-    setFavorites((prev) => {
-      const newFavorites = new Set(prev);
-      if (newFavorites.has(id)) {
-        newFavorites.delete(id);
+  const toggleFavorite = async (document_seq) => {
+    const isFavorite = favorites.has(document_seq);
+
+    try{
+      if (isFavorite) {
+        await removeFavorite(document_seq);
+
+        setFavorites((prev) => {
+          const newFavorites = new Set(prev);
+          newFavorites.delete(document_seq);
+          return newFavorites;
+        });
+        if (activeTab === '즐겨찾기') {
+          setCurrentPage(1);
+        }
       } else {
-        newFavorites.add(id);
+        await addFavorite(document_seq);
+
+        setFavorites((prev) => {
+          const newFavorites = new Set(prev);
+          newFavorites.add(document_seq);
+          return newFavorites;
+        });
       }
-      return newFavorites;
-    });
-  };
+    } catch (err){
+      console.error("즐겨찾기 실패:", err);
+      alert("즐겨찾기 중 오류가 발생했습니다.");
+    }
+  }
 
   const handleDownload = (title) => {
     alert(`${title} 파일을 다운로드합니다.`);
@@ -126,7 +150,7 @@ const DocumentsList = () => {
                 </tr>
               ) : (
                 displayedDocs.map((doc) => (
-                  <tr key={doc.id} className="hover:bg-slate-50/40 transition-colors">
+                  <tr key={doc.document_seq} className="hover:bg-slate-50/40 transition-colors">
                     <td className="py-4 text-center">
                       <button 
                         onClick={() => handleDownload(doc.title)}
@@ -141,17 +165,17 @@ const DocumentsList = () => {
                       {doc.title}
                     </td>
                     <td className="py-4 text-xs text-slate-500 font-medium">
-                      {doc.author}
+                      {doc.users_id}
                     </td>
                     <td className="py-4 text-[0.6875rem] text-slate-400 font-mono">
-                      {doc.date}
+                      {doc.created_at?.substring(0,10)}
                     </td>
                     <td className="py-4 text-center">
                       <button 
-                        onClick={() => toggleFavorite(doc.id)}
+                        onClick={() => toggleFavorite(doc.document_seq)}
                         className="p-1 hover:scale-110 transition-transform"
                       >
-                        {favorites.has(doc.id) ? (
+                        {favorites.has(doc.document_seq) ? (
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-400" viewBox="0 0 24 24" fill="currentColor">
                             <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clipRule="evenodd" />
                           </svg>
