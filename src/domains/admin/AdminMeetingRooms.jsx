@@ -1,23 +1,36 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt, faPlus, faTimes, faCloudUploadAlt } from '@fortawesome/free-solid-svg-icons';
 import { useDropzone } from 'react-dropzone';
+import { addMeetingRoom, getAllRooms } from './adminApi';
+import useAuthStore from '../../store/authStore';
 
 const AdminMeetingRooms = () => {
   const [isAddMode, setIsAddMode] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
-  const [roomName, setRoomName] = useState('');
-  const [capacity, setCapacity] = useState('');
-  const [location, setLocation] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [previewImage, setPreviewImage] = useState(null);
+  const [rooms, setRooms] = useState([]);
+  const [formData, setFormData] = useState({
+    room_seq: "",
+    room_name: "",
+    max_people: "",
+    oriname: "",
+    sysname: "",
+    room_floor: ""
+  });
 
-  // 더미 데이터 (추후 API 연동)
-  const [rooms, setRooms] = useState([
-    { id: 1, name: '대회의실 A', capacity: 20, location: '12층', image: null },
-    { id: 2, name: '중회의실 B', capacity: 10, location: '11층', image: null },
-    { id: 3, name: '소회의실 C', capacity: 4, location: '11층', image: null },
-  ]);
+  const token = useAuthStore(state => state.token);
+
+  const loadRooms = () => {
+    getAllRooms().then(resp => {
+      setRooms(resp.data);
+    }).catch(err => console.error("회의실 목록 로드 실패:", err));
+  };
+
+  useEffect(() => {
+    loadRooms();
+  }, []);
 
   const onDrop = useCallback(acceptedFiles => {
     setUploadedFiles(acceptedFiles);
@@ -41,19 +54,21 @@ const AdminMeetingRooms = () => {
   const handleAddClick = () => {
     setIsAddMode(true);
     setSelectedRoom(null);
-    setRoomName('');
-    setCapacity('');
-    setLocation('');
     setUploadedFiles([]);
     setPreviewImage(null);
+    setFormData({
+      room_seq: "",
+      room_name: "",
+      max_people: "",
+      oriname: "",
+      sysname: "",
+      room_floor: ""
+    });
   };
 
   const handleEditClick = (room) => {
     setIsAddMode(true);
     setSelectedRoom(room);
-    setRoomName(room.name);
-    setCapacity(room.capacity);
-    setLocation(room.location || '');
     setUploadedFiles([]);
     setPreviewImage(room.image);
   };
@@ -63,11 +78,35 @@ const AdminMeetingRooms = () => {
     setSelectedRoom(null);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = (seq) => {
     if (window.confirm('정말 삭제하시겠습니까?')) {
-      setRooms(rooms.filter(room => room.id !== id));
+      setRooms(rooms.filter(room => room.room_seq !== seq));
     }
   };
+
+  const handleChange = (e) => {
+    const {name, value} = e.target;
+    setFormData(prev => ({...prev, [name]:value}));
+  }
+
+  const handleComplete = () => {
+    const data = new FormData();
+    data.append('input', new Blob([JSON.stringify(formData)], { type: 'application/json' }));
+    data.append('file', uploadedFiles[0]);
+
+    try {
+      addMeetingRoom(data).then(resp => {
+        alert("회의실이 등록되었습니다.");
+        loadRooms();
+        setIsAddMode(false);
+        setSelectedRoom(null);
+      });
+    } catch (error) {
+      console.error('회의실 등록 실패', error);
+      alert("회의실 등록에 실패했습니다.");
+    }
+    
+  }
 
   return (
     <div className={`h-full flex flex-col ${isAddMode ? 'p-0 md:p-8' : 'p-6 md:p-8'} font-sans overflow-hidden bg-white`}>
@@ -107,14 +146,15 @@ const AdminMeetingRooms = () => {
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             {rooms.map((room) => (
               <div 
-                key={room.id}
-                className="flex md:grid md:grid-cols-[1.2fr_1fr_1fr_0.5fr_1fr] px-4 md:px-6 py-6 items-center border-b border-gray-50/50 hover:bg-[#F8FAFF] transition-colors"
+                key={room.room_seq}
+                className="flex md:grid md:grid-cols-[1.2fr_1fr_1fr_0.5fr_1fr] px-4 md:px-6 py-6 items-center border-b border-gray-50/50"
               >
                 {/* 회의실 사진 */}
                 <div className="flex-shrink-0 md:flex md:justify-center mr-4 md:mr-0">
                   <div className="w-24 h-16 md:w-32 md:h-20 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shadow-sm">
-                    {room.image ? (
-                      <img src={room.image} alt={room.name} className="w-full h-full object-cover" />
+                    {room.sysname ? (
+                      <img src={`http://localhost/file/profile/view?sysname=${room.sysname}&token=${token}`} 
+                        alt={room.room_name} className="w-full h-full object-cover" />
                     ) : (
                       <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -125,20 +165,20 @@ const AdminMeetingRooms = () => {
 
                 {/* 회의실명 */}
                 <div className="flex-1 md:block text-sm font-bold text-gray-700 truncate">
-                  {room.name}
+                  {room.room_name}
                   <div className="md:hidden text-[0.6875rem] text-gray-500 font-medium mt-1">
-                    인원: {room.capacity}명 | 위치: {room.location}
+                    인원: {room.max_people}명 | 위치: {room.room_floor}
                   </div>
                 </div>
 
                 {/* 허용 인원수 (PC 전용) */}
-                <div className="hidden md:block text-sm text-gray-500 font-medium">
-                  {room.capacity}명
+                <div className="hidden md:block text-sm text-gray-500 font-medium pl-3">
+                  {room.max_people}명
                 </div>
 
                 {/* 위치 (PC 전용) */}
                 <div className="hidden md:block text-sm text-gray-500 font-medium">
-                  {room.location}
+                  {room.room_floor}
                 </div>
 
                 {/* 관리 버튼 */}
@@ -151,7 +191,7 @@ const AdminMeetingRooms = () => {
                     <FontAwesomeIcon icon={faEdit} className="text-xs" />
                   </button>
                   <button 
-                    onClick={() => handleDelete(room.id)}
+                    onClick={() => handleDelete(room.room_seq)}
                     className="w-9 h-9 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center cursor-pointer"
                     title="삭제"
                   >
@@ -206,8 +246,9 @@ const AdminMeetingRooms = () => {
                   <label className="text-xs font-bold text-gray-400 uppercase ml-1">회의실명</label>
                   <input 
                     type="text"
-                    value={roomName}
-                    onChange={(e) => setRoomName(e.target.value)}
+                    value={formData.room_name}
+                    onChange={handleChange}
+                    name="room_name"
                     placeholder="회의실 이름을 입력하세요"
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all text-sm font-medium"
                   />
@@ -217,8 +258,9 @@ const AdminMeetingRooms = () => {
                   <label className="text-xs font-bold text-gray-400 uppercase ml-1">허용 인원수</label>
                   <input 
                     type="number"
-                    value={capacity}
-                    onChange={(e) => setCapacity(e.target.value)}
+                    value={formData.max_people}
+                    onChange={handleChange}
+                    name="max_people"
                     placeholder="최대 수용 인원을 입력하세요"
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all text-sm font-medium"
                   />
@@ -228,8 +270,9 @@ const AdminMeetingRooms = () => {
                   <label className="text-xs font-bold text-gray-400 uppercase ml-1">위치</label>
                   <input 
                     type="text"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
+                    value={formData.room_floor}
+                    onChange={handleChange}
+                    name="room_floor"
                     placeholder="회의실 위치를 입력하세요 (예: 12층)"
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all text-sm font-medium"
                   />
@@ -246,6 +289,7 @@ const AdminMeetingRooms = () => {
                 취소
               </button>
               <button 
+                onClick={handleComplete}
                 className="flex-[2] py-4 bg-[#3530B8] text-white text-sm font-bold rounded-2xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all cursor-pointer"
               >
                 {selectedRoom ? '수정 완료' : '등록'}
