@@ -63,13 +63,13 @@ const QnaHistory = () => {
   };
 
   return (
-    <div className="flex flex-col h-full py-8 px-1 md:px-7 overflow-y-auto">
+    <div className="flex flex-col h-full py-8 px-1 md:px-7 overflow-y-auto md:overflow-hidden custom-scrollbar">
       <div className="mb-6 px-4 md:px-2">
         <h1 className="text-xl md:text-2xl font-bold text-[#121331]">문의 내역</h1>
         <p className="text-xs md:text-sm text-[#8a92a6] mt-1">내가 작성한 문의 내역과 관리자의 답변을 확인할 수 있습니다.</p>
       </div>
 
-      <div className="flex flex-col md:flex-row h-auto md:h-[1100px] gap-6 min-h-0 max-w-[1450px] mx-auto w-full">
+      <div className="flex flex-col md:flex-row h-auto md:flex-1 gap-6 min-h-0 max-w-[1450px] mx-auto w-full">
         <div className={`bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-3 md:p-8 flex flex-col transition-all duration-300 md:overflow-hidden min-w-0 ${selectedQna ? 'md:w-[65%] w-full' : 'w-full'}`}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
             <div className="flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit items-center flex-shrink-0">
@@ -110,7 +110,7 @@ const QnaHistory = () => {
             </div>
           </div>
 
-          <div className="flex-1">
+          <div className="flex-1 md:overflow-y-auto md:min-h-0 custom-scrollbar">
             {/* 데스크탑 뷰: 테이블 형식 */}
             <div className="hidden md:block">
               <table className="w-full text-left border-collapse table-auto">
@@ -205,7 +205,7 @@ const QnaHistory = () => {
 
         {/* 데스크탑 뷰: 상세 정보 패널 */}
         {selectedQna && (
-          <div className="hidden md:flex w-[35%] bg-white rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-10 transition-all duration-300 flex-col">
+          <div className="hidden md:flex w-[35%] bg-white rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-10 transition-all duration-300 flex-col md:overflow-y-auto md:min-h-0 custom-scrollbar">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-xl font-bold text-[#1a1c3d]">문의 상세</h2>
               <button onClick={() => setSelectedQna(null)}><FontAwesomeIcon icon={faTimes} /></button>
@@ -243,7 +243,7 @@ const QnaHistory = () => {
         {/* 모바일 뷰: 상세 정보 모달 */}
         {selectedQna && (
           <div className="md:hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm shadow-2xl overflow-y-auto max-h-[90vh]">
+            <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-bold">문의 상세</h2>
                 <button onClick={() => setSelectedQna(null)}><FontAwesomeIcon icon={faTimes} /></button>
@@ -275,6 +275,13 @@ const QnaHistory = () => {
           </div>
         )}
       </div>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
+      `}} />
     </div>
   );
 };
