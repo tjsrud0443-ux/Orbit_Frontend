@@ -1,34 +1,45 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import Pagination from '../../components/common/Pagination';
+import { addFavorite, getAllDocs, getFavorites, removeFavorite } from './documentsApi';
+import useAuthStore from '../../store/authStore';
+import Preview from '../../components/common/Preview';
 
 const DocumentsList = () => {
-  // 상태 관리
   const [activeTab, setActiveTab] = useState('전체 문서');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [documents, setDocuments] = useState([]);
   const [favorites, setFavorites] = useState(new Set());
+  const [previewDoc, setPreviewDoc] = useState(null);
 
-  // 더미 데이터 생성
+  const token = useAuthStore(state => state.token);
+
+  const loadDocuments = async () => {
+    try {
+      const docsResp = await getAllDocs();
+      setDocuments(docsResp.data);
+
+      const favsResp = await getFavorites();
+      const favSeq = new Set(favsResp.data.map(fav => fav.document_seq));
+      setFavorites(favSeq);
+
+    } catch (err) {
+      console.error("데이터 로드 실패:", err);
+    }
+  };
+
   useEffect(() => {
-    const dummyData = Array.from({ length: 25 }, (_, i) => ({
-      id: i + 1,
-      title: `사내 보안 가이드라인 v${i + 1}.pdf`,
-      author: `관리자${(i % 3) + 1}`,
-      date: `2024-05-${String((i % 30) + 1).padStart(2, '0')}`,
-      isFavorite: false,
-    }));
-    setDocuments(dummyData);
+    loadDocuments();
   }, []);
 
-  // 필터링 및 검색 로직
+  // 필터링 및 검색
   const filteredDocuments = documents.filter((doc) => {
     const matchesSearch = doc.title.toLowerCase().includes(searchKeyword.toLowerCase());
-    const matchesTab = activeTab === '전체 문서' || favorites.has(doc.id);
+    const matchesTab = activeTab === '전체 문서' || favorites.has(doc.document_seq);
     return matchesSearch && matchesTab;
   });
 
-  // 페이지네이션 관련 계산
+  // 페이지네이션
   const itemsPerPage = 10;
   const totalPages = Math.ceil(filteredDocuments.length / itemsPerPage);
   const displayedDocs = filteredDocuments.slice(
@@ -40,33 +51,44 @@ const DocumentsList = () => {
     setCurrentPage(value);
   };
 
-  const toggleFavorite = (id) => {
-    setFavorites((prev) => {
-      const newFavorites = new Set(prev);
-      if (newFavorites.has(id)) {
-        newFavorites.delete(id);
-      } else {
-        newFavorites.add(id);
-      }
-      return newFavorites;
-    });
-  };
+  const toggleFavorite = async (document_seq) => {
+    const isFavorite = favorites.has(document_seq);
 
-  const handleDownload = (title) => {
-    alert(`${title} 파일을 다운로드합니다.`);
-  };
+    try{
+      if (isFavorite) {
+        await removeFavorite(document_seq);
+
+        setFavorites((prev) => {
+          const newFavorites = new Set(prev);
+          newFavorites.delete(document_seq);
+          return newFavorites;
+        });
+      } else {
+        await addFavorite(document_seq);
+
+        setFavorites((prev) => {
+          const newFavorites = new Set(prev);
+          newFavorites.add(document_seq);
+          return newFavorites;
+        });
+      }
+    } catch (err){
+      console.error("즐겨찾기 실패:", err);
+      alert("즐겨찾기 중 오류가 발생했습니다.");
+    }
+  }
 
   return (
-    <div className="h-full flex flex-col bg-white font-sans p-6 md:p-8">
-      {/* [1] 헤더 영역 */}
-      <div className="mb-6 flex-shrink-0">
-        <h1 className="text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">자료실</h1>
+    <div className="h-full flex flex-col bg-white font-sans p-3 md:p-8">
+      {/* 헤더 영역 */}
+      <div className="mb-3 md:mb-6 flex-shrink-0">
+        <h1 className="text-[1.25rem] md:text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">자료실</h1>
         <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">업무에 필요한 사내 문서를 간편하게 조회하고 다운로드하세요.</p>
       </div>
 
-      {/* [2] 필터 탭 & 검색창 라인 */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 flex-shrink-0">
-        <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-[#F0F4FF] overflow-x-auto no-scrollbar sm:w-auto">
+      {/* 필터 탭 & 검색창 라인 */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3 md:mb-6 flex-shrink-0">
+        <div className="flex w-fit bg-white p-1 rounded-2xl shadow-sm border border-[#F0F4FF] overflow-x-auto no-scrollbar sm:w-auto">
           {['전체 문서', '즐겨찾기'].map((tab) => (
             <button
               key={tab}
@@ -104,17 +126,17 @@ const DocumentsList = () => {
         </div>
       </div>
 
-      {/* [3] 목록 영역 */}
-      <div className="flex-1 flex flex-col bg-white border border-slate-100 rounded-[32px] shadow-sm overflow-hidden min-h-0">
-        <div className="flex-1 overflow-y-auto p-6 pt-0 custom-scrollbar">
-          <table className="w-full text-left border-collapse mt-6">
+      {/* 목록 영역 */}
+      <div className="flex-1 flex flex-col bg-white border border-slate-100 md:rounded-[32px] rounded-xl shadow-sm overflow-hidden min-h-0">
+        <div className="flex-1 overflow-auto p-6 pt-0 custom-scrollbar">
+          <table className="w-full min-w-[800px] md:min-w-full text-left border-collapse mt-6">
             <thead className="sticky top-0 bg-white z-10">
               <tr className="border-b border-slate-100">
-                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-50">다운로드</th>
-                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-110">제목</th>
-                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-50">작성자</th>
-                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-30">등록일</th>
-                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-50">즐겨찾기</th>
+                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-50 whitespace-nowrap">다운로드</th>
+                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-110 whitespace-nowrap">제목 (클릭 시 미리보기 가능)</th>
+                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-50 whitespace-nowrap">작성자</th>
+                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-30 whitespace-nowrap">등록일</th>
+                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-50 whitespace-nowrap">즐겨찾기</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -126,32 +148,35 @@ const DocumentsList = () => {
                 </tr>
               ) : (
                 displayedDocs.map((doc) => (
-                  <tr key={doc.id} className="hover:bg-slate-50/40 transition-colors">
+                  <tr key={doc.document_seq} className="hover:bg-slate-50/40 transition-colors">
                     <td className="py-4 text-center">
-                      <button 
-                        onClick={() => handleDownload(doc.title)}
-                        className="p-2 border border-[#3530B8]/30 rounded-lg hover:bg-[#F0F4FF] transition-all group"
+                      <a 
+                        href={`http://localhost/file/download/${doc.file_sysname}?token=${token}`} 
+                        download 
+                        className="inline-block p-2 border border-[#3530B8]/30 rounded-lg hover:bg-[#F0F4FF] transition-all group"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#3530B8]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
+                      </a>
+                    </td>
+                    <td className="py-4 text-sm font-semibold text-slate-800 cursor-pointer hover:text-[#3530B8] transition-colors whitespace-nowrap">
+                      <button onClick={() => setPreviewDoc({ sysname: doc.file_sysname, mimeType: doc.mime_type, title: doc.title })}>
+                        {doc.title}
                       </button>
                     </td>
-                    <td className="py-4 text-sm font-semibold text-slate-800 cursor-pointer hover:text-[#3530B8] transition-colors">
-                      {doc.title}
+                    <td className="py-4 text-xs text-slate-500 font-medium whitespace-nowrap">
+                      {doc.users_id}
                     </td>
-                    <td className="py-4 text-xs text-slate-500 font-medium">
-                      {doc.author}
+                    <td className="py-4 text-[0.6875rem] text-slate-400 font-mono whitespace-nowrap">
+                      {doc.created_at?.substring(0,10)}
                     </td>
-                    <td className="py-4 text-[0.6875rem] text-slate-400 font-mono">
-                      {doc.date}
-                    </td>
-                    <td className="py-4 text-center">
+                    <td className="py-4 text-center whitespace-nowrap">
                       <button 
-                        onClick={() => toggleFavorite(doc.id)}
+                        onClick={() => toggleFavorite(doc.document_seq)}
                         className="p-1 hover:scale-110 transition-transform"
                       >
-                        {favorites.has(doc.id) ? (
+                        {favorites.has(doc.document_seq) ? (
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-400" viewBox="0 0 24 24" fill="currentColor">
                             <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clipRule="evenodd" />
                           </svg>
@@ -169,15 +194,25 @@ const DocumentsList = () => {
           </table>
         </div>
 
-        <div className="border-t border-gray-50 bg-white rounded-b-[32px] py-2">
+        <div className="border-t border-gray-50 bg-white md:rounded-b-[32px] rounded-b-xl py-2 scale-[0.8] md:scale-100 origin-center">
           <Pagination 
             count={totalPages} 
             page={currentPage} 
             onChange={handlePageChange} 
           />
         </div>
-      </div>
 
+        {previewDoc && (
+          <Preview
+            sysname={previewDoc.sysname}
+            mimeType={previewDoc.mimeType}
+            title={previewDoc.title}
+            token={token}
+            onClose={() => setPreviewDoc(null)}
+          />
+        )}
+      </div>
+      
       <style dangerouslySetInnerHTML={{ __html: `
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
