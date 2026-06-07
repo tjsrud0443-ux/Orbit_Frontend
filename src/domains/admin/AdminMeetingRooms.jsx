@@ -159,8 +159,6 @@ const AdminMeetingRooms = () => {
 
   return (
     <div className={`h-full flex flex-col ${isAddMode ? 'p-0 md:p-8' : 'p-6 md:p-8'} font-sans overflow-hidden bg-white`}>
-      
-      {/* 헤더 영역 */}
       <div className={`mb-6 flex-shrink-0 ${isAddMode ? 'hidden md:block' : 'block'}`}>
         <div className="flex items-center justify-between">
           <div>
@@ -180,10 +178,7 @@ const AdminMeetingRooms = () => {
         </div>
       </div>
 
-      {/* 메인 콘텐츠 영역 */}
       <div className="flex-1 flex gap-6 min-h-0 overflow-hidden">
-        
-        {/* 목록 섹션 */}
         <div className={`flex flex-col bg-white rounded-[2rem] border border-[#F0F4FF] shadow-sm overflow-hidden transition-all duration-500 min-h-0 ${isAddMode ? 'hidden md:flex md:flex-[0.6]' : 'flex-1'}`}>
           <div className="hidden md:grid grid-cols-[1.2fr_1.2rem_1fr_1fr_0.8fr] md:grid-cols-[1.2fr_1fr_1fr_0.5fr_1fr] px-6 py-4 border-b border-gray-50 text-[0.6875rem] font-bold text-gray-400 uppercase tracking-wider flex-shrink-0">
             <div className="text-center">회의실</div>
@@ -199,7 +194,7 @@ const AdminMeetingRooms = () => {
                 key={room.room_seq}
                 className="flex md:grid md:grid-cols-[1.2fr_1fr_1fr_0.5fr_1fr] px-4 md:px-6 py-6 items-center border-b border-gray-50/50 overflow-x-auto no-scrollbar"
               >
-                {/* 모바일 UI: 사진 + 이름 (하단) */}
+                {/* 모바일 UI */}
                 <div className="flex flex-col items-center mr-4 md:hidden w-24 flex-shrink-0">
                   <div className="w-24 h-16 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shadow-sm">
                     {room.sysname ? (
@@ -216,7 +211,6 @@ const AdminMeetingRooms = () => {
                   </div>
                 </div>
 
-                {/* 모바일 UI: 인원수 + 위치 (옆에 위아래) */}
                 <div className="flex-1 flex flex-col gap-1.5 md:hidden ml-1 mr-3 min-w-fit">
                   <div className="text-[0.75rem] text-gray-500 font-medium whitespace-nowrap">
                     인원: {room.max_people}명
@@ -226,7 +220,7 @@ const AdminMeetingRooms = () => {
                   </div>
                 </div>
 
-                {/* 데스크탑 UI: 회의실 사진 (기존 유지) */}
+                {/* 데스크탑 UI */}
                 <div className="hidden md:flex md:justify-center">
                   <div className="md:w-32 md:h-20 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shadow-sm">
                     {room.sysname ? (
@@ -240,22 +234,18 @@ const AdminMeetingRooms = () => {
                   </div>
                 </div>
 
-                {/* 데스크탑 UI: 회의실명 (기존 유지) */}
                 <div className="hidden md:block text-sm font-bold text-gray-700 truncate">
                   {room.room_name}
                 </div>
 
-                {/* 데스크탑 UI: 허용 인원수 (기존 유지) */}
                 <div className="hidden md:block text-sm text-gray-500 font-medium pl-3">
                   {room.max_people}명
                 </div>
 
-                {/* 데스크탑 UI: 위치 (기존 유지) */}
                 <div className="hidden md:block text-sm text-gray-500 font-medium">
                   {room.room_floor}
                 </div>
 
-                {/* 관리 버튼 */}
                 <div className="flex-shrink-0 ml-auto md:ml-0 flex justify-center gap-1.5">
                   <button 
                     onClick={() => handleEditClick(room)}
@@ -278,7 +268,6 @@ const AdminMeetingRooms = () => {
 
         </div>
 
-        {/* 추가/수정 패널 섹션 */}
         {isAddMode && (
           <div className={`flex flex-col bg-white rounded-none md:rounded-[2rem] border-0 md:border border-[#F0F4FF] shadow-sm overflow-hidden min-h-0 animate-in slide-in-from-right duration-500 flex-1 md:flex-[0.4]`}>
             <div className="p-6 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
@@ -289,7 +278,6 @@ const AdminMeetingRooms = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-6">
-              {/* 사진 첨부 영역 */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-400 uppercase ml-1">회의실 사진</label>
                 <div 
@@ -315,7 +303,6 @@ const AdminMeetingRooms = () => {
                 {errors.image && <p className="text-xs text-rose-500 ml-1 mt-1">{errors.image}</p>}
               </div>
 
-              {/* 입력 창들 */}
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-400 uppercase ml-1">회의실명</label>
@@ -358,7 +345,6 @@ const AdminMeetingRooms = () => {
               </div>
             </div>
 
-            {/* 하단 버튼 */}
             <div className="p-6 border-t border-gray-50 flex gap-3 flex-shrink-0 bg-white">
               <button 
                 onClick={handleClosePanel}
