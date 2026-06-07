@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { format, addDays, subDays, startOfDay, parse, isWithinInterval, addMinutes, isBefore, isAfter, isEqual } from 'date-fns';
+import { format, addDays, subDays, startOfDay, parse, addMinutes, isBefore} from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserFriends, faChevronLeft, faChevronRight, faCalendarCheck, faClock, faUser, faSearch, faTimes, faCheck, faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
@@ -8,26 +8,20 @@ import Calendar from '../../components/common/Calendar';
 import useAuthStore from '../../store/authStore';
 import useUserStore from '../../store/userStore';
 import useEmployeeStore from '../../store/useEmployeeStore';
+import { getAllRooms } from './meetingRoomsApi';
 
 const MeetingRooms = () => {
   const { user } = useUserStore();
+  const token = useAuthStore(state => state.token);
   const { allEmployees, fetchEmployees } = useEmployeeStore();
   
-  // --- Mock Data ---
-  // TODO: API로 교체 - getAllRooms()
-  const [rooms, setRooms] = useState([
-    { room_seq: 1, room_name: '대회의실 A', max_people: 12, room_floor: '12층', sysname: null },
-    { room_seq: 2, room_name: '중회의실 B', max_people: 8, room_floor: '12층', sysname: null },
-    { room_seq: 3, room_name: '소회의실 C', max_people: 4, room_floor: '11층', sysname: null },
-    { room_seq: 4, room_name: '집중협업실 1', max_people: 4, room_floor: '11층', sysname: null },
-    { room_seq: 5, room_name: '집중협업실 2', max_people: 4, room_floor: '11층', sysname: null },
-  ]);
+  const [rooms, setRooms] = useState([]);
 
   // TODO: API로 교체 - getReservations(date, room_seq)
   const [events, setEvents] = useState([
-    { id: 1, room_seq: 1, title: '주간 전략 회의', startTime: '10:00', endTime: '11:30', user_name: '김철수' },
-    { id: 2, room_seq: 1, title: '디자인 싱킹 워크숍', startTime: '14:00', endTime: '16:00', user_name: '이영희' },
-    { id: 3, room_seq: 2, title: '팀 프로젝트 데일리', startTime: '09:30', endTime: '10:30', user_name: '박지민' },
+    { id: 1, room_seq: 1, title: '주간 전략 회의', startTime: '10:00', endTime: '11:30', user_name: '김철수', color: '#d9e3ff' },
+    { id: 2, room_seq: 1, title: '디자인 싱킹 워크숍', startTime: '14:00', endTime: '16:00', user_name: '이영희', color: '#fffaad' },
+    { id: 3, room_seq: 2, title: '팀 프로젝트 데일리', startTime: '09:30', endTime: '10:30', user_name: '박지민', color: '#ffe5e5' },
   ]);
 
   // --- States ---
@@ -51,6 +45,16 @@ const MeetingRooms = () => {
 
   const selectedRoom = useMemo(() => rooms.find(r => r.room_seq === selectedRoomSeq), [rooms, selectedRoomSeq]);
   const dayEvents = useMemo(() => events.filter(e => e.room_seq === selectedRoomSeq), [events, selectedRoomSeq]);
+
+  const loadRooms = () => {
+    getAllRooms().then(resp => {
+      setRooms(resp.data);
+    }).catch(err => console.error("회의실 목록 로드 실패:", err));
+  };
+
+  useEffect(() => {
+    loadRooms();
+  }, []);
 
   useEffect(() => {
     fetchEmployees();
@@ -222,12 +226,20 @@ const MeetingRooms = () => {
                 onClick={() => setSelectedRoomSeq(room.room_seq)}
                 className={`flex-shrink-0 ${isPanelOpen ? 'w-44 md:w-48' : 'w-52 md:w-60'} bg-white rounded-3xl border transition-all duration-500 cursor-pointer group overflow-hidden
                   ${selectedRoomSeq === room.room_seq 
-                    ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5 shadow-xl shadow-[#3530B8]/10' 
+                    ? 'border-[#3530B8] ring-4 ring-[#3530B8]/10 shadow-xl shadow-[#3530B8]/10' 
                     : 'border-gray-100 hover:border-gray-200 hover:shadow-md'}`}
               >
                 <div className={`transition-all duration-500 ${isPanelOpen ? 'h-24 md:h-28' : 'h-28 md:h-32'} bg-gray-100 flex items-center justify-center relative overflow-hidden`}>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                  <FontAwesomeIcon icon={faUserFriends} className="text-gray-300 text-3xl md:text-4xl" />
+                  {room.sysname ? (
+                    <img 
+                      src={`http://localhost/file/profile/view?sysname=${room.sysname}&token=${token}`}
+                      alt={room.room_name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <FontAwesomeIcon icon={faUserFriends} className="text-gray-300 text-3xl md:text-4xl" />
+                  )}
                 </div>
                 <div className="p-3 md:p-4 relative">
                   <h3 className="text-sm md:text-base font-bold text-gray-900 mb-1 group-hover:text-[#3530B8] transition-colors truncate pr-10">{room.room_name}</h3>
@@ -309,11 +321,11 @@ const MeetingRooms = () => {
                     return (
                       <div 
                         key={event.id}
-                        className="absolute top-2 bottom-2 bg-[#3530B8] rounded-xl shadow-lg shadow-[#3530B8]/20 p-3 md:p-4 flex flex-col justify-center border-l-4 border-white/20 overflow-hidden"
-                        style={{ left: `${left}%`, width: `${width}%`, zIndex: 10 }}
+                        className="absolute top-5 bottom-5 bg-[#3530B8] rounded-xl shadow-lg shadow-[#3530B8]/20 p-3 md:p-4 flex flex-col justify-center border-l-4 border-white/20 overflow-hidden"
+                        style={{ left: `${left}%`, width: `${width}%`, zIndex: 10 , backgroundColor: event.color }}
                       >
-                        <div className="text-white text-[10px] md:text-xs font-bold truncate mb-0.5">{event.title}</div>
-                        <div className="text-white/60 text-[9px] md:text-[10px] font-medium truncate">
+                        <div className="text-black text-[16px] md:text-xs font-bold truncate mb-0.5">{event.title}</div>
+                        <div className="text-black/80 text-[12px] md:text-[10px] font-medium truncate">
                           {event.startTime} - {event.endTime} | {event.user_name}
                         </div>
                       </div>
