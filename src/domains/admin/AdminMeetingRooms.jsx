@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt, faPlus, faTimes, faCloudUploadAlt } from '@fortawesome/free-solid-svg-icons';
 import { useDropzone } from 'react-dropzone';
-import { addMeetingRoom, getAllRooms } from './adminApi';
+import { addMeetingRoom, editMeetingRoom, getAllRooms } from './adminApi';
 import useAuthStore from '../../store/authStore';
 
 const AdminMeetingRooms = () => {
@@ -11,6 +11,7 @@ const AdminMeetingRooms = () => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [previewImage, setPreviewImage] = useState(null);
   const [rooms, setRooms] = useState([]);
+  const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     room_seq: "",
     room_name: "",
@@ -35,6 +36,7 @@ const AdminMeetingRooms = () => {
   const onDrop = useCallback(acceptedFiles => {
     setUploadedFiles(acceptedFiles);
     if (acceptedFiles.length > 0) {
+      setErrors(prev => ({ ...prev, image: null }));
       const file = acceptedFiles[0];
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -56,6 +58,7 @@ const AdminMeetingRooms = () => {
     setSelectedRoom(null);
     setUploadedFiles([]);
     setPreviewImage(null);
+    setErrors({});
     setFormData({
       room_seq: "",
       room_name: "",
@@ -70,7 +73,16 @@ const AdminMeetingRooms = () => {
     setIsAddMode(true);
     setSelectedRoom(room);
     setUploadedFiles([]);
-    setPreviewImage(room.image);
+    setPreviewImage(room.sysname ? `http://localhost/file/profile/view?sysname=${room.sysname}&token=${token}` : null);
+    setErrors({});
+    setFormData({
+      room_seq: room.room_seq,
+      room_name: room.room_name,
+      max_people: room.max_people,
+      oriname: room.oriname,
+      sysname: room.sysname,
+      room_floor: room.room_floor
+    });
   };
 
   const handleClosePanel = () => {
@@ -87,23 +99,53 @@ const AdminMeetingRooms = () => {
   const handleChange = (e) => {
     const {name, value} = e.target;
     setFormData(prev => ({...prev, [name]:value}));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: null }));
+    }
   }
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
+    const newErrors = {};
+    if (!previewImage && uploadedFiles.length === 0) {
+      newErrors.image = "회의실 사진을 첨부해주세요.";
+    }
+    if (!formData.room_name || !formData.room_name.trim()) {
+      newErrors.room_name = "회의실명을 입력해주세요.";
+    }
+    if (!formData.max_people) {
+      newErrors.max_people = "1 이상의 숫자를 입력해주세요.";
+    } else if (!/^[1-9][0-9]*$/.test(formData.max_people.toString())) {
+      newErrors.max_people = "1 이상의 숫자만 입력해주세요.";
+    }
+    if (!formData.room_floor || !formData.room_floor.trim()) {
+      newErrors.room_floor = "위치를 입력해주세요.";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     const data = new FormData();
     data.append('input', new Blob([JSON.stringify(formData)], { type: 'application/json' }));
-    data.append('file', uploadedFiles[0]);
+    if (uploadedFiles.length > 0) {
+      data.append('file', uploadedFiles[0]);
+    }
 
     try {
-      addMeetingRoom(data).then(resp => {
-        alert("회의실이 등록되었습니다.");
-        loadRooms();
-        setIsAddMode(false);
-        setSelectedRoom(null);
-      });
+      if (selectedRoom) {
+        await editMeetingRoom(data);
+      } else {
+        await addMeetingRoom(data);
+      }
+      alert(selectedRoom ? "회의실 정보가 수정되었습니다." : "회의실이 등록되었습니다.");
+      loadRooms();
+      setIsAddMode(false);
+      setSelectedRoom(null);
+      setErrors({});
     } catch (error) {
-      console.error('회의실 등록 실패', error);
-      alert("회의실 등록에 실패했습니다.");
+      console.error('회의실 처리 실패', error);
+      alert(selectedRoom ? "회의실 수정에 실패했습니다." : "회의실 등록에 실패했습니다.");
     }
     
   }
@@ -221,7 +263,7 @@ const AdminMeetingRooms = () => {
                 <div 
                   {...getRootProps()} 
                   className={`border-2 border-dashed rounded-2xl p-4 transition-all flex flex-col items-center justify-center gap-3 cursor-pointer h-52 overflow-hidden
-                    ${isDragActive ? 'border-[#3530B8] bg-[#3530B8]/5' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
+                    ${errors.image ? 'border-rose-500 bg-rose-50' : isDragActive ? 'border-[#3530B8] bg-[#3530B8]/5' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
                 >
                   <input {...getInputProps()} />
                   {previewImage ? (
@@ -238,6 +280,7 @@ const AdminMeetingRooms = () => {
                     </>
                   )}
                 </div>
+                {errors.image && <p className="text-xs text-rose-500 ml-1 mt-1">{errors.image}</p>}
               </div>
 
               {/* 입력 창들 */}
@@ -250,8 +293,9 @@ const AdminMeetingRooms = () => {
                     onChange={handleChange}
                     name="room_name"
                     placeholder="회의실 이름을 입력하세요"
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all text-sm font-medium"
+                    className={`w-full px-4 py-3 bg-gray-50 border rounded-xl focus:bg-white focus:ring-4 outline-none transition-all text-sm font-medium ${errors.room_name ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/5' : 'border-gray-100 focus:border-[#3530B8] focus:ring-[#3530B8]/5'}`}
                   />
+                  {errors.room_name && <p className="text-xs text-rose-500 ml-1 mt-1">{errors.room_name}</p>}
                 </div>
 
                 <div className="space-y-1.5">
@@ -262,8 +306,9 @@ const AdminMeetingRooms = () => {
                     onChange={handleChange}
                     name="max_people"
                     placeholder="최대 수용 인원을 입력하세요"
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all text-sm font-medium"
+                    className={`w-full px-4 py-3 bg-gray-50 border rounded-xl focus:bg-white focus:ring-4 outline-none transition-all text-sm font-medium ${errors.max_people ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/5' : 'border-gray-100 focus:border-[#3530B8] focus:ring-[#3530B8]/5'}`}
                   />
+                  {errors.max_people && <p className="text-xs text-rose-500 ml-1 mt-1">{errors.max_people}</p>}
                 </div>
 
                 <div className="space-y-1.5">
@@ -274,8 +319,9 @@ const AdminMeetingRooms = () => {
                     onChange={handleChange}
                     name="room_floor"
                     placeholder="회의실 위치를 입력하세요 (예: 12층)"
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all text-sm font-medium"
+                    className={`w-full px-4 py-3 bg-gray-50 border rounded-xl focus:bg-white focus:ring-4 outline-none transition-all text-sm font-medium ${errors.room_floor ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/5' : 'border-gray-100 focus:border-[#3530B8] focus:ring-[#3530B8]/5'}`}
                   />
+                  {errors.room_floor && <p className="text-xs text-rose-500 ml-1 mt-1">{errors.room_floor}</p>}
                 </div>
               </div>
             </div>
