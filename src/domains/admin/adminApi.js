@@ -48,7 +48,7 @@ export const deleteDocument = (document_seq) => maxios.delete(`/admin/deleteDocu
 export const getAllRooms = () => maxios.get("/admin/ga/getAllRooms");
 export const addMeetingRoom = (data) => maxios.post("/admin/ga/addMeetingRoom", data);
 export const editMeetingRoom = (data) => maxios.put("/admin/ga/editMeetingRoom", data);
-
+export const deleteMeetingRoom = (seq) => maxios.delete(`/admin/ga/deleteMeetingRoom/${seq}`);
 
 
 

@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt, faPlus, faTimes, faCloudUploadAlt } from '@fortawesome/free-solid-svg-icons';
 import { useDropzone } from 'react-dropzone';
-import { addMeetingRoom, editMeetingRoom, getAllRooms } from './adminApi';
+import { addMeetingRoom, deleteMeetingRoom, editMeetingRoom, getAllRooms } from './adminApi';
 import useAuthStore from '../../store/authStore';
 
 const AdminMeetingRooms = () => {
@@ -90,9 +90,16 @@ const AdminMeetingRooms = () => {
     setSelectedRoom(null);
   };
 
-  const handleDelete = (seq) => {
+  const handleDelete = async (seq) => {
     if (window.confirm('정말 삭제하시겠습니까?')) {
-      setRooms(rooms.filter(room => room.room_seq !== seq));
+      try {
+        await deleteMeetingRoom(seq);
+        alert('삭제가 완료되었습니다.');
+        loadRooms();
+      } catch (error) {
+        console.error('회의실 삭제 실패', error);
+        alert('회의실 삭제에 실패했습니다.');
+      }
     }
   };
 
@@ -274,7 +281,7 @@ const AdminMeetingRooms = () => {
                         <FontAwesomeIcon icon={faCloudUploadAlt} className="text-xl" />
                       </div>
                       <div className="text-center">
-                        <p className="text-sm font-bold text-gray-700">회의실 사진을 선택하세요</p>
+                        <p className="text-sm font-bold text-gray-700">사진을 첨부하세요</p>
                         <p className="text-[0.625rem] mt-1 text-gray-400">드래그하거나 클릭하여 업로드</p>
                       </div>
                     </>
