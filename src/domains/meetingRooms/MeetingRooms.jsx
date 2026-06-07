@@ -37,6 +37,7 @@ const MeetingRooms = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showFormCalendar, setShowFormCalendar] = useState(false);
+  const [showValidation, setShowValidation] = useState(false);
   const searchInputRef = useRef(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
 
@@ -72,8 +73,19 @@ const MeetingRooms = () => {
     });
   };
 
+  const isPastTime = (time, dateStr) => {
+    if (dateStr !== format(new Date(), 'yyyy-MM-dd')) return false;
+    const now = format(new Date(), 'HH:mm');
+    return time < now;
+  };
+
   const handleTimelineClick = (time) => {
     if (isTimeOccupied(time)) return;
+    if (isPastTime(time, format(currentDate, 'yyyy-MM-dd'))) return;
+    if (isBefore(startOfDay(currentDate), startOfDay(new Date()))) {
+      alert('오늘 이전 날짜에는 예약할 수 없습니다.');
+      return;
+    }
     setForm({
       ...form,
       date: format(currentDate, 'yyyy-MM-dd'),
@@ -82,6 +94,7 @@ const MeetingRooms = () => {
       title: '',
       attendees: []
     });
+    setShowValidation(false);
     setIsPanelOpen(true);
   };
 
@@ -135,10 +148,30 @@ const MeetingRooms = () => {
   };
 
   const handleReserve = () => {
+    setShowValidation(true);
     if (!form.title.trim()) {
-      alert('회의 제목을 입력해주세요.');
       return;
     }
+    if (!form.date) {
+      alert('예약일을 선택해주세요.');
+      return;
+    }
+    if (isBefore(parse(form.date, 'yyyy-MM-dd', new Date()), startOfDay(new Date()))) {
+      return;
+    }
+    if (!form.startTime) {
+      alert('시작 시간을 선택해주세요.');
+      return;
+    }
+    if (!form.endTime) {
+      alert('종료 시간을 선택해주세요.');
+      return;
+    }
+    if (form.startTime >= form.endTime) {
+      alert('종료 시간은 시작 시간보다 늦어야 합니다.');
+      return;
+    }
+
     // TODO: API로 교체 - createReservation()
     const newEvent = {
       id: Date.now(),
@@ -151,8 +184,12 @@ const MeetingRooms = () => {
     };
     setEvents([...events, newEvent]);
     setIsPanelOpen(false);
+    setShowValidation(false);
     alert('예약이 완료되었습니다.');
   };
+
+  const isDateInvalid = form.date && isBefore(parse(form.date, 'yyyy-MM-dd', new Date()), startOfDay(new Date()));
+  const isTitleInvalid = showValidation && !form.title.trim();
 
   return (
     <div className={`h-full flex flex-col ${isPanelOpen ? 'p-0 md:p-8' : 'p-6 md:p-8'} bg-[#FFFFFF] overflow-hidden font-sans`}>
@@ -214,7 +251,7 @@ const MeetingRooms = () => {
                 {selectedRoom?.room_name} 예약 현황
               </h2>
               
-              {/* Date Selection Bar (Inside Timeline Header, replacing Legend) */}
+              {/* Date Selection Bar (Moved inside Timeline Header) */}
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100">
                   <button onClick={handlePrevDay} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white hover:shadow-sm text-gray-400 transition-all cursor-pointer">
@@ -239,7 +276,7 @@ const MeetingRooms = () => {
                 {/* Time Axis */}
                 <div className="absolute top-0 left-0 right-0 flex border-b border-gray-50 pb-2">
                   {timeSlots.map((time, idx) => (
-                    <div key={idx} className="flex-1 text-[9px] md:text-[10px] font-bold text-gray-400 text-center">
+                    <div key={idx} className="flex-1 text-[9px] md:text-[10px] font-bold text-gray-300 text-center">
                       {time}
                     </div>
                   ))}
@@ -247,14 +284,20 @@ const MeetingRooms = () => {
 
                 {/* Timeline Grid */}
                 <div className="flex-1 flex relative bg-gray-50/30 rounded-2xl overflow-hidden border border-gray-50">
-                  {timeSlots.map((time, idx) => (
-                    <div 
-                      key={idx} 
-                      onClick={() => handleTimelineClick(time)}
-                      className={`flex-1 border-r border-gray-100/50 transition-all cursor-pointer
-                        ${isTimeOccupied(time) ? 'bg-transparent cursor-default' : 'hover:bg-[#F0F4FF]/50'}`}
-                    />
-                  ))}
+                  {timeSlots.map((time, idx) => {
+                    const isOccupied = isTimeOccupied(time);
+                    const isPast = isPastTime(time, format(currentDate, 'yyyy-MM-dd'));
+                    const isDisabled = isOccupied || isPast;
+                    
+                    return (
+                      <div 
+                        key={idx} 
+                        onClick={() => !isDisabled && handleTimelineClick(time)}
+                        className={`flex-1 border-r border-gray-100/50 transition-all 
+                          ${isDisabled ? 'bg-transparent cursor-default' : 'hover:bg-[#F0F4FF]/50 cursor-pointer'}`}
+                      />
+                    );
+                  })}
 
                   {/* Occupied Slots */}
                   {dayEvents.map(event => {
@@ -287,7 +330,7 @@ const MeetingRooms = () => {
           <div className={`flex flex-col bg-white rounded-none md:rounded-[2rem] border-0 md:border border-[#F0F4FF] shadow-sm overflow-hidden min-h-0 animate-in slide-in-from-right duration-500 flex-1 md:flex-[0.4]`}>
              <div className="p-6 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
                 <h2 className="text-lg font-bold text-gray-900">신규 회의 예약</h2>
-                <button onClick={() => { setIsPanelOpen(false); setShowFormCalendar(false); }} className="text-gray-300 hover:text-gray-500 transition-colors cursor-pointer">
+                <button onClick={() => { setIsPanelOpen(false); setShowFormCalendar(false); setShowValidation(false); }} className="text-gray-300 hover:text-gray-500 transition-colors cursor-pointer">
                   <FontAwesomeIcon icon={faTimes} />
                 </button>
              </div>
@@ -300,10 +343,13 @@ const MeetingRooms = () => {
                     <input 
                       type="text" 
                       placeholder="회의명을 입력하세요"
-                      className="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all text-sm font-bold text-gray-700"
+                      className={`w-full px-5 py-3.5 bg-gray-50 border ${isTitleInvalid ? 'border-red-500' : 'border-gray-100'} rounded-2xl focus:bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all text-sm font-bold text-gray-700`}
                       value={form.title}
                       onChange={e => setForm({ ...form, title: e.target.value })}
                     />
+                    {isTitleInvalid && (
+                      <p className="text-[10px] text-red-500 font-bold ml-1">회의명을 입력해주세요.</p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -331,7 +377,7 @@ const MeetingRooms = () => {
                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">예약일</label>
                     <div 
                       onClick={() => setShowFormCalendar(!showFormCalendar)}
-                      className="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-gray-700 flex items-center justify-between cursor-pointer hover:border-[#3530B8] transition-all"
+                      className={`w-full px-5 py-3.5 bg-gray-50 border ${isDateInvalid ? 'border-red-500' : 'border-gray-100'} rounded-2xl text-sm font-bold text-gray-700 flex items-center justify-between cursor-pointer hover:border-[#3530B8] transition-all`}
                     >
                       <div className="flex items-center gap-2">
                         <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-400" />
@@ -339,6 +385,9 @@ const MeetingRooms = () => {
                       </div>
                       <FontAwesomeIcon icon={faChevronRight} className={`text-[10px] text-gray-300 transition-transform ${showFormCalendar ? 'rotate-90' : ''}`} />
                     </div>
+                    {isDateInvalid && (
+                      <p className="text-[10px] text-red-500 font-bold ml-1">오늘 이 전 날짜는 선택 불가합니다.</p>
+                    )}
                     {showFormCalendar && (
                       <div className="absolute top-full left-0 right-0 z-50 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4">
                         <Calendar 
@@ -358,9 +407,16 @@ const MeetingRooms = () => {
                         value={form.startTime}
                         onChange={e => setForm({ ...form, startTime: e.target.value })}
                       >
-                        {timeSlots.map(time => (
-                          <option key={time} value={time} disabled={isTimeOccupied(time)}>{time}</option>
-                        ))}
+                        {timeSlots.filter(t => t <= '17:30').map(time => {
+                          const isOccupied = isTimeOccupied(time);
+                          const isPast = isPastTime(time, form.date);
+                          const isDisabled = isOccupied || isPast;
+                          return (
+                            <option key={time} value={time} disabled={isDisabled} style={isDisabled ? { color: '#ccc', backgroundColor: '#f9f9f9' } : {}}>
+                              {time} {isOccupied ? '(예약됨)' : isPast ? '(이미 지남)' : ''}
+                            </option>
+                          );
+                        })}
                       </select>
                     </div>
                     <div className="space-y-1.5">
@@ -370,12 +426,13 @@ const MeetingRooms = () => {
                         value={form.endTime}
                         onChange={e => setForm({ ...form, endTime: e.target.value })}
                       >
-                        {timeSlots.concat('18:30').map(time => {
+                        {timeSlots.concat('18:30').filter(t => t >= '09:30' && t <= '18:00').map(time => {
                           const isBeforeStart = time <= form.startTime;
                           const hasOverlap = dayEvents.some(event => {
                             return (event.startTime >= form.startTime && time > event.startTime);
                           });
-                          const isDisabled = isBeforeStart || hasOverlap;
+                          const isPast = isPastTime(time, form.date);
+                          const isDisabled = isBeforeStart || hasOverlap || isPast;
 
                           return (
                             <option 
@@ -384,7 +441,7 @@ const MeetingRooms = () => {
                               disabled={isDisabled}
                               style={isDisabled ? { color: '#ccc', backgroundColor: '#f9f9f9' } : {}}
                             >
-                              {time} {hasOverlap ? '(예약 불가)' : ''}
+                              {time} {hasOverlap ? '(예약 불가)' : isPast ? '(이미 지남)' : ''}
                             </option>
                           );
                         })}
@@ -400,7 +457,7 @@ const MeetingRooms = () => {
                       const hasOverlap = dayEvents.some(event => {
                         return (form.startTime < event.endTime && endStr > event.startTime);
                       });
-                      const isInvalid = hasOverlap || endStr > '18:30';
+                      const isInvalid = hasOverlap || endStr > '18:00';
 
                       return (
                         <button 
@@ -489,7 +546,7 @@ const MeetingRooms = () => {
              {/* Panel Buttons */}
              <div className="p-8 border-t border-gray-50 flex gap-4 bg-white flex-shrink-0">
                 <button 
-                  onClick={() => { setIsPanelOpen(false); setShowFormCalendar(false); }}
+                  onClick={() => { setIsPanelOpen(false); setShowFormCalendar(false); setShowValidation(false); }}
                   className="flex-1 py-4 border-2 border-gray-100 text-gray-400 text-sm font-bold rounded-2xl hover:bg-gray-50 transition-all cursor-pointer"
                 >
                   취소
@@ -498,7 +555,6 @@ const MeetingRooms = () => {
                   onClick={handleReserve}
                   className="flex-[2] py-4 bg-[#3530B8] text-white text-sm font-bold rounded-2xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <FontAwesomeIcon icon={faCheck} className="text-xs" />
                   예약하기
                 </button>
              </div>
