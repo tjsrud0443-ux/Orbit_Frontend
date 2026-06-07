@@ -4,18 +4,13 @@ import Pagination from '../../components/common/Pagination';
 import Calendar from '../../components/common/Calendar';
 import useEmployeeStore from '../../store/useEmployeeStore';
 import useUserStore from '../../store/userStore';
+import { getAllMyMeetRsvn } from './mypageApi';
 
 const RoomHistory = () => {
   const { allEmployees, fetchEmployees } = useEmployeeStore();
   const { user } = useUserStore();
 
-  // State for reservation list
-  const [reservations, setReservations] = useState([
-    { id: 1, roomName: '대회의실 A', meetingName: '주간 기획 회의', date: '2026-06-10', startTime: '10:00', endTime: '11:00', attendees: [] },
-    { id: 2, roomName: '중회의실 B', meetingName: '디자인 리뷰', date: '2026-06-11', startTime: '14:00', endTime: '15:30', attendees: [] },
-    { id: 3, roomName: '소회의실 C', meetingName: '1:1 면담', date: '2026-06-12', startTime: '13:00', endTime: '14:00', attendees: [] },
-    // Mock data
-  ]);
+  const [reservations, setReservations] = useState([]);
 
   // Pagination state
   const [page, setPage] = useState(1);
@@ -41,6 +36,16 @@ const RoomHistory = () => {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const inputRef = useRef(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
+
+  const loadRsvn = () => {
+    getAllMyMeetRsvn().then(resp => {
+      setReservations(resp.data);
+    }).catch(err => console.error("목록 로드 실패:", err));
+  };
+
+  useEffect(() => {
+    loadRsvn();
+  }, []);
 
   useEffect(() => {
     fetchEmployees();
