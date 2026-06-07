@@ -320,7 +320,7 @@ const AdminDept = () => {
                   <th className="py-4 pl-6 pr-4 w-[40%]">부서</th>
                   <th className="py-4 px-4 w-[25%]">부서 코드</th>
                   <th className="py-4 px-4 w-[15%]">총 인원</th>
-                  <th className="py-4 pl-4 pr-6 w-[20%] text-right">관리</th>
+                  <th className="py-4 pl-4 pr-17 w-[20%] text-right">관리</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
