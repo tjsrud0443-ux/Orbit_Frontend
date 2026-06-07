@@ -1,62 +1,105 @@
 ﻿import { useState, useRef, useMemo, useEffect } from 'react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css'; // 기본 스노우 테마 CSS 로드
-import {useNavigate } from 'react-router-dom';
+import { maxios } from "../../api/axiosConfig"; 
+import { useNavigate } from 'react-router-dom';
 import useUserStore from '../../store/userStore';
+import { insertBoard, insertEditorImage } from './boardApi';
 
 const CATEGORIES_HR   = ['공지', '경조', '생일', '승진', '부서 이동'];
-const CATEGORIES_ALL  = ['공지', '이벤트', '인사/총무', '자유', '프로젝트'];
 
 const BoardWrite = () => {
   const { user } = useUserStore();
   const navigate = useNavigate();
+  const quillRef = useRef(null); // 💡 에디터 객체에 직접 접근하기 위한 Ref 추가
+  const fileInputRef = useRef(null);
 
-  // 툴바 설정 (컴포넌트 리렌더링 시 에디터 깜빡임 방지용 useMemo)
-  const modules = useMemo(() => ({
-    toolbar: [
-      [{ header: [1, 2, 3, false] }],               // 제목 크기
-      ['bold', 'italic', 'underline', 'strike'],     // 글자 스타일링
-      [{ color: [] }, { background: [] }],          // 글자/배경 색상
-      [{ list: 'ordered' }, { list: 'bullet' }],    // 리스트
-      [{ align: [] }],                              // 정렬
-      ['image', 'link'],                            // 이미지, 링크
-      ['clean'],                                    // 포맷 초기화
-    ],
-  }), []);
-
-  const isHR = user?.auth_group?.includes('HR');
-  const categories = useMemo(() => (isHR ? CATEGORIES_HR : CATEGORIES_ALL), [isHR]);
-
-  // form 객체 내부에 content를 함께 관리하도록 유지
   const [form, setForm] = useState({
-    category: CATEGORIES_ALL[0],
+    category:'',
     title: '',
     content: '',
   });
-  
-  // user 로드 시 카테고리 초기값 설정
-  useEffect(() => {
-    setForm(prev => ({ ...prev, category: categories[0] }));
-  }, [categories]);
 
-  const [files, setFiles] = useState([]); // 첨부파일 목록
-  const [errors, setErrors] = useState({});// 유효성 검사 에러
-  const fileInputRef = useRef(null);
-console.log(user);
-    // 사용자 정보가 로드될 때까지 대기 (Hooks 아래에 위치)
+  const [files, setFiles] = useState([]); 
+  const [errors, setErrors] = useState({});
+
+  const isHR = user?.auth_group?.includes('HR');
+
+  // 바이트 계산 유틸리티
+  const getByteLength = (str) => {
+    return new TextEncoder().encode(str).length;
+  };
+
+  // 제목 변경 핸들러 (바이트 제한 적용)
+  const handleTitleChange = (e) => {
+    const val = e.target.value;
+    if (getByteLength(val) <= 200) {
+      set('title', val);
+    }
+  };
+
+  // 💡 [달라진 점 2] 툴바 및 핸들러 매핑 최적화
+  const modules = useMemo(() => {
+      // 💡 [달라진 점 1] 이미지 커스텀 업로드 핸들러
+  const imageHandler = () => {
+    // 1. 이미지를 선택할 수 있는 가상 input 생성
+    const input = document.createElement('input');
+    input.setAttribute('type', 'file');
+    input.setAttribute('accept', 'image/*');
+    input.click();
+
+    input.onchange = () => {
+      const file = input.files?.[0];
+      console.log('파일 선택됨:', file);
+      if (!file) return;
+
+      // 이미지 파일 서버 전송용 FormData 생성
+      const formData = new FormData();
+      formData.append('image', file);
+        // 2. 백엔드의 이미지 업로드 전용 API 호출
+        // (주의: 이 API는 업로드된 이미지의 저장소 'URL 경로'를 문자열로 리턴해야 함)
+      insertEditorImage(formData).then((resp) => {
+        console.log('업로드 완료:', resp.data); // 
+        const imageUrl = resp.data.url;
+        const quill = quillRef.current.getEditor();
+        const range = quill.getSelection();
+        quill.insertEmbed(range ? range.index : 0, 'image', imageUrl);
+        quill.setSelection((range ? range.index : 0) + 1); //커서 다음으로
+      }).catch((error) => {
+        console.error('이미지 업로드 실패:', error);
+        alert('이미지 업로드 중 오류가 발생했습니다.');
+      });
+    };
+  };
+
+return {   
+  toolbar: {
+      container: [
+        [{ header: [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ color: [] }, { background: [] }],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        [{ align: [] }],
+        ['image', 'link'], // 이미지 포함
+        ['clean'],
+      ],
+      handlers: {
+        image: imageHandler, // 비디오 핸들러 등이 필요하면 여기에 추가 매핑 가능
+      }
+    }
+    };
+  }, []);
+
   if (user === null) {
     return <div>로딩 중...</div>; 
   }
 
-//에러가 있던 필드를 수정하면 에러도 같이 지워줌
   const set = (key, val) => {
     setForm(prev => ({ ...prev, [key]: val }));
     if (errors[key]) setErrors(prev => ({ ...prev, [key]: false }));
   };
 
-  // 에디터 내용 변경 핸들러 Quill은 아무것도 안 써도 <p><br></p>를 반환
   const handleEditorChange = (value) => {
-    // 빈 공백만 있는 태그인 경우 유효성 검사를 위해 빈 문자열로 처리
     const cleanValue = value === '<p><br></p>' ? '' : value;
     set('content', cleanValue);
   };
@@ -73,8 +116,7 @@ console.log(user);
     setFiles(prev => [...prev, ...dropped]);
   };
 
-  const removeFile = (idx) =>
-    setFiles(prev => prev.filter((_, i) => i !== idx));
+  const removeFile = (idx) => setFiles(prev => prev.filter((_, i) => i !== idx));
 
   const formatSize = (bytes) => {
     if (bytes < 1024) return `${bytes} B`;
@@ -82,31 +124,55 @@ console.log(user);
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
   
-//유효성 검사
+  // 💡 [달라진 점 3] 정교해진 유효성 검사 (HTML 태그 제거 후 공백 체크)
   const validate = () => {
     const e = {};
-    if (!form.title.trim()) e.title = true;
-    if (!form.content.trim()) e.content = true; // 에디터의 HTML 문자열 검증
+    if (!form.title.trim()) {
+      e.title = true;
+    } else if (getByteLength(form.title) > 200) {
+      e.title = true;
+    }
+    
+    // HTML 태그를 모두 제거하고 알맹이 텍스트만 추출
+    const pureText = form.content.replace(/<[^>]*>/g, '').trim();
+    // 만약 이미지만 한 장 달랑 들어있을 때는 텍스트가 0이므로, img 태그가 포함되어 있는지도 함께 체크
+    const hasImage = form.content.includes('<img');
+
+    if (!pureText && !hasImage) {
+      e.content = true;
+    }
+    
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = () => {
+  // 💡 [달라진 점 4] FormData를 이용한 최종 게시글 등록(Insert) 처리
+  const handleSubmit = async () => {
     if (!validate()) return;
     
-    // 백엔드로 보낼 최종 데이터 확인 구조
-    console.log("제출 데이터:", {
-      ...form,
-      files: files
+    const formData = new FormData();
+    // 일반 폼 데이터 바인딩
+    formData.append('category', isHR ? form.category : '자유');
+    formData.append('title', form.title);
+    formData.append('content', form.content); // Quill의 HTML 문자열이 그대로 전송됨
+
+    // 일반 첨부파일 배열 바이딩
+    files.forEach((file) => {
+      formData.append('files', file); 
     });
-    
-    // TODO: API 호출 (axios.post('/api/board', formData)...)
-    alert('게시글이 등록되었습니다.');
+      // 글 등록
+    insertBoard(formData).then((resp)=>{
+      if (resp.status === 200 || resp.status === 201) {
+        alert('게시글이 등록되었습니다.');
+        navigate('/board'); // 등록 후 게시판 목록으로 이동
+      }
+    }).catch((error) =>{
+      console.error('게시글 등록 실패:', error);
+      alert('게시글 등록 중 서버 오류가 발생했습니다.');
+    })
   };
 
-  const handleCancel = () => {
-    navigate(-1);
-  };
+  const handleCancel = () => { navigate(-1); };
 
   return (
     <div className="w-full h-auto lg:h-full flex flex-col p-6 md:p-8 lg:px-10 bg-white font-sans items-center">
@@ -162,14 +228,19 @@ console.log(user);
 
               {/* 제목 */}
               <div className={`flex-1 ${!isHR ? 'w-full' : ''}`}>
-                <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">
-                  제목
-                </label>
+                <div className="flex justify-between items-end mb-2">
+                  <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider block">
+                    제목
+                  </label>
+                  <span className={`text-[10px] font-bold ${getByteLength(form.title) >= 200 ? 'text-red-500' : 'text-gray-400'}`}>
+                    {getByteLength(form.title)} / 200 bytes
+                  </span>
+                </div>
                 <input
                   type="text"
                   placeholder="제목을 입력하세요"
                   value={form.title}
-                  onChange={e => set('title', e.target.value)}
+                  onChange={handleTitleChange}
                   className={`w-full px-4 py-3 bg-white border rounded-2xl text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 transition-all placeholder:text-gray-300
                     ${errors.title
                       ? 'border-red-400 ring-4 ring-red-100'
@@ -177,7 +248,9 @@ console.log(user);
                     }`}
                 />
                 {errors.title && (
-                  <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">제목을 입력해주세요.</p>
+                  <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">
+                    {form.title.trim() === '' ? '제목을 입력해주세요.' : '제목은 200바이트 이내로 입력해주세요.'}
+                  </p>
                 )}
               </div>
             </div>
@@ -229,6 +302,7 @@ console.log(user);
                 ${errors.content ? '[&>.ql-toolbar]:border-red-400 [&>.ql-container]:border-red-400 [&>.ql-container]:ring-4 [&>.ql-container]:ring-red-100' : ''}
               `}>
                 <ReactQuill 
+                  ref={quillRef} 
                   theme="snow"
                   value={form.content}
                   onChange={handleEditorChange}
