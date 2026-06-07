@@ -39,8 +39,7 @@ import ApprovalDetail from './domains/approval/ApprovalDetail';
 import FindId from './domains/auth/FindId';
 import FindPw from './domains/auth/FindPw';
 import QnaHistory from './domains/mypage/QnaHistory';
-
-
+import RoomHistory from './domains/mypage/RoomHistory';
 
 function App() {
   return (
@@ -58,6 +57,7 @@ function App() {
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/mypage/edit" element={<MyPageEdit />} />
           <Route path="/qnaHistory" element={<QnaHistory />} />
+          <Route path="/roomHistory" element={<RoomHistory />} />
           <Route path="/main" element={<Main />} />
           <Route path="/departments" element={<Departments />} />
 
