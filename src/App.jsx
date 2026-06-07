@@ -84,7 +84,8 @@ function App() {
 
           <Route path="/board" element={<BoardList />} />
           <Route path="/boardWrite" element={<BoardWrite />} />
-          <Route path="/boardDetail" element={<BoardDetail />} />
+          <Route path="/boardWrite/:seq" element={<BoardWrite />} />
+          <Route path="/boardDetail/:seq" element={<BoardDetail />} />
 
           <Route path="/aiChat" element={<AiChat />} />
 
