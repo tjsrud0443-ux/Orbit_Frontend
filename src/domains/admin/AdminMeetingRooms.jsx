@@ -171,10 +171,11 @@ const AdminMeetingRooms = () => {
           </div>
           <button 
             onClick={handleAddClick}
-            className="px-4 py-2 bg-[#3530B8] text-white text-sm font-bold rounded-xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all flex items-center gap-2 cursor-pointer"
+            className="px-3 md:px-4 py-2 bg-[#3530B8] text-white text-sm font-bold rounded-xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all flex items-center gap-2 cursor-pointer"
           >
             <FontAwesomeIcon icon={faPlus} className="text-xs" />
-            회의실 추가
+            <span className="hidden md:inline">회의실 추가</span>
+            <span className="md:hidden">추가</span>
           </button>
         </div>
       </div>
@@ -196,11 +197,38 @@ const AdminMeetingRooms = () => {
             {rooms.map((room) => (
               <div 
                 key={room.room_seq}
-                className="flex md:grid md:grid-cols-[1.2fr_1fr_1fr_0.5fr_1fr] px-4 md:px-6 py-6 items-center border-b border-gray-50/50"
+                className="flex md:grid md:grid-cols-[1.2fr_1fr_1fr_0.5fr_1fr] px-4 md:px-6 py-6 items-center border-b border-gray-50/50 overflow-x-auto no-scrollbar"
               >
-                {/* 회의실 사진 */}
-                <div className="flex-shrink-0 md:flex md:justify-center mr-4 md:mr-0">
-                  <div className="w-24 h-16 md:w-32 md:h-20 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shadow-sm">
+                {/* 모바일 UI: 사진 + 이름 (하단) */}
+                <div className="flex flex-col items-center mr-4 md:hidden w-24 flex-shrink-0">
+                  <div className="w-24 h-16 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shadow-sm">
+                    {room.sysname ? (
+                      <img src={`http://localhost/file/profile/view?sysname=${room.sysname}&token=${token}`} 
+                        alt={room.room_name} className="w-full h-full object-cover" />
+                    ) : (
+                      <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="text-[0.75rem] font-bold text-gray-700 mt-2 truncate w-full text-center">
+                    {room.room_name}
+                  </div>
+                </div>
+
+                {/* 모바일 UI: 인원수 + 위치 (옆에 위아래) */}
+                <div className="flex-1 flex flex-col gap-1.5 md:hidden ml-1 mr-3 min-w-fit">
+                  <div className="text-[0.75rem] text-gray-500 font-medium whitespace-nowrap">
+                    인원: {room.max_people}명
+                  </div>
+                  <div className="text-[0.75rem] text-gray-500 font-medium whitespace-nowrap">
+                    위치: {room.room_floor}
+                  </div>
+                </div>
+
+                {/* 데스크탑 UI: 회의실 사진 (기존 유지) */}
+                <div className="hidden md:flex md:justify-center">
+                  <div className="md:w-32 md:h-20 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shadow-sm">
                     {room.sysname ? (
                       <img src={`http://localhost/file/profile/view?sysname=${room.sysname}&token=${token}`} 
                         alt={room.room_name} className="w-full h-full object-cover" />
@@ -212,39 +240,36 @@ const AdminMeetingRooms = () => {
                   </div>
                 </div>
 
-                {/* 회의실명 */}
-                <div className="flex-1 md:block text-sm font-bold text-gray-700 truncate">
+                {/* 데스크탑 UI: 회의실명 (기존 유지) */}
+                <div className="hidden md:block text-sm font-bold text-gray-700 truncate">
                   {room.room_name}
-                  <div className="md:hidden text-[0.6875rem] text-gray-500 font-medium mt-1">
-                    인원: {room.max_people}명 | 위치: {room.room_floor}
-                  </div>
                 </div>
 
-                {/* 허용 인원수 (PC 전용) */}
+                {/* 데스크탑 UI: 허용 인원수 (기존 유지) */}
                 <div className="hidden md:block text-sm text-gray-500 font-medium pl-3">
                   {room.max_people}명
                 </div>
 
-                {/* 위치 (PC 전용) */}
+                {/* 데스크탑 UI: 위치 (기존 유지) */}
                 <div className="hidden md:block text-sm text-gray-500 font-medium">
                   {room.room_floor}
                 </div>
 
                 {/* 관리 버튼 */}
-                <div className="flex-shrink-0 ml-3 md:ml-0 flex justify-center gap-2">
+                <div className="flex-shrink-0 ml-auto md:ml-0 flex justify-center gap-1.5">
                   <button 
                     onClick={() => handleEditClick(room)}
-                    className="w-9 h-9 rounded-lg bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-[#3530B8] transition-all flex items-center justify-center cursor-pointer"
+                    className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-[#3530B8] transition-all flex items-center justify-center cursor-pointer"
                     title="수정"
                   >
-                    <FontAwesomeIcon icon={faEdit} className="text-xs" />
+                    <FontAwesomeIcon icon={faEdit} className="text-[0.65rem] md:text-xs" />
                   </button>
                   <button 
                     onClick={() => handleDelete(room.room_seq)}
-                    className="w-9 h-9 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center cursor-pointer"
+                    className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center cursor-pointer"
                     title="삭제"
                   >
-                    <FontAwesomeIcon icon={faTrashAlt} className="text-xs" />
+                    <FontAwesomeIcon icon={faTrashAlt} className="text-[0.65rem] md:text-xs" />
                   </button>
                 </div>
               </div>
