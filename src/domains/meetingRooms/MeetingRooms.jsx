@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { format, addDays, subDays, startOfDay, parse, isWithinInterval, addMinutes, isBefore, isAfter, isEqual } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUserFriends, faChevronLeft, faChevronRight, faCalendarCheck, faClock, faUser, faSearch, faTimes, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faUserFriends, faChevronLeft, faChevronRight, faCalendarCheck, faClock, faUser, faSearch, faTimes, faCheck, faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { createPortal } from 'react-dom';
+import Calendar from '../../components/common/Calendar';
 import useAuthStore from '../../store/authStore';
 import useUserStore from '../../store/userStore';
 import useEmployeeStore from '../../store/useEmployeeStore';
@@ -35,11 +36,13 @@ const MeetingRooms = () => {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [showFormCalendar, setShowFormCalendar] = useState(false);
   const searchInputRef = useRef(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
 
   const [form, setForm] = useState({
     title: '',
+    date: format(new Date(), 'yyyy-MM-dd'),
     startTime: '09:00',
     endTime: '10:00',
     attendees: []
@@ -73,6 +76,7 @@ const MeetingRooms = () => {
     if (isTimeOccupied(time)) return;
     setForm({
       ...form,
+      date: format(currentDate, 'yyyy-MM-dd'),
       startTime: time,
       endTime: format(addMinutes(parse(time, 'HH:mm', new Date()), 60), 'HH:mm'),
       title: '',
@@ -140,6 +144,7 @@ const MeetingRooms = () => {
       id: Date.now(),
       room_seq: selectedRoomSeq,
       title: form.title,
+      date: form.date,
       startTime: form.startTime,
       endTime: form.endTime,
       user_name: user?.name || '나'
@@ -164,25 +169,6 @@ const MeetingRooms = () => {
               회의실의 예약 현황을 확인하고 예약할 수 있습니다.
             </p>
           </div>
-          
-          <div className="flex items-center gap-4 bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 flex-shrink-0 overflow-x-auto no-scrollbar">
-            <div className="flex items-center gap-1">
-              <button onClick={handlePrevDay} className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-50 text-gray-400 transition-all cursor-pointer">
-                <FontAwesomeIcon icon={faChevronLeft} className="text-xs" />
-              </button>
-              <button onClick={handleToday} className="px-4 py-1.5 text-xs font-bold text-[#3530B8] hover:bg-[#F0F4FF] rounded-xl transition-all cursor-pointer">
-                오늘
-              </button>
-              <button onClick={handleNextDay} className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-50 text-gray-400 transition-all cursor-pointer">
-                <FontAwesomeIcon icon={faChevronRight} className="text-xs" />
-              </button>
-            </div>
-            <div className="h-4 w-[1px] bg-gray-100 mx-1 flex-shrink-0"></div>
-            <div className="px-4 text-[0.6875rem] md:text-sm font-bold text-gray-700 flex items-center gap-2 whitespace-nowrap">
-              <FontAwesomeIcon icon={faCalendarCheck} className="text-[#3530B8]" />
-              {format(currentDate, 'yyyy년 MM월 dd일 (EEEE)', { locale: ko })}
-            </div>
-          </div>
         </div>
       </div>
 
@@ -197,44 +183,53 @@ const MeetingRooms = () => {
               <div 
                 key={room.room_seq}
                 onClick={() => setSelectedRoomSeq(room.room_seq)}
-                className={`flex-shrink-0 w-52 md:w-60 bg-white rounded-3xl border transition-all cursor-pointer group overflow-hidden
+                className={`flex-shrink-0 ${isPanelOpen ? 'w-44 md:w-48' : 'w-52 md:w-60'} bg-white rounded-3xl border transition-all duration-500 cursor-pointer group overflow-hidden
                   ${selectedRoomSeq === room.room_seq 
                     ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5 shadow-xl shadow-[#3530B8]/10' 
                     : 'border-gray-100 hover:border-gray-200 hover:shadow-md'}`}
               >
-                <div className="h-28 md:h-32 bg-gray-100 flex items-center justify-center relative overflow-hidden">
+                <div className={`transition-all duration-500 ${isPanelOpen ? 'h-24 md:h-28' : 'h-28 md:h-32'} bg-gray-100 flex items-center justify-center relative overflow-hidden`}>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                   <FontAwesomeIcon icon={faUserFriends} className="text-gray-300 text-3xl md:text-4xl" />
-                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-[9px] md:text-[10px] font-bold text-[#3530B8] shadow-sm">
-                    {room.room_floor}
-                  </div>
                 </div>
-                <div className="p-3 md:p-4">
-                  <h3 className="text-sm md:text-base font-bold text-gray-900 mb-1 group-hover:text-[#3530B8] transition-colors truncate">{room.room_name}</h3>
+                <div className="p-3 md:p-4 relative">
+                  <h3 className="text-sm md:text-base font-bold text-gray-900 mb-1 group-hover:text-[#3530B8] transition-colors truncate pr-10">{room.room_name}</h3>
                   <div className="flex items-center gap-2 text-[10px] md:text-[11px] text-gray-400 font-medium">
                     <FontAwesomeIcon icon={faUserFriends} className="text-gray-300" />
                     최대 {room.max_people}명 수용
+                  </div>
+                  <div className="absolute right-3 bottom-4 bg-[#F0F4FF] px-2 py-0.5 rounded-md text-[9px] md:text-[10px] font-bold text-[#3530B8] shadow-sm">
+                    {room.room_floor}
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Timeline */}
+          {/* Timeline Area */}
           <div className="flex-1 bg-white rounded-[2rem] border border-[#F0F4FF] shadow-sm p-6 md:p-8 flex flex-col min-h-0 overflow-hidden">
             <div className="flex items-center justify-between mb-8 flex-shrink-0">
-              <h2 className="text-base md:text-lg font-bold text-gray-900 flex items-center gap-2">
+              <h2 className="text-sm md:text-base font-bold text-gray-900 flex items-center gap-2">
                 <FontAwesomeIcon icon={faClock} className="text-[#3530B8]" />
                 {selectedRoom?.room_name} 예약 현황
               </h2>
-              <div className="hidden sm:flex gap-4">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 bg-[#F0F4FF] rounded-sm"></div>
-                  <span className="text-[10px] md:text-[11px] font-bold text-gray-400">예약 가능</span>
+              
+              {/* Date Selection Bar (Inside Timeline Header, replacing Legend) */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100">
+                  <button onClick={handlePrevDay} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white hover:shadow-sm text-gray-400 transition-all cursor-pointer">
+                    <FontAwesomeIcon icon={faChevronLeft} className="text-[10px]" />
+                  </button>
+                  <button onClick={handleToday} className="px-3 py-1 text-[10px] font-bold text-[#3530B8] hover:bg-white hover:shadow-sm rounded-lg transition-all cursor-pointer">
+                    오늘
+                  </button>
+                  <button onClick={handleNextDay} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white hover:shadow-sm text-gray-400 transition-all cursor-pointer">
+                    <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
+                  </button>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 bg-[#3530B8]/10 rounded-sm"></div>
-                  <span className="text-[10px] md:text-[11px] font-bold text-gray-400">이미 예약됨</span>
+                <div className="text-sm font-bold text-gray-800 flex items-center gap-2 whitespace-nowrap">
+                  <FontAwesomeIcon icon={faCalendarCheck} className="text-[#3530B8]" />
+                  {format(currentDate, 'yyyy년 MM월 dd일 (EEEE)', { locale: ko })}
                 </div>
               </div>
             </div>
@@ -244,7 +239,7 @@ const MeetingRooms = () => {
                 {/* Time Axis */}
                 <div className="absolute top-0 left-0 right-0 flex border-b border-gray-50 pb-2">
                   {timeSlots.map((time, idx) => (
-                    <div key={idx} className="flex-1 text-[9px] md:text-[10px] font-bold text-gray-300 text-center">
+                    <div key={idx} className="flex-1 text-[9px] md:text-[10px] font-bold text-gray-400 text-center">
                       {time}
                     </div>
                   ))}
@@ -292,7 +287,7 @@ const MeetingRooms = () => {
           <div className={`flex flex-col bg-white rounded-none md:rounded-[2rem] border-0 md:border border-[#F0F4FF] shadow-sm overflow-hidden min-h-0 animate-in slide-in-from-right duration-500 flex-1 md:flex-[0.4]`}>
              <div className="p-6 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
                 <h2 className="text-lg font-bold text-gray-900">신규 회의 예약</h2>
-                <button onClick={() => setIsPanelOpen(false)} className="text-gray-300 hover:text-gray-500 transition-colors cursor-pointer">
+                <button onClick={() => { setIsPanelOpen(false); setShowFormCalendar(false); }} className="text-gray-300 hover:text-gray-500 transition-colors cursor-pointer">
                   <FontAwesomeIcon icon={faTimes} />
                 </button>
              </div>
@@ -328,10 +323,33 @@ const MeetingRooms = () => {
                   </div>
                 </div>
 
-                {/* Time Selection */}
+                {/* Date & Time Selection */}
                 <div className="space-y-4 pt-2">
-                  <h3 className="text-xs font-bold text-[#3530B8] uppercase ml-1 tracking-widest">시간 설정</h3>
+                  <h3 className="text-xs font-bold text-[#3530B8] uppercase ml-1 tracking-widest">날짜 및 시간 설정</h3>
                   
+                  <div className="space-y-1.5 relative">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">예약일</label>
+                    <div 
+                      onClick={() => setShowFormCalendar(!showFormCalendar)}
+                      className="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-gray-700 flex items-center justify-between cursor-pointer hover:border-[#3530B8] transition-all"
+                    >
+                      <div className="flex items-center gap-2">
+                        <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-400" />
+                        {form.date}
+                      </div>
+                      <FontAwesomeIcon icon={faChevronRight} className={`text-[10px] text-gray-300 transition-transform ${showFormCalendar ? 'rotate-90' : ''}`} />
+                    </div>
+                    {showFormCalendar && (
+                      <div className="absolute top-full left-0 right-0 z-50 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4">
+                        <Calendar 
+                          value={form.date} 
+                          onChange={(date) => { setForm({ ...form, date }); setShowFormCalendar(false); }} 
+                          onClose={() => setShowFormCalendar(false)} 
+                        />
+                      </div>
+                    )}
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">시작 시간</label>
@@ -471,7 +489,7 @@ const MeetingRooms = () => {
              {/* Panel Buttons */}
              <div className="p-8 border-t border-gray-50 flex gap-4 bg-white flex-shrink-0">
                 <button 
-                  onClick={() => setIsPanelOpen(false)}
+                  onClick={() => { setIsPanelOpen(false); setShowFormCalendar(false); }}
                   className="flex-1 py-4 border-2 border-gray-100 text-gray-400 text-sm font-bold rounded-2xl hover:bg-gray-50 transition-all cursor-pointer"
                 >
                   취소
