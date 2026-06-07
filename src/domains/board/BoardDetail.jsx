@@ -5,61 +5,62 @@ import useUserStore from '../../store/userStore';
 import DOMPurify from 'dompurify';
 //이걸 import 해야 에디터에서 작성한 글, 이미지, 굵기 등 서식이 그대로
 import 'react-quill-new/dist/quill.snow.css';
-import { getPostDetail } from './boardApi';
+import { getPostDetail, deletePost } from './boardApi';
 
 const BoardDetail = () => {
   const { seq } = useParams();
   const navigate = useNavigate();
+  const token = sessionStorage.getItem("token");
   const { user } = useUserStore();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
-  useEffect(() => {    
-        getPostDetail(seq).then(resp => {
-          setPost(resp.data);
-        })
-        .catch(err => {
-          console.error('게시글 상세 조회 실패:', err);
-          alert('게시글을 불러오는 중 오류가 발생했습니다.');
-          navigate('/board');
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    }, [seq, navigate]);
 
-  // const handleDelete = () => {
-  //     if (!window.confirm('정말 삭제하시겠습니까?')) return;
-  //     maxios.delete(`/board/${seq}`)
-  //       .then(() => {
-  //         alert('게시글이 삭제되었습니다.');
-  //         navigate('/board');
-  //       })
-  //       .catch(err => {
-  //         console.error('게시글 삭제 실패:', err);
-  //         alert('삭제 중 오류가 발생했습니다.');
-  //       });
-  //   };
+  useEffect(() => {    
+    getPostDetail(seq).then(resp => {
+      setPost(resp.data);
+    })
+    .catch(err => {
+      console.error('게시글 상세 조회 실패:', err);
+      alert('게시글을 불러오는 중 오류가 발생했습니다.');
+      navigate('/board');
+    })
+    .finally(() => {
+      setLoading(false);
+    });
+  }, [seq, navigate]);
+
+  const handleDelete = () => {
+    if (!window.confirm('정말 삭제하시겠습니까?')) return;
+    deletePost(seq).then(() => {
+      alert('게시글이 삭제되었습니다.');
+      navigate('/board');
+    })
+    .catch(err => {
+      console.error('게시글 삭제 실패:', err);
+      alert('삭제 중 오류가 발생했습니다.');
+    });
+  };
 
   const handleEdit = () => {
     navigate(`/BoardWrite/${seq}`, { state: { post } });
   };
 
   const handleDownload = (fileSeq, fileName) => {
-      maxios.get(`/board/download/${fileSeq}`, { responseType: 'blob' })
-        .then(response => {
-          const url = window.URL.createObjectURL(new Blob([response.data]));
-          const link = document.createElement('a');
-          link.href = url;
-          link.setAttribute('download', fileName);
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-        })
-        .catch(err => {
-          console.error('파일 다운로드 실패:', err);
-          alert('파일 다운로드 중 오류가 발생했습니다.');
-        });
-    };
+    maxios.get(`/board/download/${fileSeq}`, { responseType: 'blob' })
+      .then(response => {
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', fileName);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      })
+      .catch(err => {
+        console.error('파일 다운로드 실패:', err);
+        alert('파일 다운로드 중 오류가 발생했습니다.');
+      });
+  };
 
   if (loading) return (
     <div className="w-full h-screen flex items-center justify-center bg-white">
@@ -70,7 +71,12 @@ const BoardDetail = () => {
   if (!post) return null;
 
   // 본인 확인 (작성자 ID와 현재 로그인 유저 ID 비교)
-  const isAuthor = user?.emp_seq === post.emp_seq;
+  // 프로젝트 내 여러 컴포넌트(AdminDocuments, MinutesList 등)의 패턴을 참고하여 
+  // 가장 범용적인 id와 users_id 필드를 우선적으로 체크합니다.
+  const isAuthor = 
+    (!!user?.id && !!post?.users_id && String(user.id) === String(post.users_id)) ||
+    (!!user?.users_seq && !!post?.users_seq && String(user.users_seq) === String(post.users_seq)) ||
+    (!!user?.emp_seq && !!post?.emp_seq && String(user.emp_seq) === String(post.emp_seq));
 
   return (
     <div className="w-full h-auto lg:h-full flex flex-col p-6 md:p-8 lg:px-10 bg-white font-sans items-center">
@@ -94,15 +100,7 @@ const BoardDetail = () => {
               게시글 상세보기
             </h3>
           </div>
-          <button 
-            onClick={() => navigate('/board')}
-            className="text-xs font-bold text-gray-400 hover:text-indigo-600 transition-colors flex items-center gap-1"
-          >
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path d="M19 12H5M12 19l-7-7 7-7"/>
-            </svg>
-            목록으로
-          </button>
+
         </div>
 
         {/* 게시글 본문 영역 */}
@@ -128,8 +126,16 @@ const BoardDetail = () => {
             
             <div className="flex flex-wrap items-center gap-y-3 gap-x-6 text-[0.8rem]">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs">
-                  {post.author_name?.charAt(0)}
+                <div className="w-8 h-8 rounded-full bg-indigo-100 overflow-hidden flex items-center justify-center text-indigo-600 font-bold text-xs">
+                  {post.author_sysname ? (
+                    <img
+                      src={`http://localhost/file/profile/view?sysname=${post.author_sysname}&token=${token}`}
+                      alt={post.author_name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    post.author_name?.charAt(0)
+                  )}
                 </div>
                 <div>
                   <p className="font-bold text-gray-800">{post.author_name}</p>
@@ -139,7 +145,7 @@ const BoardDetail = () => {
               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-6">
                 <span className="flex items-center gap-1.5 text-gray-400">
                   <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z"/>
                   </svg>
                   작성일: {post.created_at?.replace('T', ' ').slice(0, 11)}
                 </span>
@@ -156,7 +162,6 @@ const BoardDetail = () => {
           {/* 본문 내용 */}
           <div 
             className="post-content min-h-[300px] text-sm md:text-base"
-            //살균된 안전한 HTML을 화면에 그려줌
             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content)}}
           />
 
@@ -193,27 +198,27 @@ const BoardDetail = () => {
         </div>
 
         {/* 하단 액션 버튼 */}
-        <div className="px-6 md:px-8 py-5 bg-gray-50/50 border-t border-gray-100 flex flex-col sm:flex-row gap-3">
+        <div className="px-6 md:px-8 py-5 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between gap-3">
           <button
             onClick={() => navigate('/board')}
-            className="flex-1 sm:flex-none px-8 py-3 bg-white border border-gray-200 text-gray-500 text-sm font-bold rounded-2xl hover:bg-gray-100 transition-all order-2 sm:order-1"
+            className="px-8 py-3 bg-white border border-gray-200 text-gray-500 text-sm font-bold rounded-2xl hover:bg-[#F0F4FF] hover:text-indigo-600 transition-all"
           >
             목록
           </button>
           
-          <div className="flex-1 flex gap-3 order-1 sm:order-2">
+          <div className="flex items-center gap-3">
             {isAuthor && (
               <>
                 <button
                   onClick={handleEdit}
-                  className="flex-1 py-3 bg-white border border-indigo-200 text-indigo-600 text-sm font-bold rounded-2xl hover:bg-indigo-50 transition-all shadow-sm"
+                  className="px-8 py-3 bg-white border border-indigo-200 text-indigo-600 text-sm font-bold rounded-2xl hover:bg-indigo-50 transition-all shadow-sm"
                 >
                   수정하기
                 </button>
                 
                 <button
-                  
-                  className="flex-1 py-3 bg-rose-500 text-white text-sm font-bold rounded-2xl hover:bg-rose-600 active:scale-[0.98] transition-all shadow-md shadow-rose-100"
+                  onClick={handleDelete}
+                  className="px-8 py-3 bg-rose-500 text-white text-sm font-bold rounded-2xl hover:bg-rose-600 active:scale-[0.98] transition-all shadow-md shadow-rose-100"
                 >
                   삭제하기
                 </button>

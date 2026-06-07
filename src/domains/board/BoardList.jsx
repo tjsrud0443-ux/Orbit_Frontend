@@ -4,7 +4,7 @@ import Pagination from '../../components/common/Pagination';
 import { maxios } from "../../api/axiosConfig"; 
 import { getBoardList } from './boardApi';
 
-const CATEGORIES = ['전체', '공지', '이벤트', '인사/총무', '자유', '프로젝트'];
+const CATEGORIES = ['전체', '공지', '이벤트', '인사/총무', '일반'];
 
 const ITEMS_PER_PAGE = 10;
 
@@ -139,7 +139,7 @@ const BoardList = () => {
       </div>
 
       {/* 카드 */}
-      <div className="bg-white rounded-3xl border border-gray-200 shadow-sm flex flex-col flex-1 min-h-0 overflow-hidden">
+      <div className="bg-white rounded-3xl border border-gray-200 shadow-sm flex flex-col flex-1 min-h-0 ">
 
         {/* 툴바 */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 md:px-8 border-b border-gray-50 bg-white shrink-0">
@@ -180,7 +180,13 @@ const BoardList = () => {
         </div>
 
         {/* 목록 */}
-        <div className="divide-y divide-gray-50">
+        <div className="flex-1 overflow-y-auto divide-y divide-gray-50 custom-scrollbar">
+          <style>{`
+            .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+            .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
+          `}</style>
           {posts.length > 0 ? (
             posts.map((post, i) => {
               return (

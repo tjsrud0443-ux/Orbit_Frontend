@@ -19,3 +19,4 @@ export const insertEditorImage = (formData) =>
 
 export const getBoardList = (params) => maxios.get('/board', { params });
 export const getPostDetail = (seq) =>  maxios.get(`/board/${seq}`)
+export const deletePost = (seq) =>  maxios.delete(`/board/${seq}`);
