@@ -59,6 +59,9 @@ const ApprovalTemp = () => {
         }
       })
     })
+    .catch(err => {
+      alert("삭제 중 오류가 발생되었습니다.")
+    })
   };
 
   const docType = {
