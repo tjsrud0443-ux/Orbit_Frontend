@@ -282,7 +282,7 @@ const AdminDept = () => {
               <span className="text-sm font-bold text-slate-600">{memberCount}명</span>
             </div>
           </td>
-          <td className="py-4 pl-4 pr-6 text-right">
+          <td className="py-4 pl-4 pr-20 text-right">
             <div className="flex justify-end gap-2">
               {(level !== 0 && node.deptName !== '대표이사실') && (
                 <>
@@ -299,7 +299,7 @@ const AdminDept = () => {
   };
 
   return (
-    <div className="flex-1 bg-white flex flex-col h-screen overflow-hidden">
+    <div className="flex-1 bg-white flex flex-col h-full overflow-hidden">
       <div className="p-8 lg:p-10 pb-4 px-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
         <div className="space-y-1.5">
           <h1 className="text-2xl font-bold text-[#1a1c3d] tracking-tight">부서 관리</h1>
@@ -320,7 +320,7 @@ const AdminDept = () => {
                   <th className="py-4 pl-6 pr-4 w-[40%]">부서</th>
                   <th className="py-4 px-4 w-[25%]">부서 코드</th>
                   <th className="py-4 px-4 w-[15%]">총 인원</th>
-                  <th className="py-4 pl-4 pr-17 w-[20%] text-right">관리</th>
+                  <th className="py-4 pl-4 pr-27 w-[20%] text-right">관리</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
