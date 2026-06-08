@@ -43,8 +43,8 @@ const CategoryTag = ({ label }) => {
 //   return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
 // };
 
-const PostRow = ({ post, onLike, onClick }) => (
-  
+const PostRow = ({ post, onLike, onClick }) => {
+ return ( 
   <div 
     onClick={onClick}
     className="relative flex flex-col md:grid md:grid-cols-12 gap-2 md:gap-4 px-6 md:px-8 py-4 items-start md:items-center cursor-pointer hover:bg-gray-50 transition-colors group border-b border-gray-50 last:border-0"
@@ -103,7 +103,7 @@ const PostRow = ({ post, onLike, onClick }) => (
     </div>
   </div>
 );
-
+}
 const BoardList = () => {
   const [search, setSearch] = useState('');
   const [posts, setPosts] = useState([]);

@@ -6,7 +6,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import useUserStore from '../../store/userStore';
 import { insertBoard, insertEditorImage, updateBoard } from './boardApi';
 
-const CATEGORIES_HR   = ['공지', '경조', '생일', '승진', '부서 이동'];
+const CATEGORIES_HR   = ['공지', '경조', '생일', '승진', '부서 이동', '자유'];
 
 const BoardWrite = () => {
   const { user } = useUserStore();
@@ -17,8 +17,11 @@ const BoardWrite = () => {
   const quillRef = useRef(null); // 💡 에디터 객체에 직접 접근하기 위한 Ref 추가
   const fileInputRef = useRef(null);
 
+
+  const isHR = user?.auth_group?.includes('HR');
+
   const [form, setForm] = useState({
-    category: editPost?.category || '',
+    category: editPost?.category || (isHR ? CATEGORIES_HR[0] : '자유'),
     title:    editPost?.title   || '',
     content:  editPost?.content || '',
   });
@@ -30,8 +33,6 @@ const BoardWrite = () => {
   //새로 등록할 파일
   const [files, setFiles] = useState([]); 
   const [errors, setErrors] = useState({});
-
-  const isHR = user?.auth_group?.includes('HR');
 
   // 제목 변경 핸들러 (글자수 제한 적용)
   const handleTitleChange = (e) => {
@@ -106,6 +107,15 @@ return {
   const set = (key, val) => {
     setForm(prev => ({ ...prev, [key]: val }));
     if (errors[key]) setErrors(prev => ({ ...prev, [key]: false }));
+  };
+
+  const handleCategoryChange = (e) => {
+    const newCategory = e.target.value;
+    set('category', newCategory);
+    // 제목 앞의 기존 [태그] 제거 후 새 태그 삽입
+    const stripped = form.title.replace(/^\[[^\]]*\]\s*/, '');
+    //stripped는 기존 제목에서 [이전태그] 를 제거한 순수 제목 텍스트
+     set('title', newCategory === '자유' ? stripped : `[${newCategory}] ${stripped}`);
   };
 
   const handleEditorChange = (value) => {
@@ -252,7 +262,7 @@ return {
                   <div className="relative">
                     <select
                       value={form.category}
-                      onChange={e => set('category', e.target.value)}
+                      onChange={handleCategoryChange}
                       className="w-full appearance-none px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-indigo-600/5 focus:border-indigo-400 transition-all pr-9"
                     >
                       {CATEGORIES_HR.map(c => (
