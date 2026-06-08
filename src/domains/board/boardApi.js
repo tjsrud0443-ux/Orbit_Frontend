@@ -20,3 +20,9 @@ export const insertEditorImage = (formData) =>
 export const getBoardList = (params) => maxios.get('/board', { params });
 export const getPostDetail = (seq) =>  maxios.get(`/board/${seq}`)
 export const deletePost = (seq) =>  maxios.delete(`/board/${seq}`);
+export const downFiles = (fileSeq) => maxios.get(`/board/download/${fileSeq}`, { responseType: 'blob' });
+export const updateBoard = (seq, formData) => {
+  return maxios.put(`/board/${seq}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+};

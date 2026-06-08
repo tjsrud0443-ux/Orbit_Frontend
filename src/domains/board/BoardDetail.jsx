@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { maxios } from "../../api/axiosConfig";
 import useUserStore from '../../store/userStore';
 import DOMPurify from 'dompurify';
 //이걸 import 해야 에디터에서 작성한 글, 이미지, 굵기 등 서식이 그대로
 import 'react-quill-new/dist/quill.snow.css';
-import { getPostDetail, deletePost } from './boardApi';
+import { getPostDetail, deletePost, downFiles } from './boardApi';
 
 const BoardDetail = () => {
   const { seq } = useParams();
@@ -14,8 +14,12 @@ const BoardDetail = () => {
   const { user } = useUserStore();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
+  const hasFetched = useRef(false);
 
   useEffect(() => {    
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+
     getPostDetail(seq).then(resp => {
       setPost(resp.data);
     })
@@ -46,8 +50,7 @@ const BoardDetail = () => {
   };
 
   const handleDownload = (fileSeq, fileName) => {
-    maxios.get(`/board/download/${fileSeq}`, { responseType: 'blob' })
-      .then(response => {
+    downFiles(fileSeq).then(response => {
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
         link.href = url;
@@ -82,10 +85,7 @@ const BoardDetail = () => {
     <div className="w-full h-auto lg:h-full flex flex-col p-6 md:p-8 lg:px-10 bg-white font-sans items-center">
       
       {/* 페이지 헤더 */}
-      <div className="w-full mb-6 shrink-0">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">사내 게시판</h1>
-        <p className="text-[0.85rem] text-gray-500 font-medium">상세 내용을 확인하고 의견을 나누세요</p>
-      </div>
+
 
       {/* 카드 */}
       <div className="w-full h-[90vh] max-w-7xl bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
@@ -175,7 +175,7 @@ const BoardDetail = () => {
                 {post.files.map((file, idx) => (
                   <div 
                     key={idx} 
-                    onClick={() => handleDownload(file.file_seq, file.origin_name)}
+                    onClick={() => handleDownload(file.file_seq, file.file_oriname)}
                     className="flex items-center gap-3 px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl cursor-pointer hover:bg-indigo-50 hover:border-indigo-100 transition-all group"
                   >
                     <div className="p-2 bg-white rounded-xl shadow-sm group-hover:text-indigo-600 transition-colors">
@@ -184,7 +184,7 @@ const BoardDetail = () => {
                       </svg>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-gray-700 truncate">{file.origin_name}</p>
+                      <p className="text-xs font-bold text-gray-700 truncate">{file.file_oriname}</p>
                       <p className="text-[10px] text-gray-400">{(file.file_size / 1024).toFixed(1)} KB</p>
                     </div>
                     <svg className="text-gray-300 group-hover:text-indigo-400 transition-colors" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">

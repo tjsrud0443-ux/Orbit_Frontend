@@ -142,7 +142,7 @@ const BoardList = () => {
       <div className="bg-white rounded-3xl border border-gray-200 shadow-sm flex flex-col flex-1 min-h-0 ">
 
         {/* 툴바 */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 md:px-8 border-b border-gray-50 bg-white shrink-0">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 md:px-8 border-b border-gray-50 bg-white shrink-0 rounded-t-3xl">
           <div className="flex items-center gap-3 flex-wrap">
             <h3 className="text-s font-extrabold text-indigo-950">게시글 목록</h3>
             <span className="bg-indigo-50 text-indigo-600 text-[0.7rem] font-bold px-2.5 py-1 rounded-full">
@@ -203,7 +203,7 @@ const BoardList = () => {
         </div>
 
         {/* 페이지네이션 */}
-        <div className="border-t border-gray-50 bg-white py-2 shrink-0">
+        <div className="border-t border-gray-50 bg-white py-2 shrink-0 rounded-b-3xl">
           <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} />
         </div>
       </div>
