@@ -253,7 +253,7 @@ const MeetingRooms = () => {
       <div className={`mb-6 flex-shrink-0 ${isPanelOpen ? 'hidden md:block' : 'block'}`}>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-1 flex items-center gap-3">
+            <h1 className="text-lg md:text-2xl font-bold text-gray-900 mb-1 flex items-center gap-3">
               <div className="w-1.5 h-6 bg-[#3530B8] rounded-full"></div>
               회의실 예약
             </h1>
@@ -275,12 +275,12 @@ const MeetingRooms = () => {
               <div 
                 key={room.room_seq}
                 onClick={() => setSelectedRoomSeq(room.room_seq)}
-                className={`flex-shrink-0 ${isPanelOpen ? 'w-44 md:w-48' : 'w-52 md:w-60'} bg-white rounded-3xl border transition-all duration-500 cursor-pointer group overflow-hidden
+                className={`flex-shrink-0 ${isPanelOpen ? 'w-32 md:w-48' : 'w-36 md:w-60'} bg-white rounded-2xl md:rounded-3xl border transition-all duration-500 cursor-pointer group overflow-hidden
                   ${selectedRoomSeq === room.room_seq 
                     ? 'border-[#3530B8] ring-4 ring-[#3530B8]/10 shadow-xl shadow-[#3530B8]/10' 
                     : 'border-gray-100 hover:border-gray-200 hover:shadow-md'}`}
               >
-                <div className={`transition-all duration-500 ${isPanelOpen ? 'h-24 md:h-28' : 'h-28 md:h-32'} bg-gray-100 flex items-center justify-center relative overflow-hidden`}>
+                <div className={`transition-all duration-500 ${isPanelOpen ? 'h-16 md:h-28' : 'h-20 md:h-32'} bg-gray-100 flex items-center justify-center relative overflow-hidden`}>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                   {room.sysname ? (
                     <img 
@@ -289,16 +289,16 @@ const MeetingRooms = () => {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <FontAwesomeIcon icon={faUserFriends} className="text-gray-300 text-3xl md:text-4xl" />
+                    <FontAwesomeIcon icon={faUserFriends} className="text-gray-300 text-2xl md:text-4xl" />
                   )}
                 </div>
-                <div className="p-3 md:p-4 relative">
-                  <h3 className="text-sm md:text-base font-bold text-gray-900 mb-1 group-hover:text-[#3530B8] transition-colors truncate pr-10">{room.room_name}</h3>
-                  <div className="flex items-center gap-2 text-[10px] md:text-[11px] text-gray-400 font-medium">
+                <div className="p-2 md:p-4 relative">
+                  <h3 className="text-[11px] md:text-base font-bold text-gray-900 mb-0.5 group-hover:text-[#3530B8] transition-colors truncate pr-6 md:pr-10">{room.room_name}</h3>
+                  <div className="flex items-center gap-1 md:gap-2 text-[8px] md:text-[11px] text-gray-400 font-medium">
                     <FontAwesomeIcon icon={faUserFriends} className="text-gray-300" />
-                    최대 {room.max_people}명 수용
+                    최대 {room.max_people}명
                   </div>
-                  <div className="absolute right-3 bottom-4 bg-[#F0F4FF] px-2 py-0.5 rounded-md text-[9px] md:text-[10px] font-bold text-[#3530B8] shadow-sm">
+                  <div className="absolute right-2 bottom-2 md:right-4 md:top-10 md:bottom-auto bg-[#F0F4FF] px-1.5 py-0.5 rounded-md text-[8px] md:text-[10px] font-bold text-[#3530B8] shadow-sm">
                     {room.room_floor}
                   </div>
                 </div>
@@ -307,35 +307,35 @@ const MeetingRooms = () => {
           </div>
 
           {/* Timeline Area */}
-          <div className="flex-1 bg-white rounded-[2rem] border border-[#F0F4FF] shadow-sm p-6 md:p-8 flex flex-col min-h-0 overflow-hidden">
-            <div className="flex items-center justify-between mb-8 flex-shrink-0">
-              <h2 className="text-sm md:text-base font-bold text-gray-900 flex items-center gap-2">
+          <div className="flex-1 bg-white rounded-[2rem] border border-[#F0F4FF] shadow-sm p-4 md:p-8 flex flex-col min-h-0 overflow-hidden">
+            <div className="flex flex-row md:items-center justify-between mb-4 md:mb-8 flex-shrink-0 gap-4">
+              <h2 className="text-sm md:text-base font-bold text-gray-900 hidden md:flex items-center gap-2">
                 <FontAwesomeIcon icon={faClock} className="text-[#3530B8]" />
                 {selectedRoom?.room_name} 예약 현황
               </h2>
               
               {/* Date Selection Bar (Moved inside Timeline Header) */}
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100">
-                  <button onClick={handlePrevDay} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white hover:shadow-sm text-gray-400 transition-all cursor-pointer">
+              <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
+                <div className="flex items-center gap-1 bg-gray-50 p-0.5 md:p-1 rounded-xl border border-gray-100">
+                  <button onClick={handlePrevDay} className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-lg hover:bg-white hover:shadow-sm text-gray-400 transition-all cursor-pointer">
                     <FontAwesomeIcon icon={faChevronLeft} className="text-[10px]" />
                   </button>
-                  <button onClick={handleToday} className="px-3 py-1 text-[10px] font-bold text-[#3530B8] hover:bg-white hover:shadow-sm rounded-lg transition-all cursor-pointer">
+                  <button onClick={handleToday} className="px-2 md:px-3 py-1 text-[10px] font-bold text-[#3530B8] hover:bg-white hover:shadow-sm rounded-lg transition-all cursor-pointer whitespace-nowrap">
                     오늘
                   </button>
-                  <button onClick={handleNextDay} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white hover:shadow-sm text-gray-400 transition-all cursor-pointer">
+                  <button onClick={handleNextDay} className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-lg hover:bg-white hover:shadow-sm text-gray-400 transition-all cursor-pointer">
                     <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
                   </button>
                 </div>
-                <div className="text-sm font-bold text-gray-800 flex items-center gap-2 whitespace-nowrap">
+                <div className="text-[10px] md:text-sm font-bold text-gray-800 flex items-center gap-1 md:gap-2 whitespace-nowrap">
                   <FontAwesomeIcon icon={faCalendarCheck} className="text-[#3530B8]" />
                   {format(currentDate, 'yyyy년 MM월 dd일 (EEEE)', { locale: ko })}
                 </div>
               </div>
             </div>
 
-            <div className="flex-1 overflow-x-auto overflow-y-hidden custom-scrollbar pb-6">
-              <div className="min-w-[1000px] h-full flex flex-col relative pt-10">
+            <div className="flex-1 overflow-x-auto overflow-y-hidden custom-scrollbar pb-2 md:pb-6">
+              <div className="min-w-[1000px] h-full flex flex-col relative pt-8 md:pt-10">
                 {/* Time Axis */}
                 <div className="absolute top-0 left-0 right-0 flex border-b border-gray-50 pb-2">
                   {timeSlots.map((time, idx) => (
@@ -378,11 +378,11 @@ const MeetingRooms = () => {
                     return (
                       <div 
                         key={event.rsvn_seq}
-                        className="absolute top-10 bottom-10 bg-[#3530B8] rounded-xl shadow-lg shadow-gray-400/25 p-3 md:p-4 flex flex-col justify-center border-l-4 border-white/20 overflow-hidden"
+                        className="absolute top-2 md:top-10 bottom-2 md:bottom-10 bg-[#3530B8] rounded-xl shadow-lg shadow-gray-400/25 p-2 md:p-4 flex flex-col justify-center border-l-4 border-white/20 overflow-hidden"
                         style={{ left: `${left}%`, width: `${width}%`, zIndex: 10 , backgroundColor: getColor(event.rsvn_seq) }}
                       >
-                        <div className="text-black text-[16px] md:text-xs font-bold truncate mb-0.5">{event.title}</div>
-                        <div className="text-black/80 text-[12px] md:text-[10px] font-medium truncate">
+                        <div className="text-black text-[10px] md:text-xs font-bold truncate mb-0.5">{event.title}</div>
+                        <div className="text-black/80 text-[8px] md:text-[10px] font-medium truncate">
                           {getTime(event.start_dt)} - {getTime(event.end_dt)} | {event.name}
                         </div>
                       </div>
