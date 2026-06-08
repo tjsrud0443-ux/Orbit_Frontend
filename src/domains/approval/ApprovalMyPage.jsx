@@ -249,11 +249,11 @@ const ApprovalMyPage = () => {
   };
 
   return (
-    <div className="flex-1 bg-white overflow-y-auto p-5 lg:p-6">
-      <div className="max-w-[1440px] mx-auto space-y-10">
+    <div className="flex-1 bg-white md:overflow-hidden flex flex-col p-5 lg:p-6 custom-scrollbar">
+      <div className="max-w-[1440px] mx-auto w-full flex flex-col h-full space-y-10">
 
         {/* Title & Description */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 flex-shrink-0">
           <div className="space-y-1">
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">나의 전자결재</h1>
             <p className="text-xs text-slate-500 font-medium">전자결재 문서의 진행 현황과 상세 정보를 확인하세요.</p>
@@ -303,7 +303,7 @@ const ApprovalMyPage = () => {
         </div>
 
         {/* Sections */}
-        <div className="space-y-8">
+        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-8 pr-1">
           <DocumentTable
             title="결재 대기중"
             data={filterDocuments('DRAFT')}
@@ -338,6 +338,12 @@ const ApprovalMyPage = () => {
           />
         </div>
       </div>
+      <style dangerouslySetInnerHTML={{ __html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
+      `}} />
     </div>
   );
 };

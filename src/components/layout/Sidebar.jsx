@@ -186,7 +186,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             )}
           </div>
 
-          <nav className="space-y-1 flex-1 overflow-y-auto pr-1">
+          <nav className="space-y-1 flex-1 overflow-y-auto pr-1 custom-scrollbar">
             {filteredMenuItems.map((item, idx) => {
               if (item.subItems) {
                 const isSubItemActive = item.subItems.some(sub => location.pathname === sub.path);
@@ -273,6 +273,12 @@ const Sidebar = ({ isOpen, onClose }) => {
             </button>
           </div>
         </div>
+        <style dangerouslySetInnerHTML={{ __html: `
+          .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+          .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+          .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
+        `}} />
       </aside>
     </>
   );
