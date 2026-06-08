@@ -5,19 +5,28 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 
 import { fetchHolidays } from '../../api/holidayApi';
-import { getSchedules, createSchedule, deleteSchedule, updateSchedule} from './schedulesApi';
+import { getSchedules, createSchedule, deleteSchedule, updateSchedule } from './schedulesApi';
+import useLoadingStore from '../../store/useLoadingStore';
 
 const generateCompanyEvents = (years) => {
   const events = [];
   years.forEach(year => {
-    events.push({ id: `c-town-${year}-02`, title: '타운홀 미팅 (12:00~14:00)', 
-      start: `${year}-02-15T12:00:00`, end: `${year}-02-15T14:00:00`, category: 'team', color: '#0EA5E9' });
-    events.push({ id: `c-town-${year}-07`, title: '타운홀 미팅 (12:00~14:00)', 
-      start: `${year}-07-15T12:00:00`, end: `${year}-07-15T14:00:00`, category: 'team', color: '#0EA5E9' });
-    events.push({ id: `c-work-${year}-04`, title: '전사 워크숍 (1박 2일)', 
-      start: `${year}-04-16`, end: `${year}-04-18`, category: 'company', color: '#F59E0B' });
-    events.push({ id: `c-work-${year}-09`, title: '전사 워크숍 (1박 2일)', 
-      start: `${year}-09-17`, end: `${year}-09-19`, category: 'company', color: '#F59E0B' });
+    events.push({
+      id: `c-town-${year}-02`, title: '타운홀 미팅 (12:00~14:00)',
+      start: `${year}-02-15T12:00:00`, end: `${year}-02-15T14:00:00`, category: 'team', color: '#0EA5E9'
+    });
+    events.push({
+      id: `c-town-${year}-07`, title: '타운홀 미팅 (12:00~14:00)',
+      start: `${year}-07-15T12:00:00`, end: `${year}-07-15T14:00:00`, category: 'team', color: '#0EA5E9'
+    });
+    events.push({
+      id: `c-work-${year}-04`, title: '전사 워크숍 (1박 2일)',
+      start: `${year}-04-16`, end: `${year}-04-18`, category: 'company', color: '#F59E0B'
+    });
+    events.push({
+      id: `c-work-${year}-09`, title: '전사 워크숍 (1박 2일)',
+      start: `${year}-09-17`, end: `${year}-09-19`, category: 'company', color: '#F59E0B'
+    });
     events.push({ id: `c-survey-${year}-05`, title: '임직원 만족도 조사', start: `${year}-05-10`, category: 'company', color: '#F59E0B' });
     events.push({ id: `c-health-${year}-05`, title: '건강 챌린지 시작', start: `${year}-05-01`, category: 'company', color: '#F59E0B' });
     events.push({ id: `c-survey-${year}-11`, title: '임직원 만족도 조사', start: `${year}-11-10`, category: 'company', color: '#F59E0B' });
@@ -54,7 +63,7 @@ const MiniCalendar = () => {
         <button onClick={() => setDate(new Date(year, month + 1, 1))} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">&gt;</button>
       </div>
       <div className="grid grid-cols-7 text-center text-[0.625rem] text-slate-400 mb-2 font-medium">
-        {['일','월','화','수','목','금','토'].map(d => <span key={d}>{d}</span>)}
+        {['일', '월', '화', '수', '목', '금', '토'].map(d => <span key={d}>{d}</span>)}
       </div>
       <div className="grid grid-cols-7 text-center text-[0.6875rem] flex-1 content-between">
         {days.map((day, i) => (
@@ -114,18 +123,18 @@ const MonthlyEvents = ({ events, currentTitle, title = "이달의 주요 일정"
 
 /*체크박스 */
 const PERSONAL_FILTERS = [
-  { key: 'personal', label: '내 일정',     color: '#3530B8' },
-  { key: 'leave',    label: '연차 / 휴가', color: '#10B981' },
-  { key: 'project',  label: '프로젝트',    color: '#6366F1' },
-  { key: 'meeting',  label: '회의',        color: '#ff75bf' },
-  { key: 'holiday',  label: '공휴일',      color: '#EF4444' }
+  { key: 'personal', label: '내 일정', color: '#3530B8' },
+  { key: 'leave', label: '연차 / 휴가', color: '#10B981' },
+  { key: 'project', label: '프로젝트', color: '#6366F1' },
+  { key: 'meeting', label: '회의', color: '#ff75bf' },
+  { key: 'holiday', label: '공휴일', color: '#EF4444' }
 ];
 
 const COMPANY_FILTERS = [
-  { key: 'company',     label: '회사 전체 일정', color: '#F59E0B' },
-  { key: 'team',        label: '부서/팀 일정',   color: '#0EA5E9' },
-  { key: 'holiday',     label: '공휴일',         color: '#EF4444' },
-  { key: 'anniversary', label: '기념일',         color: '#EC4899' }
+  { key: 'company', label: '회사 전체 일정', color: '#F59E0B' },
+  { key: 'team', label: '부서/팀 일정', color: '#0EA5E9' },
+  { key: 'holiday', label: '공휴일', color: '#EF4444' },
+  { key: 'anniversary', label: '기념일', color: '#EC4899' }
 ];
 
 const COMPANY_CATEGORIES = ['company', 'team', 'holiday', 'anniversary'];
@@ -134,7 +143,7 @@ const Calendar = () => {
   const calendarRef = useRef(null);
   // 화면이 모바일인지 여부 (캘린더 height 분기용)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
-//(커스텀 달력 상태)
+  //(커스텀 달력 상태)
   const [openCalendar, setOpenCalendar] = useState(null); // 'start' | 'end' | null
   const [viewDate, setViewDate] = useState(new Date());
   const calendarYear = viewDate.getFullYear();
@@ -152,14 +161,14 @@ const Calendar = () => {
   };
 
   useEffect(() => {
-    const handler = () =>{
-       setIsMobile(window.innerWidth < 1024);//1024 미만이면 모바일 처리
+    const handler = () => {
+      setIsMobile(window.innerWidth < 1024);//1024 미만이면 모바일 처리
       // 추가: 리사이즈 시 캘린더 크기 재계산
-       setTimeout(()=>{
-         const api = getApi();
+      setTimeout(() => {
+        const api = getApi();
         if (api) api.updateSize();
-       },100)
-      };
+      }, 100)
+    };
     window.addEventListener('resize', handler);// 창을 늘리거나 줄일 때마다 자동으로 호출
     return () => window.removeEventListener('resize', handler);// 페이지 이동시 이벤트 제거해서 메모리 누수 방지
   }, []);
@@ -170,15 +179,15 @@ const Calendar = () => {
   // 개인 체크박스 on/off 상태 { personal: true, leave: true }
   const [personalChecked, setPersonalChecked] = useState(Object.fromEntries(PERSONAL_FILTERS.map(f => [f.key, true])));
   // 회사 체크박스 on/off 상태
-  const [companyChecked, setCompanyChecked]   = useState(Object.fromEntries(COMPANY_FILTERS.map(f => [f.key, true])));
+  const [companyChecked, setCompanyChecked] = useState(Object.fromEntries(COMPANY_FILTERS.map(f => [f.key, true])));
   // 개인 일정 목록
   const [personalEvents, setPersonalEvents] = useState([]);
   // 회사 일정 목록 (공휴일도 여기 합쳐짐)
-  const [companyEvents, setCompanyEvents]   = useState(COMPANY_EVENTS);
+  const [companyEvents, setCompanyEvents] = useState(COMPANY_EVENTS);
   // 일정 추가/수정 모달 열림 여부 + 날짜
   const [modal, setModal] = useState({ open: false, date: '' });
   // 모달 안 입력값들(제목, 카테고리, 날짜 등)
-  const [form, setForm]   = useState({ schedule_seq: '', title: '', schedule_type: 'personal', start_dt: '', end_dt: '', sked_reason: '', is_public: 0 });
+  const [form, setForm] = useState({ schedule_seq: '', title: '', schedule_type: 'personal', start_dt: '', end_dt: '', sked_reason: '', is_public: 0 });
   // 지금 모달이 추가 모드인지 수정 모드인지
   const [isEditing, setIsEditing] = useState(false);
   // 일정 클릭 시 상세 보기 모달
@@ -188,6 +197,8 @@ const Calendar = () => {
   const [showDaily, setShowDaily] = useState(false);
   const [selectedDayEvents, setSelectedDayEvents] = useState([]);
   const [selectedDayLabel, setSelectedDayLabel] = useState('');
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
 
   // showDaily 상태 변경 시 캘린더 크기 재계산
   useEffect(() => {
@@ -200,7 +211,7 @@ const Calendar = () => {
     return () => clearTimeout(timer);
   }, [showDaily]);
 
-  
+
   useEffect(() => {
     //일정 출력
     getSchedules()
@@ -209,7 +220,7 @@ const Calendar = () => {
           const filter = [...PERSONAL_FILTERS, ...COMPANY_FILTERS].find(f => f.key === item.schedule_type);
           const startDate = item.start_dt?.split('T')[0];
           const endDate = item.end_dt?.split('T')[0];
-          
+
           const isSameDay = startDate === endDate;
 
           // FullCalendar의 end date는 exclusive하므로, 
@@ -224,11 +235,11 @@ const Calendar = () => {
           return {
             id: item.schedule_seq.toString(),
             title: item.title,
-            start: startDate, 
+            start: startDate,
             end: displayEnd,
             allDay: !isSameDay, // 하루면 false(점), 이틀 이상이면 true(바)
-            extendedProps: { 
-              category: item.schedule_type, 
+            extendedProps: {
+              category: item.schedule_type,
               description: item.sked_reason,
               is_public: item.is_public,
               actualEnd: endDate // 화면 표시용 실제 종료일
@@ -237,10 +248,10 @@ const Calendar = () => {
             color: filter?.color ?? '#3530B8',
           };
         });
-//.some()은 배열에서 조건에 맞는 게 하나라도 있으면 true를 반환
-      // allEvents에서 개인 카테고리인 것만 골라내기
+        //.some()은 배열에서 조건에 맞는 게 하나라도 있으면 true를 반환
+        // allEvents에서 개인 카테고리인 것만 골라내기
         const pEvents = allEvents.filter(e => PERSONAL_FILTERS.some(f => f.key === e.category));
-      // allEvents에서 회사 카테고리인 것만 골라내기
+        // allEvents에서 회사 카테고리인 것만 골라내기
         const cEvents = allEvents.filter(e => COMPANY_FILTERS.some(f => f.key === e.category));
 
         setPersonalEvents(prev => {
@@ -261,23 +272,25 @@ const Calendar = () => {
   const loadedYears = useRef(new Set());
   // API에서 공휴일 가져와서 companyEvents에 추가
   const loadHolidaysForYear = useCallback(async (year) => {
-  if (loadedYears.current.has(year)) return;//공휴일 이미있음. return
-  loadedYears.current.add(year);//아직이면 공휴일 api 부름
-  try {
-    const holidays = await fetchHolidays(year);//해당 연도 공휴일 1년치
-    if (holidays?.length > 0) {
-      const addHolidays = (prev) => {
-        const existingIds = new Set(prev.map(e => e.id));//기존 이벤트 id 목록
-        return [...prev, ...holidays.filter(h => !existingIds.has(h.id))];
-      };
-      setCompanyEvents(addHolidays);  // 기존
-      setPersonalEvents(addHolidays); // 추가
-    }
-  } catch (err) { console.error(`${year}년 공휴일 로드 실패:`, err); }
-}, []);
+    showLoading();
+    if (loadedYears.current.has(year)) return;//공휴일 이미있음. return
+    loadedYears.current.add(year);//아직이면 공휴일 api 부름
+    try {
+      const holidays = await fetchHolidays(year);//해당 연도 공휴일 1년치
+      if (holidays?.length > 0) {
+        const addHolidays = (prev) => {
+          const existingIds = new Set(prev.map(e => e.id));//기존 이벤트 id 목록
+          return [...prev, ...holidays.filter(h => !existingIds.has(h.id))];
+        };
+        setCompanyEvents(addHolidays);  // 기존
+        setPersonalEvents(addHolidays); // 추가
+        hideLoading();
+      }
+    } catch (err) { console.error(`${year}년 공휴일 로드 실패:`, err); }
+  }, []);
 
   const getApi = () => calendarRef.current?.getApi();
-// 캘린더 날짜 바뀔 때 2026년 5월 텍스트 업데이트
+  // 캘린더 날짜 바뀔 때 2026년 5월 텍스트 업데이트
   const updateTitle = useCallback(() => {
     setTimeout(() => {
       const api = getApi();
@@ -295,26 +308,26 @@ const Calendar = () => {
     ? personalEvents.filter(e => personalChecked[e.category])
     : companyEvents.filter(e => companyChecked[e.category]);
 
-    // 날짜 클릭 → 추가 모달 열기
+  // 날짜 클릭 → 추가 모달 열기
   const handleDateClick = (info) => {
     if (activeTab === 'company') return;
     setIsEditing(false);
-    setForm({ 
-      schedule_seq: '', 
-      title: '', 
-      schedule_type: 'personal', 
-      start_dt: info.dateStr, 
-      end_dt: '', 
+    setForm({
+      schedule_seq: '',
+      title: '',
+      schedule_type: 'personal',
+      start_dt: info.dateStr,
+      end_dt: '',
       sked_reason: '',
       is_public: 0
     });
     setModal({ open: true, date: info.dateStr });
   };
-// 이벤트 클릭 → 상세 모달 열기
+  // 이벤트 클릭 → 상세 모달 열기
   const handleEventClick = (info) => {
     setDetailModal({ open: true, event: info.event });
   };
-// 상세 모달에서 수정 버튼 → 수정 모달로 전환
+  // 상세 모달에서 수정 버튼 → 수정 모달로 전환
   const handleEditStart = () => {
     const event = detailModal.event;
     setIsEditing(true);
@@ -330,14 +343,14 @@ const Calendar = () => {
     setDetailModal({ open: false, event: null });
     setModal({ open: true, date: event.startStr });
   };
-// 모달에서 저장/완료 → 이벤트 추가 또는 수정
+  // 모달에서 저장/완료 → 이벤트 추가 또는 수정
   const handleSaveEvent = () => {
     const isValid = form.title.trim() && form.start_dt && form.end_dt && (form.start_dt <= form.end_dt);
     if (!isValid) return;
 
     const isPersonalCategory = PERSONAL_FILTERS.some(f => f.key === form.schedule_type);
     const filter = [...PERSONAL_FILTERS, ...COMPANY_FILTERS].find(f => f.key === form.schedule_type);
-    
+
     // 백엔드 전송용 데이터 (DTO 형식)
     const payload = {
       title: form.title,
@@ -353,7 +366,7 @@ const Calendar = () => {
     let displayEnd = undefined;
     if (form.end_dt && !isSameDay) {
       const d = new Date(form.end_dt);
-      d.setDate(d.getDate() + 1); 
+      d.setDate(d.getDate() + 1);
       displayEnd = d.toISOString().split('T')[0];//시간 자르기
     }
 
@@ -363,8 +376,8 @@ const Calendar = () => {
       start: form.start_dt,
       end: displayEnd,
       allDay: !isSameDay,
-      extendedProps: { 
-        category: form.schedule_type, 
+      extendedProps: {
+        category: form.schedule_type,
         description: form.sked_reason,
         is_public: form.is_public,
         actualEnd: form.end_dt
@@ -381,7 +394,7 @@ const Calendar = () => {
       updateSchedule(form.schedule_seq, payload)
         .then(() => {
           if (isPersonalCategory) setPersonalEvents(updater);
-          else                    setCompanyEvents(updater);
+          else setCompanyEvents(updater);
           setModal({ open: false, date: '' });
         })
         .catch(err => console.error('일정 수정 실패:', err));
@@ -389,7 +402,7 @@ const Calendar = () => {
       createSchedule(payload)
         .then(() => {
           if (isPersonalCategory) setPersonalEvents(updater);
-          else                    setCompanyEvents(updater);
+          else setCompanyEvents(updater);
           setModal({ open: false, date: '' });
         })
         .catch(err => console.error('일정 추가 실패:', err));
@@ -398,15 +411,15 @@ const Calendar = () => {
 
   // 폼 유효성 검사 (모든 필드 입력 및 날짜 순서 확인)
   const isFormValid = form.title.trim() && form.start_dt && form.end_dt && (form.start_dt <= form.end_dt);
- // 이벤트 삭제
+  // 이벤트 삭제
   const handleDeleteEvent = (id) => {
     // 공용 데이터(숫자 아닌 seq)는 API 호출 안 함
-  if (isNaN(Number(id))) {
-    setPersonalEvents(prev => prev.filter(e => e.id !== id));
-    setCompanyEvents(prev => prev.filter(e => e.id !== id));
-    setModal({ open: false, date: '' });
-    return;
-  }
+    if (isNaN(Number(id))) {
+      setPersonalEvents(prev => prev.filter(e => e.id !== id));
+      setCompanyEvents(prev => prev.filter(e => e.id !== id));
+      setModal({ open: false, date: '' });
+      return;
+    }
     deleteSchedule(id)
       .then(() => {
         setPersonalEvents(prev => prev.filter(e => e.id !== id));
@@ -416,15 +429,15 @@ const Calendar = () => {
       .catch(err => console.error('일정 삭제 실패:', err));
   };
 
-// --- [Calendar 컴포넌트 내부 맨 밑바닥에 배치할 함수] ---
+  // --- [Calendar 컴포넌트 내부 맨 밑바닥에 배치할 함수] ---
   function renderInlineCalendar(type) {
     const currentTargetDate = type === 'start' ? form.start_dt : form.end_dt;
     const positionClass = type === 'start' ? 'left-0' : 'right-0';
     const calendarDays = getCustomCalendarDays();
 
     return (
-      <div 
-        onClick={(e) => e.stopPropagation()} 
+      <div
+        onClick={(e) => e.stopPropagation()}
         className={`absolute z-30 w-[15rem] bottom-full mb-1 ${positionClass} bg-white border border-gray-100 rounded-2xl shadow-2xl p-4 animate-in fade-in slide-in-from-bottom-2 duration-200`}
       >
         {/* 달력 헤더 */}
@@ -455,12 +468,12 @@ const Calendar = () => {
         <div className="grid grid-cols-7 gap-1">
           {calendarDays.map((d, i) => {
             const isSelected = d && currentTargetDate === `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-            
+
             return (
               <div
                 key={i}
                 onClick={() => {
-                  if(!d) return;
+                  if (!d) return;
                   const formattedDate = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                   setForm(prev => ({ ...prev, [type === 'start' ? 'start_dt' : 'end_dt']: formattedDate }));
                   setOpenCalendar(null);
@@ -482,9 +495,9 @@ const Calendar = () => {
   // --- [renderInlineCalendar 끝] ---
 
   return (
-       <>
-        <style>
-          {`
+    <>
+      <style>
+        {`
             .custom-scrollbar::-webkit-scrollbar {
               width: 0.25rem;
             }
@@ -538,131 +551,133 @@ const Calendar = () => {
               display: inline-block;
             }
           `}
-        </style>
-        <div className="flex-1 p-4 flex flex-col gap-4 overflow-y-auto lg:overflow-hidden min-h-0 h-full">
-          <div className="px-1">
-            <h1 className="text-xl font-bold text-slate-900 leading-tight">캘린더</h1>
-            <p className="text-xs text-slate-500 mt-0.5">일정을 한눈에 확인하세요.</p>
-          </div>
+      </style>
+      <div className="flex-1 p-4 flex flex-col gap-4 overflow-y-auto lg:overflow-hidden min-h-0 h-full">
+        <div className="px-1">
+          <h1 className="text-xl font-bold text-slate-900 leading-tight">캘린더</h1>
+          <p className="text-xs text-slate-500 mt-0.5">일정을 한눈에 확인하세요.</p>
+        </div>
 
-          <div className="flex gap-1 border-b border-slate-200 px-1">
-            {[{ key: 'personal', label: '개인 캘린더' }, 
-            { key: 'company', label: '공용 캘린더' }].map(tab => (
-              <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-2 rounded-t-lg text-xs font-bold transition-all whitespace-nowrap border border-b-0
+        <div className="flex gap-1 border-b border-slate-200 px-1">
+          {[{ key: 'personal', label: '개인 캘린더' },
+          { key: 'company', label: '공용 캘린더' }].map(tab => (
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+              className={`px-4 py-2 rounded-t-lg text-xs font-bold transition-all whitespace-nowrap border border-b-0
                   ${activeTab === tab.key ? 'bg-[#3530B8] text-white border-[#3530B8]' : 'bg-white text-slate-500 border-slate-200'}`}>
-                {tab.label}
-              </button>
-            ))}
-          </div>
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-          <div className="flex flex-col lg:flex-row gap-2 flex-1 lg:items-stretch min-h-0 lg:overflow-hidden">
-            <div className={`bg-white border border-slate-200 rounded-xl shadow-sm p-4 flex flex-col min-w-0 transition-all duration-300 flex-1 shrink-0 lg:shrink lg:overflow-hidden`}>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                <div className="flex items-center gap-2">
-                  <button onClick={() => { getApi()?.today(); updateTitle(); }}
-                    className="px-2.5 py-1 border border-slate-200 rounded-lg text-[0.6875rem] font-medium bg-white hover:bg-[#DDE8FF] transition-colors">오늘</button>
-                  <div className="flex border border-slate-200 rounded-lg overflow-hidden bg-white">
-                    <button onClick={() => { getApi()?.prev(); updateTitle(); }}
-                      className="px-1.5 py-1 border-r border-slate-200 hover:bg-[#DDE8FF] text-[0.6875rem]">&lt;</button>
-                    <button onClick={() => { getApi()?.next(); updateTitle(); }}
-                      className="px-1.5 py-1 hover:bg-[#DDE8FF] text-[0.6875rem]">&gt;</button>
-                  </div>
-                  <h2 className="text-sm font-bold text-slate-800 ml-1">{currentTitle}</h2>
+        <div className="flex flex-col lg:flex-row gap-2 flex-1 lg:items-stretch min-h-0 lg:overflow-hidden">
+          <div className={`bg-white border border-slate-200 rounded-xl shadow-sm p-4 flex flex-col min-w-0 transition-all duration-300 flex-1 shrink-0 lg:shrink lg:overflow-hidden`}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-2">
+                <button onClick={() => { getApi()?.today(); updateTitle(); }}
+                  className="px-2.5 py-1 border border-slate-200 rounded-lg text-[0.6875rem] font-medium bg-white hover:bg-[#DDE8FF] transition-colors">오늘</button>
+                <div className="flex border border-slate-200 rounded-lg overflow-hidden bg-white">
+                  <button onClick={() => { getApi()?.prev(); updateTitle(); }}
+                    className="px-1.5 py-1 border-r border-slate-200 hover:bg-[#DDE8FF] text-[0.6875rem]">&lt;</button>
+                  <button onClick={() => { getApi()?.next(); updateTitle(); }}
+                    className="px-1.5 py-1 hover:bg-[#DDE8FF] text-[0.6875rem]">&gt;</button>
                 </div>
-                {activeTab === 'personal' && (
-                  <button onClick={() => {
-                    const t = new Date().toISOString().split('T')[0];
-                    setForm({ 
-                      schedule_seq: '', 
-                      title: '', 
-                      schedule_type: 'personal', 
-                      start_dt: t, 
-                      end_dt: '', 
-                      sked_reason: '',
-                      is_public: 0
-                    });
-                    setIsEditing(false);
-                    setModal({ open: true, date: t });
-                  }} className="px-3 py-1.5 bg-[#3530B8] text-white rounded-lg text-[0.6875rem] font-semibold">+ 일정 추가</button>
-                )}
+                <h2 className="text-sm font-bold text-slate-800 ml-1">{currentTitle}</h2>
               </div>
-
-              <div className="calendar-container flex-1" style={{ minHeight: isMobile ? 'auto' : 0 ,
-                                                                  height: isMobile ? 'auto' : '100%' }}>
-                <FullCalendar
-                  ref={calendarRef}
-                  plugins={[dayGridPlugin, interactionPlugin]}
-                  initialView="dayGridMonth"
-                  locale="ko"
-                  headerToolbar={false}
-                  stickyHeaderDates={false}  // 헤더 고정 해제 - 스크롤하면 같이 올라감                 
-                  dayMaxEvents={true} //보여줄 일정 고정
-                  height={isMobile ? 'auto' : '100%'}
-                  editable={activeTab === 'personal'}
-                  selectable={activeTab === 'personal'}
-                  events={filteredEvents}
-                  dateClick={handleDateClick}
-                  eventClick={handleEventClick}
-                  datesSet={updateTitle}
-                  displayEventTime={false} // 이벤트 시간 표시 숨기기
-                  moreLinkClick={(arg) => {
-                    setSelectedDayEvents(arg.allSegs.map(seg => seg.event));
-                    setSelectedDayLabel(`${arg.date.getMonth() + 1}월 ${arg.date.getDate()}일`);
-                    setShowDaily(true);
-                    return 'none'; // 기본 팝업 방지
-                  }}
-                />
-              </div>
+              {activeTab === 'personal' && (
+                <button onClick={() => {
+                  const t = new Date().toISOString().split('T')[0];
+                  setForm({
+                    schedule_seq: '',
+                    title: '',
+                    schedule_type: 'personal',
+                    start_dt: t,
+                    end_dt: '',
+                    sked_reason: '',
+                    is_public: 0
+                  });
+                  setIsEditing(false);
+                  setModal({ open: true, date: t });
+                }} className="px-3 py-1.5 bg-[#3530B8] text-white rounded-lg text-[0.6875rem] font-semibold">+ 일정 추가</button>
+              )}
             </div>
 
-            <aside className={`w-full shrink-0 flex flex-col lg:flex-row-reverse gap-4 lg:gap-2 transition-all duration-300 ${showDaily ? 'lg:w-[32.5rem]' : 'lg:w-64'}`}>
-              <div className="w-full lg:w-64 flex flex-col gap-4 lg:gap-2 shrink-0">
-                {activeTab === 'personal' ? (
-                  <>
-                    <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-hidden">
-                      <MonthlyEvents 
-                        events={personalEvents.filter(e => e.category !== 'holiday')} 
-                        currentTitle={currentTitle} 
-                        title="이달의 내 일정"
-                      />
-                    </div>
-                    <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-y-auto">
-                      <FilterSection title="개인 캘린더" filters={PERSONAL_FILTERS} checked={personalChecked} onChange={(k, v) => setPersonalChecked(p => ({ ...p, [k]: v }))} />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-hidden">
-                      <MonthlyEvents events={companyEvents} currentTitle={currentTitle} title="이달의 전사 일정 및 공휴일" />
-                    </div>
-                    <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-y-auto">
-                      <FilterSection title="회사 공용 캘린더" filters={COMPANY_FILTERS} checked={companyChecked} onChange={(k, v) => setCompanyChecked(p => ({ ...p, [k]: v }))} />
-                    </div>
-                  </>
-                )}
-              </div>
-              <div className={`hidden lg:block bg-white border border-slate-200 rounded-xl p-4 shadow-sm overflow-hidden transition-all duration-300 ${showDaily ? 'w-64 opacity-100' : 'w-0 opacity-0 p-0 border-0 m-0'}`}>
-                {showDaily && (
-                  <DailyEvents 
-                    events={selectedDayEvents} 
-                    title={selectedDayLabel} 
-                    onClose={() => setShowDaily(false)} 
-                    onEventClick={handleEventClick}
-                  />
-                )}
-              </div>
-            </aside>
+            <div className="calendar-container flex-1" style={{
+              minHeight: isMobile ? 'auto' : 0,
+              height: isMobile ? 'auto' : '100%'
+            }}>
+              <FullCalendar
+                ref={calendarRef}
+                plugins={[dayGridPlugin, interactionPlugin]}
+                initialView="dayGridMonth"
+                locale="ko"
+                headerToolbar={false}
+                stickyHeaderDates={false}  // 헤더 고정 해제 - 스크롤하면 같이 올라감                 
+                dayMaxEvents={true} //보여줄 일정 고정
+                height={isMobile ? 'auto' : '100%'}
+                editable={activeTab === 'personal'}
+                selectable={activeTab === 'personal'}
+                events={filteredEvents}
+                dateClick={handleDateClick}
+                eventClick={handleEventClick}
+                datesSet={updateTitle}
+                displayEventTime={false} // 이벤트 시간 표시 숨기기
+                moreLinkClick={(arg) => {
+                  setSelectedDayEvents(arg.allSegs.map(seg => seg.event));
+                  setSelectedDayLabel(`${arg.date.getMonth() + 1}월 ${arg.date.getDate()}일`);
+                  setShowDaily(true);
+                  return 'none'; // 기본 팝업 방지
+                }}
+              />
+            </div>
           </div>
+
+          <aside className={`w-full shrink-0 flex flex-col lg:flex-row-reverse gap-4 lg:gap-2 transition-all duration-300 ${showDaily ? 'lg:w-[32.5rem]' : 'lg:w-64'}`}>
+            <div className="w-full lg:w-64 flex flex-col gap-4 lg:gap-2 shrink-0">
+              {activeTab === 'personal' ? (
+                <>
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-hidden">
+                    <MonthlyEvents
+                      events={personalEvents.filter(e => e.category !== 'holiday')}
+                      currentTitle={currentTitle}
+                      title="이달의 내 일정"
+                    />
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-y-auto">
+                    <FilterSection title="개인 캘린더" filters={PERSONAL_FILTERS} checked={personalChecked} onChange={(k, v) => setPersonalChecked(p => ({ ...p, [k]: v }))} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-hidden">
+                    <MonthlyEvents events={companyEvents} currentTitle={currentTitle} title="이달의 전사 일정 및 공휴일" />
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-y-auto">
+                    <FilterSection title="회사 공용 캘린더" filters={COMPANY_FILTERS} checked={companyChecked} onChange={(k, v) => setCompanyChecked(p => ({ ...p, [k]: v }))} />
+                  </div>
+                </>
+              )}
+            </div>
+            <div className={`hidden lg:block bg-white border border-slate-200 rounded-xl p-4 shadow-sm overflow-hidden transition-all duration-300 ${showDaily ? 'w-64 opacity-100' : 'w-0 opacity-0 p-0 border-0 m-0'}`}>
+              {showDaily && (
+                <DailyEvents
+                  events={selectedDayEvents}
+                  title={selectedDayLabel}
+                  onClose={() => setShowDaily(false)}
+                  onEventClick={handleEventClick}
+                />
+              )}
+            </div>
+          </aside>
         </div>
+      </div>
 
       {/* 모바일용 하루 일정 모달 */}
       {isMobile && showDaily && (
         <ModalOverlay onClose={() => setShowDaily(false)}>
-          <DailyEvents 
-            events={selectedDayEvents} 
-            title={selectedDayLabel} 
-            onClose={() => setShowDaily(false)} 
+          <DailyEvents
+            events={selectedDayEvents}
+            title={selectedDayLabel}
+            onClose={() => setShowDaily(false)}
             onEventClick={handleEventClick}
           />
         </ModalOverlay>
@@ -680,26 +695,26 @@ const Calendar = () => {
             </optgroup>
           </select>
           {/* 날짜 선택 영역 (커스텀 달력 팝업 적용) */}
-<div className="flex gap-2 mb-3">
-  
-  {/* [시작일 커스텀 달력] */}
-  <div className="flex-1 relative">
-    <div
-      onClick={() => setOpenCalendar(openCalendar === 'start' ? null : 'start')}
-      className={`w-full border rounded-lg px-3 py-1.5 text-xs bg-white text-slate-700 flex justify-between items-center cursor-pointer transition-all ${openCalendar === 'start' ? 'border-[#3530B8]' : 'border-slate-300'}`}
-    >
-      <span className={!form.start_dt ? 'text-slate-400' : 'text-slate-700'}>
-        {form.start_dt || '시작일'}
-      </span>
-      <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-    </div>
+          <div className="flex gap-2 mb-3">
 
-    {openCalendar === 'start' && renderInlineCalendar('start')}
-  </div>
-          {/* [종료일 커스텀 달력] */}
-          <div className="flex-1 relative">
+            {/* [시작일 커스텀 달력] */}
+            <div className="flex-1 relative">
+              <div
+                onClick={() => setOpenCalendar(openCalendar === 'start' ? null : 'start')}
+                className={`w-full border rounded-lg px-3 py-1.5 text-xs bg-white text-slate-700 flex justify-between items-center cursor-pointer transition-all ${openCalendar === 'start' ? 'border-[#3530B8]' : 'border-slate-300'}`}
+              >
+                <span className={!form.start_dt ? 'text-slate-400' : 'text-slate-700'}>
+                  {form.start_dt || '시작일'}
+                </span>
+                <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+
+              {openCalendar === 'start' && renderInlineCalendar('start')}
+            </div>
+            {/* [종료일 커스텀 달력] */}
+            <div className="flex-1 relative">
               <div
                 onClick={() => setOpenCalendar(openCalendar === 'end' ? null : 'end')}
                 className={`w-full border rounded-lg px-3 py-1.5 text-xs bg-white text-slate-700 flex justify-between items-center cursor-pointer transition-all ${openCalendar === 'end' ? 'border-[#3530B8]' : 'border-slate-300'}`}
@@ -719,12 +734,11 @@ const Calendar = () => {
             {isEditing ? (
               <>
                 <button onClick={() => handleDeleteEvent(form.schedule_seq)} className="px-4 py-1.5 text-xs text-red-500 font-semibold border border-red-200 rounded-lg hover:bg-red-50">삭제</button>
-                <button 
-                  onClick={handleSaveEvent} 
+                <button
+                  onClick={handleSaveEvent}
                   disabled={!isFormValid}
-                  className={`px-4 py-1.5 text-xs rounded-lg font-semibold transition-colors ${
-                    isFormValid ? 'bg-[#3530B8] text-white hover:bg-[#2a2696]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                  }`}
+                  className={`px-4 py-1.5 text-xs rounded-lg font-semibold transition-colors ${isFormValid ? 'bg-[#3530B8] text-white hover:bg-[#2a2696]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    }`}
                 >
                   완료
                 </button>
@@ -732,12 +746,11 @@ const Calendar = () => {
             ) : (
               <>
                 <button onClick={() => setModal({ open: false, date: '' })} className="px-4 py-1.5 text-xs text-slate-500 font-semibold border border-slate-200 rounded-lg hover:bg-slate-50">취소</button>
-                <button 
-                  onClick={handleSaveEvent} 
+                <button
+                  onClick={handleSaveEvent}
                   disabled={!isFormValid}
-                  className={`px-4 py-1.5 text-xs rounded-lg font-semibold transition-colors ${
-                    isFormValid ? 'bg-[#3530B8] text-white hover:bg-[#2a2696]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                  }`}
+                  className={`px-4 py-1.5 text-xs rounded-lg font-semibold transition-colors ${isFormValid ? 'bg-[#3530B8] text-white hover:bg-[#2a2696]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    }`}
                 >
                   저장
                 </button>
@@ -751,7 +764,7 @@ const Calendar = () => {
         <ModalOverlay onClose={() => setDetailModal({ open: false, event: null })}>
           <h3 className="text-sm font-bold mb-4">일정 상세</h3>
           <div className="p-3 mb-4 rounded-lg bg-[#3530B8] text-white text-xs font-semibold"
-          style={{ backgroundColor: detailModal.event.backgroundColor || detailModal.event.extendedProps?.color || '#3530B8' }}>{detailModal.event.title}</div>
+            style={{ backgroundColor: detailModal.event.backgroundColor || detailModal.event.extendedProps?.color || '#3530B8' }}>{detailModal.event.title}</div>
           <div className="space-y-2 mb-5 text-xs text-slate-600">
             <p><span className="font-semibold">시작:</span> {detailModal.event.startStr.split('T')[0]}</p>
             {detailModal.event.extendedProps?.actualEnd && detailModal.event.startStr.split('T')[0] !== detailModal.event.extendedProps.actualEnd && (
@@ -775,7 +788,7 @@ const Calendar = () => {
           )}
         </ModalOverlay>
       )}
-       </>
+    </>
   );
 };
 
@@ -793,8 +806,8 @@ const DailyEvents = ({ events, title, onClose, onEventClick }) => {
       <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-3">
         {events.length > 0 ? (
           events.map(e => (
-            <div 
-              key={e.id} 
+            <div
+              key={e.id}
               onClick={() => onEventClick({ event: e })}
               className="flex gap-3 items-start p-2 rounded-lg hover:bg-slate-50 transition-colors group cursor-pointer border border-transparent hover:border-slate-100"
             >
