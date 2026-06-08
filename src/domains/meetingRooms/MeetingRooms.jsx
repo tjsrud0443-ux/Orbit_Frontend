@@ -8,7 +8,7 @@ import Calendar from '../../components/common/Calendar';
 import useAuthStore from '../../store/authStore';
 import useUserStore from '../../store/userStore';
 import useEmployeeStore from '../../store/useEmployeeStore';
-import { getAllRooms } from './meetingRoomsApi';
+import { createReservation, getAllRooms, getReservations } from './meetingRoomsApi';
 
 const MeetingRooms = () => {
   const { user } = useUserStore();
@@ -17,12 +17,13 @@ const MeetingRooms = () => {
   
   const [rooms, setRooms] = useState([]);
   
-  const colorPalette = ['#bfbdf5', '#b6e7db', '#e0b3a4', '#e5c195', '#e9b0c3'];
-  const getColor = (id) => colorPalette[id % colorPalette.length];
-  // TODO: API로 교체 - getReservations(date, room_seq)
-  const [events, setEvents] = useState([]);
+  const colorPalette = [ '#1ac20b13', '#e3eeff88', '#ffc5d652', '#e0c5ff50', '#ffcd292f'];
+  const getColor = (seq) => colorPalette[seq % colorPalette.length];
 
-  // --- States ---
+  const getTime = (dt) => dt.slice(11, 16);
+  const getDate = (dt) => dt.slice(0, 10);
+
+  const [events, setEvents] = useState([]);
   const [selectedRoomSeq, setSelectedRoomSeq] = useState(1);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -38,11 +39,25 @@ const MeetingRooms = () => {
     date: format(new Date(), 'yyyy-MM-dd'),
     startTime: '09:00',
     endTime: '10:00',
+    name: '',
     attendees: []
   });
 
   const selectedRoom = useMemo(() => rooms.find(r => r.room_seq === selectedRoomSeq), [rooms, selectedRoomSeq]);
-  const dayEvents = useMemo(() => events.filter(e => e.room_seq === selectedRoomSeq), [events, selectedRoomSeq]);
+
+  const dayEvents = useMemo(() => 
+    events.filter(e => 
+      e.room_seq === selectedRoomSeq && getDate(e.start_dt) === format(currentDate, 'yyyy-MM-dd')
+    ),
+    [events, selectedRoomSeq, currentDate]
+  );
+
+  const panelEvents = useMemo(() => 
+    events.filter(e => 
+      e.room_seq === selectedRoomSeq && getDate(e.start_dt) === form.date
+    ),
+    [events, selectedRoomSeq, form.date]
+  );
 
   const loadRooms = () => {
     getAllRooms().then(resp => {
@@ -53,6 +68,12 @@ const MeetingRooms = () => {
   useEffect(() => {
     loadRooms();
   }, []);
+
+  useEffect(() => {
+    getReservations(format(currentDate, 'yyyy-MM-dd'), selectedRoomSeq).then(resp => {
+      setEvents(resp.data);
+    }).catch(err => console.error("회의 예약 일정 로드 실패: ", err));
+  }, [currentDate, selectedRoomSeq]);
 
   useEffect(() => {
     fetchEmployees();
@@ -71,7 +92,7 @@ const MeetingRooms = () => {
 
   const isTimeOccupied = (time) => {
     return dayEvents.some(event => {
-      return time >= event.startTime && time < event.endTime;
+      return time >= getTime(event.start_dt) && time < getTime(event.end_dt);
     });
   };
 
@@ -83,7 +104,10 @@ const MeetingRooms = () => {
 
   const handleTimelineClick = (time) => {
     if (isTimeOccupied(time)) return;
-    if (isPastTime(time, format(currentDate, 'yyyy-MM-dd'))) return;
+    if (isPastTime(time, format(currentDate, 'yyyy-MM-dd'))) {
+      alert('이미 지난 시간에는 예약할 수 없습니다.');
+      return;
+    }
     if (isBefore(startOfDay(currentDate), startOfDay(new Date()))) {
       alert('오늘 이전 날짜에는 예약할 수 없습니다.');
       return;
@@ -106,9 +130,9 @@ const MeetingRooms = () => {
     const endStr = format(end, 'HH:mm');
     
     // Check if new end time causes overlap
-    const hasOverlap = dayEvents.some(event => {
-      const eStart = event.startTime;
-      const eEnd = event.endTime;
+    const hasOverlap = panelEvents.some(event => {
+      const eStart = getTime(event.start_dt);
+      const eEnd = getTime(event.end_dt);
       return (form.startTime < eEnd && endStr > eStart);
     });
 
@@ -134,7 +158,8 @@ const MeetingRooms = () => {
     ? allEmployees.filter(emp => {
         const name = emp?.name || '';
         const deptName = emp?.dept_name || '';
-        return name.includes(searchQuery) || deptName.includes(searchQuery);
+        const isMe = emp.id === user?.id;
+        return !isMe && (name.includes(searchQuery) || deptName.includes(searchQuery));
       }) 
     : [];
 
@@ -149,7 +174,7 @@ const MeetingRooms = () => {
     setForm({ ...form, attendees: form.attendees.filter(a => a.users_seq !== users_seq) });
   };
 
-  const handleReserve = () => {
+  const handleReserve = async () => {
     setShowValidation(true);
     if (!form.title.trim()) {
       return;
@@ -174,20 +199,25 @@ const MeetingRooms = () => {
       return;
     }
 
-    // TODO: API로 교체 - createReservation()
     const newEvent = {
-      id: Date.now(),
       room_seq: selectedRoomSeq,
       title: form.title,
-      date: form.date,
-      startTime: form.startTime,
-      endTime: form.endTime,
-      user_name: user?.name || '나'
+      start_dt: `${form.date} ${form.startTime}:00`,
+      end_dt: `${form.date} ${form.endTime}:00`,
+      attendees: form.attendees.map(a => ({ users_id: a.id }))
     };
-    setEvents([...events, newEvent]);
-    setIsPanelOpen(false);
-    setShowValidation(false);
-    alert('예약이 완료되었습니다.');
+
+    try {
+      await createReservation(newEvent);
+      const resp = await getReservations(format(currentDate, 'yyyy-MM-dd'), selectedRoomSeq);
+      setEvents(resp.data);
+      setIsPanelOpen(false);
+      setShowValidation(false);
+      alert('예약이 완료되었습니다.');
+    } catch(error) {
+      console.error('회의실 예약 실패: ', error);
+      alert('회의실 예약에 실패했습니다.');
+    }
   };
 
   const isDateInvalid = form.date && isBefore(parse(form.date, 'yyyy-MM-dd', new Date()), startOfDay(new Date()));
@@ -297,34 +327,40 @@ const MeetingRooms = () => {
                   {timeSlots.map((time, idx) => {
                     const isOccupied = isTimeOccupied(time);
                     const isPast = isPastTime(time, format(currentDate, 'yyyy-MM-dd'));
-                    const isDisabled = isOccupied || isPast;
-                    
+                    const isEndTime = time >= '18:00';
+                    const isDisabled = isOccupied || isEndTime;
+
                     return (
                       <div 
                         key={idx} 
-                        onClick={() => !isDisabled && handleTimelineClick(time)}
+                        onClick={() => {
+                          if (isDisabled) return;
+                          handleTimelineClick(time);
+                        }}
                         className={`flex-1 border-r border-gray-100/50 transition-all 
-                          ${isDisabled ? 'bg-transparent cursor-default' : 'hover:bg-[#F0F4FF]/50 cursor-pointer'}`}
+                          ${isDisabled ? 'bg-transparent cursor-default' : 
+                            isPast ? 'cursor-pointer' : 
+                            'hover:bg-[#F0F4FF]/50 cursor-pointer'}`}
                       />
                     );
                   })}
 
                   {/* Occupied Slots */}
                   {dayEvents.map(event => {
-                    const startIndex = timeSlots.indexOf(event.startTime);
-                    const endIndex = timeSlots.indexOf(event.endTime);
+                    const startIndex = timeSlots.indexOf(getTime(event.start_dt));
+                    const endIndex = timeSlots.indexOf(getTime(event.end_dt));
                     const width = ((endIndex - startIndex) / timeSlots.length) * 100;
                     const left = (startIndex / timeSlots.length) * 100;
 
                     return (
                       <div 
-                        key={event.users_id}
-                        className="absolute top-5 bottom-5 bg-[#3530B8] rounded-xl shadow-lg shadow-[#3530B8]/20 p-3 md:p-4 flex flex-col justify-center border-l-4 border-white/20 overflow-hidden"
-                        style={{ left: `${left}%`, width: `${width}%`, zIndex: 10 , backgroundColor: getColor(event.users_id) }}
+                        key={event.rsvn_seq}
+                        className="absolute top-10 bottom-10 bg-[#3530B8] rounded-xl shadow-lg shadow-gray-400/25 p-3 md:p-4 flex flex-col justify-center border-l-4 border-white/20 overflow-hidden"
+                        style={{ left: `${left}%`, width: `${width}%`, zIndex: 10 , backgroundColor: getColor(event.rsvn_seq) }}
                       >
                         <div className="text-black text-[16px] md:text-xs font-bold truncate mb-0.5">{event.title}</div>
                         <div className="text-black/80 text-[12px] md:text-[10px] font-medium truncate">
-                          {event.startTime} - {event.endTime} | {event.name}
+                          {getTime(event.start_dt)} - {getTime(event.end_dt)} | {event.name}
                         </div>
                       </div>
                     );
@@ -402,7 +438,13 @@ const MeetingRooms = () => {
                       <div className="absolute top-full left-0 right-0 z-50 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4">
                         <Calendar 
                           value={form.date} 
-                          onChange={(date) => { setForm({ ...form, date }); setShowFormCalendar(false); }} 
+                          onChange={(date) => 
+                            { setForm({ ...form, date }); 
+                              setShowFormCalendar(false); 
+                              getReservations(date, selectedRoomSeq).then(resp => {
+                                setEvents(resp.data);
+                              });
+                            }} 
                           onClose={() => setShowFormCalendar(false)} 
                         />
                       </div>
@@ -418,12 +460,14 @@ const MeetingRooms = () => {
                         onChange={e => setForm({ ...form, startTime: e.target.value })}
                       >
                         {timeSlots.filter(t => t <= '17:30').map(time => {
-                          const isOccupied = isTimeOccupied(time);
+                          const isOccupied = panelEvents.some(e =>
+                            time >= getTime(e.start_dt) && time < getTime(e.end_dt)
+                          );
                           const isPast = isPastTime(time, form.date);
                           const isDisabled = isOccupied || isPast;
                           return (
                             <option key={time} value={time} disabled={isDisabled} style={isDisabled ? { color: '#ccc', backgroundColor: '#f9f9f9' } : {}}>
-                              {time} {isOccupied ? '(예약됨)' : isPast ? '(이미 지남)' : ''}
+                              {time} {isOccupied ? '(예약됨)' : ''}
                             </option>
                           );
                         })}
@@ -438,8 +482,8 @@ const MeetingRooms = () => {
                       >
                         {timeSlots.concat('18:30').filter(t => t >= '09:30' && t <= '18:00').map(time => {
                           const isBeforeStart = time <= form.startTime;
-                          const hasOverlap = dayEvents.some(event => {
-                            return (event.startTime >= form.startTime && time > event.startTime);
+                          const hasOverlap = panelEvents.some(event => {
+                            return (form.startTime < getTime(event.end_dt) && time > getTime(event.start_dt));
                           });
                           const isPast = isPastTime(time, form.date);
                           const isDisabled = isBeforeStart || hasOverlap || isPast;
@@ -451,7 +495,7 @@ const MeetingRooms = () => {
                               disabled={isDisabled}
                               style={isDisabled ? { color: '#ccc', backgroundColor: '#f9f9f9' } : {}}
                             >
-                              {time} {hasOverlap ? '(예약 불가)' : isPast ? '(이미 지남)' : ''}
+                              {time} {hasOverlap ? '(예약됨)' : ''}
                             </option>
                           );
                         })}
@@ -464,8 +508,8 @@ const MeetingRooms = () => {
                       const start = parse(form.startTime, 'HH:mm', new Date());
                       const end = addMinutes(start, h * 60);
                       const endStr = format(end, 'HH:mm');
-                      const hasOverlap = dayEvents.some(event => {
-                        return (form.startTime < event.endTime && endStr > event.startTime);
+                      const hasOverlap = panelEvents.some(event => {
+                        return (form.startTime < getTime(event.end_dt) && endStr > getTime(event.start_dt));
                       });
                       const isInvalid = hasOverlap || endStr > '18:00';
 
