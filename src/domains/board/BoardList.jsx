@@ -4,13 +4,34 @@ import Pagination from '../../components/common/Pagination';
 import { maxios } from "../../api/axiosConfig"; 
 import { getBoardList } from './boardApi';
 
-const CATEGORIES = ['전체', '공지', '이벤트', '인사/총무', '일반'];
-
 const ITEMS_PER_PAGE = 10;
+
+const getCategoryStyle = (category) => {
+  // 💡 category가 없을 때를 대비한 방어 코드 및 앞뒤 공백 제거(.trim())
+  const cleanCategory = category ? category.trim() : '';
+
+  switch (cleanCategory) {
+    case '공지': 
+      return 'bg-rose-50 text-rose-600 border-rose-100';
+    case '경조': 
+      return 'bg-indigo-50 text-indigo-600 border-indigo-100';
+    case '생일': 
+      return 'bg-pink-50 text-pink-600 border-pink-100';
+    case '승진': 
+      return 'bg-amber-50 text-amber-600 border-amber-100';
+    // 💡 공백이 있든('부서 이동') 없든('부서이동') 둘 다 에메랄드 색상으로 처리
+    case '부서 이동':
+    case '부서이동': 
+      return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+    default: 
+      // 매칭 안 되면 투명하고 흐릿한 회색 뱃지가 됨 (현재 공지 글이 빠진 함정)
+      return 'bg-gray-50 text-gray-500 border-gray-100';
+  }
+};
 
 const CategoryTag = ({ label }) => {
   return (
-    <span className="bg-gray-50 text-gray-500 text-[10px] font-bold px-2 py-0.5 rounded-full border border-gray-100">
+    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getCategoryStyle(label)}`}>
       {label}
     </span>
   );
@@ -23,22 +44,23 @@ const CategoryTag = ({ label }) => {
 // };
 
 const PostRow = ({ post, onLike, onClick }) => (
+  
   <div 
     onClick={onClick}
     className="relative flex flex-col md:grid md:grid-cols-12 gap-2 md:gap-4 px-6 md:px-8 py-4 items-start md:items-center cursor-pointer hover:bg-gray-50 transition-colors group border-b border-gray-50 last:border-0"
   >
     {/* 번호 - 데스크톱 전용 */}
     <div className="hidden md:block md:col-span-1 text-center">
-      {post.id === '공지'
+      {['공지', '경조', '생일', '승진', '부서 이동'].includes(post.category?.trim())
         ? <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">공지</span>
         : <span className="text-xs text-gray-400">{post.post_seq}</span>
       }
     </div>
 
     {/* 제목 & 모바일용 서브 정보 */}
-    <div className="col-span-12 md:col-span-4 flex flex-col gap-1 min-w-0 w-full">
+    <div className="col-span-12 md:col-span-4 flex flex-col gap-1 min-w-0 w-full pr-16 md:pr-0">
       <div className="flex items-center gap-2">
-        {post.id === '공지' && (
+        {['공지', '경조', '생일', '승진', '부서 이동'].includes(post.category?.trim()) && (
           <span className="md:hidden text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 shrink-0">공지</span>
         )}
         <span 
@@ -96,6 +118,7 @@ const BoardList = () => {
     // API 호출
   useEffect(() => {
     getBoardList({page, size:10, keyword:search}).then(resp=>{
+
       setPosts(resp.data.list);
       setTotalPages(resp.data.totalPages);
       setTotal(resp.data.total);

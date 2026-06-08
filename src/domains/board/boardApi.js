@@ -26,3 +26,10 @@ export const updateBoard = (seq, formData) => {
     headers: { 'Content-Type': 'multipart/form-data' }
   });
 };
+
+//댓글 
+export const insertComment = (post_seq, content) => {
+  return maxios.post(`/board/${post_seq}/comments`, { content });
+};
+export const deleteComment = (comment_seq) => maxios.delete(`/board/comments/${comment_seq}`);
+export const updateComment = (comment_seq,editComment) => maxios.put(`/board/comments/${comment_seq}`,editComment);

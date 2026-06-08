@@ -33,17 +33,18 @@ const BoardWrite = () => {
 
   const isHR = user?.auth_group?.includes('HR');
 
-  // 바이트 계산 유틸리티
-  const getByteLength = (str) => {
-    return new TextEncoder().encode(str).length;
-  };
-
-  // 제목 변경 핸들러 (바이트 제한 적용)
+  // 제목 변경 핸들러 (글자수 제한 적용)
   const handleTitleChange = (e) => {
     const val = e.target.value;
-    if (getByteLength(val) <= 200) {
+    if ([...val].length <= 66) {
       set('title', val);
     }
+  };
+
+  // URL 추출 유틸 함수(수정->에디터 이미지 삭제용)
+  const extractImageUrls = (html) => {
+    const matches = html.matchAll(/<img[^>]+src="([^"]+)"/g);
+    return [...matches].map(m => m[1]);
   };
 
   // 💡 [달라진 점 2] 툴바 및 핸들러 매핑 최적화
@@ -142,7 +143,7 @@ return {
     const e = {};
     if (!form.title.trim()) {
       e.title = true;
-    } else if (getByteLength(form.title) > 200) {
+    } else if ([...form.title].length > 66) {
       e.title = true;
     }
     
@@ -174,19 +175,24 @@ return {
     });
 
     if (isEdit) {
+      //HTML 문자열에서 <img src="URL"> 패턴을 찾아서 URL만 배열로 뽑아주는 함수
+      const extractImageUrls = (html) => {
+        const matches = html.matchAll(/<img[^>]+src="([^"]+)"/g);
+        return [...matches].map(m => m[1]);
+      };
+      //수정 전 원본 이미지 URL
+      const originalUrls = extractImageUrls(editPost.content);
+      //현재 에디터에 남아있는 content에서 이미지 URL 목록 추출
+      const currentUrls = extractImageUrls(form.content);
+      //원본에는 있었는데 현재에는 없는 URL(삭제한) 추추ㄹ
+      const deletedImageUrls = originalUrls.filter(url => !currentUrls.includes(url));
+
+      //삭제된 이미지 URL들을 formData에 담아 백엔드로 전송
+      deletedImageUrls.forEach(url => formData.append('deletedImageUrls', url));
+      //첨부파일
       deletedFileSeqs.forEach(seq => formData.append('deletedFileSeqs', seq));
     }
 
-      // 글 등록
-    // insertBoard(formData).then((resp)=>{
-    //   if (resp.status === 200 || resp.status === 201) {
-    //     alert('게시글이 등록되었습니다.');
-    //     navigate('/board'); // 등록 후 게시판 목록으로 이동
-    //   }
-    // }).catch((error) =>{
-    //   console.error('게시글 등록 실패:', error);
-    //   alert('게시글 등록 중 서버 오류가 발생했습니다.');
-    // })
     if (isEdit) {
       updateBoard(editPost.post_seq, formData).then(() => {
         alert('게시글이 수정되었습니다.');
@@ -266,8 +272,8 @@ return {
                   <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider block">
                     제목
                   </label>
-                  <span className={`text-[10px] font-bold ${getByteLength(form.title) >= 200 ? 'text-red-500' : 'text-gray-400'}`}>
-                    {getByteLength(form.title)} / 200 bytes
+                  <span className={`text-[10px] font-bold ${[...form.title].length >= 66 ? 'text-red-500' : 'text-gray-400'}`}>
+                    {[...form.title].length} / 66자
                   </span>
                 </div>
                 <input
@@ -283,7 +289,7 @@ return {
                 />
                 {errors.title && (
                   <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">
-                    {form.title.trim() === '' ? '제목을 입력해주세요.' : '제목은 200바이트 이내로 입력해주세요.'}
+                    {form.title.trim() === '' ? '제목을 입력해주세요.' : '제목은 66자 이내로 입력해주세요.'}
                   </p>
                 )}
               </div>
@@ -314,6 +320,10 @@ return {
                   border-radius: 0 0 16px 16px !important; /* rounded-b-2xl */
                   font-size: 0.875rem;
                 }
+                /* Quill 에디터 내부 스크롤 제거 */
+                .ql-editor {
+                  min-height: 400px;
+                }
 
                 /* ✅ 에러 상태 */
                 .ql-error .ql-toolbar.ql-snow {
@@ -326,7 +336,7 @@ return {
               `}</style>
               {/* 에디터 컴포넌트 감싸기 및 Tailwind 커스텀 */}
               <div className={
-                `w-full min-h-[360px] pb-12
+                `w-full min-h-[500px] pb-12
                 [&>.ql-toolbar]:bg-gray-50 // 툴바 배경색 연한 회색
                 [&>.ql-toolbar]:border-gray-200 // 툴바 테두리 연한 회색
                 [&>.ql-toolbar]:rounded-t-2xl // 툴바 위쪽만 둥글게
@@ -341,7 +351,7 @@ return {
                   value={form.content}
                   onChange={handleEditorChange}
                   modules={modules}
-                  className="h-72"
+                  className=""
                   placeholder="내용을 입력하세요..."
                 />
               </div>

@@ -5,7 +5,7 @@ import useUserStore from '../../store/userStore';
 import DOMPurify from 'dompurify';
 //이걸 import 해야 에디터에서 작성한 글, 이미지, 굵기 등 서식이 그대로
 import 'react-quill-new/dist/quill.snow.css';
-import { getPostDetail, deletePost, downFiles } from './boardApi';
+import { getPostDetail, deletePost, downFiles, insertComment, deleteComment, updateComment } from './boardApi';
 
 const BoardDetail = () => {
   const { seq } = useParams();
@@ -14,14 +14,35 @@ const BoardDetail = () => {
   const { user } = useUserStore();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [comments, setComments] = useState([]);
+  const [commentInput, setCommentInput] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
+  const [editingCommentSeq, setEditingCommentSeq] = useState(null);
+  const [editingContent, setEditingContent] = useState('');
   const hasFetched = useRef(false);
 
-  useEffect(() => {    
+  // 카테고리별 스타일 매핑
+  const getCategoryStyle = (category) => {
+    switch (category) {
+      case '공지': return 'bg-rose-50 text-rose-600 border-rose-100';
+      case '경조': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
+      case '생일': return 'bg-pink-50 text-pink-600 border-pink-100';
+      case '승진': return 'bg-amber-50 text-amber-600 border-amber-100';
+      case '부서 이동': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+      default: return 'bg-gray-50 text-gray-500 border-gray-100';
+    }
+  };
+
+  useEffect(() => {        
     if (hasFetched.current) return;
     hasFetched.current = true;
 
     getPostDetail(seq).then(resp => {
       setPost(resp.data);
+      // 게시글 상세 데이터에 댓글이 포함되어 있다고 가정합니다.
+      if (resp.data.comments) {
+        setComments(resp.data.comments);
+      }
     })
     .catch(err => {
       console.error('게시글 상세 조회 실패:', err);
@@ -32,6 +53,45 @@ const BoardDetail = () => {
       setLoading(false);
     });
   }, [seq, navigate]);
+
+  const handleCommentSubmit = () => {
+    if (!commentInput.trim()) return;
+    
+    insertComment(seq, commentInput).then(() => {
+      setCommentInput('');
+      getPostDetail(seq).then(resp => {
+        if (resp.data.comments) setComments(resp.data.comments);
+      });
+  }).catch(err => {
+    console.error(err);
+    alert('댓글 등록 중 오류가 발생했습니다.');
+  });
+  };
+
+  const handleCommentDelete = (commentSeq) => {
+    if (!window.confirm('댓글을 삭제하시겠습니까?')) return;
+    deleteComment(commentSeq).then(() => {
+      setComments(prev => prev.filter(c => c.comment_seq !== commentSeq));
+    }).catch(err => {
+      console.error(err);
+      alert('댓글 삭제 중 오류가 발생했습니다.');
+    });
+  };
+
+  const handleCommentUpdate = (commentSeq) => {
+    if (!editingContent.trim()) return;
+
+    updateComment(commentSeq, { content: editingContent }).then(() => {
+      setEditingCommentSeq(null);
+      setEditingContent('');
+      getPostDetail(seq).then(resp => {
+        if (resp.data.comments) setComments(resp.data.comments);
+      });
+    }).catch(err => {
+      console.error(err);
+      alert('댓글 수정 중 오류가 발생했습니다.');
+    });
+  };
 
   const handleDelete = () => {
     if (!window.confirm('정말 삭제하시겠습니까?')) return;
@@ -83,17 +143,13 @@ const BoardDetail = () => {
 
   return (
     <div className="w-full h-auto lg:h-full flex flex-col p-6 md:p-8 lg:px-10 bg-white font-sans items-center">
-      
-      {/* 페이지 헤더 */}
-
-
       {/* 카드 */}
       <div className="w-full h-[90vh] max-w-7xl bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
         
         {/* 카드 헤더 (카테고리 & 목록가기) */}
         <div className="flex items-center justify-between px-6 md:px-8 py-5 border-b border-gray-50 bg-gray-50/30">
           <div className="flex items-center gap-3">
-            <span className="bg-indigo-50 text-indigo-600 text-[10px] font-bold px-3 py-1 rounded-full border border-indigo-100">
+            <span className={`text-[10px] font-bold px-3 py-1 rounded-full border ${getCategoryStyle(post.category)}`}>
               {post.category}
             </span>
             <h3 className="text-sm font-extrabold text-indigo-950 truncate max-w-md">
@@ -106,10 +162,15 @@ const BoardDetail = () => {
         {/* 게시글 본문 영역 */}
         <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar bg-white">
           <style>{`
-            .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+            .custom-scrollbar::-webkit-scrollbar { width: 8px; }
             .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-            .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
-            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
+            .custom-scrollbar::-webkit-scrollbar-thumb { 
+              background: #E5E7EB; 
+              border-radius: 10px; 
+              border: 2px solid transparent; /* 여백 효과 */
+              background-clip: padding-box; 
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; border: 2px solid transparent; background-clip: padding-box; }
             
             /* Quill 에디터 스타일 대응 */
             .post-content img { max-width: 100%; height: auto; border-radius: 12px; margin: 20px 0; }
@@ -195,32 +256,203 @@ const BoardDetail = () => {
               </div>
             </div>
           )}
+
+          {/* 댓글 영역 */}
+          <div className="mt-16 pt-10 border-t border-gray-100">
+            <div className="flex items-center gap-2 mb-8">
+              <h3 className="text-lg font-extrabold text-gray-900">댓글</h3>
+              <span className="bg-indigo-50 text-indigo-600 text-xs font-bold px-2 py-0.5 rounded-full">
+                {comments.length}
+              </span>
+            </div>
+
+            {/* 댓글 목록 */}
+            <div className="space-y-8 mb-10">
+              {comments.length > 0 ? (
+                comments.map((comment) => (
+                  <div key={comment.comment_seq} className="flex gap-4">
+                    <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden shrink-0 border border-gray-100">
+                      {comment.author_sysname ? (
+                        <img
+                          src={`http://localhost/file/profile/view?sysname=${comment.author_sysname}&token=${token}`}
+                          alt={comment.author_name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold text-sm bg-gray-50">
+                          {comment.author_name?.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1.5 overflow-hidden">
+                        <div className="flex items-center gap-2 whitespace-nowrap overflow-hidden">
+                          <span className="font-bold text-gray-900 text-sm shrink-0">{comment.author_name}</span>
+                          <span className="text-[11px] text-gray-400 truncate">
+                            {comment.update_at 
+                              ? `${comment.update_at.replace('T', ' ').slice(0, 16)} (수정됨)` 
+                              : comment.created_at?.replace('T', ' ').slice(0, 16)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+                        {editingCommentSeq === comment.comment_seq ? (
+                          <div className="flex flex-col gap-2">
+                            <textarea
+                              value={editingContent}
+                              onChange={(e) => {
+                                if ([...e.target.value].length <= 900) {
+                                  setEditingContent(e.target.value);
+                                }
+                              }}
+                              className="w-full border border-indigo-200 rounded-xl p-3 text-sm text-gray-700 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-200 min-h-[80px] custom-scrollbar"
+                            />
+                            <div className="flex items-center justify-between">
+                              <span className={`text-[11px] font-bold ${[...editingContent].length >= 899 ? 'text-rose-500' : 'text-gray-400'}`}>
+                                {[...editingContent].length} / 900
+                              </span>
+                              <div className="flex items-center gap-3">
+                                <button
+                                  onClick={() => handleCommentUpdate(comment.comment_seq)}
+                                  className="text-[11px] text-gray-400 hover:text-indigo-900 font-bold transition-colors"
+                                >
+                                  완료
+                                </button>
+                                <button
+                                  onClick={() => { setEditingCommentSeq(null); setEditingContent(''); }}
+                                  className="text-[11px] text-gray-400 hover:text-gray-600 font-bold transition-colors"
+                                >
+                                  취소
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <p>{comment.content}</p>
+                            {String(comment.users_id) === String(user?.id) && (
+                              <div className="flex items-center gap-3 mt-2 justify-end">
+                                <button 
+                                  onClick={() => {
+                                    setEditingCommentSeq(comment.comment_seq);
+                                    setEditingContent(comment.content);
+                                  }}
+                                className="text-[11px] text-gray-400 hover:text-indigo-600 font-bold transition-colors">
+                                  수정
+                                </button>
+                                <button 
+                                  onClick={() => handleCommentDelete(comment.comment_seq)}
+                                  className="text-[11px] text-gray-400 hover:text-rose-500 font-bold transition-colors"
+                                >
+                                  삭제
+                                </button>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="py-10 text-center">
+                  <p className="text-sm text-gray-400">등록된 댓글이 없습니다. 첫 댓글을 남겨보세요!</p>
+                </div>
+              )}
+            </div>
+
+            {/* 댓글 입력창 */}
+            <div className="bg-gray-50 rounded-2xl p-4 md:p-6 border border-slate-200 shadow-sm">
+              {/* 프로필 + 이름 상단 배치 */}
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-full bg-white overflow-hidden shrink-0 border border-slate-200 shadow-sm">
+                  {user?.sysname ? (
+                    <img
+                      src={`http://localhost/file/profile/view?sysname=${user.sysname}&token=${token}`}
+                      alt={user.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-indigo-600 font-bold text-sm bg-indigo-50">
+                      {user?.name?.charAt(0)}
+                    </div>
+                  )}
+                </div>
+                <span className="text-xs font-bold text-gray-700">{user?.name}</span>
+              </div>
+
+              {/* 입력창 전체 너비 */}
+              <div
+                className="bg-white rounded-2xl border transition-all overflow-hidden"
+                style={{
+                  boxShadow: isFocused ? '0 0 0 2px #DDE8FF' : 'none',
+                  borderColor: isFocused ? '#DDE8FF' : '#E2E8F0'
+                }}
+              >
+                <style>{`
+                  .comment-textarea:focus {
+                    border-color: transparent !important;
+                    box-shadow: none !important;
+                    outline: none !important;
+                  }
+                `}</style>
+                <textarea
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                  placeholder="댓글을 남겨주세요."
+                  className="comment-textarea outline-none w-full bg-transparent border-0 focus:outline-none ring-0 focus:ring-0 text-sm text-gray-700 placeholder-gray-400 resize-none min-h-[120px] p-4 custom-scrollbar transition-all"
+                  value={commentInput}
+                  onChange={(e) => {
+                    if ([...e.target.value].length <= 900) {
+                      setCommentInput(e.target.value);
+                    }
+                  }}
+                />
+              </div>
+              <div className="flex justify-between items-center mt-3">
+                <span className={`text-[11px] font-bold ${[...commentInput].length >= 899 ? 'text-rose-500' : 'text-gray-400'}`}>
+                  {[...commentInput].length} / 900
+                </span>
+                <button
+                  onClick={handleCommentSubmit}
+                  disabled={!commentInput.trim()}
+                  className={`px-6 py-2 rounded-xl text-xs font-extrabold transition-all shadow-sm border ${
+                    commentInput.trim()
+                      ? 'bg-indigo-600 text-white border-transparent hover:bg-indigo-700 active:scale-95 cursor-pointer shadow-indigo-100'
+                      : 'bg-white text-indigo-200 border-indigo-100 cursor-not-allowed'
+                  }`}
+                >
+                  등록하기
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* 하단 액션 버튼 */}
-        <div className="px-6 md:px-8 py-5 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between gap-3">
+        <div className="px-4 md:px-8 py-4 md:py-5 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between gap-2 md:gap-3">
           <button
             onClick={() => navigate('/board')}
-            className="px-8 py-3 bg-white border border-gray-200 text-gray-500 text-sm font-bold rounded-2xl hover:bg-[#F0F4FF] hover:text-indigo-600 transition-all"
+            className="px-4 md:px-8 py-2.5 md:py-3 bg-white border border-gray-200 text-gray-500 text-xs md:text-sm font-bold rounded-xl md:rounded-2xl hover:bg-[#F0F4FF] hover:text-indigo-600 transition-all shadow-sm"
           >
             목록
           </button>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             {isAuthor && (
               <>
                 <button
                   onClick={handleEdit}
-                  className="px-8 py-3 bg-white border border-indigo-200 text-indigo-600 text-sm font-bold rounded-2xl hover:bg-indigo-50 transition-all shadow-sm"
+                  className="px-4 md:px-8 py-2.5 md:py-3 bg-white border border-indigo-200 text-indigo-600 text-xs md:text-sm font-bold rounded-xl md:rounded-2xl hover:bg-indigo-50 transition-all shadow-sm"
                 >
-                  수정하기
+                  수정
                 </button>
                 
                 <button
                   onClick={handleDelete}
-                  className="px-8 py-3 bg-rose-500 text-white text-sm font-bold rounded-2xl hover:bg-rose-600 active:scale-[0.98] transition-all shadow-md shadow-rose-100"
+                  className="px-4 md:px-8 py-2.5 md:py-3 bg-rose-500 text-white text-xs md:text-sm font-bold rounded-xl md:rounded-2xl hover:bg-rose-600 active:scale-[0.98] transition-all shadow-md shadow-rose-100"
                 >
-                  삭제하기
+                  삭제
                 </button>
               </>
             )}
