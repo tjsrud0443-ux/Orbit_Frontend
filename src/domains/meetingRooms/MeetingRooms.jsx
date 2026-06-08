@@ -456,7 +456,10 @@ const MeetingRooms = () => {
                           onChange={(date) => 
                             { setForm({ ...form, date }); 
                               setShowFormCalendar(false); 
-                              loadReservs();
+                              setCurrentDate(parse(date, 'yyyy-MM-dd', new Date()));
+                              getReservations(date, selectedRoomSeq).then(resp => {
+                                setEvents(resp.data);
+                              });
                             }} 
                           onClose={() => setShowFormCalendar(false)} 
                         />
