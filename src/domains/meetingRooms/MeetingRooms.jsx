@@ -69,14 +69,10 @@ const MeetingRooms = () => {
     loadRooms();
   }, []);
 
-  const loadReservs = () => {
+  useEffect(() => {
     getReservations(format(currentDate, 'yyyy-MM-dd'), selectedRoomSeq).then(resp => {
       setEvents(resp.data);
     }).catch(err => console.error("회의 예약 일정 로드 실패: ", err));
-  };
-
-  useEffect(() => {
-    loadReservs();
   }, [currentDate, selectedRoomSeq]);
 
   useEffect(() => {
@@ -101,8 +97,9 @@ const MeetingRooms = () => {
     setForm(prev => ({...prev, date: format(newDate, 'yyyy-MM-dd')}));
   }
   const handleToday = () => {
-    setCurrentDate(new Date());
-    setForm(prev => ({...prev, date: format(newDate, 'yyyy-MM-dd')}));
+    const today = new Date();
+    setCurrentDate(today);
+    setForm(prev => ({...prev, date: format(today, 'yyyy-MM-dd')}));
   }
 
   const isTimeOccupied = (time) => {
@@ -127,11 +124,22 @@ const MeetingRooms = () => {
       alert('오늘 이전 날짜에는 예약할 수 없습니다.');
       return;
     }
+
+    const nextEvent = dayEvents
+      .filter(e => getTime(e.start_dt) > time)
+      .sort((a, b) => getTime(a.start_dt).localeCompare(getTime(b.start_dt)))[0];
+
+    const defaultEnd = format(addMinutes(parse(time, 'HH:mm', new Date()), 60), 'HH:mm');
+
+    const endTime = nextEvent && defaultEnd > getTime(nextEvent.start_dt)
+      ? getTime(nextEvent.start_dt)
+      : defaultEnd;
+
     setForm({
       ...form,
       date: format(currentDate, 'yyyy-MM-dd'),
       startTime: time,
-      endTime: format(addMinutes(parse(time, 'HH:mm', new Date()), 60), 'HH:mm'),
+      endTime: endTime,
       title: '',
       attendees: []
     });
@@ -210,7 +218,6 @@ const MeetingRooms = () => {
       return;
     }
     if (form.startTime >= form.endTime) {
-      alert('종료 시간은 시작 시간보다 늦어야 합니다.');
       return;
     }
 
@@ -237,6 +244,7 @@ const MeetingRooms = () => {
 
   const isDateInvalid = form.date && isBefore(parse(form.date, 'yyyy-MM-dd', new Date()), startOfDay(new Date()));
   const isTitleInvalid = showValidation && !form.title.trim();
+  const isTimeInvalid = form.startTime >= form.endTime;
 
   return (
     <div className={`h-full flex flex-col ${isPanelOpen ? 'p-0 md:p-8' : 'p-6 md:p-8'} bg-[#FFFFFF] overflow-hidden font-sans`}>
@@ -457,9 +465,9 @@ const MeetingRooms = () => {
                             { setForm({ ...form, date }); 
                               setShowFormCalendar(false); 
                               setCurrentDate(parse(date, 'yyyy-MM-dd', new Date()));
-                              getReservations(date, selectedRoomSeq).then(resp => {
-                                setEvents(resp.data);
-                              });
+                              // getReservations(date, selectedRoomSeq).then(resp => {
+                              //   setEvents(resp.data);
+                              // });
                             }} 
                           onClose={() => setShowFormCalendar(false)} 
                         />
@@ -471,7 +479,7 @@ const MeetingRooms = () => {
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">시작 시간</label>
                       <select 
-                        className="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-gray-700 focus:outline-none"
+                        className={`w-full px-5 py-3.5 bg-gray-50 border ${isTimeInvalid ? 'border-red-500' : 'border-gray-100'} rounded-2xl text-sm font-bold text-gray-700 focus:outline-none`}
                         value={form.startTime}
                         onChange={e => setForm({ ...form, startTime: e.target.value })}
                       >
@@ -492,7 +500,7 @@ const MeetingRooms = () => {
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">종료 시간</label>
                       <select 
-                        className="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-gray-700 focus:outline-none"
+                        className={`w-full px-5 py-3.5 bg-gray-50 border ${isTimeInvalid ? 'border-red-500' : 'border-gray-100'} rounded-2xl text-sm font-bold text-gray-700 focus:outline-none`}
                         value={form.endTime}
                         onChange={e => setForm({ ...form, endTime: e.target.value })}
                       >
@@ -518,6 +526,9 @@ const MeetingRooms = () => {
                       </select>
                     </div>
                   </div>
+                  {isTimeInvalid && (
+                    <p className="text-[10px] text-red-500 font-bold ml-1">종료 시간은 시작 시간보다 늦어야 합니다.</p>
+                  )}
 
                   <div className="flex gap-2">
                     {[1, 1.5, 2].map(h => {
