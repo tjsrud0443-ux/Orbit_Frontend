@@ -16,13 +16,11 @@ const MeetingRooms = () => {
   const { allEmployees, fetchEmployees } = useEmployeeStore();
   
   const [rooms, setRooms] = useState([]);
-
+  
+  const colorPalette = ['#bfbdf5', '#b6e7db', '#e0b3a4', '#e5c195', '#e9b0c3'];
+  const getColor = (id) => colorPalette[id % colorPalette.length];
   // TODO: API로 교체 - getReservations(date, room_seq)
-  const [events, setEvents] = useState([
-    { id: 1, room_seq: 1, title: '주간 전략 회의', startTime: '10:00', endTime: '11:30', user_name: '김철수', color: '#d9e3ff' },
-    { id: 2, room_seq: 1, title: '디자인 싱킹 워크숍', startTime: '14:00', endTime: '16:00', user_name: '이영희', color: '#fffaad' },
-    { id: 3, room_seq: 2, title: '팀 프로젝트 데일리', startTime: '09:30', endTime: '10:30', user_name: '박지민', color: '#ffe5e5' },
-  ]);
+  const [events, setEvents] = useState([]);
 
   // --- States ---
   const [selectedRoomSeq, setSelectedRoomSeq] = useState(1);
@@ -320,13 +318,13 @@ const MeetingRooms = () => {
 
                     return (
                       <div 
-                        key={event.id}
+                        key={event.users_id}
                         className="absolute top-5 bottom-5 bg-[#3530B8] rounded-xl shadow-lg shadow-[#3530B8]/20 p-3 md:p-4 flex flex-col justify-center border-l-4 border-white/20 overflow-hidden"
-                        style={{ left: `${left}%`, width: `${width}%`, zIndex: 10 , backgroundColor: event.color }}
+                        style={{ left: `${left}%`, width: `${width}%`, zIndex: 10 , backgroundColor: getColor(event.users_id) }}
                       >
                         <div className="text-black text-[16px] md:text-xs font-bold truncate mb-0.5">{event.title}</div>
                         <div className="text-black/80 text-[12px] md:text-[10px] font-medium truncate">
-                          {event.startTime} - {event.endTime} | {event.user_name}
+                          {event.startTime} - {event.endTime} | {event.name}
                         </div>
                       </div>
                     );
