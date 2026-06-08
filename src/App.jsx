@@ -42,7 +42,15 @@ import QnaHistory from './domains/mypage/QnaHistory';
 import RoomHistory from './domains/mypage/RoomHistory';
 
 function App() {
+  const loading = useLoadingStore(state => state.loading);
+  const loadingType = useLoadingStore(state => state.loadingType);
   return (
+    <>
+    {loading && (
+      <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40">
+        <Loading type={loadingType}/>
+      </div>
+    )}
     <Router>
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
@@ -121,6 +129,7 @@ function App() {
         </Route>
       </Routes>
     </Router>
+    </>
   );
 }
 

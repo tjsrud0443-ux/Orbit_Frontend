@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { format, addDays, subDays, startOfDay, parse, addMinutes, isBefore} from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUserFriends, faChevronLeft, faChevronRight, faCalendarCheck, faClock, faUser, faSearch, faTimes, faCheck, faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
+import { faUserFriends, faChevronLeft, faChevronRight, faCalendarCheck, faClock, faUser, faSearch, faTimes, faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { createPortal } from 'react-dom';
 import Calendar from '../../components/common/Calendar';
 import useAuthStore from '../../store/authStore';
