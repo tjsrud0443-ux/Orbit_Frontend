@@ -418,7 +418,7 @@ const Departments = () => {
             </button>
           </div>
 
-          <nav className="flex-1 overflow-y-auto p-3 pt-4 space-y-1">
+          <nav className="flex-1 overflow-y-auto custom-scrollbar p-3 pt-4 space-y-1">
             <button
               onClick={() => {
                 setSelectedDept('ALL');
@@ -490,7 +490,7 @@ const Departments = () => {
               {isHeaderSearchOpen && headerSearch.trim() && (
                 <>
                   <div className="fixed inset-0 z-50" onClick={() => setIsHeaderSearchOpen(false)} />
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-[60] max-h-[350px] overflow-y-auto">
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-[60] max-h-[350px] overflow-y-auto custom-scrollbar">
 
                     {/* Department Results Section */}
                     {headerResults.depts.length > 0 && (
@@ -581,7 +581,7 @@ const Departments = () => {
         </header>
 
         {/* Dynamic Content Area */}
-        <div className="flex-1 overflow-auto bg-white">
+        <div className="flex-1 overflow-y-auto bg-white custom-scrollbar">
           {searchTerm.trim() ? (
             /* CASE 0: Search Mode (Global Results) */
             <div className="w-full">
@@ -617,6 +617,12 @@ const Departments = () => {
         </div>
       </main>
 
+      <style dangerouslySetInnerHTML={{ __html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
+      `}} />
     </div>
   );
 };

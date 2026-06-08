@@ -59,6 +59,9 @@ const ApprovalTemp = () => {
         }
       })
     })
+    .catch(err => {
+      alert("삭제 중 오류가 발생되었습니다.")
+    })
   };
 
   const docType = {
@@ -76,7 +79,7 @@ const ApprovalTemp = () => {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-1">
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">임시 문서함</h1>
-            <p className="text-xs text-slate-500 font-medium">
+            <p className="text-xs text-slate-500 font-medium break-keep">
               기안 작성 중 임시 저장된 문서를 확인하세요. (최대 저장 기간은 7일입니다.)
             </p>
           </div>
@@ -89,7 +92,7 @@ const ApprovalTemp = () => {
                 setSelectedType(e.target.value);
                 setPage(1);
               }}
-              className="px-3 py-1.5 text-xs bg-slate-50 border-none rounded-lg focus:ring-0 text-slate-600 font-medium cursor-pointer outline-none"
+              className="px-3 py-1.5 text-xs bg-slate-50 border-none rounded-lg focus:ring-0 text-slate-600 font-medium cursor-pointer outline-none whitespace-nowrap"
             >
               <option>전체 문서</option>
               <option>일반 품의서</option>
@@ -119,7 +122,7 @@ const ApprovalTemp = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50/50 border-b border-slate-100 text-[0.8125rem] font-bold text-slate-400 uppercase tracking-widest">
+                <tr className="bg-slate-50/50 border-b border-slate-100 text-[0.8125rem] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
                   <th className="py-4 pl-8 pr-4 w-[20%]">제목</th>
                   <th className="py-4 px-4 w-[25%] text-center">문서 종류</th>
                   <th className="py-4 px-4 w-[20%] text-center">최종 수정일</th>
@@ -132,22 +135,22 @@ const ApprovalTemp = () => {
                   displayDocs.map((doc) => (
                     <tr key={doc.seq} className="hover:bg-slate-50 transition-colors group">
                       <td className="py-5 pl-8 pr-4">
-                        <span className="text-sm font-bold text-slate-700 transition-colors">
+                        <span className="text-sm font-bold text-slate-700 transition-colors whitespace-nowrap">
                           {doc.title}
                         </span>
                       </td>
                       <td className="py-5 px-4 text-center">
-                        <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
+                        <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md whitespace-nowrap">
                           {docType[doc.doc_type] || doc.doc_type}
                         </span>
                       </td>
                       <td className="py-5 px-4 text-center">
-                        <span className="text-xs font-bold text-slate-400 font-mono tracking-tighter">
+                        <span className="text-xs font-bold text-slate-400 font-mono tracking-tighter whitespace-nowrap">
                           {doc.updated_at?.substring(0, 10)}
                         </span>
                       </td>
                       <td className="py-5 px-4 text-center">
-                        <span className={`text-xs font-bold ${expiresDay(doc.temp_expires_at) <= 1 ? 'text-rose-500' : 'text-slate-600'}`}>
+                        <span className={`text-xs font-bold whitespace-nowrap ${expiresDay(doc.temp_expires_at) <= 1 ? 'text-rose-500' : 'text-slate-600'}`}>
                           {expiresDay(doc.temp_expires_at)}일 남음
                         </span>
                       </td>
@@ -173,7 +176,7 @@ const ApprovalTemp = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="py-20 text-center text-slate-400 text-sm font-bold">
+                    <td colSpan="5" className="py-20 text-center text-slate-400 text-sm font-bold whitespace-nowrap">
                       임시 저장된 문서가 없습니다.
                     </td>
                   </tr>
