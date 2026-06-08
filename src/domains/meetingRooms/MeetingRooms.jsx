@@ -69,10 +69,14 @@ const MeetingRooms = () => {
     loadRooms();
   }, []);
 
-  useEffect(() => {
+  const loadReservs = () => {
     getReservations(format(currentDate, 'yyyy-MM-dd'), selectedRoomSeq).then(resp => {
       setEvents(resp.data);
     }).catch(err => console.error("회의 예약 일정 로드 실패: ", err));
+  };
+
+  useEffect(() => {
+    loadReservs();
   }, [currentDate, selectedRoomSeq]);
 
   useEffect(() => {
@@ -86,9 +90,20 @@ const MeetingRooms = () => {
     if (i < 18) timeSlots.push(`${String(i).padStart(2, '0')}:30`);
   }
 
-  const handlePrevDay = () => setCurrentDate(subDays(currentDate, 1));
-  const handleNextDay = () => setCurrentDate(addDays(currentDate, 1));
-  const handleToday = () => setCurrentDate(new Date());
+  const handlePrevDay = () => {
+    const newDate = subDays(currentDate, 1);
+    setCurrentDate(newDate);
+    setForm(prev => ({...prev, date: format(newDate, 'yyyy-MM-dd')}));
+  }
+  const handleNextDay = () => {
+    const newDate = addDays(currentDate, 1);
+    setCurrentDate(newDate);
+    setForm(prev => ({...prev, date: format(newDate, 'yyyy-MM-dd')}));
+  }
+  const handleToday = () => {
+    setCurrentDate(new Date());
+    setForm(prev => ({...prev, date: format(newDate, 'yyyy-MM-dd')}));
+  }
 
   const isTimeOccupied = (time) => {
     return dayEvents.some(event => {
@@ -441,9 +456,7 @@ const MeetingRooms = () => {
                           onChange={(date) => 
                             { setForm({ ...form, date }); 
                               setShowFormCalendar(false); 
-                              getReservations(date, selectedRoomSeq).then(resp => {
-                                setEvents(resp.data);
-                              });
+                              loadReservs();
                             }} 
                           onClose={() => setShowFormCalendar(false)} 
                         />
@@ -495,7 +508,7 @@ const MeetingRooms = () => {
                               disabled={isDisabled}
                               style={isDisabled ? { color: '#ccc', backgroundColor: '#f9f9f9' } : {}}
                             >
-                              {time} {hasOverlap ? '(예약됨)' : ''}
+                              {time}
                             </option>
                           );
                         })}
