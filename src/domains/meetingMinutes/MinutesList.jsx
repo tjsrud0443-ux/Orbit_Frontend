@@ -7,6 +7,7 @@ import useAuthStore from '../../store/authStore';
 import useUserStore from '../../store/userStore';
 import { maxios } from '../../api/axiosConfig';
 import { delMinutes, getMinutesDetail, getMinutesList, insertMinutes, upMinutes } from './meetingMinutesApi';
+import useLoadingStore from '../../store/useLoadingStore';
 
 // 참여자 프로필 스택 컴포넌트
 const ParticipantStack = ({ attendees = [] }) => {
@@ -219,6 +220,9 @@ const MinutesList = () => {
   const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
   const paginatedMinutes = filteredMinutes.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
+
   const handlePageChange = (event, value) => {
     setCurrentPage(value);
   };
@@ -275,12 +279,14 @@ const MinutesList = () => {
 }))
     };
 
-  insertMinutes(payload) .then(() => {
+  showLoading("meeting");
+  insertMinutes(payload).then(() => {
       // 서버 저장에 성공했을 때 실행할 로직들을 이 안에 모아둡니다.
-      alert('회의록이 저장되었습니다.');
       setIsCreating(false);
       setActiveId(null); // 이 부분이 추가되면 창이 완전히 닫힙니다!
+      hideLoading();
       fetchMinutesList(); // 목록 새로고침
+      alert('회의록이 저장되었습니다.');
     }).catch((error) => {
       console.error('회의록 저장 실패:', error);
       alert('저장에 실패했습니다.');

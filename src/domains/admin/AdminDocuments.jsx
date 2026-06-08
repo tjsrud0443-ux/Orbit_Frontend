@@ -7,6 +7,7 @@ import { useDropzone } from 'react-dropzone';
 import { createDocument, deleteDocument, editDocument, getAllDocs } from './adminApi';
 import useAuthStore from '../../store/authStore';
 import Preview from '../../components/common/Preview';
+import useLoadingStore from '../../store/useLoadingStore';
 
 
 const AdminDocuments = () => {
@@ -14,7 +15,7 @@ const AdminDocuments = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [documents, setDocuments] = useState([]);
-  
+
   // 모달 관련 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -27,7 +28,8 @@ const AdminDocuments = () => {
   const [previewDoc, setPreviewDoc] = useState(null);
 
   const token = useAuthStore(state => state.token);
-
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
   // 문서 불러오기
   const loadDocuments = () => {
     getAllDocs().then(resp => {
@@ -47,19 +49,19 @@ const AdminDocuments = () => {
     }
   }, []);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-    // 이미지
-    'image/*': ['.png', '.jpg', '.jpeg', '.gif'],
-    
-    // PDF
-    'application/pdf': ['.pdf'],
-    
-    // MS Word
-    'application/msword': ['.doc'],
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
-  },
+      // 이미지
+      'image/*': ['.png', '.jpg', '.jpeg', '.gif'],
+
+      // PDF
+      'application/pdf': ['.pdf'],
+
+      // MS Word
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
+    },
     maxFiles: 1,
     multiple: false
   });
@@ -130,7 +132,7 @@ const AdminDocuments = () => {
     } else {
       setTitleError('');
     }
-    
+
     if (!isEditMode && uploadedFiles.length === 0) {
       setFileError('파일을 첨부해주세요.');
       hasError = true;
@@ -139,11 +141,11 @@ const AdminDocuments = () => {
     }
 
     if (hasError) return;
-    
+
     const formData = new FormData();
     formData.append('title', newDocTitle);
-    
-    try{
+
+    try {
       if (isEditMode) {
         formData.append('document_seq', editingSeq);
         if (uploadedFiles.length > 0) {
@@ -152,19 +154,25 @@ const AdminDocuments = () => {
         await editDocument(formData);
         alert('문서가 수정되었습니다.');
       } else {
-          if (user && user.id) {
-            formData.append('users_id', user.id);
-          }
-          formData.append('file', uploadedFiles[0]);
-          await createDocument(formData);
-          alert('문서가 등록되었습니다.');
+        if (user && user.id) {
+          formData.append('users_id', user.id);
         }
-          handleModalClose();
-          loadDocuments();
-      }catch (error) {
-          console.error('문서 등록 실패:', error);
-          alert('문서 등록 중 오류가 발생했습니다.');
+        formData.append('file', uploadedFiles[0]);
+        handleModalClose();
+        showLoading("document");
+
+        try {
+          await createDocument(formData);
+          await loadDocuments();
+        } finally {
+          hideLoading();
+        }
+        alert('문서가 등록되었습니다.');
       }
+    } catch (error) {
+      console.error('문서 등록 실패:', error);
+      alert('문서 등록 중 오류가 발생했습니다.');
+    }
   };
 
   // 권한 체크
@@ -184,13 +192,13 @@ const AdminDocuments = () => {
 
         <div className="flex flex-row md:items-center gap-2 w-full md:w-auto">
           <div className="relative group flex-1 md:w-72 flex-shrink-0">
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="문서 제목으로 검색"
               value={searchKeyword}
               onChange={(e) => {
-                  setSearchKeyword(e.target.value);
-                  setCurrentPage(1);
+                setSearchKeyword(e.target.value);
+                setCurrentPage(1);
               }}
               className="w-full pl-9 md:pl-10 pr-4 py-2 md:py-2.5 bg-white border border-gray-200 rounded-xl 
               focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-xs md:text-sm text-gray-700 shadow-sm"/>
@@ -200,7 +208,7 @@ const AdminDocuments = () => {
               </svg>
             </div>
           </div>
-          <button 
+          <button
             onClick={handleCreate}
             className="px-3 md:px-6 py-2 md:py-2.5 bg-[#3530B8] text-white text-xs md:text-sm font-bold rounded-xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all flex items-center justify-center gap-1.5 md:gap-2 cursor-pointer whitespace-nowrap"
           >
@@ -248,14 +256,14 @@ const AdminDocuments = () => {
                     <td className="py-4 text-center whitespace-nowrap">
                       {canManage(doc.users_id) ? (
                         <div className="flex justify-center gap-2">
-                          <button 
+                          <button
                             onClick={() => handleEdit(doc.document_seq)}
                             className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-[#3530B8] transition-all flex items-center justify-center cursor-pointer"
                             title="수정"
                           >
                             <FontAwesomeIcon icon={faEdit} className="text-xs" />
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleDelete(doc.document_seq)}
                             className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center cursor-pointer"
                             title="삭제"
@@ -275,10 +283,10 @@ const AdminDocuments = () => {
         </div>
 
         <div className="border-t border-gray-50 bg-white md:rounded-b-[32px] rounded-b-xl py-2 scale-[0.8] md:scale-100 origin-center">
-          <Pagination 
-            count={totalPages} 
-            page={currentPage} 
-            onChange={handlePageChange} 
+          <Pagination
+            count={totalPages}
+            page={currentPage}
+            onChange={handlePageChange}
           />
         </div>
       </div>
@@ -293,12 +301,12 @@ const AdminDocuments = () => {
                 <FontAwesomeIcon icon={faTimes} />
               </button>
             </div>
-            
+
             <div className="p-6 space-y-6">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-400 uppercase ml-1">문서 제목</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={newDocTitle}
                   onChange={(e) => {
                     setNewDocTitle(e.target.value);
@@ -312,20 +320,20 @@ const AdminDocuments = () => {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-400 uppercase ml-1">{isEditMode ? '파일 변경 (선택)' : '파일 업로드'}</label>
-                <div 
-                  {...getRootProps()} 
+                <div
+                  {...getRootProps()}
                   className={`border-2 border-dashed rounded-2xl p-8 transition-all flex flex-col items-center justify-center gap-3 cursor-pointer
-                    ${isDragActive ? 'border-[#3530B8] bg-[#3530B8]/5' : 
-                      fileError ? 'border-red-500 bg-red-50/30' : 
-                      uploadedFiles.length > 0 ? 'border-green-500 bg-green-50/30' : 
-                      'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
+                    ${isDragActive ? 'border-[#3530B8] bg-[#3530B8]/5' :
+                      fileError ? 'border-red-500 bg-red-50/30' :
+                        uploadedFiles.length > 0 ? 'border-green-500 bg-green-50/30' :
+                          'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
                 >
                   <input {...getInputProps()} />
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center 
-                    ${isDragActive ? 'bg-[#3530B8] text-white' : 
-                      fileError ? 'bg-red-100 text-red-500' : 
-                      uploadedFiles.length > 0 ? 'bg-green-100 text-green-600' : 
-                      'bg-gray-100 text-gray-400'}`}>
+                    ${isDragActive ? 'bg-[#3530B8] text-white' :
+                      fileError ? 'bg-red-100 text-red-500' :
+                        uploadedFiles.length > 0 ? 'bg-green-100 text-green-600' :
+                          'bg-gray-100 text-gray-400'}`}>
                     <FontAwesomeIcon icon={faCloudUploadAlt} className="text-xl" />
                   </div>
                   <div className="text-center">
@@ -340,12 +348,12 @@ const AdminDocuments = () => {
             </div>
 
             <div className="p-6 border-t border-gray-50 flex gap-3 bg-white">
-              <button 
+              <button
                 onClick={handleModalClose}
                 className="flex-1 py-3 border border-gray-200 text-gray-500 text-sm font-bold rounded-xl hover:bg-gray-100 transition-all cursor-pointer">
                 취소
               </button>
-              <button 
+              <button
                 onClick={handleRegister}
                 className="flex-[2] py-3 bg-[#3530B8] text-white text-sm font-bold rounded-xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all cursor-pointer">
                 {isEditMode ? '수정 완료' : '등록'}
@@ -365,7 +373,8 @@ const AdminDocuments = () => {
         />
       )}
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
