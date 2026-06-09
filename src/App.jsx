@@ -39,11 +39,20 @@ import ApprovalDetail from './domains/approval/ApprovalDetail';
 import FindId from './domains/auth/FindId';
 import FindPw from './domains/auth/FindPw';
 import QnaHistory from './domains/mypage/QnaHistory';
-
-
+import RoomHistory from './domains/mypage/RoomHistory';
+import useLoadingStore from './store/useLoadingStore';
+import Loading from './components/common/Loading';
 
 function App() {
+  const loading = useLoadingStore(state => state.loading);
+  const loadingType = useLoadingStore(state => state.loadingType);
   return (
+    <>
+    {loading && (
+      <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40">
+        <Loading type={loadingType}/>
+      </div>
+    )}
     <Router>
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
@@ -58,6 +67,7 @@ function App() {
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/mypage/edit" element={<MyPageEdit />} />
           <Route path="/qnaHistory" element={<QnaHistory />} />
+          <Route path="/roomHistory" element={<RoomHistory />} />
           <Route path="/main" element={<Main />} />
           <Route path="/departments" element={<Departments />} />
 
@@ -121,6 +131,7 @@ function App() {
         </Route>
       </Routes>
     </Router>
+    </>
   );
 }
 

@@ -9,4 +9,6 @@ export const IMAGES = {
     SIGNUP_PIC : `${GCS_BUCKET_URL}/SignupPic.png`,
     MAIN_AI1 : `${GCS_BUCKET_URL}/Ai_2light.png`,
     FIND_ACCOUNT : `${GCS_BUCKET_URL}/findAccount.png`,
+    LOBOT_SMILE : `${GCS_BUCKET_URL}/LoadingRobot2.png`,
+    LOBOT_THINKING : `${GCS_BUCKET_URL}/LoadingRobot1.png`,
 };

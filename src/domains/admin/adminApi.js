@@ -44,8 +44,11 @@ export const createDocument = (formData) => maxios.post('/admin/addDocument', fo
 export const editDocument = (formData) => maxios.put('/admin/editDocument', formData);
 export const deleteDocument = (document_seq) => maxios.delete(`/admin/deleteDocument/${document_seq}`);
 
-
-
+// 회의실 관리
+export const getAllRooms = () => maxios.get("/admin/ga/getAllRooms");
+export const addMeetingRoom = (data) => maxios.post("/admin/ga/addMeetingRoom", data);
+export const editMeetingRoom = (data) => maxios.put("/admin/ga/editMeetingRoom", data);
+export const deleteMeetingRoom = (seq) => maxios.delete(`/admin/ga/deleteMeetingRoom/${seq}`);
 
 
 

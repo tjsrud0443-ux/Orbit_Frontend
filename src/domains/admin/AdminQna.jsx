@@ -130,7 +130,7 @@ const AdminQna = () => {
   }
 
   return (
-    <div className="flex flex-col h-full py-8 px-1 md:px-7 overflow-y-auto md:overflow-hidden custom-scrollbar">
+    <div className="flex flex-col h-full bg-[#FFFFFF] py-8 px-1 md:px-7 overflow-y-auto md:overflow-hidden custom-scrollbar">
       <div className="mb-6 px-4 md:px-2">
         <h1 className="text-xl md:text-2xl font-bold text-[#121331]">AI 답변 불가 질문 관리</h1>
         <p className="text-xs md:text-sm text-[#8a92a6] mt-1">AI가 답변할 수 없는 질문을 관리하고 답변을 등록하세요.</p>
@@ -319,11 +319,11 @@ const AdminQna = () => {
 
             {isEditing ? (
               <div className="flex gap-2 mt-auto">
+                 <button onClick={handleCancelClick} className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-xl font-bold hover:bg-gray-200 transition-all">
+                  취소
+                </button>
                 <button onClick={handleAnswerSubmit} className="flex-1 py-4 bg-[#3530B8] text-white rounded-xl font-bold hover:bg-[#2a2594] transition-all">
                   {selectedQna.status === 'PENDING' ? '등록' : '저장'}
-                </button>
-                <button onClick={handleCancelClick} className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-xl font-bold hover:bg-gray-200 transition-all">
-                  취소
                 </button>
               </div>
             ) : (selectedQna.status === 'ANSWERED' && hasPermission(selectedQna)) ? (
