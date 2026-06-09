@@ -6,7 +6,6 @@ import {
   faPlus,
   faFileAlt,
   faTimes,
-  faPaperclip,
   faTrashCan,
   faBars,
   faChevronDown,
@@ -374,8 +373,7 @@ const AiChat = () => {
 
         {/* 입출력 입력창 섹션 */}
         <div className="p-6 border-t border-[#edf2f9] flex-shrink-0">
-          <div className="flex items-center gap-3 bg-[#f4f7fc] p-2 rounded-xl">
-            <button className="text-[#8a92a6] px-3"><FontAwesomeIcon icon={faPaperclip} /></button>
+          <div className="flex items-center gap-3 px-6 bg-[#f4f7fc] p-2 rounded-xl">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
