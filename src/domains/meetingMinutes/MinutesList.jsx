@@ -496,7 +496,14 @@ const MinutesList = () => {
     setIsCreating(true);
   };
 
-  const handleClosePanel = () => { setActiveId(null); setActiveDetail(null); setIsCreating(false); };
+  const handleClosePanel = () => {
+    setActiveId(null); 
+    setActiveDetail(null); 
+    setIsCreating(false); 
+    setIsEditing(false);
+    setEditMinutes(null);
+    setHostInAttendeesWarning(false);
+  };
 
   const handleSelectMinutes = (id) => {
     setIsCreating(false);
