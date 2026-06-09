@@ -11,6 +11,8 @@ const RoomHistory = () => {
   const { user } = useUserStore();
 
   const [reservations, setReservations] = useState([]);
+  const getTime = (dt) => dt.slice(11, 16);
+  const getDate = (dt) => dt.slice(0, 10);
 
   // Pagination state
   const [page, setPage] = useState(1);
@@ -20,8 +22,9 @@ const RoomHistory = () => {
   // Edit mode state
   const [editingReservation, setEditingReservation] = useState(null);
   const [editForm, setEditForm] = useState({
-    roomName: '',
-    meetingName: '',
+    room_seq: '',
+    room_name: '',
+    title: '',
     date: '',
     startTime: '',
     endTime: '',
@@ -182,9 +185,9 @@ const RoomHistory = () => {
         {/* List Section */}
         <div className={`flex flex-col bg-white rounded-[2rem] border border-[#F0F4FF] shadow-sm overflow-hidden transition-all duration-500 min-h-0 ${editingReservation ? 'hidden md:flex md:flex-[0.6]' : 'flex-1'}`}>
           <div className="hidden md:grid grid-cols-[1fr_1.8fr_1.2fr_1.2fr_0.8fr] px-6 py-4 border-b border-gray-50 text-[0.6875rem] font-bold text-gray-400 uppercase tracking-wider flex-shrink-0">
-            <div className="pl-6">회의실명</div>
+            <div className="pl-4">회의실명</div>
             <div>회의명</div>
-            <div className="pl-3">예약일</div>
+            <div className="pl-4">예약일</div>
             <div className="pl-3">예약 시간</div>
             <div className="text-center">관리</div>
           </div>
@@ -192,19 +195,19 @@ const RoomHistory = () => {
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             {reservations.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((res) => (
               <div 
-                key={res.id}
-                className={`flex md:grid md:grid-cols-[1fr_1.8fr_1.2fr_1.2fr_0.8fr] px-4 md:px-6 py-4 items-center border-b border-gray-50/50 hover:bg-[#F8FAFF] transition-colors ${editingReservation?.id === res.id ? 'bg-[#F0F4FF]' : ''}`}
+                key={res.rsvn_seq}
+                className={`flex md:grid md:grid-cols-[1fr_1.8fr_1.2fr_1.2fr_0.8fr] px-4 md:px-6 py-4 items-center border-b border-gray-50/50 hover:bg-[#F8FAFF] transition-colors ${editingReservation?.rsvn_seq === res.rsvn_seq ? 'bg-[#F0F4FF]' : ''}`}
               >
                 {/* Mobile & PC Info */}
-                <div className="flex-1 md:block text-xs md:text-sm font-bold text-gray-700 truncate pl-4">{res.roomName}</div>
-                <div className="hidden md:block text-xs text-gray-600 truncate">{res.meetingName}</div>
-                <div className="hidden md:block text-xs text-gray-500 truncate">{res.date}</div>
-                <div className="hidden md:block text-xs text-gray-500 truncate">{`${res.startTime} ~ ${res.endTime}`}</div>
+                <div className="flex-1 md:block text-xs md:text-sm font-bold text-gray-700 truncate pl-4">{res.room_name}</div>
+                <div className="hidden md:block text-xs text-gray-600 truncate">{res.title}</div>
+                <div className="hidden md:block text-xs text-gray-500 truncate">{getDate(res.start_dt)}</div>
+                <div className="hidden md:block text-xs text-gray-500 truncate">{`${getTime(res.start_dt)} ~ ${getTime(res.end_dt)}`}</div>
 
                 {/* Mobile Info Overlay (for smaller screens) */}
                 <div className="md:hidden flex-1 min-w-0 mx-2">
-                  <div className="text-[10px] text-gray-400 truncate">{res.meetingName}</div>
-                  <div className="text-[10px] text-gray-500">{res.date} | {res.startTime}~{res.endTime}</div>
+                  <div className="text-[10px] text-gray-400 truncate">{res.title}</div>
+                  <div className="text-[10px] text-gray-500">{getDate(res.start_dt)} | {getTime(res.start_dt)}~{getTime(res.end_dt)}</div>
                 </div>
 
                 {/* Actions */}
@@ -216,7 +219,7 @@ const RoomHistory = () => {
                     수정
                   </button>
                   <button 
-                    onClick={() => handleCancelReservation(res.id)}
+                    onClick={() => handleCancelReservation(res.rsvn_seq)}
                     className="px-2.5 py-1.5 text-[0.625rem] md:text-xs font-bold text-red-500 bg-red-50 rounded-lg hover:bg-red-500 hover:text-white transition-all"
                   >
                     취소
@@ -249,8 +252,8 @@ const RoomHistory = () => {
                   <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1.5 ml-1">회의실 선택</label>
                   <select 
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-medium focus:outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 transition-all"
-                    value={editForm.roomName}
-                    onChange={(e) => setEditForm({ ...editForm, roomName: e.target.value })}
+                    value={editForm.room_name}
+                    onChange={(e) => setEditForm({ ...editForm, room_name: e.target.value })}
                   >
                     <option value="대회의실 A">대회의실 A</option>
                     <option value="중회의실 B">중회의실 B</option>
@@ -263,8 +266,8 @@ const RoomHistory = () => {
                   <input 
                     type="text" 
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-medium focus:outline-none focus:border-[#3530B8] transition-all"
-                    value={editForm.meetingName}
-                    onChange={(e) => setEditForm({ ...editForm, meetingName: e.target.value })}
+                    value={editForm.title}
+                    onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                   />
                 </div>
               </div>

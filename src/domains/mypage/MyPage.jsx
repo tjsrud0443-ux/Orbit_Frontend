@@ -314,6 +314,8 @@ const weeklyAttendance = [
               <button 
                 onClick={() => {
                   if (activeTab === '관리자 문의') navigate('/qnaHistory');
+                  if (activeTab === '회의실') navigate('/roomHistory');
+                  if (activeTab === '비품') navigate('/supplyHistory');
                 }}
                 className="text-[0.65rem] text-slate-400 font-bold hover:text-[#3530B8]"
               >
