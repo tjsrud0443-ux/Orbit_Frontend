@@ -63,7 +63,7 @@ const QnaHistory = () => {
   };
 
   return (
-    <div className="flex flex-col h-full py-8 px-1 md:px-7 overflow-y-auto md:overflow-hidden custom-scrollbar">
+    <div className="flex flex-col h-full bg-[#FFFFFF] py-8 px-1 md:px-7 overflow-y-auto md:overflow-hidden custom-scrollbar">
       <div className="mb-6 px-4 md:px-2">
         <h1 className="text-xl md:text-2xl font-bold text-[#121331]">문의 내역</h1>
         <p className="text-xs md:text-sm text-[#8a92a6] mt-1">내가 작성한 문의 내역과 관리자의 답변을 확인할 수 있습니다.</p>
@@ -234,7 +234,7 @@ const QnaHistory = () => {
               )}
             </div>
 
-            <button onClick={() => setSelectedQna(null)} className="mt-auto w-full py-4 bg-[#3530B8] text-white rounded-xl font-bold hover:bg-[#2a2594] transition-all">
+            <button onClick={() => setSelectedQna(null)} className="mt-auto w-full py-4 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-100 transition-all cursor-pointer rounded-xl">
               닫기
             </button>
           </div>

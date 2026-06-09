@@ -40,6 +40,8 @@ import FindId from './domains/auth/FindId';
 import FindPw from './domains/auth/FindPw';
 import QnaHistory from './domains/mypage/QnaHistory';
 import RoomHistory from './domains/mypage/RoomHistory';
+import useLoadingStore from './store/useLoadingStore';
+import Loading from './components/common/Loading';
 
 function App() {
   const loading = useLoadingStore(state => state.loading);
