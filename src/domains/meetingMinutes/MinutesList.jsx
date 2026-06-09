@@ -536,24 +536,23 @@ const MinutesList = () => {
         }
       `}</style>
 
-      <div className="mb-4 px-0 py-1 shrink-0 flex justify-between items-end">
+      <div className="mb-4 px-0 py-1 shrink-0 flex justify-between items-start">
         <div>
           <h1 className="text-2xl md:text-2xl font-bold text-gray-900 mb-1">회의록</h1>
           <p className="text-[0.85rem] text-gray-500 font-medium">회의 내용을 기록하고 참여자와 공유하세요</p>
         </div>
-        <button onClick={handleOpenCreate} className="hidden md:block bg-indigo-600 text-white text-[0.75rem] font-bold px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-100 mb-1">
-          + 회의록 작성
-        </button>
+        <div className="flex flex-col items-end">
+          <button onClick={handleOpenCreate} className="md:hidden bg-indigo-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100 hover:bg-indigo-700 active:scale-95 transition-all text-xl font-bold">+</button>
+          <button onClick={handleOpenCreate} className="hidden md:block bg-indigo-600 text-white text-[0.75rem] font-bold px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-100 mb-1">
+            + 회의록 작성
+          </button>
+        </div>
       </div>
 
-      <div className="md:hidden flex justify-end px-0 mb-4">
-        <button onClick={handleOpenCreate} className="bg-indigo-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100 hover:bg-indigo-700 active:scale-95 transition-all text-xl font-bold">+</button>
-      </div>
-
-      <div className="flex-1 relative flex gap-0 lg:gap-6 px-0 overflow-hidden min-h-0">
+      <div className={`flex-1 relative flex px-0 overflow-hidden min-h-0 ${(activeId || isCreating) ? 'gap-0 lg:gap-6' : 'gap-0'}`}>
         {/* 목록 섹션 */}
         <div className={`transition-all duration-500 ease-in-out bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full
-          ${(activeId || isCreating) ? 'w-0 opacity-0 invisible lg:w-auto lg:flex-1 lg:opacity-100 lg:visible' : 'w-full opacity-100 visible flex-1'}`}>
+          ${(activeId || isCreating) ? 'w-0 opacity-0 invisible lg:w-[55%] lg:opacity-100 lg:visible' : 'w-full opacity-100 visible flex-1'}`}>
 
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 md:px-8 border-b border-gray-50 bg-gray-50/10 shrink-0">
             <div className="flex items-center gap-3">
@@ -611,7 +610,7 @@ const MinutesList = () => {
 
         {/* 상세/작성 섹션 */}
         <div className={`transition-all duration-500 ease-in-out bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full
-          ${(activeId || isCreating) ? 'flex-1 lg:max-w-[45%] translate-x-0 opacity-100 visible' : 'w-0 translate-x-full opacity-0 invisible'}`}>
+          ${(activeId || isCreating) ? 'flex-1 lg:w-[45%] lg:flex-none translate-x-0 opacity-100 visible' : 'w-0 lg:w-0 translate-x-full opacity-0 invisible'}`}>
 
           {/* ── 상세 보기 ── */}
           {activeDetail && !isCreating && (
@@ -821,11 +820,11 @@ const MinutesList = () => {
                     {isEditing ? (
                       <>
                         <textarea rows="3" value={editMinutes.decisions} 
-                          maxLength={3000}
+                          maxLength={1000}
                           onChange={(e) => setEditMinutes({...editMinutes, decisions: e.target.value})}
                           className="w-full px-4 py-3 bg-white border border-gray-300 rounded-2xl text-sm text-gray-900 resize-none focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-300 transition-all custom-scrollbar" />
                         <div className="flex justify-end mt-1">
-                          <span className={`text-[10px] font-bold ${(editMinutes.decisions?.length || 0) >= 3000 ? 'text-red-400' : 'text-gray-300'}`}>{editMinutes.decisions?.length || 0}/3000</span>
+                          <span className={`text-[10px] font-bold ${(editMinutes.decisions?.length || 0) >= 1000 ? 'text-red-400' : 'text-gray-300'}`}>{editMinutes.decisions?.length || 0}/1000</span>
                         </div>
                       </>
                     ) : (
@@ -839,11 +838,11 @@ const MinutesList = () => {
                     {isEditing ? (
                       <>
                         <textarea rows="3" value={editMinutes.todos} 
-                          maxLength={1000}
+                          maxLength={300}
                           onChange={(e) => setEditMinutes({...editMinutes, todos: e.target.value})}
                           className="w-full px-4 py-3 bg-white border border-gray-300 rounded-2xl text-sm text-gray-900 resize-none focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-300 transition-all custom-scrollbar" />
                         <div className="flex justify-end mt-1">
-                          <span className={`text-[10px] font-bold ${(editMinutes.todos?.length || 0) >= 1000 ? 'text-red-400' : 'text-gray-300'}`}>{editMinutes.todos?.length || 0}/1000</span>
+                          <span className={`text-[10px] font-bold ${(editMinutes.todos?.length || 0) >= 300 ? 'text-red-400' : 'text-gray-300'}`}>{editMinutes.todos?.length || 0}/300</span>
                         </div>
                       </>
                     ) : (
@@ -1025,11 +1024,11 @@ const MinutesList = () => {
                   <div>
                     <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">결정 사항</label>
                     <textarea rows="3" placeholder="주요 결정 사항을 입력하세요" value={newMinutes.decisions}
-                      maxLength={3000}
+                      maxLength={1000}
                       onChange={(e) => setNewMinutes({...newMinutes, decisions: e.target.value})}
                       className="w-full px-4 py-3 bg-white border border-gray-300 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all font-bold text-gray-600 resize-none custom-scrollbar" />
                     <div className="flex justify-end mt-1">
-                      <span className={`text-[10px] font-bold ${(newMinutes.decisions?.length || 0) >= 3000 ? 'text-red-400' : 'text-gray-300'}`}>{newMinutes.decisions?.length || 0}/3000</span>
+                      <span className={`text-[10px] font-bold ${(newMinutes.decisions?.length || 0) >= 1000 ? 'text-red-400' : 'text-gray-300'}`}>{newMinutes.decisions?.length || 0}/1000</span>
                     </div>
                   </div>
 
@@ -1037,11 +1036,11 @@ const MinutesList = () => {
                   <div>
                     <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">할 일</label>
                     <textarea rows="3" placeholder="후속 조치 사항을 입력하세요" value={newMinutes.todos}
-                      maxLength={1000}
+                      maxLength={300}
                       onChange={(e) => setNewMinutes({...newMinutes, todos: e.target.value})}
                       className="w-full px-4 py-3 bg-white border border-gray-300 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all font-medium text-gray-600 resize-none custom-scrollbar" />
                     <div className="flex justify-end mt-1">
-                      <span className={`text-[10px] font-bold ${(newMinutes.todos?.length || 0) >= 1000 ? 'text-red-400' : 'text-gray-300'}`}>{newMinutes.todos?.length || 0}/1000</span>
+                      <span className={`text-[10px] font-bold ${(newMinutes.todos?.length || 0) >= 300 ? 'text-red-400' : 'text-gray-300'}`}>{newMinutes.todos?.length || 0}/300</span>
                     </div>
                   </div>
 
