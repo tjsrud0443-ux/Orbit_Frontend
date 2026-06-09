@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import useUserStore from '../../store/userStore';
 import Calendar from '../../components/common/Calendar';
 
+// 비품 전체 카테고리
+const CATEGORIES = ['전체', '사무용품', '전자기기', '가구', '네트워크 장비'];
 // ── 비품 추가 모달 ──────────────────────────────────────────────
 const USAGE_TYPES = ['개발용', '일반용', '비품 교체'];
 
@@ -20,10 +22,23 @@ const SUPPLY_CATALOG = [
 const AddItemModal = ({ onAdd, onClose }) => {
   const [keyword, setKeyword] = useState('');
   const [selected, setSelected] = useState(null);
+  const [currentCategory, setCurrentCategory] = useState('전체'); // 카테고리 상태 추가
+
   const [qty, setQty] = useState(1);
   const [usageType, setUsageType] = useState('개발용');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  // 카테고리 필터링 + 검색어 필터링을 동시에 처리
+  const filtered = SUPPLY_CATALOG.filter(item => {
+    // 1. 카테고리 조건 체크
+    const matchesCategory = currentCategory === '전체' || item.category === currentCategory; 
+    // 2. 검색어 조건 체크
+    const matchesKeyword = item.name.toLowerCase().includes(keyword.toLowerCase()) || 
+                           item.model.toLowerCase().includes(keyword.toLowerCase());
+    
+    return matchesCategory && matchesKeyword;
+  });
 
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
@@ -32,13 +47,10 @@ const AddItemModal = ({ onAdd, onClose }) => {
         setIsDropdownOpen(false);
       }
     };
+    //외부 클릭 감지는 React 이벤트 시스템만으로는 처리가 어려워서 DOM 직접 접근이 불가피
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const filtered = keyword.trim()
-    ? SUPPLY_CATALOG.filter(s => s.name.toLowerCase().includes(keyword.toLowerCase()) || s.model.toLowerCase().includes(keyword.toLowerCase()))
-    : SUPPLY_CATALOG;
 
   const handleSelect = (item) => {
     setSelected(item);
@@ -65,6 +77,32 @@ const AddItemModal = ({ onAdd, onClose }) => {
           </button>
         </div>
 
+        {/* 2. 카테고리 선택 칩 영역 배치 */}
+        <div className="flex flex-col gap-1.5 mb-4">
+          <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider">
+            카테고리 분류
+          </label>
+          <div className="flex flex-wrap gap-1.5">
+            {CATEGORIES.map(cat => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => {
+                  setCurrentCategory(cat);
+                  setSelected(null); // 카테고리 바꾸면 선택했던 품목 해제
+                  setIsDropdownOpen(true); // 편의성을 위해 드롭다운 즉시 열기
+                }}
+                className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all
+                  ${currentCategory === cat 
+                    ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-100' 
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* 비품 검색 */}
         <div className="flex flex-col gap-1.5 mb-5">
           <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider">
@@ -88,6 +126,7 @@ const AddItemModal = ({ onAdd, onClose }) => {
                 <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
               </svg>
             </div>
+
             {/* 검색 드롭다운 */}
             {isDropdownOpen && filtered.length > 0 && !selected && (
               <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden max-h-60 overflow-y-auto custom-scrollbar py-2">
@@ -123,6 +162,12 @@ const AddItemModal = ({ onAdd, onClose }) => {
                     <span className="text-xs text-gray-400 shrink-0">재고 {item.stock}개</span>
                   </div>
                 ))}
+              </div>
+            )}
+            {/* 아무 검색 결과도 없을 때 보여줄 UI */}
+            {isDropdownOpen && filtered.length === 0 && !selected && (
+              <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 py-6 text-center text-xs text-gray-400 font-medium">
+                일치하는 비품이 없습니다.
               </div>
             )}
           </div>
@@ -428,7 +473,7 @@ const SupplyRequest = () => {
           </button>
           <button
             onClick={handleSubmit}
-            className="px-7 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all"
+            className="px-7 py-2.5 bg-[#3530B8] text-white text-sm font-bold rounded-xl hover:bg-[#4F4DD0] shadow-md shadow-indigo-100 transition-all"
           >
             신청
           </button>
