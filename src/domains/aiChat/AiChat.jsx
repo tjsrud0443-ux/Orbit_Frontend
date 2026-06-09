@@ -364,9 +364,12 @@ const AiChat = () => {
 
                 {/* 임베딩 출처 메타데이터 바인딩 연동 문서 구역 */}
                 {msg.sourceFileName?.map(source => (
-                  <div key={source.rag_doc_seq} className="mt-4 pt-3 border-t border-[#edf2f9] flex items-center justify-between gap-4">
-                    <span className="text-xs font-medium text-[#8a92a6] truncate min-w-0"><FontAwesomeIcon icon={faFileAlt} className="mr-1.5" />{source.file_name}</span>
-                    <a href={`http://localhost/file/download/${source.sysname}?token=${token}`} download>
+                  <div key={source.rag_doc_seq} className="mt-4 pt-3 border-t border-[#edf2f9] flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4">
+                    <span className="text-xs font-medium text-[#8a92a6] whitespace-normal md:truncate min-w-0">
+                      <FontAwesomeIcon icon={faFileAlt} className="mr-1.5" />
+                      {source.file_name}
+                    </span>
+                    <a href={`http://localhost/file/download/${source.sysname}?token=${token}`} download className="self-end md:self-auto">
                       <button className="text-[10px] font-medium bg-white border border-[#edf2f9] px-2 py-1 rounded hover:bg-[#F0F4FF] transition-colors flex-shrink-0 cursor-pointer">
                         📄 다운로드
                       </button>
