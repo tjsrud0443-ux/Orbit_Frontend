@@ -6,7 +6,7 @@ import Calendar from '../../components/common/Calendar';
 import useEmployeeStore from '../../store/useEmployeeStore';
 import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
-import { getAllMyMeetRsvn, getAllRooms, getMeetRsvnDetail, getOccupiedTimes } from './mypageApi';
+import { getAllMyMeetRsvn, getAllRooms, getMeetRsvnDetail, getOccupiedTimes, updateMeetRsvn } from './mypageApi';
 import useLoadingStore from '../../store/useLoadingStore';
 
 const RoomHistory = () => {
@@ -106,16 +106,24 @@ const RoomHistory = () => {
     hideLoading();
   }
 
-  const handleEditClick = (res) => {
+  const handleEditClick = async (res) => {
     setSelectedReservation(null);
-    setEditingReservation(res);
-    setEditForm({
-       ...res,
-      date: getDate(res.start_dt),
-      startTime: getTime(res.start_dt),
-      endTime: getTime(res.end_dt),
-      attendees: res.attendees ?? []
-    });
+    showLoading();
+    try {
+      const resp = await getMeetRsvnDetail(res.rsvn_seq);
+      const detail = resp.data[0];
+      setEditingReservation(detail);
+      setEditForm({
+        ...detail,
+        date: getDate(detail.start_dt),
+        startTime: getTime(detail.start_dt),
+        endTime: getTime(detail.end_dt),
+        attendees: detail.attendees ?? []
+      });
+    } catch (err) {
+      console.error('예약 상세 조회 실패', err);
+    }
+    hideLoading();
   };
 
   const handleCancelReservation = (id) => {
@@ -133,8 +141,31 @@ const RoomHistory = () => {
   const handleUpdateSubmit = () => {
     if (isTimeInvalid) return;
     setReservations(reservations.map(r => r.rsvn_seq === editForm.rsvn_seq ? editForm : r));
-    setEditingReservation(null);
-    alert('수정이 완료되었습니다.');
+
+    const originAttendees = editingReservation.attendees ?? [];
+    const currentAttendees = editForm.attendees;
+
+    const removedAttendees = originAttendees.filter(
+      origin => !currentAttendees.some(current => current.id === origin.id)
+    ).map(a => ({ ...a, users_id: a.id }));
+
+    const addedAttendees = currentAttendees.filter(
+      current => !originAttendees.some(origin => origin.id === current.id)
+    ).map(a => ({ ...a, users_id: a.id }));
+
+    const updateData = {
+      ...editForm,
+      start_dt: `${editForm.date} ${editForm.startTime}:00`,
+      end_dt: `${editForm.date} ${editForm.endTime}:00`,
+      removedAttendees,
+      addedAttendees
+    };
+
+    updateMeetRsvn(updateData).then(() => {
+      loadRsvn();
+      setEditingReservation(null);
+      alert('수정이 완료되었습니다.');
+    });
   };
 
   const isPastTime = (time, dateStr) => {
