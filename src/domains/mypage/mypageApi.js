@@ -18,3 +18,5 @@ export const deleteMyQuestions = (question_seq) => maxios.delete("/mypage/delete
 // 내 회의실 신청 내역
 export const getAllMyMeetRsvn = () => maxios.get("/mypage/getAllMyMeetRsvn");
 export const getMeetRsvnDetail = (rsvn_seq) => maxios.get(`/mypage/getMeetRsvnDetail/${rsvn_seq}`);
+export const getAllRooms = () => maxios.get("/mypage/getAllRooms");
+export const getOccupiedTimes = (room_seq, date, rsvn_seq) => maxios.get("/mypage/getOccupiedTimes", {params : { room_seq, date, rsvn_seq }});

@@ -5,7 +5,7 @@ import Calendar from '../../components/common/Calendar';
 import useEmployeeStore from '../../store/useEmployeeStore';
 import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
-import { getAllMyMeetRsvn, getMeetRsvnDetail } from './mypageApi';
+import { getAllMyMeetRsvn, getAllRooms, getMeetRsvnDetail, getOccupiedTimes } from './mypageApi';
 import useLoadingStore from '../../store/useLoadingStore';
 
 const RoomHistory = () => {
@@ -18,6 +18,9 @@ const RoomHistory = () => {
   const [reservations, setReservations] = useState([]);
   const getTime = (dt) => dt?.slice(11, 16);
   const getDate = (dt) => dt?.slice(0, 10);
+
+  const [meetingRooms, setMeetingRooms] = useState([]);
+  const [occupiedTimes, setOccupiedTimes] = useState([]);
 
   // Pagination state
   const [page, setPage] = useState(1);
@@ -55,8 +58,24 @@ const RoomHistory = () => {
   };
 
   useEffect(() => {
+    showLoading();
     loadRsvn();
+    hideLoading();
   }, []);
+
+  useEffect(() => {
+    getAllRooms().then(resp => {
+      setMeetingRooms(resp.data);
+    })
+  })
+
+  useEffect(() => {
+    if(!editForm.room_seq || !editForm.date) return;
+
+    getOccupiedTimes(editForm.room_seq, editForm.date, editingReservation?.rsvn_seq).then(resp => {
+      setOccupiedTimes(resp.data);
+    })
+  }, [editForm.room_seq, editForm.date]);
 
   useEffect(() => {
     fetchEmployees();
@@ -72,8 +91,6 @@ const RoomHistory = () => {
     showLoading();
     try {
       const resp = await getMeetRsvnDetail(res.rsvn_seq);
-      console.log('resp : ', resp);
-      console.log('resp.data: ', resp.data);
       setSelectedReservation(resp.data[0]);
     } catch (err) {
       console.error('예약 상세 조회 실패: ', err);
@@ -81,10 +98,16 @@ const RoomHistory = () => {
     hideLoading();
   }
 
-  const handleEditClick = (reservation) => {
+  const handleEditClick = (res) => {
     setSelectedReservation(null);
-    setEditingReservation(reservation);
-    setEditForm({ ...reservation });
+    setEditingReservation(res);
+    setEditForm({
+       ...res,
+      date: getDate(res.start_dt),
+      startTime: getTime(res.start_dt),
+      endTime: getTime(res.end_dt),
+      attendees: res.attendees ?? []
+    });
   };
 
   const handleCancelReservation = (id) => {
@@ -107,11 +130,9 @@ const RoomHistory = () => {
 
   // Time overlap logic (Mock)
   const timeSlots = [
-    '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'
+    '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
+    '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'
   ];
-
-  // Mock occupied times for the selected room and date
-  const occupiedTimes = ['11:00', '15:00']; 
 
   const updateDropdownPos = useCallback(() => {
     if (inputRef.current) {
@@ -241,18 +262,22 @@ const RoomHistory = () => {
 
                   {/* Actions */}
                   <div className="flex-shrink-0 flex justify-center gap-2">
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleEditClick(res); }}
-                      className="px-2.5 py-1.5 text-[0.625rem] md:text-xs font-bold text-[#3530B8] bg-[#F0F4FF] rounded-lg hover:bg-[#3530B8] hover:text-white transition-all"
-                    >
-                      수정
-                    </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleCancelReservation(res.rsvn_seq); }}
-                      className="px-2.5 py-1.5 text-[0.625rem] md:text-xs font-bold text-red-500 bg-red-50 rounded-lg hover:bg-red-500 hover:text-white transition-all"
-                    >
-                      취소
-                    </button>
+                    {new Date(res.start_dt) > new Date() && (
+                      <>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleEditClick(res); }}
+                          className="px-2.5 py-1.5 text-[0.625rem] md:text-xs font-bold text-[#3530B8] bg-[#F0F4FF] rounded-lg hover:bg-[#3530B8] hover:text-white transition-all"
+                        >
+                          수정
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleCancelReservation(res.rsvn_seq); }}
+                          className="px-2.5 py-1.5 text-[0.625rem] md:text-xs font-bold text-red-500 bg-red-50 rounded-lg hover:bg-red-500 hover:text-white transition-all"
+                        >
+                          취소
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))
@@ -289,12 +314,15 @@ const RoomHistory = () => {
                   <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1.5 ml-1">회의실 선택</label>
                   <select 
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-medium focus:outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 transition-all"
-                    value={editForm.room_name}
-                    onChange={(e) => setEditForm({ ...editForm, room_name: e.target.value })}
+                    value={editForm.room_seq}
+                    onChange={(e) => {
+                      const selected = meetingRooms.find(m => m.room_seq === Number(e.target.value));
+                      setEditForm({ ...editForm, room_seq: selected.room_seq, room_name: selected.room_name });
+                    }}
                   >
-                    <option value="대회의실 A">대회의실 A</option>
-                    <option value="중회의실 B">중회의실 B</option>
-                    <option value="소회의실 C">소회의실 C</option>
+                    {meetingRooms.map(room => (
+                      <option key={room.room_seq} value={room.room_seq}>{room.room_name}</option>
+                    ))}
                   </select>
                 </div>
 
