@@ -146,12 +146,12 @@ const RoomHistory = () => {
     const currentAttendees = editForm.attendees;
 
     const removedAttendees = originAttendees.filter(
-      origin => !currentAttendees.some(current => current.id === origin.id)
-    ).map(a => ({ ...a, users_id: a.id }));
+      origin => !currentAttendees.some(current => current.users_id === origin.users_id)
+    );
 
     const addedAttendees = currentAttendees.filter(
-      current => !originAttendees.some(origin => origin.id === current.id)
-    ).map(a => ({ ...a, users_id: a.id }));
+      current => !originAttendees.some(origin => origin.users_id === (current.users_id ?? current.id))
+    ).map(a => ({ users_id: a.users_id ?? a.id }));
 
     const updateData = {
       ...editForm,
@@ -180,7 +180,6 @@ const RoomHistory = () => {
 
   const isTimeInvalid = editForm.startTime >= editForm.endTime;
 
-  // Time overlap logic (Mock)
   const timeSlots = [
     '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
     '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'
