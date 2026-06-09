@@ -14,6 +14,7 @@ import {
 import { IMAGES } from '../../images/images';
 import { deleteChat, getDetailChat, inputMsg, insertQuestion, sideChatTitleList } from './aiChatApi';
 import { getGroup } from '../departments/departmentsApi';
+import useAuthStore from '../../store/authStore';
 
 const AiChat = () => {
   // --- 1. States ---
@@ -36,7 +37,7 @@ const AiChat = () => {
   const [selectedDept, setSelectedDept] = useState(null);
   const [inputQuestion, setInputQuestion] = useState("");
   const [deptList, setDeptList] = useState([]);
-
+  const token = useAuthStore(state => state.token);
   // --- 2. Effects ---
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -364,7 +365,11 @@ const AiChat = () => {
                 {msg.sourceFileName?.map(source => (
                   <div key={source.rag_doc_seq} className="mt-4 pt-3 border-t border-[#edf2f9] flex items-center justify-between gap-4">
                     <span className="text-xs font-medium text-[#8a92a6] truncate min-w-0"><FontAwesomeIcon icon={faFileAlt} className="mr-1.5" />{source.file_name}</span>
-                    <button className="text-[10px] font-medium bg-white border border-[#edf2f9] px-2 py-1 rounded hover:bg-[#F0F4FF] transition-colors flex-shrink-0 cursor-pointer">📄 다운로드</button>
+                    <a href={`http://localhost/file/download/${source.sysname}?token=${token}`} download>
+                      <button className="text-[10px] font-medium bg-white border border-[#edf2f9] px-2 py-1 rounded hover:bg-[#F0F4FF] transition-colors flex-shrink-0 cursor-pointer">
+                        📄 다운로드
+                      </button>
+                    </a>
                   </div>
                 ))}
               </div>
