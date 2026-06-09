@@ -2,40 +2,50 @@
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css'; // 기본 스노우 테마 CSS 로드
 import { maxios } from "../../api/axiosConfig"; 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import useUserStore from '../../store/userStore';
-import { insertBoard, insertEditorImage } from './boardApi';
+import { insertBoard, insertEditorImage, updateBoard } from './boardApi';
 
-const CATEGORIES_HR   = ['공지', '경조', '생일', '승진', '부서 이동'];
+const CATEGORIES_HR   = ['공지', '경조', '생일', '승진', '부서 이동', '자유'];
 
 const BoardWrite = () => {
   const { user } = useUserStore();
   const navigate = useNavigate();
+  const location = useLocation();
+  const editPost = location.state?.post ?? null;
+  const isEdit = !!editPost; // 수정 모드 여부
   const quillRef = useRef(null); // 💡 에디터 객체에 직접 접근하기 위한 Ref 추가
   const fileInputRef = useRef(null);
 
-  const [form, setForm] = useState({
-    category:'',
-    title: '',
-    content: '',
-  });
-
-  const [files, setFiles] = useState([]); 
-  const [errors, setErrors] = useState({});
 
   const isHR = user?.auth_group?.includes('HR');
 
-  // 바이트 계산 유틸리티
-  const getByteLength = (str) => {
-    return new TextEncoder().encode(str).length;
-  };
+  const [form, setForm] = useState({
+    category: editPost?.category || (isHR ? CATEGORIES_HR[0] : '자유'),
+    title:    editPost?.title   || '',
+    content:  editPost?.content || '',
+  });
 
-  // 제목 변경 핸들러 (바이트 제한 적용)
+  // 기존 파일 (서버에 이미 있는 것)
+  const [existingFiles, setExistingFiles] = useState(editPost?.files || []);
+  // 삭제할 파일 seq 목록
+  const [deletedFileSeqs, setDeletedFileSeqs] = useState([]);
+  //새로 등록할 파일
+  const [files, setFiles] = useState([]); 
+  const [errors, setErrors] = useState({});
+
+  // 제목 변경 핸들러 (글자수 제한 적용)
   const handleTitleChange = (e) => {
     const val = e.target.value;
-    if (getByteLength(val) <= 200) {
+    if ([...val].length <= 66) {
       set('title', val);
     }
+  };
+
+  // URL 추출 유틸 함수(수정->에디터 이미지 삭제용)
+  const extractImageUrls = (html) => {
+    const matches = html.matchAll(/<img[^>]+src="([^"]+)"/g);
+    return [...matches].map(m => m[1]);
   };
 
   // 💡 [달라진 점 2] 툴바 및 핸들러 매핑 최적화
@@ -71,10 +81,15 @@ const BoardWrite = () => {
       });
     };
   };
+  const isMobile = window.innerWidth < 768;
 
 return {   
   toolbar: {
-      container: [
+      container: isMobile ? [
+        ['bold', 'italic', 'underline'],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        ['image', 'link'],
+      ] :[
         [{ header: [1, 2, 3, false] }],
         ['bold', 'italic', 'underline', 'strike'],
         [{ color: [] }, { background: [] }],
@@ -99,6 +114,15 @@ return {
     if (errors[key]) setErrors(prev => ({ ...prev, [key]: false }));
   };
 
+  const handleCategoryChange = (e) => {
+    const newCategory = e.target.value;
+    set('category', newCategory);
+    // 제목 앞의 기존 [태그] 제거 후 새 태그 삽입
+    const stripped = form.title.replace(/^\[[^\]]*\]\s*/, '');
+    //stripped는 기존 제목에서 [이전태그] 를 제거한 순수 제목 텍스트
+     set('title', newCategory === '자유' ? stripped : `[${newCategory}] ${stripped}`);
+  };
+
   const handleEditorChange = (value) => {
     const cleanValue = value === '<p><br></p>' ? '' : value;
     set('content', cleanValue);
@@ -118,6 +142,11 @@ return {
 
   const removeFile = (idx) => setFiles(prev => prev.filter((_, i) => i !== idx));
 
+  const removeExistingFile = (fileSeq) => {
+    setExistingFiles(prev => prev.filter(f => f.file_seq !== fileSeq));
+    setDeletedFileSeqs(prev => [...prev, fileSeq]);
+  };
+
   const formatSize = (bytes) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -129,7 +158,7 @@ return {
     const e = {};
     if (!form.title.trim()) {
       e.title = true;
-    } else if (getByteLength(form.title) > 200) {
+    } else if ([...form.title].length > 66) {
       e.title = true;
     }
     
@@ -155,21 +184,47 @@ return {
     formData.append('category', isHR ? form.category : '자유');
     formData.append('title', form.title);
     formData.append('content', form.content); // Quill의 HTML 문자열이 그대로 전송됨
-
     // 일반 첨부파일 배열 바이딩
     files.forEach((file) => {
-      formData.append('files', file); 
+      formData.append(isEdit ? 'newFiles' : 'files', file); 
     });
-      // 글 등록
-    insertBoard(formData).then((resp)=>{
-      if (resp.status === 200 || resp.status === 201) {
+
+    if (isEdit) {
+      //HTML 문자열에서 <img src="URL"> 패턴을 찾아서 URL만 배열로 뽑아주는 함수
+      const extractImageUrls = (html) => {
+        const matches = html.matchAll(/<img[^>]+src="([^"]+)"/g);
+        return [...matches].map(m => m[1]);
+      };
+      //수정 전 원본 이미지 URL
+      const originalUrls = extractImageUrls(editPost.content);
+      //현재 에디터에 남아있는 content에서 이미지 URL 목록 추출
+      const currentUrls = extractImageUrls(form.content);
+      //원본에는 있었는데 현재에는 없는 URL(삭제한) 추추ㄹ
+      const deletedImageUrls = originalUrls.filter(url => !currentUrls.includes(url));
+
+      //삭제된 이미지 URL들을 formData에 담아 백엔드로 전송
+      deletedImageUrls.forEach(url => formData.append('deletedImageUrls', url));
+      //첨부파일
+      deletedFileSeqs.forEach(seq => formData.append('deletedFileSeqs', seq));
+    }
+
+    if (isEdit) {
+      updateBoard(editPost.post_seq, formData).then(() => {
+        alert('게시글이 수정되었습니다.');
+        navigate('/board');
+      }).catch(err => {
+        console.error(err);
+        alert('오류가 발생했습니다.');
+      });
+    } else {
+      insertBoard(formData).then(() => {
         alert('게시글이 등록되었습니다.');
-        navigate('/board'); // 등록 후 게시판 목록으로 이동
-      }
-    }).catch((error) =>{
-      console.error('게시글 등록 실패:', error);
-      alert('게시글 등록 중 서버 오류가 발생했습니다.');
-    })
+        navigate('/board');
+      }).catch(err => {
+        console.error(err);
+        alert('오류가 발생했습니다.');
+      });
+    }
   };
 
   const handleCancel = () => { navigate(-1); };
@@ -188,7 +243,7 @@ return {
 
         {/* 카드 헤더 */}
         <div className="flex items-center justify-between px-6 md:px-8 py-5 border-b border-gray-50">
-          <h3 className="text-sm font-extrabold text-indigo-950">게시글 작성</h3>
+          <h3 className="text-sm font-extrabold text-indigo-950">{isEdit ? '게시글 수정' : '게시글 작성'}</h3>
         </div>
 
         {/* 폼 본문 */}
@@ -212,10 +267,10 @@ return {
                   <div className="relative">
                     <select
                       value={form.category}
-                      onChange={e => set('category', e.target.value)}
+                      onChange={handleCategoryChange}
                       className="w-full appearance-none px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-indigo-600/5 focus:border-indigo-400 transition-all pr-9"
                     >
-                      {categories.map(c => (
+                      {CATEGORIES_HR.map(c => (
                         <option key={c} value={c}>{c}</option>
                       ))}
                     </select>
@@ -232,8 +287,8 @@ return {
                   <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider block">
                     제목
                   </label>
-                  <span className={`text-[10px] font-bold ${getByteLength(form.title) >= 200 ? 'text-red-500' : 'text-gray-400'}`}>
-                    {getByteLength(form.title)} / 200 bytes
+                  <span className={`text-[10px] font-bold ${[...form.title].length >= 66 ? 'text-red-500' : 'text-gray-400'}`}>
+                    {[...form.title].length} / 66자
                   </span>
                 </div>
                 <input
@@ -249,7 +304,7 @@ return {
                 />
                 {errors.title && (
                   <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">
-                    {form.title.trim() === '' ? '제목을 입력해주세요.' : '제목은 200바이트 이내로 입력해주세요.'}
+                    {form.title.trim() === '' ? '제목을 입력해주세요.' : '제목은 66자 이내로 입력해주세요.'}
                   </p>
                 )}
               </div>
@@ -280,6 +335,10 @@ return {
                   border-radius: 0 0 16px 16px !important; /* rounded-b-2xl */
                   font-size: 0.875rem;
                 }
+                /* Quill 에디터 내부 스크롤 제거 */
+                .ql-editor {
+                  min-height: 400px;
+                }
 
                 /* ✅ 에러 상태 */
                 .ql-error .ql-toolbar.ql-snow {
@@ -292,7 +351,7 @@ return {
               `}</style>
               {/* 에디터 컴포넌트 감싸기 및 Tailwind 커스텀 */}
               <div className={
-                `w-full min-h-[360px] pb-12
+                `w-full min-h-[500px] pb-12
                 [&>.ql-toolbar]:bg-gray-50 // 툴바 배경색 연한 회색
                 [&>.ql-toolbar]:border-gray-200 // 툴바 테두리 연한 회색
                 [&>.ql-toolbar]:rounded-t-2xl // 툴바 위쪽만 둥글게
@@ -307,7 +366,7 @@ return {
                   value={form.content}
                   onChange={handleEditorChange}
                   modules={modules}
-                  className="h-72"
+                  className=""
                   placeholder="내용을 입력하세요..."
                 />
               </div>
@@ -339,6 +398,27 @@ return {
                 <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileAdd} />
               </div>
 
+              {/* 수정모드 파일 */}
+              {isEdit && existingFiles.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {existingFiles.map((file) => (
+                    <div key={file.file_seq} className="flex items-center gap-3 px-4 py-2.5 bg-white border border-gray-100 rounded-2xl group hover:border-indigo-100 transition-all">
+                      <svg className="w-4 h-4 text-indigo-400 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                      </svg>
+                      <span className="flex-1 text-xs font-bold text-gray-600 truncate">{file.file_oriname}</span>
+                      <span className="text-[11px] text-gray-400 shrink-0">{(file.file_size / 1024).toFixed(1)} KB</span>
+                      <button onClick={() => removeExistingFile(file.file_seq)}
+                        className="text-gray-300 hover:text-red-400 transition-colors ml-1">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* 파일 목록 */}
               {files.length > 0 && (
                 <div className="mt-3 space-y-2">
@@ -367,7 +447,7 @@ return {
                 onClick={handleSubmit}
                 className="flex-1 py-3.5 bg-indigo-600 text-white text-sm font-bold rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-md shadow-indigo-100"
               >
-                등록
+                {isEdit ? '수정 완료' : '등록'}
               </button>
               <button
                 onClick={handleCancel}
