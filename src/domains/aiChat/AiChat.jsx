@@ -268,7 +268,7 @@ const AiChat = () => {
       <button onClick={handleNewChat} className="w-full bg-[#3530B8] text-white rounded-xl py-3 font-bold text-sm mb-8 hover:bg-[#2a2594] transition-all">
         <FontAwesomeIcon icon={faPlus} className="mr-2" /> 새 대화 시작
       </button>
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
         <h3 className="text-xs font-bold text-[#8a92a6] uppercase mb-4 px-2">최근 대화</h3>
         {chatHistory.map(chat => (
           <div
@@ -311,6 +311,10 @@ const AiChat = () => {
         .animate-fadeIn {
           animation: fadeIn 0.3s ease-out forwards;
         }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
       `}</style>
       {/* 1. Desktop Sidebar */}
       <div className="hidden md:flex md:w-80 flex-shrink-0 h-full border-r border-[#edf2f9]">
@@ -433,7 +437,7 @@ const AiChat = () => {
                 <FontAwesomeIcon icon={isDropdownOpen ? faChevronUp : faChevronDown} className="text-slate-400 text-xs" />
               </div>
               {isDropdownOpen && (
-                <div className="absolute top-full left-0 w-full bg-white border border-[#edf2f9] rounded-lg mt-1 shadow-lg z-[70] max-h-48 overflow-y-auto">
+                <div className="absolute top-full left-0 w-full bg-white border border-[#edf2f9] rounded-lg mt-1 shadow-lg z-[70] max-h-48 overflow-y-auto custom-scrollbar">
                   {deptList.map(dept => (
                     <div
                       key={dept.deptSeq}
