@@ -136,25 +136,24 @@ const BoardList = () => {
     <div className="w-full h-screen lg:h-full flex flex-col p-6 md:p-8 lg:px-10 box-border bg-white font-sans">
 
       {/* 페이지 헤더 */}
-      <div className="mb-4 flex justify-between items-end shrink-0">
+      <div className="mb-4 flex justify-between items-start shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">사내 게시판</h1>
           <p className="text-[0.85rem] text-gray-500 font-medium mb-3">공지사항, 이벤트, 게시글을 확인하세요</p>
         </div>
-        <button className="hidden md:block bg-indigo-600 text-white text-[0.75rem] font-bold 
-        px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-100 mb-1"
-        onClick={nav}>
-          + 글쓰기
-        </button>
-      </div>
-
-      {/* 모바일 글쓰기 버튼 */}
-      <div className="md:hidden flex justify-end mb-4">
-        <button className="bg-indigo-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100 text-xl font-bold"
-        onClick={nav} 
-        >
-          +
-        </button>
+        <div className="flex flex-col items-end">
+          <button 
+            className="md:hidden bg-indigo-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100 text-xl font-bold"
+            onClick={nav}
+          >
+            +
+          </button>
+          <button className="hidden md:block bg-indigo-600 text-white text-[0.75rem] font-bold 
+          px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-100 mt-4 mb-1"
+          onClick={nav}>
+            + 글쓰기
+          </button>
+        </div>
       </div>
 
       {/* 카드 */}
