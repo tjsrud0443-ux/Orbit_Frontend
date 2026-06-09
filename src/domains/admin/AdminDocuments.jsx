@@ -151,7 +151,14 @@ const AdminDocuments = () => {
         if (uploadedFiles.length > 0) {
           formData.append('file', uploadedFiles[0]);
         }
-        await editDocument(formData);
+        handleModalClose();
+        showLoading("document");
+        try {
+          await editDocument(formData);
+          await loadDocuments();
+        } finally {
+          hideLoading();
+        }
         alert('문서가 수정되었습니다.');
       } else {
         if (user && user.id) {
