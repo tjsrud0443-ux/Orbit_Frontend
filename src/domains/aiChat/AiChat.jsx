@@ -133,6 +133,8 @@ const AiChat = () => {
     inputMsg(chatData)
       .then(resp => {
         const aiResponseText = resp.data.aiAnswer;
+        const sourceFileName = resp.data.resultSources || [];
+        console.log("출처 문서", resp.data)
 
         if (!currentChatSeq) {
           setCurrentChatSeq(resp.data.chat_seq);
@@ -146,7 +148,7 @@ const AiChat = () => {
 
         setMessages(prev => prev.map(msg => {
           if (msg.id === aiMessageId) {
-            return { ...msg, content: "", isTyping: true, showInquiry: needInquiryButton };
+            return { ...msg, content: "", isTyping: true, showInquiry: needInquiryButton, sourceFileName: sourceFileName };
           }
           return msg;
         }));
@@ -359,12 +361,12 @@ const AiChat = () => {
                 )}
 
                 {/* 임베딩 출처 메타데이터 바인딩 연동 문서 구역 */}
-                {!msg.isTyping && msg.role === 'AI' && !msg.showInquiry && (
-                  <div className="mt-4 pt-3 border-t border-[#edf2f9] flex items-center justify-between gap-4">
-                    <span className="text-xs font-medium text-[#8a92a6] truncate min-w-0"><FontAwesomeIcon icon={faFileAlt} className="mr-1.5" /> 사내_업무_규정_통합본.pdf</span>
+                {msg.sourceFileName?.map(source => (
+                  <div key={source.rag_doc_seq} className="mt-4 pt-3 border-t border-[#edf2f9] flex items-center justify-between gap-4">
+                    <span className="text-xs font-medium text-[#8a92a6] truncate min-w-0"><FontAwesomeIcon icon={faFileAlt} className="mr-1.5" />{source.file_name}</span>
                     <button className="text-[10px] bg-white border border-[#edf2f9] px-2 py-1 rounded hover:bg-slate-50 transition-colors flex-shrink-0">📄 다운로드</button>
                   </div>
-                )}
+                ))}
               </div>
             </div>
           ))}
