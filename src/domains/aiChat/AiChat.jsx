@@ -18,7 +18,7 @@ import { getGroup } from '../departments/departmentsApi';
 const AiChat = () => {
   // --- 1. States ---
   const [messages, setMessages] = useState([
-    { id: Date.now(), role: 'AI', content: '안녕하세요! Orbit 사내 업무지원 AI 비서입니다. 인사, 규정, 복리후생 등 궁금하신 내용을 질문해주세요.', isTyping: false }
+    { id: Date.now(), role: 'AI', content: '안녕하세요! Orbit AI 비서입니다.\n회사 문서와 회의록을 기반으로 필요한 정보를 찾아 답변해 드립니다. 궁금하신 내용을 질문해 주세요!', isTyping: false }
   ]);
 
   const [input, setInput] = useState("");
@@ -85,7 +85,7 @@ const AiChat = () => {
           {
             id: Date.now(),
             role: 'AI',
-            content: '안녕하세요! Orbit 사내 업무지원 AI 비서입니다. 인사, 규정, 복리후생 등 궁금하신 내용을 질문해주세요.',
+            content: '안녕하세요! Orbit AI 비서입니다.\n회사 문서와 회의록을 기반으로 필요한 정보를 찾아 답변해 드립니다. 궁금하신 내용을 질문해 주세요!',
             isTyping: false
           }
         ]);
@@ -100,7 +100,7 @@ const AiChat = () => {
       {
         id: Date.now(),
         role: 'AI',
-        content: '안녕하세요! Orbit 사내 업무지원 AI 비서입니다. 인사, 규정, 복리후생 등 궁금하신 내용을 질문해주세요.',
+        content: '안녕하세요! Orbit AI 비서입니다.\n회사 문서와 회의록을 기반으로 필요한 정보를 찾아 답변해 드립니다. 궁금하신 내용을 질문해 주세요!',
         isTyping: false
       }
     ]);
@@ -157,7 +157,7 @@ const AiChat = () => {
         console.error("AI 통신 실패:", err);
         setMessages(prev => prev.map(msg => {
           if (msg.id === aiMessageId) {
-            return { ...msg, content: "서버와의 연결이 원활하지 않습니다. 잠시 후 다시 시도해주세요.", isTyping: false };
+            return { ...msg, content: "서버와의 연결이 원활하지 않습니다. 잠시 후 다시 시도해 주세요.", isTyping: false };
           }
           return msg;
         }));
@@ -225,11 +225,11 @@ const AiChat = () => {
   // 🔥 [수정] 문의 제출 성공 시 메시지 상태 변경
   const handleInsertQuestion = () => {
     if (!selectedDept) {
-      alert("부서를 선택해주세요.");
+      alert("부서를 선택해 주세요.");
       return;
     }
     if (!inputQuestion.trim()) {
-      alert("문의 내용을 작성해주세요.");
+      alert("문의 내용을 작성해 주세요.");
       return;
     }
 
@@ -379,7 +379,7 @@ const AiChat = () => {
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
               className="flex-1 bg-transparent py-2 text-sm outline-none"
-              placeholder="인사, 연차, 회사 복리후생에 대해 질문해보세요..."
+              placeholder="문서나 회의록에 대해 궁금한 내용을 질문해보세요..."
             />
             <button onClick={handleSend} className="bg-[#3530B8] text-white w-10 h-10 rounded-lg flex items-center justify-center hover:bg-[#2a2594] transition-all">
               <FontAwesomeIcon icon={faPaperPlane} />
