@@ -4,20 +4,28 @@ import Pagination from '../../components/common/Pagination';
 import Calendar from '../../components/common/Calendar';
 import useEmployeeStore from '../../store/useEmployeeStore';
 import useUserStore from '../../store/userStore';
-import { getAllMyMeetRsvn } from './mypageApi';
+import useAuthStore from '../../store/authStore';
+import { getAllMyMeetRsvn, getMeetRsvnDetail } from './mypageApi';
+import useLoadingStore from '../../store/useLoadingStore';
 
 const RoomHistory = () => {
   const { allEmployees, fetchEmployees } = useEmployeeStore();
   const { user } = useUserStore();
+  const token = useAuthStore(state => state.token);
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
 
   const [reservations, setReservations] = useState([]);
-  const getTime = (dt) => dt.slice(11, 16);
-  const getDate = (dt) => dt.slice(0, 10);
+  const getTime = (dt) => dt?.slice(11, 16);
+  const getDate = (dt) => dt?.slice(0, 10);
 
   // Pagination state
   const [page, setPage] = useState(1);
   const itemsPerPage = 10;
   const count = Math.ceil(reservations.length / itemsPerPage);
+
+  // Detail view state
+  const [selectedReservation, setSelectedReservation] = useState(null);
 
   // Edit mode state
   const [editingReservation, setEditingReservation] = useState(null);
@@ -58,7 +66,23 @@ const RoomHistory = () => {
     setPage(value);
   };
 
+  const handleSelectReservation = async (res) => {
+    setEditingReservation(null);
+    setSelectedReservation(null);
+    showLoading();
+    try {
+      const resp = await getMeetRsvnDetail(res.rsvn_seq);
+      console.log('resp : ', resp);
+      console.log('resp.data: ', resp.data);
+      setSelectedReservation(resp.data[0]);
+    } catch (err) {
+      console.error('예약 상세 조회 실패: ', err);
+    }
+    hideLoading();
+  }
+
   const handleEditClick = (reservation) => {
+    setSelectedReservation(null);
     setEditingReservation(reservation);
     setEditForm({ ...reservation });
   };
@@ -68,6 +92,9 @@ const RoomHistory = () => {
       setReservations(reservations.filter(r => r.id !== id));
       if (editingReservation?.id === id) {
         setEditingReservation(null);
+      }
+      if (selectedReservation?.id === id) {
+        setSelectedReservation(null);
       }
     }
   };
@@ -169,10 +196,10 @@ const RoomHistory = () => {
   };
 
   return (
-    <div className={`h-full flex flex-col ${editingReservation ? 'p-0 md:p-8' : 'p-6 md:p-8'} font-sans overflow-hidden bg-[#FFFFFF]`}>
+    <div className={`h-full flex flex-col ${editingReservation || selectedReservation ? 'p-0 md:p-8' : 'p-6 md:p-8'} font-sans overflow-hidden bg-[#FFFFFF]`}>
       
       {/* Header Section */}
-      <div className={`mb-6 flex-shrink-0 ${editingReservation ? 'hidden md:block' : 'block'}`}>
+      <div className={`mb-6 flex-shrink-0 ${editingReservation || selectedReservation ? 'hidden md:block' : 'block'}`}>
         <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">회의실 신청 내역</h1>
         <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">
           나의 회의실 예약 목록을 확인하고 관리할 수 있습니다.
@@ -183,7 +210,7 @@ const RoomHistory = () => {
       <div className="flex-1 flex gap-6 min-h-0 overflow-hidden">
         
         {/* List Section */}
-        <div className={`flex flex-col bg-white rounded-[2rem] border border-[#F0F4FF] shadow-sm overflow-hidden transition-all duration-500 min-h-0 ${editingReservation ? 'hidden md:flex md:flex-[0.6]' : 'flex-1'}`}>
+        <div className={`flex flex-col bg-white rounded-[2rem] border border-[#F0F4FF] shadow-sm overflow-hidden transition-all duration-500 min-h-0 ${editingReservation || selectedReservation ? 'hidden md:flex md:flex-[0.6]' : 'flex-1'}`}>
           <div className="hidden md:grid grid-cols-[1fr_1.8fr_1.2fr_1.2fr_0.8fr] px-6 py-4 border-b border-gray-50 text-[0.6875rem] font-bold text-gray-400 uppercase tracking-wider flex-shrink-0">
             <div className="pl-4">회의실명</div>
             <div>회의명</div>
@@ -196,7 +223,8 @@ const RoomHistory = () => {
             {reservations.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((res) => (
               <div 
                 key={res.rsvn_seq}
-                className={`flex md:grid md:grid-cols-[1fr_1.8fr_1.2fr_1.2fr_0.8fr] px-4 md:px-6 py-4 items-center border-b border-gray-50/50 hover:bg-[#F8FAFF] transition-colors ${editingReservation?.rsvn_seq === res.rsvn_seq ? 'bg-[#F0F4FF]' : ''}`}
+                onClick={() => {handleSelectReservation(res); setSelectedReservation(res);}}
+                className={`flex md:grid md:grid-cols-[1fr_1.8fr_1.2fr_1.2fr_0.8fr] px-4 md:px-6 py-4 items-center border-b border-gray-50/50 hover:bg-[#F8FAFF] transition-colors cursor-pointer ${editingReservation?.rsvn_seq === res.rsvn_seq || selectedReservation?.rsvn_seq === res.rsvn_seq ? 'bg-[#F0F4FF]' : ''}`}
               >
                 {/* Mobile & PC Info */}
                 <div className="flex-1 md:block text-xs md:text-sm font-bold text-gray-700 truncate pl-4">{res.room_name}</div>
@@ -213,13 +241,13 @@ const RoomHistory = () => {
                 {/* Actions */}
                 <div className="flex-shrink-0 flex justify-center gap-2">
                   <button 
-                    onClick={() => handleEditClick(res)}
+                    onClick={(e) => { e.stopPropagation(); handleEditClick(res); }}
                     className="px-2.5 py-1.5 text-[0.625rem] md:text-xs font-bold text-[#3530B8] bg-[#F0F4FF] rounded-lg hover:bg-[#3530B8] hover:text-white transition-all"
                   >
                     수정
                   </button>
                   <button 
-                    onClick={() => handleCancelReservation(res.rsvn_seq)}
+                    onClick={(e) => { e.stopPropagation(); handleCancelReservation(res.rsvn_seq); }}
                     className="px-2.5 py-1.5 text-[0.625rem] md:text-xs font-bold text-red-500 bg-red-50 rounded-lg hover:bg-red-500 hover:text-white transition-all"
                   >
                     취소
@@ -371,6 +399,61 @@ const RoomHistory = () => {
               >
                 수정 완료
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Detail View Section */}
+        {selectedReservation && (
+          <div className={`flex flex-col bg-white rounded-none md:rounded-[2rem] border-0 md:border border-[#F0F4FF] shadow-sm overflow-hidden min-h-0 animate-in slide-in-from-right duration-500 flex-1 md:flex-[0.4]`}>
+            <div className="p-6 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
+              <h2 className="text-lg font-bold text-gray-900">예약 내용 상세</h2>
+              <button onClick={() => setSelectedReservation(null)} className="text-gray-300 hover:text-gray-500 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-8">
+              {/* Meeting Info Section */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-bold text-gray-400 uppercase ml-1">회의 정보</h3>
+                <div className="bg-[#F8FAFF] rounded-2xl p-5 space-y-4">
+                  {[
+                    { label: '회의실명', value: selectedReservation.room_name },
+                    { label: '회의명', value: selectedReservation.title },
+                    { label: '예약일', value: getDate(selectedReservation.start_dt) },
+                    { label: '예약 시간', value: `${getTime(selectedReservation.start_dt)} ~ ${getTime(selectedReservation.end_dt)}` }
+                  ].map((info, idx) => (
+                    <div key={idx} className="flex justify-between items-center border-b border-gray-100/50 pb-2 last:border-0 last:pb-0">
+                      <span className="text-xs font-medium text-gray-500">{info.label}</span>
+                      <span className="text-xs font-bold text-gray-800">{info.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Attendees Section */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-bold text-gray-400 uppercase ml-1">참석자 ({selectedReservation.attendees?.length || 0}명)</h3>
+                <div className="grid grid-cols-4 gap-4">
+                  {selectedReservation.attendees?.map((attendee, idx) => (
+                    <div key={idx} className="flex flex-col items-center gap-2">
+                      <div className="w-12 h-12 rounded-full bg-white border-2 border-gray-50 shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {attendee.sysname ? (
+                          <img 
+                            src={`http://localhost/file/profile/view?sysname=${attendee.sysname}&token=${token}`} 
+                            className="w-full h-full object-cover" 
+                            alt="Profile"
+                          />
+                        ) : (
+                          <svg className="w-6 h-6 text-gray-200" fill="currentColor" viewBox="0 0 24 24"><path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                        )}
+                      </div>
+                      <span className="text-[10px] font-bold text-gray-600 truncate w-full text-center">{attendee.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         )}
