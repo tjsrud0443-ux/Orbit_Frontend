@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { format, startOfDay, parse, isBefore } from 'date-fns';
 import { createPortal } from 'react-dom';
 import Pagination from '../../components/common/Pagination';
 import Calendar from '../../components/common/Calendar';
@@ -123,10 +124,23 @@ const RoomHistory = () => {
   };
 
   const handleUpdateSubmit = () => {
-    setReservations(reservations.map(r => r.id === editForm.id ? editForm : r));
+    if (isTimeInvalid) return;
+    setReservations(reservations.map(r => r.rsvn_seq === editForm.rsvn_seq ? editForm : r));
     setEditingReservation(null);
     alert('수정이 완료되었습니다.');
   };
+
+  const isPastTime = (time, dateStr) => {
+    if (!dateStr) return false;
+    const now = new Date();
+    const todayStr = format(now, 'yyyy-MM-dd');
+    if (dateStr < todayStr) return true;
+    if (dateStr > todayStr) return false;
+    const currentTimeStr = format(now, 'HH:mm');
+    return time <= currentTimeStr;
+  };
+
+  const isTimeInvalid = editForm.startTime >= editForm.endTime;
 
   // Time overlap logic (Mock)
   const timeSlots = [
@@ -352,6 +366,10 @@ const RoomHistory = () => {
                     <Calendar 
                       value={editForm.date} 
                       onChange={(date) => {
+                        if (isBefore(parse(date, 'yyyy-MM-dd', new Date()), startOfDay(new Date()))) {
+                          alert('오늘 이전 날짜는 선택할 수 없습니다.');
+                          return;
+                        }
                         setEditForm({ ...editForm, date });
                         setShowCalendar(false);
                       }} 
@@ -364,15 +382,17 @@ const RoomHistory = () => {
                   <div>
                     <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1.5 ml-1">시작 시간</label>
                     <select 
-                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-medium focus:outline-none"
+                      className={`w-full px-4 py-2.5 bg-gray-50 border ${isTimeInvalid ? 'border-red-500' : 'border-gray-100'} rounded-xl text-xs font-medium focus:outline-none`}
                       value={editForm.startTime}
                       onChange={(e) => setEditForm({ ...editForm, startTime: e.target.value })}
                     >
                       {timeSlots.map(time => {
                         const isOccupied = occupiedTimes.includes(time);
+                        const isPast = isPastTime(time, editForm.date);
+                        const isDisabled = isOccupied || isPast;
                         return (
-                          <option key={time} value={time} disabled={isOccupied} style={isOccupied ? { color: '#ccc' } : {}}>
-                            {time} {isOccupied ? '(예약불가)' : ''}
+                          <option key={time} value={time} disabled={isDisabled} style={isDisabled ? { color: '#ccc' } : {}}>
+                            {time} {isOccupied ? '(예약됨)' : ''}
                           </option>
                         );
                       })}
@@ -381,16 +401,24 @@ const RoomHistory = () => {
                   <div>
                     <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1.5 ml-1">종료 시간</label>
                     <select 
-                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-medium focus:outline-none"
+                      className={`w-full px-4 py-2.5 bg-gray-50 border ${isTimeInvalid ? 'border-red-500' : 'border-gray-100'} rounded-xl text-xs font-medium focus:outline-none`}
                       value={editForm.endTime}
                       onChange={(e) => setEditForm({ ...editForm, endTime: e.target.value })}
                     >
-                      {timeSlots.map(time => (
-                        <option key={time} value={time}>{time}</option>
-                      ))}
+                      {timeSlots.map(time => {
+                        const isPast = isPastTime(time, editForm.date);
+                        return (
+                          <option key={time} value={time} disabled={isPast} style={isPast ? { color: '#ccc' } : {}}>
+                            {time}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
                 </div>
+                {isTimeInvalid && (
+                  <p className="text-[10px] text-red-500 font-bold ml-1">종료 시간은 시작 시간보다 늦어야 합니다.</p>
+                )}
               </div>
 
               {/* Attendees */}
