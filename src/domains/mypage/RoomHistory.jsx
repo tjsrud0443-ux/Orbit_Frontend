@@ -78,6 +78,13 @@ const RoomHistory = () => {
     })
   }, [editForm.room_seq, editForm.date]);
 
+  const isStartOccupied = (time) => {
+    return occupiedTimes.some(range => time >= range.startTime && time < range.endTime);
+  };
+  const isEndOccupied = (time) => {
+    return occupiedTimes.some(range => time > range.startTime && time <= range.endTime);
+  }
+
   useEffect(() => {
     fetchEmployees();
   }, [fetchEmployees]);
@@ -387,7 +394,7 @@ const RoomHistory = () => {
                       onChange={(e) => setEditForm({ ...editForm, startTime: e.target.value })}
                     >
                       {timeSlots.map(time => {
-                        const isOccupied = occupiedTimes.includes(time);
+                        const isOccupied = isStartOccupied(time);
                         const isPast = isPastTime(time, editForm.date);
                         const isDisabled = isOccupied || isPast;
                         return (
@@ -406,10 +413,12 @@ const RoomHistory = () => {
                       onChange={(e) => setEditForm({ ...editForm, endTime: e.target.value })}
                     >
                       {timeSlots.map(time => {
+                        const isOccupied = isEndOccupied(time);
                         const isPast = isPastTime(time, editForm.date);
+                        const isDisabled = isOccupied || isPast;
                         return (
-                          <option key={time} value={time} disabled={isPast} style={isPast ? { color: '#ccc' } : {}}>
-                            {time}
+                          <option key={time} value={time} disabled={isDisabled} style={isDisabled ? { color: '#ccc' } : {}}>
+                            {time} {isOccupied ? '(예약됨)' : ''}
                           </option>
                         );
                       })}
