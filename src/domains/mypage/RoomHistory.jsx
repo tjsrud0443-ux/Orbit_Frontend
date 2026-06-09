@@ -6,7 +6,7 @@ import Calendar from '../../components/common/Calendar';
 import useEmployeeStore from '../../store/useEmployeeStore';
 import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
-import { getAllMyMeetRsvn, getAllRooms, getMeetRsvnDetail, getOccupiedTimes, updateMeetRsvn } from './mypageApi';
+import { cancelMeetRsvn, getAllMyMeetRsvn, getAllRooms, getMeetRsvnDetail, getOccupiedTimes, updateMeetRsvn } from './mypageApi';
 import useLoadingStore from '../../store/useLoadingStore';
 
 const RoomHistory = () => {
@@ -23,15 +23,12 @@ const RoomHistory = () => {
   const [meetingRooms, setMeetingRooms] = useState([]);
   const [occupiedTimes, setOccupiedTimes] = useState([]);
 
-  // Pagination state
   const [page, setPage] = useState(1);
   const itemsPerPage = 10;
   const count = Math.ceil(reservations.length / itemsPerPage);
 
-  // Detail view state
   const [selectedReservation, setSelectedReservation] = useState(null);
 
-  // Edit mode state
   const [editingReservation, setEditingReservation] = useState(null);
   const [editForm, setEditForm] = useState({
     room_seq: '',
@@ -43,10 +40,7 @@ const RoomHistory = () => {
     attendees: []
   });
 
-  // Calendar visibility
   const [showCalendar, setShowCalendar] = useState(false);
-
-  // Attendee search state
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
   const inputRef = useRef(null);
@@ -126,14 +120,16 @@ const RoomHistory = () => {
     hideLoading();
   };
 
-  const handleCancelReservation = (id) => {
+  const handleCancelReservation = async (rsvn_seq) => {
     if (window.confirm('예약을 취소하시겠습니까?')) {
-      setReservations(reservations.filter(r => r.id !== id));
-      if (editingReservation?.id === id) {
+      try {
+        await cancelMeetRsvn(rsvn_seq);
+        alert('예약이 취소되었습니다.');
+        loadRsvn();
         setEditingReservation(null);
-      }
-      if (selectedReservation?.id === id) {
         setSelectedReservation(null);
+      } catch (err) {
+        console.error('예약 취소 실패 : ', err);
       }
     }
   };

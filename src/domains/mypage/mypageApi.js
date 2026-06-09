@@ -21,3 +21,4 @@ export const getMeetRsvnDetail = (rsvn_seq) => maxios.get(`/mypage/getMeetRsvnDe
 export const getAllRooms = () => maxios.get("/mypage/getAllRooms");
 export const getOccupiedTimes = (room_seq, date, rsvn_seq) => maxios.get("/mypage/getOccupiedTimes", {params : { room_seq, date, rsvn_seq }});
 export const updateMeetRsvn = (data) => maxios.put("/mypage/updateMeetRsvn", data);
+export const cancelMeetRsvn = (rsvn_seq) => maxios.delete(`/mypage/cancelMeetRsvn/${rsvn_seq}`);
