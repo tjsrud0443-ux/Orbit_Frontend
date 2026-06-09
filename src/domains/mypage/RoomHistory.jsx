@@ -220,41 +220,50 @@ const RoomHistory = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar">
-            {reservations.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((res) => (
-              <div 
-                key={res.rsvn_seq}
-                onClick={() => {handleSelectReservation(res); setSelectedReservation(res);}}
-                className={`flex md:grid md:grid-cols-[1fr_1.8fr_1.2fr_1.2fr_0.8fr] px-4 md:px-6 py-4 items-center border-b border-gray-50/50 hover:bg-[#F8FAFF] transition-colors cursor-pointer ${editingReservation?.rsvn_seq === res.rsvn_seq || selectedReservation?.rsvn_seq === res.rsvn_seq ? 'bg-[#F0F4FF]' : ''}`}
-              >
-                {/* Mobile & PC Info */}
-                <div className="flex-1 md:block text-xs md:text-sm font-bold text-gray-700 truncate pl-4">{res.room_name}</div>
-                <div className="hidden md:block text-xs text-gray-600 truncate">{res.title}</div>
-                <div className="hidden md:block text-xs text-gray-500 truncate">{getDate(res.start_dt)}</div>
-                <div className="hidden md:block text-xs text-gray-500 truncate">{`${getTime(res.start_dt)} ~ ${getTime(res.end_dt)}`}</div>
+            {reservations.length > 0 ? (
+              reservations.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((res) => (
+                <div 
+                  key={res.rsvn_seq}
+                  onClick={() => {handleSelectReservation(res); setSelectedReservation(res);}}
+                  className={`flex md:grid md:grid-cols-[1fr_1.8fr_1.2fr_1.2fr_0.8fr] px-4 md:px-6 py-4 items-center border-b border-gray-50/50 hover:bg-[#F8FAFF] transition-colors cursor-pointer ${editingReservation?.rsvn_seq === res.rsvn_seq || selectedReservation?.rsvn_seq === res.rsvn_seq ? 'bg-[#F0F4FF]' : ''}`}
+                >
+                  {/* Mobile & PC Info */}
+                  <div className="flex-1 md:block text-xs md:text-sm font-bold text-gray-700 truncate pl-4">{res.room_name}</div>
+                  <div className="hidden md:block text-xs text-gray-600 truncate">{res.title}</div>
+                  <div className="hidden md:block text-xs text-gray-500 truncate">{getDate(res.start_dt)}</div>
+                  <div className="hidden md:block text-xs text-gray-500 truncate">{`${getTime(res.start_dt)} ~ ${getTime(res.end_dt)}`}</div>
 
-                {/* Mobile Info Overlay (for smaller screens) */}
-                <div className="md:hidden flex-1 min-w-0 mx-2">
-                  <div className="text-[10px] text-gray-400 truncate">{res.title}</div>
-                  <div className="text-[10px] text-gray-500">{getDate(res.start_dt)} | {getTime(res.start_dt)}~{getTime(res.end_dt)}</div>
-                </div>
+                  {/* Mobile Info Overlay (for smaller screens) */}
+                  <div className="md:hidden flex-1 min-w-0 mx-2">
+                    <div className="text-[10px] text-gray-400 truncate">{res.title}</div>
+                    <div className="text-[10px] text-gray-500">{getDate(res.start_dt)} | {getTime(res.start_dt)}~{getTime(res.end_dt)}</div>
+                  </div>
 
-                {/* Actions */}
-                <div className="flex-shrink-0 flex justify-center gap-2">
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); handleEditClick(res); }}
-                    className="px-2.5 py-1.5 text-[0.625rem] md:text-xs font-bold text-[#3530B8] bg-[#F0F4FF] rounded-lg hover:bg-[#3530B8] hover:text-white transition-all"
-                  >
-                    수정
-                  </button>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); handleCancelReservation(res.rsvn_seq); }}
-                    className="px-2.5 py-1.5 text-[0.625rem] md:text-xs font-bold text-red-500 bg-red-50 rounded-lg hover:bg-red-500 hover:text-white transition-all"
-                  >
-                    취소
-                  </button>
+                  {/* Actions */}
+                  <div className="flex-shrink-0 flex justify-center gap-2">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleEditClick(res); }}
+                      className="px-2.5 py-1.5 text-[0.625rem] md:text-xs font-bold text-[#3530B8] bg-[#F0F4FF] rounded-lg hover:bg-[#3530B8] hover:text-white transition-all"
+                    >
+                      수정
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleCancelReservation(res.rsvn_seq); }}
+                      className="px-2.5 py-1.5 text-[0.625rem] md:text-xs font-bold text-red-500 bg-red-50 rounded-lg hover:bg-red-500 hover:text-white transition-all"
+                    >
+                      취소
+                    </button>
+                  </div>
                 </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full py-20 text-gray-400">
+                <svg className="w-12 h-12 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <p className="text-sm font-bold">예약 내역이 없습니다.</p>
               </div>
-            ))}
+            )}
           </div>
 
           {/* Pagination */}
