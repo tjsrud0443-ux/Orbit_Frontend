@@ -14,7 +14,7 @@ const getCategoryStyle = (category) => {
     case '공지': 
       return 'bg-rose-50 text-rose-600 border-rose-100';
     case '경조': 
-      return 'bg-indigo-50 text-indigo-600 border-indigo-100';
+      return 'bg-sky-50 text-sky-600 border-sky-100';
     case '생일': 
       return 'bg-pink-50 text-pink-600 border-pink-100';
     case '승진': 
@@ -36,12 +36,6 @@ const CategoryTag = ({ label }) => {
     </span>
   );
 };
-
-// // HTML 태그 제거 유틸 함수 추가 (컴포넌트 밖에)
-// const stripHtml = (html) => {
-//   if (!html) return '';
-//   return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
-// };
 
 const PostRow = ({ post, onLike, onClick }) => {
  return ( 
@@ -156,7 +150,9 @@ const BoardList = () => {
 
       {/* 모바일 글쓰기 버튼 */}
       <div className="md:hidden flex justify-end mb-4">
-        <button className="bg-indigo-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100 text-xl font-bold">
+        <button className="bg-indigo-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100 text-xl font-bold"
+        onClick={nav} 
+        >
           +
         </button>
       </div>

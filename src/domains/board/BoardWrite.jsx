@@ -81,10 +81,15 @@ const BoardWrite = () => {
       });
     };
   };
+  const isMobile = window.innerWidth < 768;
 
 return {   
   toolbar: {
-      container: [
+      container: isMobile ? [
+        ['bold', 'italic', 'underline'],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        ['image', 'link'],
+      ] :[
         [{ header: [1, 2, 3, false] }],
         ['bold', 'italic', 'underline', 'strike'],
         [{ color: [] }, { background: [] }],
