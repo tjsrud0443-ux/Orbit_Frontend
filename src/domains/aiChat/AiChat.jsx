@@ -175,11 +175,12 @@ const AiChat = () => {
       const mappedMessages = resp.data.map(msg => {
         if (msg.role === 'AI' && msg.content) {
           const needInquiryButton = msg.content.includes("찾지 못했습니다") || msg.content.includes("죄송합니다");
-
+          
           return {
             ...msg,
             showInquiry: needInquiryButton,
-            isInquiryComplete: msg.status === 'PENDING' // 백엔드 스펙에 맞게 조정 가능
+            isInquiryComplete: msg.status === 'PENDING', // 백엔드 스펙에 맞게 조정 가능
+            sourceFileName : msg.resultSources || []
           };
         }
         return msg;
