@@ -339,7 +339,7 @@ const MeetingRooms = () => {
                 {/* Time Axis */}
                 <div className="absolute top-0 left-0 right-0 flex border-b border-gray-50 pb-2">
                   {timeSlots.map((time, idx) => (
-                    <div key={idx} className="flex-1 text-[9px] md:text-[10px] font-bold text-gray-300 text-center">
+                    <div key={idx} className="flex-1 text-[9px] md:text-[10px] font-bold text-gray-400 text-center">
                       {time}
                     </div>
                   ))}
