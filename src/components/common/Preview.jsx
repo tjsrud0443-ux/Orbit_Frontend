@@ -78,7 +78,7 @@ const DocumentPreviewModal = ({ sysname, mimeType, title, token, onClose }) => {
             
             {/* 문서 출력 영역 (Ref가 바인딩되는 곳) */}
             <div className="flex-1 overflow-y-auto bg-slate-100 p-4 md:p-6 custom-scrollbar flex justify-center items-start">
-              <div className="w-full max-w-4xl bg-white shadow-md rounded-xl p-4 md:p-8 min-h-full docx-preview-parent overflow-x-hidden break-words relative">
+              <div className="w-full max-w-4xl bg-white shadow-md rounded-xl p-4 md:p-8 min-h-full docx-preview-parent overflow-x-auto break-words relative">
                 {isLoading && (
                   <div className="absolute inset-0 bg-white/90 z-10 flex flex-col items-center justify-center rounded-xl min-h-[300px]">
                     <Loader2 className="w-8 h-8 text-[#3530B8] animate-spin mb-3" />
@@ -86,7 +86,7 @@ const DocumentPreviewModal = ({ sysname, mimeType, title, token, onClose }) => {
                   </div>
                 )}
                 {previewType === 'docx' ? (
-                    <div ref={docxContainerRef} className="w-full break-words overflow-x-hidden" />
+                    <div ref={docxContainerRef} className="mx-auto min-w-[800px] sm:min-w-0" />
                     ) : previewType === 'pdf' && previewUrl ? (
                     <iframe 
                         src={previewUrl} 

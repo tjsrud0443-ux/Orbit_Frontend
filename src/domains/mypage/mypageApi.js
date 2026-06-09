@@ -14,3 +14,6 @@ export const getAnuualSummary = () => maxios.get("/mypage/annualSummary");
 // 내 관리자 문의 내역
 export const getMyQuestions = () => maxios.get("/mypage/myQuestions");
 export const deleteMyQuestions = (question_seq) => maxios.delete("/mypage/deleteMyQuestions/" + question_seq);
+
+// 내 회의실 신청 내역
+export const getAllMyMeetRsvn = () => maxios.get("/mypage/getAllMyMeetRsvn");
