@@ -364,7 +364,7 @@ const AiChat = () => {
                 {msg.sourceFileName?.map(source => (
                   <div key={source.rag_doc_seq} className="mt-4 pt-3 border-t border-[#edf2f9] flex items-center justify-between gap-4">
                     <span className="text-xs font-medium text-[#8a92a6] truncate min-w-0"><FontAwesomeIcon icon={faFileAlt} className="mr-1.5" />{source.file_name}</span>
-                    <button className="text-[10px] bg-white border border-[#edf2f9] px-2 py-1 rounded hover:bg-slate-50 transition-colors flex-shrink-0">📄 다운로드</button>
+                    <button className="text-[10px] font-medium bg-white border border-[#edf2f9] px-2 py-1 rounded hover:bg-[#F0F4FF] transition-colors flex-shrink-0 cursor-pointer">📄 다운로드</button>
                   </div>
                 ))}
               </div>
