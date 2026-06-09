@@ -314,6 +314,15 @@ const AiChat = () => {
         .animate-fadeIn {
           animation: fadeIn 0.3s ease-out forwards;
         }
+        @keyframes dot-pulse {
+          0%, 33.3% { content: '.'; }
+          33.4%, 66.6% { content: '..'; }
+          66.7%, 100% { content: '...'; }
+        }
+        .dot-animate::after {
+          content: '.';
+          animation: dot-pulse 3s infinite;
+        }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
@@ -345,7 +354,13 @@ const AiChat = () => {
           {messages.map((msg, index) => (
             <div key={index} className={`flex ${msg.role === 'USER' ? 'justify-end' : 'justify-start'} animate-fadeIn`}>
               <div className={`max-w-[70%] p-4 rounded-2xl ${msg.role === 'USER' ? 'bg-[#3530B8] text-white' : 'bg-[#f4f7fc] text-[#1a1c3d]'}`}>
-                <div className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</div>
+                <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                  {msg.content === '데이터를 분석하고 있습니다...' ? (
+                    <span>데이터를 분석하고 있습니다<span className="dot-animate"></span> 🤖</span>
+                  ) : (
+                    msg.content
+                  )}
+                </div>
 
                 {/* 🔥 [수정] 관리자 문의하기 컴포넌트 유동 제어 및 문의 완료 분기 처리 */}
                 {msg.showInquiry && (
