@@ -8,6 +8,7 @@ import useUserStore from '../../store/userStore';
 import { maxios } from '../../api/axiosConfig';
 import { delMinutes, getMinutesDetail, getMinutesList, insertMinutes, upMinutes } from './meetingMinutesApi';
 import useLoadingStore from '../../store/useLoadingStore';
+import TimePicker from '../../components/common/TimePicker';
 
 // 참여자 프로필 스택 컴포넌트
 const ParticipantStack = ({ attendees = [] }) => {
@@ -225,13 +226,16 @@ const MinutesList = () => {
       .map(emp => ({ users_id: emp.users_id || emp.id }))
     };
 
+    showLoading();
     upMinutes(minuteData).then(() => {
+      hideLoading();
       alert('수정되었습니다.');
       setIsEditing(false);
       setEditMinutes(null);
       fetchMinutesList();
-      handleSelectMinutes(editMinutes.minute_seq);
+      handleSelectMinutes(editMinutes.minute_seq, true);
     }).catch((error) => {
+      hideLoading();
       console.error('수정 실패:', error);
       alert('수정에 실패했습니다.');
     });
@@ -275,9 +279,12 @@ const MinutesList = () => {
   }, [fetchEmployees]);
 
   const fetchMinutesList = () => {
+    showLoading();
     getMinutesList().then((resp) => {
-      setMinutesList(resp.data);
+    setMinutesList(resp.data);
+    hideLoading();
     }).catch((error) => {
+      hideLoading();
       console.error('회의록 목록 조회 실패:', error);
     });
   };
@@ -346,6 +353,7 @@ const MinutesList = () => {
       fetchMinutesList();
       alert('회의록이 저장되었습니다.');
     }).catch((error) => {
+      hideLoading();
       console.error('회의록 저장 실패:', error);
       alert('저장에 실패했습니다.');
     });
@@ -505,7 +513,11 @@ const MinutesList = () => {
     setHostInAttendeesWarning(false);
   };
 
-  const handleSelectMinutes = (id) => {
+  const handleSelectMinutes = (id, skipEditCheck = false) => {
+    if (!skipEditCheck && isEditing) {
+      if (!window.confirm('수정 중인 내용이 있습니다. 취소하고 이동하시겠습니까?')) return;
+      handleCancelEdit();
+    }
     setIsCreating(false);
     setActiveId(id);
     getMinutesDetail(id).then(resp => {
@@ -561,7 +573,7 @@ const MinutesList = () => {
         <div className={`transition-all duration-500 ease-in-out bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full
           ${(activeId || isCreating) ? 'w-0 opacity-0 invisible lg:w-[55%] lg:opacity-100 lg:visible' : 'w-full opacity-100 visible flex-1'}`}>
 
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 md:px-8 border-b border-gray-50 bg-gray-50/10 shrink-0">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 md:px-8 border-b border-gray-50 bg-white shrink-0">
             <div className="flex items-center gap-3">
               <h3 className="text-s font-extrabold text-indigo-950">회의 목록</h3>
               <span className="bg-indigo-50 text-indigo-600 text-[0.7rem] font-bold px-2.5 py-1 rounded-full">총 {totalCount}건</span>
@@ -578,36 +590,40 @@ const MinutesList = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 md:px-8 py-2 custom-scrollbar">
-            <div className="hidden md:grid md:grid-cols-12 gap-4 px-4 py-4 sticky top-0 bg-white z-10 border-b border-gray-100">
+            <div className="hidden md:grid md:grid-cols-12 gap-4 px-12 py-3 bg-white border-b border-gray-100 shrink-0">
               <div className="md:col-span-5 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider">회의 제목</div>
               <div className="md:col-span-4 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider">일시</div>
               <div className="md:col-span-3 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider text-center">참여자</div>
             </div>
-            <div className="divide-y divide-gray-50">
-              {paginatedMinutes.length > 0 ? (
-                paginatedMinutes.map((item) => (
-                  <div key={item.minute_seq} onClick={() => handleSelectMinutes(item.minute_seq)}
-                    className={`cursor-pointer hover:bg-indigo-50/50 transition-colors group px-4 py-5 md:py-4 flex flex-col md:grid md:grid-cols-12 md:items-center gap-3 md:gap-4 ${activeId === item.minute_seq ? 'bg-indigo-50/50' : ''}`}>
-                    <div className="md:col-span-5 flex items-center gap-2 min-w-0">
-                      <span className={`text-sm font-bold group-hover:text-indigo-600 transition-colors ${activeId === item.minute_seq ? 'text-indigo-600' : 'text-gray-700'} truncate`}>{item.title}</span>
-                      {item.badgeType !== 'author' && (
-                        <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
-                      )}
+
+            {/* 스크롤 div에서 컬럼 헤더 제거 */}
+            <div className="flex-1 overflow-y-auto px-4 md:px-8 py-2 custom-scrollbar">
+              <div className="divide-y divide-gray-50">
+                {paginatedMinutes.length > 0 ? (
+                  paginatedMinutes.map((item) => (
+                    <div key={item.minute_seq} onClick={() => handleSelectMinutes(item.minute_seq)}
+                      className={`cursor-pointer hover:bg-indigo-50/50 transition-colors group px-4 py-5 md:py-4 flex flex-col md:grid md:grid-cols-12 md:items-center gap-3 md:gap-4 ${activeId === item.minute_seq ? 'bg-indigo-50/50' : ''}`}>
+                      <div className="md:col-span-5 flex items-center gap-2 min-w-0">
+                        <span className={`text-sm font-bold group-hover:text-indigo-600 transition-colors ${activeId === item.minute_seq ? 'text-indigo-600' : 'text-gray-700'} truncate`}>{item.title}</span>
+                        {item.badgeType !== 'author' && (
+                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
+                        )}
+                      </div>
+                      <div className="md:col-span-4 text-xs text-gray-500 font-medium">
+                        <span className="md:hidden text-gray-400 mr-2 font-bold uppercase text-[10px]">일시</span>
+                        {item.meeting_dt} | {formatTime(item.start_time)} – {formatTime(item.end_time)}
+                      </div>
+                      <div className="md:col-span-3 flex justify-start md:justify-center">
+                        <div className="md:hidden text-gray-400 mr-4 font-bold uppercase text-[10px] self-center">참여자</div>
+                        <ParticipantStack attendees={item.attendees} />
+                      </div>
                     </div>
-                    <div className="md:col-span-4 text-xs text-gray-500 font-medium">
-                      <span className="md:hidden text-gray-400 mr-2 font-bold uppercase text-[10px]">일시</span>
-                      {item.meeting_dt} | {formatTime(item.start_time)} – {formatTime(item.end_time)}
-                    </div>
-                    <div className="md:col-span-3 flex justify-start md:justify-center">
-                      <div className="md:hidden text-gray-400 mr-4 font-bold uppercase text-[10px] self-center">참여자</div>
-                      <ParticipantStack attendees={item.attendees} />
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="py-20 text-center text-gray-400 text-sm font-bold">회의록이 없습니다.</div>
-              )}
-            </div>
+                  ))
+                ) : (
+                  <div className="py-20 text-center text-gray-400 text-sm font-bold">회의록이 없습니다.</div>
+                )}
+              </div>
+            </div>       
           </div>
 
           <div className="border-t border-gray-50 bg-white py-2 shrink-0">
@@ -654,12 +670,22 @@ const MinutesList = () => {
                       </div>
                       <div className="flex flex-col gap-1">
                         <div className="flex gap-2">
-                          <input type="time" value={editMinutes.start_time}
-                            onChange={(e) => { setEditMinutes({...editMinutes, start_time: e.target.value}); setErrors(prev => ({...prev, time_order: false})); }}
-                            className={`flex-1 md:w-32 border rounded-xl p-2 text-sm focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all ${errors.time_order ? 'border-red-400 focus:ring-red-100' : 'border-gray-300 focus:border-indigo-300'}`} />
-                          <input type="time" value={editMinutes.end_time}
-                            onChange={(e) => { setEditMinutes({...editMinutes, end_time: e.target.value}); setErrors(prev => ({...prev, time_order: false})); }}
-                            className={`flex-1 md:w-32 border rounded-xl p-2 text-sm focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all ${errors.time_order ? 'border-red-400 focus:ring-red-100' : 'border-gray-300 focus:border-indigo-300'}`} />
+                           <TimePicker
+                              value={editMinutes.start_time}
+                              hasError={errors.time_order}
+                              onChange={(val) => {
+                                setEditMinutes({...editMinutes, start_time: val});
+                                setErrors(prev => ({...prev, time_order: false}));
+                              }}
+                            />
+                            <TimePicker
+                              value={editMinutes.end_time}
+                              hasError={errors.time_order}
+                              onChange={(val) => {
+                                setEditMinutes({...editMinutes, end_time: val});
+                                setErrors(prev => ({...prev, time_order: false}));
+                              }}
+                            />
                         </div>
                       </div>
                     </div>
@@ -688,9 +714,33 @@ const MinutesList = () => {
               </div>
 
               <div className="flex-1 overflow-y-auto p-6 md:p-8 pt-0 custom-scrollbar">
-                <div className="max-w-3xl space-y-8 mt-6">
+                <div className="max-w-3xl space-y-4">
 
-                  {/* 주최자 */}
+                  {/* 작성자 */}
+                  <div>
+                    <h4 className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-4">작성자</h4>
+                    <div className="flex items-center gap-3">
+                      {(() => {
+                        const author = (allEmployees || []).find(emp => emp.id === activeDetail.users_id);
+                        return author ? (
+                          <div className="flex flex-col items-center gap-1.5">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm border-2 border-white overflow-hidden bg-slate-100">
+                              {author.sysname && author.sysname !== 'system' && token ? (
+                                <img src={`http://localhost/file/profile/view?sysname=${author.sysname}&token=${token}`} alt={author.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: author.color || '#6366F1' }}>
+                                  {author.name ? author.name.slice(0, 1) : '?'}
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-[11px] font-bold text-gray-600">{author.name}</span>
+                          </div>
+                        ) : <span className="text-sm text-gray-400">-</span>;
+                      })()}
+                    </div>
+                  </div>
+
+                {/* 주최자 */}
                 <div>
                   <h4 className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-4">주최자</h4>
                   {isEditing ? (
@@ -871,11 +921,14 @@ const MinutesList = () => {
                           <button
                             onClick={() => {
                               if (window.confirm("정말 이 회의록을 삭제하시겠습니까?")) {
+                                showLoading();
                                 delMinutes(activeDetail.minute_seq).then(() => {
+                                  hideLoading();
                                   alert('삭제되었습니다.');
                                   handleClosePanel();
                                   fetchMinutesList();
                                 }).catch((error) => {
+                                  hideLoading();
                                   console.error('삭제 실패:', error);
                                   alert('삭제에 실패했습니다.');
                                 });
@@ -904,7 +957,7 @@ const MinutesList = () => {
               </div>
 
               <div className="flex-1 overflow-y-auto p-6 md:p-8 pt-0 custom-scrollbar">
-                <div className="max-w-3xl space-y-6 mt-6">
+                <div className="max-w-3xl space-y-6">
 
                   {/* 제목 */}
                   <div>
@@ -937,17 +990,27 @@ const MinutesList = () => {
                       )}
                     </div>
                     <div>
-                      <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">시작 시간</label>
-                      <input type="time" value={newMinutes.start_time}
-                        onChange={(e) => { setNewMinutes({...newMinutes, start_time: e.target.value}); if(e.target.value) setErrors(prev => ({...prev, start_time: false, time_order: false})); }}
-                        className={`w-full px-4 py-3 bg-white border rounded-2xl text-sm focus:outline-none focus:ring-4 transition-all font-bold ${errors.start_time ? 'border-red-400 ring-4 ring-red-100 text-red-400' : 'border-gray-300 text-gray-600 focus:ring-indigo-100'}`} />
+                      <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">시작 시간</label> 
+                      <TimePicker
+                        value={newMinutes.start_time}
+                        hasError={errors.start_time || errors.time_order}
+                        onChange={(val) => {
+                          setNewMinutes({...newMinutes, start_time: val});
+                          setErrors(prev => ({...prev, start_time: false, time_order: false}));
+                        }}
+                      />
                       {errors.start_time && <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">시작 시간을 입력해주세요.</p>}
                     </div>
                     <div>
                       <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">종료 시간</label>
-                      <input type="time" value={newMinutes.end_time}
-                        onChange={(e) => { setNewMinutes({...newMinutes, end_time: e.target.value}); if(e.target.value) setErrors(prev => ({...prev, end_time: false, time_order: false})); }}
-                        className={`w-full px-4 py-3 bg-white border rounded-2xl text-sm focus:outline-none focus:ring-4 transition-all font-bold ${errors.end_time ? 'border-red-400 ring-4 ring-red-100 text-red-400' : 'border-gray-300 text-gray-600 focus:ring-indigo-100'}`} />
+                        <TimePicker
+                          value={newMinutes.end_time}
+                          hasError={errors.end_time || errors.time_order}
+                          onChange={(val) => {
+                            setNewMinutes({...newMinutes, end_time: val});
+                            setErrors(prev => ({...prev, end_time: false, time_order: false}));
+                          }}
+                        />
                       {errors.end_time && <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">종료 시간을 입력해주세요.</p>}
                       {errors.time_order && <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1 whitespace-pre-wrap">{"종료 시간은 시작 시간보다 \n이후여야 합니다."}</p>}
                     </div>
