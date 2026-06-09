@@ -405,7 +405,7 @@ const RoomHistory = () => {
 
         {/* Detail View Section */}
         {selectedReservation && (
-          <div className={`flex flex-col bg-white rounded-none md:rounded-[2rem] border-0 md:border border-[#F0F4FF] shadow-sm overflow-hidden min-h-0 animate-in slide-in-from-right duration-500 flex-1 md:flex-[0.4]`}>
+          <div className={`flex flex-col bg-white rounded-none md:rounded-[2rem] border-0 md:border border-[#F0F4FF] shadow-sm overflow-hidden animate-in slide-in-from-right duration-500 flex-1 md:flex-[0.4] md:h-fit self-start`}>
             <div className="p-6 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
               <h2 className="text-lg font-bold text-gray-900">예약 내용 상세</h2>
               <button onClick={() => setSelectedReservation(null)} className="text-gray-300 hover:text-gray-500 transition-colors">
@@ -413,7 +413,7 @@ const RoomHistory = () => {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-8">
+            <div className="overflow-y-auto p-6 custom-scrollbar space-y-6">
               {/* Meeting Info Section */}
               <div className="space-y-4">
                 <h3 className="text-xs font-bold text-gray-400 uppercase ml-1">회의 정보</h3>
@@ -435,10 +435,10 @@ const RoomHistory = () => {
               {/* Attendees Section */}
               <div className="space-y-4">
                 <h3 className="text-xs font-bold text-gray-400 uppercase ml-1">참석자 ({selectedReservation.attendees?.length || 0}명)</h3>
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-8 gap-2">
                   {selectedReservation.attendees?.map((attendee, idx) => (
-                    <div key={idx} className="flex flex-col items-center gap-2">
-                      <div className="w-12 h-12 rounded-full bg-white border-2 border-gray-50 shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0">
+                    <div key={idx} className="flex flex-col items-center gap-1">
+                      <div className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white border-2 border-gray-50 shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0">
                         {attendee.sysname ? (
                           <img 
                             src={`http://localhost/file/profile/view?sysname=${attendee.sysname}&token=${token}`} 
