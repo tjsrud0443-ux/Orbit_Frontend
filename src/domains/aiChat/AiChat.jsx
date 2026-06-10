@@ -9,7 +9,8 @@ import {
   faTrashCan,
   faBars,
   faChevronDown,
-  faChevronUp
+  faChevronUp,
+  faRobot
 } from '@fortawesome/free-solid-svg-icons';
 import { IMAGES } from '../../images/images';
 import { deleteChat, getDetailChat, inputMsg, insertQuestion, sideChatTitleList } from './aiChatApi';
@@ -174,12 +175,12 @@ const AiChat = () => {
       const mappedMessages = resp.data.map(msg => {
         if (msg.role === 'AI' && msg.content) {
           const needInquiryButton = msg.content.includes("찾지 못했습니다") || msg.content.includes("죄송합니다");
-          
+
           return {
             ...msg,
             showInquiry: needInquiryButton,
             isInquiryComplete: msg.status === 'PENDING', // 백엔드 스펙에 맞게 조정 가능
-            sourceFileName : msg.resultSources || []
+            sourceFileName: msg.resultSources || []
           };
         }
         return msg;
@@ -342,11 +343,14 @@ const AiChat = () => {
 
       {/* 3. Main Chat Feed */}
       <div className="flex-1 flex flex-col min-h-0 relative">
-        <div className="p-6 border-b border-[#edf2f9] flex-shrink-0 flex items-center">
+        <div className="p-6 border-b border-[#edf2f9] flex-shrink-0 flex items-center gap-3">
           <button onClick={() => setIsMobileSidebarOpen(true)} className="md:hidden text-[#3530B8] text-xl mr-4">
             <FontAwesomeIcon icon={faBars} />
           </button>
-          <h2 className="text-2xl font-extrabold text-[#1a1c3d]">Orbit AI 업무비서</h2>
+          <div className="flex flex-col md:flex-row md:items-center md:gap-2">
+            <h2 className="text-2xl font-extrabold text-[#1a1c3d]">Orbit AI 업무비서</h2>
+            <p className="md:mt-3 text-gray-400 text-[11px]">AI는 실수할 수 있습니다. 응답을 다시 한 번 확인해 주세요.</p>
+          </div>
         </div>
 
         <div key={currentChatSeq || 'new'} className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
@@ -355,7 +359,7 @@ const AiChat = () => {
               <div className={`max-w-[70%] p-4 rounded-2xl ${msg.role === 'USER' ? 'bg-[#3530B8] text-white' : 'bg-[#f4f7fc] text-[#1a1c3d]'}`}>
                 <div className="text-sm leading-relaxed whitespace-pre-wrap">
                   {msg.content === '데이터를 분석하고 있습니다...' ? (
-                    <span>데이터를 분석하고 있습니다<span className="dot-animate"></span> 🤖</span>
+                    <span>데이터를 분석하고 있습니다<span className="dot-animate"></span><FontAwesomeIcon icon={faRobot}/></span>
                   ) : (
                     msg.content
                   )}
@@ -404,7 +408,7 @@ const AiChat = () => {
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
               className="flex-1 bg-transparent py-2 text-sm outline-none"
-              placeholder="문서나 회의록에 대해 궁금한 내용을 질문해보세요..."
+              placeholder="문서나 회의록에 대해 궁금한 내용을 질문해 보세요..."
             />
             <button onClick={handleSend} className="bg-[#3530B8] text-white w-10 h-10 rounded-lg flex items-center justify-center hover:bg-[#2a2594] transition-all">
               <FontAwesomeIcon icon={faPaperPlane} />
