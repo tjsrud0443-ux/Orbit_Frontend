@@ -1,4 +1,4 @@
-﻿import React, { useState,useEffect } from 'react';
+﻿import React, { useState,useEffect, useRef } from 'react';
 import Pagination from '../../components/common/Pagination';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
@@ -31,6 +31,19 @@ const SupplyModal = ({ mode, supply, onClose, onSave }) => {
   const [form, setForm] = useState(
     supply || { name: '', category: '사무용품', code: '', totalQty: '', stockQty: '', minStockQty: '' }
   );
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const categoryRef = useRef(null); 
+
+    // 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (categoryRef.current && !categoryRef.current.contains(e.target)) {
+        setIsCategoryOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleChange = (field, val) => setForm(prev => ({ ...prev, [field]: val }));
 
@@ -64,15 +77,35 @@ const SupplyModal = ({ mode, supply, onClose, onSave }) => {
           {/* 카테고리 */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[0.6875rem] font-bold text-slate-400 uppercase tracking-wider">카테고리</label>
-            <select
-              value={form.category}
-              onChange={e => handleChange('category', e.target.value)}
-              className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 transition-all"
-            >
-              {CATEGORIES.filter(c => c !== '전체').map(c => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+            <div className="relative" ref={categoryRef}>
+              <button
+                type="button"
+                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 transition-all flex items-center justify-between"
+              >
+                <span>{form.category}</span>
+                <svg className={`w-4 h-4 text-gray-400 transition-transform ${isCategoryOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {isCategoryOpen && (
+                <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden py-1">
+                  {CATEGORIES.filter(c => c !== '전체').map(cat => (
+                    <div
+                      key={cat}
+                      onClick={() => { handleChange('category', cat); setIsCategoryOpen(false); }}
+                      className={`px-4 py-2.5 text-sm cursor-pointer transition-colors
+                        ${form.category === cat
+                          ? 'bg-[#3530B8] text-white font-bold'
+                          : 'text-gray-700 hover:bg-indigo-50 hover:text-[#3530B8] font-medium'}`}
+                    >
+                      {cat}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* 비품코드 */}
