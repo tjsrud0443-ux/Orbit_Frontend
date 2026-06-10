@@ -55,22 +55,24 @@ const RoomHistory = () => {
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
 
   const loadRsvn = () => {
+    showLoading();
     getAllMyMeetRsvn().then(resp => {
       setReservations(resp.data);
-    }).catch(err => console.error("목록 로드 실패:", err));
+    }).catch(err => console.error("목록 로드 실패:", err))
+    .finally(() => {
+      hideLoading();
+    })
   };
 
   useEffect(() => {
-    showLoading();
     loadRsvn();
-    hideLoading();
   }, []);
 
   useEffect(() => {
     getAllRooms().then(resp => {
       setMeetingRooms(resp.data);
-    })
-  })
+    });
+  }, []);
 
   useEffect(() => {
     if(!editForm.room_seq || !editForm.date) return;
