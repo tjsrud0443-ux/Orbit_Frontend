@@ -1,29 +1,10 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useState,useEffect } from 'react';
 import Pagination from '../../components/common/Pagination';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { getSupplies } from '../supply/supplyApi';
 
-// ── 더미 데이터 ──────────────────────────────────────────────
 const CATEGORIES = ['전체', '사무용품', '전자기기', '가구', '네트워크 장비'];
-
-const INITIAL_SUPPLIES = [
-  { id: 1, name: '노트북', category: '전자기기', code: 'EQP-0001', totalQty: 10, stockQty: 7, minStockQty: 3, status: '정상' },
-  { id: 2, name: '빔 프로젝터', category: '전자기기', code: 'EQP-0002', totalQty: 3, stockQty: 1, minStockQty: 2, status: '정상' },
-  { id: 3, name: '회의용 마이크', category: '전자기기', code: 'EQP-0003', totalQty: 8, stockQty: 0, minStockQty: 2, status: '정상' },
-  { id: 4, name: '화이트보드', category: '사무용품', code: 'EQP-0004', totalQty: 5, stockQty: 2, minStockQty: 1, status: '정상' },
-  { id: 5, name: '의자', category: '가구', code: 'EQP-0005', totalQty: 20, stockQty: 15, minStockQty: 5, status: '정상' },
-  { id: 6, name: 'A4 용지', category: '사무용품', code: 'EQP-0006', totalQty: 200, stockQty: 150, minStockQty: 30, status: '정상' },
-  { id: 7, name: '무선 마우스', category: '전자기기', code: 'EQP-0007', totalQty: 40, stockQty: 18, minStockQty: 5, status: '정상' },
-  { id: 8, name: '스위칭 허브', category: '네트워크 장비', code: 'EQP-0008', totalQty: 10, stockQty: 3, minStockQty: 2, status: '정상' },
-];
-
-const RENTAL_LIST = [
-  { id: 1, name: '노트북', category: '전자기기', code: 'EQP-0001', dept: '개발팀', renter: '김개발', rentalDate: '2026-05-01' },
-  { id: 2, name: '빔 프로젝터', category: '전자기기', code: 'EQP-0002', dept: '마케팅팀', renter: '이마케팅', rentalDate: '2026-05-10' },
-  { id: 3, name: '회의용 마이크', category: '전자기기', code: 'EQP-0003', dept: '인사팀', renter: '박인사', rentalDate: '2026-05-15' },
-  { id: 4, name: '노트북', category: '전자기기', code: 'EQP-0001', dept: '재무팀', renter: '최재무', rentalDate: '2026-05-20' },
-  { id: 5, name: '빔 프로젝터', category: '전자기기', code: 'EQP-0002', dept: '기획팀', renter: '정기획', rentalDate: '2026-06-01' },
-];
 
 // ── 재고 상태 계산 ────────────────────────────────────────────
 const getStockStatus = (item) => {
@@ -157,8 +138,8 @@ const SupplyModal = ({ mode, supply, onClose, onSave }) => {
 // ── 메인 컴포넌트 ─────────────────────────────────────────────
 const AdminSupply = () => {
   const [activeTab, setActiveTab] = useState('list'); // 'list' | 'rental'
-  const [supplies, setSupplies] = useState(INITIAL_SUPPLIES);
-  const [rentals, setRentals] = useState(RENTAL_LIST);
+  const [supplies, setSupplies] = useState([]);
+  const [rentals, setRentals] = useState([]);
 
   // 검색 / 필터
   const [keyword, setKeyword] = useState('');
@@ -174,6 +155,21 @@ const AdminSupply = () => {
 
   // 모달
   const [modal, setModal] = useState(null); // null | { mode: 'add'|'edit', supply? }
+
+    useEffect(() => {
+    getSupplies().then(res => {
+      const mapped = res.data.map(item => ({
+        id: item.supply_seq,
+        name: item.supply_name,
+        category: item.category,
+        code: item.supply_code,
+        totalQty: item.total_qty,
+        stockQty: item.stock_qty,
+        minStockQty: item.min_stock_qty,
+      }));
+      setSupplies(mapped);
+    });
+  }, []);
 
   // ── 비품 목록 필터링
   const filtered = supplies.filter(item => {
@@ -194,7 +190,7 @@ const AdminSupply = () => {
     item.category.toLowerCase().includes(keyword.toLowerCase())
   );
   const paginatedRentals = filteredRentals.slice((page - 1) * PER_PAGE, page * PER_PAGE);
-
+ 
   // ── 체크박스
   const toggleCheck = (id) => {
     setCheckedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
@@ -221,9 +217,22 @@ const AdminSupply = () => {
   // ── 저장 (추가/수정)
   const handleSave = (form) => {
     if (modal.mode === 'add') {
-      setSupplies(prev => [...prev, { ...form, id: Date.now(), totalQty: Number(form.stockQty), stockQty: Number(form.stockQty), minStockQty: Number(form.minStockQty) }]);
+      addSupply(form).then(res => {
+        // 저장 후 목록 새로고침
+        getSupplies().then(r => setSupplies(r.data.map(item => ({
+          id: item.supply_seq,
+          name: item.supply_name,
+          category: item.category,
+          code: item.supply_code,
+          totalQty: item.total_qty,
+          stockQty: item.stock_qty,
+          minStockQty: item.min_stock_qty,
+        }))));
+      });
     } else {
-      setSupplies(prev => prev.map(i => i.id === modal.supply.id ? { ...i, ...form } : i));
+      updateSupply(modal.supply.id, form).then(() => {
+        setSupplies(prev => prev.map(i => i.id === modal.supply.id ? { ...i, ...form } : i));
+      });
     }
   };
 
