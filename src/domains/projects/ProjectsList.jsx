@@ -37,7 +37,7 @@ const ProjectsList = () => {
   }, []);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 3;
+  const itemsPerPage = 5;
 
   const [projects, setProjects] = useState(INITIAL_PROJECTS);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -95,14 +95,14 @@ const ProjectsList = () => {
   };
 
   return (
-    <div className="flex flex-col h-full py-8 px-2 overflow-y-auto">
-      <div className="mb-6 px-2">
+    <div className="flex flex-col h-full bg-[#FFFFFF] py-8 px-1 md:px-7 overflow-y-auto md:overflow-hidden custom-scrollbar">
+      <div className="mb-6 px-4 md:px-2">
         <h1 className="text-xl md:text-2xl font-bold text-[#121331]">프로젝트 관리</h1>
         <p className="text-xs md:text-sm text-[#8a92a6] mt-1">진행 중인 프로젝트명을 클릭하여 칸반 보드에서 업무를 관리하세요.</p>
       </div>
 
-      <div className="flex flex-col md:flex-row h-auto gap-6">
-        <div className={`bg-white rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-4 md:p-8 flex flex-col transition-all duration-300 ${selectedProject ? 'md:w-[65%] w-full' : 'w-full'}`}>
+      <div className="flex flex-col md:flex-row h-auto md:flex-1 gap-6 min-h-0 max-w-[1450px] mx-auto w-full">
+        <div className={`bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-3 md:p-8 flex flex-col transition-all duration-300 md:overflow-hidden min-w-0 ${selectedProject ? 'md:w-[65%] w-full' : 'w-full'}`}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
             <div className="flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit overflow-x-auto items-center">
               {['전체', '진행중', '완료'].map(tab => (
@@ -145,7 +145,7 @@ const ProjectsList = () => {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-visible">
+          <div className="flex-1 md:overflow-y-auto md:min-h-0 custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead className="hidden md:table-header-group">
                 <tr className="text-[#8a92a6] text-sm border-b border-gray-100">
@@ -203,7 +203,7 @@ const ProjectsList = () => {
 
         {/* 데스크탑 뷰: 상세 정보 패널 */}
         {selectedProject && (
-          <div className="hidden md:flex w-[35%] bg-white rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-10 transition-all duration-300 flex-col">
+          <div className="hidden md:flex w-[35%] bg-white rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-10 transition-all duration-300 flex-col md:overflow-y-auto md:min-h-0 custom-scrollbar">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-xl font-bold text-[#1a1c3d]">프로젝트 상세</h2>
               <button onClick={() => setSelectedProject(null)}><FontAwesomeIcon icon={faTimes} /></button>
@@ -222,7 +222,7 @@ const ProjectsList = () => {
         {/* 모바일 뷰: 상세 정보 모달 */}
         {selectedProject && (
           <div className="md:hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm shadow-2xl">
+            <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-bold">프로젝트 상세</h2>
                 <button onClick={() => setSelectedProject(null)}><FontAwesomeIcon icon={faTimes} /></button>
@@ -240,7 +240,7 @@ const ProjectsList = () => {
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-8">
-          <div className="bg-white p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] w-full max-w-[550px] shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] w-full max-w-[550px] shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
             <h2 className="text-2xl font-bold mb-8">새 프로젝트 생성</h2>
             <label className="block text-xs font-bold text-[#1a1c3d] mb-2 ">프로젝트명 *</label>
             <input className="w-full p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none text-xs" onChange={e => setNewProject({ ...newProject, title: e.target.value })} />
@@ -311,6 +311,13 @@ const ProjectsList = () => {
           </div>
         </div>
       )}
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
+      `}} />
     </div>
   );
 };
