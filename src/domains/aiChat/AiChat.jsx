@@ -330,14 +330,14 @@ const AiChat = () => {
       `}</style>
       {/* 1. Desktop Sidebar */}
       <div className="hidden md:flex md:w-80 flex-shrink-0 h-full border-r border-[#edf2f9]">
-        <SidebarContent />
+        {SidebarContent()}
       </div>
 
       {/* 2. Mobile Sidebar Overlay */}
       <div className={`md:hidden absolute inset-0 z-50 transition-opacity duration-300 ${isMobileSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-black/40" onClick={() => setIsMobileSidebarOpen(false)} />
         <div className={`absolute left-0 top-0 w-3/4 h-full transform transition-transform duration-300 ease-in-out ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-          <SidebarContent />
+          {SidebarContent()}
         </div>
       </div>
 
