@@ -6,7 +6,7 @@ import { getSupplies,supplyRequest } from './supplyApi';
 // 비품 전체 카테고리
 const CATEGORIES = ['전체', '사무용품', '전자기기', '가구', '네트워크 장비'];
 // ── 비품 추가 모달 ──────────────────────────────────────────────
-const USAGE_TYPES = ['개발용', '일반용', '비품 교체'];
+const USAGE_TYPES = ['개발용', '일반용', '교체용'];
 
 const AddItemModal = ({ onAdd, onClose }) => {
   const [keyword, setKeyword] = useState('');
@@ -429,6 +429,7 @@ const SupplyRequest = () => {
           <textarea
             value={reason}
             onChange={e => {
+              if (e.target.value.length > 40) return;
               setReason(e.target.value);
               if (errors.reason) setErrors(prev => ({ ...prev, reason: false }));
             }}
@@ -440,9 +441,16 @@ const SupplyRequest = () => {
                 : 'border-gray-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-600/5'
               }`}
           />
-          {errors.reason && (
-            <p className="text-[11px] text-red-500 font-bold ml-1">요청 사유를 입력해주세요.</p>
-          )}
+          <div className="flex justify-between items-center px-1">
+            {errors.reason ? (
+              <p className="text-[11px] text-red-500 font-bold">요청 사유를 입력해주세요.</p>
+            ) : (
+              <div />
+            )}
+            <p className={`text-[11px] ${reason.length >= 40 ? 'text-red-400' : 'text-gray-400'} font-medium`}>
+              {reason.length}/40
+            </p>
+          </div>
         </div>
 
         {/* 비품 목록 헤더 */}
