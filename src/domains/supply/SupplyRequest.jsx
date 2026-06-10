@@ -1,29 +1,38 @@
 import React, { useState, useRef, useEffect } from 'react';
 import useUserStore from '../../store/userStore';
 import Calendar from '../../components/common/Calendar';
+import { getSupplies,supplyRequest } from './supplyApi';
 
+// 비품 전체 카테고리
+const CATEGORIES = ['전체', '사무용품', '전자기기', '가구', '네트워크 장비'];
 // ── 비품 추가 모달 ──────────────────────────────────────────────
-const USAGE_TYPES = ['개발용', '일반용', '비품 교체'];
-
-// 검색용 더미 비품 목록 (실제로는 API로 교체)
-const SUPPLY_CATALOG = [
-  { id: 101, name: '모니터 27인치', model: 'LG 27UK850', stock: 12 },
-  { id: 102, name: '무선 키보드',   model: 'Logitech MX Keys', stock: 8 },
-  { id: 103, name: '무선 마우스',   model: 'Logitech MX Master 3', stock: 15 },
-  { id: 104, name: '사무용 의자',   model: 'Herman Miller Aeron', stock: 3 },
-  { id: 105, name: '노트북 거치대', model: 'Rain Design mStand', stock: 5 },
-  { id: 106, name: '웹캠',         model: 'Logitech C920', stock: 7 },
-  { id: 107, name: '헤드셋',       model: 'Jabra Evolve2 55', stock: 4 },
-  { id: 108, name: 'USB 허브',     model: 'Anker 7-in-1', stock: 20 },
-];
+const USAGE_TYPES = ['개발용', '일반용', '교체용'];
 
 const AddItemModal = ({ onAdd, onClose }) => {
   const [keyword, setKeyword] = useState('');
   const [selected, setSelected] = useState(null);
+  const [currentCategory, setCurrentCategory] = useState('전체'); // 카테고리 상태 추가
+  const [catalog, setCatalog] = useState([]);
   const [qty, setQty] = useState(1);
   const [usageType, setUsageType] = useState('개발용');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    getSupplies().then(resp => {
+      setCatalog(resp.data)
+    });
+  }, []);
+  
+  // 카테고리 필터링 + 검색어 필터링을 동시에 처리
+  const filtered = catalog.filter(item => {
+    // 1. 카테고리 조건 체크
+    const matchesCategory = currentCategory === '전체' || item.category === currentCategory; 
+    // 2. 검색어 조건 체크
+    const matchesKeyword = item.supply_name.toLowerCase().includes(keyword.toLowerCase()) || 
+                           item.supply_code.toLowerCase().includes(keyword.toLowerCase());
+    return matchesCategory && matchesKeyword;
+  });
 
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
@@ -32,17 +41,15 @@ const AddItemModal = ({ onAdd, onClose }) => {
         setIsDropdownOpen(false);
       }
     };
+    //외부 클릭 감지는 React 이벤트 시스템만으로는 처리가 어려워서 DOM 직접 접근이 불가피
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filtered = keyword.trim()
-    ? SUPPLY_CATALOG.filter(s => s.name.toLowerCase().includes(keyword.toLowerCase()) || s.model.toLowerCase().includes(keyword.toLowerCase()))
-    : SUPPLY_CATALOG;
-
   const handleSelect = (item) => {
     setSelected(item);
-    setKeyword(item.name);
+    // setKeyword(item.supply_name);
+    setKeyword('');
     setIsDropdownOpen(false);
   };
 
@@ -63,6 +70,33 @@ const AddItemModal = ({ onAdd, onClose }) => {
               <path d="M18 6L6 18M6 6l12 12"/>
             </svg>
           </button>
+        </div>
+
+        {/* 2. 카테고리 선택 칩 영역 배치 */}
+        <div className="flex flex-col gap-1.5 mb-4">
+          <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider">
+            카테고리 분류
+          </label>
+          <div className="flex flex-wrap gap-1 md:gap-1.5 justify-center md:justify-start">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => {
+                  setCurrentCategory(cat);
+                  setSelected(null); // 카테고리 바꾸면 선택했던 품목 해제
+                  setIsDropdownOpen(true); // 편의성을 위해 드롭다운 즉시 열기
+                }}
+                className={`px-2 py-1 md:px-3 md:py-1.5 text-[10px] md:text-xs font-bold rounded-full transition-all whitespace-nowrap
+                  ${currentCategory === cat 
+                    ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-100' 
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}
+                `}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* 비품 검색 */}
@@ -88,6 +122,7 @@ const AddItemModal = ({ onAdd, onClose }) => {
                 <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
               </svg>
             </div>
+
             {/* 검색 드롭다운 */}
             {isDropdownOpen && filtered.length > 0 && !selected && (
               <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden max-h-60 overflow-y-auto custom-scrollbar py-2">
@@ -112,17 +147,23 @@ const AddItemModal = ({ onAdd, onClose }) => {
                 `}</style>
                 {filtered.map(item => (
                   <div
-                    key={item.id}
+                    key={item.supply_seq}
                     onClick={() => handleSelect(item)}
                     className="flex items-center justify-between px-4 py-2.5 hover:bg-indigo-50 cursor-pointer transition-colors"
                   >
                     <div>
-                      <p className="text-sm font-bold text-gray-700">{item.name}</p>
-                      <p className="text-[11px] text-gray-400">{item.model}</p>
+                      <p className="text-sm font-bold text-gray-700">{item.supply_name}</p>
+                      <p className="text-[11px] text-gray-400">{item.supply_code}</p>
                     </div>
-                    <span className="text-xs text-gray-400 shrink-0">재고 {item.stock}개</span>
+                    <span className="text-xs text-gray-400 shrink-0">재고 {item.stock_qty}개</span>
                   </div>
                 ))}
+              </div>
+            )}
+            {/* 아무 검색 결과도 없을 때 보여줄 UI */}
+            {isDropdownOpen && filtered.length === 0 && !selected && (
+              <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 py-6 text-center text-xs text-gray-400 font-medium">
+                일치하는 비품이 없습니다.
               </div>
             )}
           </div>
@@ -136,8 +177,8 @@ const AddItemModal = ({ onAdd, onClose }) => {
           <div className={`px-4 py-3 border rounded-xl min-h-[60px] transition-all ${selected ? 'border-gray-200 bg-gray-50' : 'border-dashed border-gray-200 bg-gray-50'}`}>
             {selected ? (
               <div>
-                <p className="text-sm font-bold text-gray-700">{selected.name}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{selected.model} · 재고 {selected.stock}개</p>
+                <p className="text-sm font-bold text-gray-700">{selected.supply_name}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{selected.supply_code} · 재고 {selected.stock_qty}개</p>
               </div>
             ) : (
               <p className="text-sm text-gray-300">검색 후 비품을 선택하면 정보가 표시됩니다.</p>
@@ -221,6 +262,7 @@ const SupplyRequest = () => {
   const [errors, setErrors] = useState({});
   const [showModal, setShowModal] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  const calendarRef = useRef(null);
 
   const changeQty = (id, delta) => {
     setItems(prev =>
@@ -239,26 +281,76 @@ const SupplyRequest = () => {
     if (errors.items) setErrors(prev => ({ ...prev, items: false }));
   };
 
+    //외부 클릭시 달력 닫기
+  useEffect(() => {
+      const handleClickOutside = (e) => {
+          if (calendarRef.current && !calendarRef.current.contains(e.target)) {
+              setShowCalendar(false);
+          }
+      };
+      if (showCalendar) document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showCalendar]);
+
   const validate = () => {
     const e = {};
     if (!reason.trim()) e.reason = true;
     if (items.length === 0) e.items = true;
+    if (reqDate < today) e.reqDate = true;
     setErrors(e);
+    //에러가 하나도 없으면 true 반환
     return Object.keys(e).length === 0;
+  };
+
+  //오늘 이전은 선택 불가
+  const handleDateChange = (date) => {
+    if (date < today) {
+        setErrors(prev => ({ ...prev, reqDate: true }));
+        return;
+    }
+    setErrors(prev => ({ ...prev, reqDate: false }));
+    setReqDate(date);
+    setShowCalendar(false);
   };
 
   const handleSubmit = () => {
     if (!validate()) return;
     // TODO: API 연동
-    alert('비품 신청이 완료되었습니다.');
+     supplyRequest({
+        reason: reason,
+        status: 'PENDING',
+        req_date: reqDate,
+        items: items.map(item => ({
+            supply_seq: item.supply_seq,
+            ea: item.qty,
+            use_type: item.usageType
+        }))
+    }).then(() => {
+        alert('비품 신청이 완료되었습니다.');
+        handleCancel();
+    }).catch(() => {
+        alert('신청 중 오류가 발생했습니다.');
+    });
   };
 
   const handleCancel = () => {
-    if (window.history.length > 1) window.history.back();
+    setReason('');
+    setItems([]);
+    setReqDate(today);
+    setErrors({});
   };
 
   return (
-    <div className="w-full min-h-screen bg-white p-6 md:p-8 lg:px-10 font-sans">
+    <div className="w-full h-full bg-white p-6 md:p-8 lg:px-10 font-sans flex flex-col overflow-hidden no-scrollbar">
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
 
       {/* 비품 추가 모달 */}
       {showModal && (
@@ -269,17 +361,17 @@ const SupplyRequest = () => {
       )}
 
       {/* 페이지 헤더 */}
-      <div className="mb-7">
+      <div className="mb-6 shrink-0">
         <h1 className="text-2xl font-bold text-gray-900 mb-1">비품 신청</h1>
         <p className="text-[0.82rem] text-gray-500">업무에 필요한 비품을 신청합니다.</p>
       </div>
 
       {/* 카드 */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 w-full">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 w-full flex-1 flex flex-col overflow-hidden mb-4 min-h-0">
 
         {/* 신청자 / 신청일 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-          <div className="flex flex-col gap-1.5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 shrink-0">
+          <div className="flex flex-col gap-1">
             <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider">
               신청자
             </label>
@@ -287,12 +379,12 @@ const SupplyRequest = () => {
               type="text"
               readOnly
               value={user ? `${user.name} ${user.position || ''} (${user.dept_name || ''})` : ''}
-              className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-400 bg-gray-50 outline-none"
+              className="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-400 bg-gray-50 outline-none"
             />
           </div>
-          <div className="flex flex-col gap-1.5 relative">
+          <div className="flex flex-col gap-1 relative">
             <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider">
-              신청일
+              수령 희망 날짜
             </label>
             <div className="relative">
               <input
@@ -300,7 +392,11 @@ const SupplyRequest = () => {
                 readOnly
                 value={reqDate}
                 onClick={() => setShowCalendar(!showCalendar)}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-600/5 transition-all cursor-pointer bg-white"
+                className={`w-full px-4 py-2 border rounded-xl text-sm text-gray-700 outline-none focus:ring-4 transition-all cursor-pointer bg-white
+                ${errors.reqDate
+                  ? 'border-red-400 ring-4 ring-red-100'
+                  : 'border-gray-200 focus:border-indigo-400 focus:ring-indigo-600/5'
+                }`}
               />
               <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                 <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -311,124 +407,144 @@ const SupplyRequest = () => {
                 <div className="absolute top-full left-0 w-full z-40 [&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-1 [&>div]:mb-0">
                   <Calendar 
                     value={reqDate} 
-                    onChange={(date) => setReqDate(date)} 
+                    onChange={handleDateChange} 
                     onClose={() => setShowCalendar(false)} 
-                  />
+                  />                 
                 </div>
               )}
             </div>
+             {errors.reqDate && (
+                <p className="text-[11px] text-red-500 font-bold mt-1 ml-1">
+                    오늘 이후 날짜를 선택해주세요.
+                </p>
+              )}
           </div>
         </div>
 
         {/* 요청 사유 */}
-        <div className="flex flex-col gap-1.5 mb-7">
+        <div className="flex flex-col gap-1 mb-5 shrink-0">
           <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider">
             요청 사유 <span className="text-red-500">*</span>
           </label>
           <textarea
             value={reason}
             onChange={e => {
+              if (e.target.value.length > 40) return;
               setReason(e.target.value);
               if (errors.reason) setErrors(prev => ({ ...prev, reason: false }));
             }}
             placeholder="요청 사유를 입력해주세요."
-            rows={3}
-            className={`px-4 py-3 border rounded-xl text-sm text-gray-700 outline-none resize-none transition-all
+            rows={2}
+            className={`px-4 py-2 border rounded-xl text-sm text-gray-700 outline-none resize-none transition-all
               ${errors.reason
                 ? 'border-red-400 ring-4 ring-red-100'
                 : 'border-gray-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-600/5'
               }`}
           />
-          {errors.reason && (
-            <p className="text-[11px] text-red-500 font-bold ml-1">요청 사유를 입력해주세요.</p>
-          )}
+          <div className="flex justify-between items-center px-1">
+            {errors.reason ? (
+              <p className="text-[11px] text-red-500 font-bold">요청 사유를 입력해주세요.</p>
+            ) : (
+              <div />
+            )}
+            <p className={`text-[11px] ${reason.length >= 40 ? 'text-red-400' : 'text-gray-400'} font-medium`}>
+              {reason.length}/40
+            </p>
+          </div>
         </div>
 
         {/* 비품 목록 헤더 */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3 shrink-0">
           <span className="text-sm font-extrabold text-indigo-950">신청 비품 목록</span>
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 border border-gray-200 rounded-xl text-xs font-bold text-indigo-600 bg-white hover:bg-indigo-50 hover:border-indigo-300 transition-all"
+            className="flex items-center gap-1.5 px-3 py-1 border border-gray-200 rounded-xl text-xs font-bold text-indigo-600 bg-white hover:bg-indigo-50 hover:border-indigo-300 transition-all"
           >
             + 비품 추가
           </button>
         </div>
 
         {/* 테이블 */}
-        <div className={`border rounded-2xl overflow-hidden ${errors.items ? 'border-red-300' : 'border-gray-100'}`}>
-          <div className="grid grid-cols-12 bg-gray-50 border-b border-gray-100">
-            <div className="col-span-4 px-4 py-2.5 text-[0.68rem] font-extrabold text-gray-400 uppercase tracking-wider">품목</div>
-            <div className="col-span-3 px-4 py-2.5 text-[0.68rem] font-extrabold text-gray-400 uppercase tracking-wider text-center">수량</div>
-            <div className="col-span-2 px-4 py-2.5 text-[0.68rem] font-extrabold text-gray-400 uppercase tracking-wider text-center">재고</div>
-            <div className="col-span-2 px-4 py-2.5 text-[0.68rem] font-extrabold text-gray-400 uppercase tracking-wider text-center">사용구분</div>
-            <div className="col-span-1 px-4 py-2.5 text-[0.68rem] font-extrabold text-gray-400 uppercase tracking-wider text-center">삭제</div>
-          </div>
-
-          {items.length > 0 ? (
-            items.map(item => (
-              <div key={item.id} className="grid grid-cols-12 border-b border-gray-50 last:border-0 items-center hover:bg-gray-50/60 transition-colors">
-                <div className="col-span-4 px-4 py-3">
-                  <p className="text-sm text-gray-700 font-medium">{item.name}</p>
-                  <p className="text-[11px] text-gray-400">{item.model}</p>
-                </div>
-                <div className="col-span-3 px-4 py-3 flex items-center justify-center">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => changeQty(item.id, -1)}
-                      className="w-6 h-6 flex items-center justify-center border border-gray-200 rounded-md text-gray-500 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 transition-all text-sm"
-                    >−</button>
-                    <span className="text-sm font-bold text-gray-800 w-5 text-center">{item.qty}</span>
-                    <button
-                      onClick={() => changeQty(item.id, 1)}
-                      className="w-6 h-6 flex items-center justify-center border border-gray-200 rounded-md text-gray-500 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 transition-all text-sm"
-                    >+</button>
-                  </div>
-                </div>
-                <div className="col-span-2 px-4 py-3 text-center text-xs text-gray-400 font-semibold">
-                  {item.stock !== '-' ? `${item.stock}개` : '-'}
-                </div>
-                <div className="col-span-2 px-4 py-3 text-center">
-                  <span className="text-xs font-bold px-2 py-1 rounded-lg bg-indigo-50 text-indigo-600">
-                    {item.usageType}
-                  </span>
-                </div>
-                <div className="col-span-1 px-4 py-3 flex items-center justify-center">
-                  <button
-                    onClick={() => removeItem(item.id)}
-                    className="text-gray-300 hover:text-red-400 transition-colors"
-                  >
-                    <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <polyline points="3 6 5 6 21 6"/>
-                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                      <path d="M10 11v6M14 11v6"/>
-                      <path d="M9 6V4h6v2"/>
-                    </svg>
-                  </button>
-                </div>
+        <div className={`border rounded-2xl overflow-hidden ${errors.items ? 'border-red-300' : 'border-gray-100'} flex-1 flex flex-col min-h-0`}>
+          {/* 가로 스크롤을 위한 컨테이너 추가 */}
+          <div className="flex-1 flex flex-col min-w-full overflow-x-auto no-scrollbar">
+            <div className="min-w-[700px] flex-1 flex flex-col">
+              <div className="grid grid-cols-12 bg-gray-50 border-b border-gray-100 shrink-0">
+                <div className="col-span-4 px-4 py-2 text-[0.68rem] font-extrabold text-gray-400 uppercase tracking-wider">품목</div>
+                <div className="col-span-3 px-4 py-2 text-[0.68rem] font-extrabold text-gray-400 uppercase tracking-wider text-center">수량</div>
+                <div className="col-span-2 px-4 py-2 text-[0.68rem] font-extrabold text-gray-400 uppercase tracking-wider text-center">재고</div>
+                <div className="col-span-2 px-4 py-2 text-[0.68rem] font-extrabold text-gray-400 uppercase tracking-wider text-center">사용구분</div>
+                <div className="col-span-1 px-4 py-2 text-[0.68rem] font-extrabold text-gray-400 uppercase tracking-wider text-center">삭제</div>
               </div>
-            ))
-          ) : (
-            <div className="py-10 text-center text-sm text-gray-400 font-bold">
-              비품 추가 버튼을 눌러 비품을 추가해주세요.
+
+              <div className="flex-1 overflow-y-auto no-scrollbar">
+                {items.length > 0 ? (
+                  items.map(item => (
+                    <div key={item.id} className="grid grid-cols-12 border-b border-gray-50 last:border-0 items-center hover:bg-gray-50/60 transition-colors">
+                      <div className="col-span-4 px-4 py-2">
+                        <p className="text-sm text-gray-700 font-medium whitespace-nowrap overflow-hidden text-ellipsis">{item.supply_name}</p>
+                        <p className="text-[11px] text-gray-400 whitespace-nowrap">{item.supply_code}</p>
+                      </div>
+                      <div className="col-span-3 px-4 py-2 flex items-center justify-center">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => changeQty(item.id, -1)}
+                            className="w-5 h-5 flex items-center justify-center border border-gray-200 rounded-md text-gray-500 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 transition-all text-xs"
+                          >−</button>
+                          <span className="text-sm font-bold text-gray-800 w-5 text-center">{item.qty}</span>
+                          <button
+                            onClick={() => changeQty(item.id, 1)}
+                            className="w-5 h-5 flex items-center justify-center border border-gray-200 rounded-md text-gray-500 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 transition-all text-xs"
+                          >+</button>
+                        </div>
+                      </div>
+                      <div className="col-span-2 px-4 py-2 text-center text-xs text-gray-400 font-semibold whitespace-nowrap">
+                        {item.stock !== '-' ? `${item.stock_qty}개` : '-'}
+                      </div>
+                      <div className="col-span-2 px-4 py-2 text-center">
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-600 whitespace-nowrap">
+                          {item.usageType}
+                        </span>
+                      </div>
+                      <div className="col-span-1 px-4 py-2 flex items-center justify-center">
+                        <button
+                          onClick={() => removeItem(item.id)}
+                          className="text-gray-300 hover:text-red-400 transition-colors"
+                        >
+                          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                            <path d="M10 11v6M14 11v6"/>
+                            <path d="M9 6V4h6v2"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex items-center justify-center text-sm text-gray-400 font-bold py-12">
+                    비품 추가 버튼을 눌러 비품을 추가해주세요.
+                  </div>
+                )}
+              </div>
             </div>
-          )}
+          </div>
         </div>
         {errors.items && (
-          <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">비품을 1개 이상 추가해주세요.</p>
+          <p className="text-[11px] text-red-500 font-bold mt-1 ml-1 shrink-0">비품을 1개 이상 추가해주세요.</p>
         )}
 
         {/* 버튼 */}
-        <div className="flex justify-end gap-3 mt-8">
+        <div className="flex justify-end gap-3 mt-6 shrink-0">
           <button
             onClick={handleCancel}
-            className="px-6 py-2.5 border border-gray-200 rounded-xl text-sm font-bold text-gray-500 bg-white hover:bg-gray-50 transition-all"
+            className="px-5 py-2 border border-gray-200 rounded-xl text-sm font-bold text-gray-500 bg-white hover:bg-gray-50 transition-all"
           >
             취소
           </button>
           <button
             onClick={handleSubmit}
-            className="px-7 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all"
+            className="px-6 py-2 bg-[#3530B8] text-white text-sm font-bold rounded-xl hover:bg-[#4F4DD0] shadow-md shadow-indigo-100 transition-all"
           >
             신청
           </button>
