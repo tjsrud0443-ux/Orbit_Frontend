@@ -32,6 +32,7 @@ const RoomHistory = () => {
   const [editingReservation, setEditingReservation] = useState(null);
   const [titleError, setTitleError] = useState(false);
   const [timeError, setTimeError] = useState(false);
+  const [attendeeError, setAttendeeError] = useState(false);
   const [editForm, setEditForm] = useState({
     room_seq: '',
     room_name: '',
@@ -149,11 +150,16 @@ const RoomHistory = () => {
   };
 
   const handleUpdateSubmit = () => {
-    if (!editForm.title.trim()) {
+    if (!editForm.title.trim() || editForm.title.length > 20) {
       setTitleError(true);
       return;
     }
     setTitleError(false);
+
+    const maxPeople = meetingRooms.find(r => r.room_seq === editForm.room_seq)?.max_people || 0;
+    if (editForm.attendees.length > maxPeople) {
+      return;
+    }
 
     const isStartDisabled = isStartOccupied(editForm.startTime) || isPastTime(editForm.startTime, editForm.date);
     const isEndDisabled = isEndOccupied(editForm.endTime) || isPastTime(editForm.endTime, editForm.date);
@@ -441,15 +447,17 @@ const RoomHistory = () => {
                   <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1.5 ml-1">회의명</label>
                   <input 
                     type="text" 
-                    className={`w-full px-4 py-2.5 bg-gray-50 border ${titleError ? 'border-red-500' : 'border-gray-100'} rounded-xl text-xs font-medium focus:outline-none focus:border-[#3530B8] transition-all`}
+                    className={`w-full px-4 py-2.5 bg-gray-50 border ${titleError || editForm.title.length > 20 ? 'border-red-500' : 'border-gray-100'} rounded-xl text-xs font-medium focus:outline-none focus:border-[#3530B8] transition-all`}
                     value={editForm.title}
                     onChange={(e) => {
                       setEditForm({ ...editForm, title: e.target.value });
-                      if (e.target.value.trim()) setTitleError(false);
+                      if (e.target.value.trim() && e.target.value.length <= 20) setTitleError(false);
                     }}
                   />
-                  {titleError && (
-                    <p className="text-[10px] text-red-500 font-bold ml-1 mt-1">회의명을 입력해주세요.</p>
+                  {(titleError || editForm.title.length > 20) && (
+                    <p className="text-[10px] text-red-500 font-bold ml-1 mt-1">
+                      {editForm.title.length > 20 ? "20자까지만 입력 가능합니다." : "회의명을 입력해주세요."}
+                    </p>
                   )}
                 </div>
               </div>
@@ -586,7 +594,7 @@ const RoomHistory = () => {
                     ref={inputRef}
                     type="text" 
                     placeholder="이름/부서로 검색"
-                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium outline-none focus:border-[#3530B8] transition-all"
+                    className={`w-full px-4 py-2.5 bg-white border ${editForm.attendees.length > (meetingRooms.find(r => r.room_seq === editForm.room_seq)?.max_people || 0) ? 'border-red-500' : 'border-gray-200'} rounded-xl text-xs font-medium outline-none focus:border-[#3530B8] transition-all`}
                     value={searchQuery}
                     onChange={(e) => {
                       setSearchQuery(e.target.value);
@@ -596,6 +604,9 @@ const RoomHistory = () => {
                   />
                   {renderDropdown()}
                 </div>
+                {editForm.attendees.length > (meetingRooms.find(r => r.room_seq === editForm.room_seq)?.max_people || 0) && (
+                  <p className="text-[10px] text-red-500 font-bold ml-1 mt-1">해당 회의실의 최대 인원수는 {meetingRooms.find(r => r.room_seq === editForm.room_seq)?.max_people}명입니다.</p>
+                )}
                 <div className="flex flex-wrap gap-2">
                   {editForm.attendees.map((attendee, idx) => (
                     <div key={idx} className="flex items-center gap-1.5 bg-[#F8FAFF] border border-[#F0F4FF] px-3 py-1.5 rounded-full text-[10px] font-bold text-[#3530B8] shadow-sm animate-in zoom-in-95">
