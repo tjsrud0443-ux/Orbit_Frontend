@@ -319,6 +319,7 @@ const SupplyRequest = () => {
      supplyRequest({
         reason: reason,
         status: 'PENDING',
+        req_date: reqDate,
         items: items.map(item => ({
             supply_seq: item.supply_seq,
             ea: item.qty,
