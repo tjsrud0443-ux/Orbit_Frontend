@@ -3,6 +3,7 @@ import Pagination from '../../components/common/Pagination';
 import { approveUserSignup, getAllRequest, getDeptList, getHrInfo, getRankList, getUserInfo, rejectUserSignup } from './adminApi';
 import useAuthStore from '../../store/authStore';
 import Calendar from '../../components/common/Calendar';
+import useLoadingStore from '../../store/useLoadingStore';
 
 const AdminSignup = () => {
   const [activeTab, setActiveTab] = useState('전체');
@@ -27,6 +28,8 @@ const AdminSignup = () => {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const token = useAuthStore(state => state.token);
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
 
   const statusMap = {
     '전체': 'TOTAL',
@@ -50,12 +53,15 @@ const AdminSignup = () => {
   };
 
   const loadList = () => {
+    showLoading();
     getAllRequest(page, statusMap[activeTab], searchTerm).then(resp => {
       setAllInfo(resp.data.list);
       const calculatedPages = Math.ceil(resp.data.count / 10);
       setTotalPages(calculatedPages === 0 ? 1 : calculatedPages);
       setTabCount(resp.data.tabCount);
-    });
+    }).finally(() => {
+      hideLoading();
+    })
   };
 
   useEffect(() => {

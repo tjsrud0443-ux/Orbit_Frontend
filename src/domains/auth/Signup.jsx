@@ -2,11 +2,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { emailDuplCheck, idDuplCheck, signupRequest } from './authApi';
 import { IMAGES } from '../../images/images';
+import useLoadingStore from '../../store/useLoadingStore';
 
 const Signup = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const postcodeRef = useRef(null);
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
 
   const [formData, setFormData] = useState({
     id: '',
@@ -80,6 +83,7 @@ const Signup = () => {
         setErrors(prev => ({ ...prev, id: '아이디를 입력해주세요.' }));
         return;
       }
+      showLoading();
       if (resp.data === true) {
         setErrors(prev => ({ ...prev, id: '이미 사용 중인 아이디입니다.' }));
         setIsIdChecked(false);
@@ -89,6 +93,9 @@ const Signup = () => {
         setErrors((prev) => ({ ...prev, idCheck: '' }));
       }
     })
+    .finally(() => {
+      hideLoading();
+    });
   };
 
   const handleEmailDuplCheck = () => {
@@ -97,6 +104,7 @@ const Signup = () => {
         setErrors(prev => ({ ...prev, email: '이메일을 입력해주세요.' }));
         return;
       }
+      showLoading();
       if (resp.data === true) {
         setErrors(prev => ({ ...prev, email: '이미 사용 중인 이메일입니다.' }));
         setIsEmailChecked(false);
@@ -106,6 +114,9 @@ const Signup = () => {
         setErrors((prev) => ({ ...prev, emailCheck: '' }));
       }
     })
+    .finally(() => {
+      hideLoading();
+    });
   };
 
   useEffect(() => {
@@ -248,9 +259,12 @@ const Signup = () => {
       data.append('file', profileImgFile);
     }
 
+    showLoading();
     signupRequest(data).then(resp => {
+      alert("회원가입 신청이 완료되었습니다.");
       navigate("/");
     })
+    hideLoading();
   };
 
   return (
