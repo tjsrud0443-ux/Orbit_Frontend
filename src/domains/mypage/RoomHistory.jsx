@@ -43,6 +43,12 @@ const RoomHistory = () => {
   });
 
   const [showCalendar, setShowCalendar] = useState(false);
+  const [showRoomDropdown, setShowRoomDropdown] = useState(false);
+  const [showStartTimeDropdown, setShowStartTimeDropdown] = useState(false);
+  const [showEndTimeDropdown, setShowEndTimeDropdown] = useState(false);
+  const roomRef = useRef(null);
+  const startTimeRef = useRef(null);
+  const endTimeRef = useRef(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
   const inputRef = useRef(null);
@@ -214,16 +220,32 @@ const RoomHistory = () => {
   }, []);
 
   useEffect(() => {
-    if (showSearchResults) {
-      updateDropdownPos();
-      window.addEventListener('resize', updateDropdownPos);
-      window.addEventListener('scroll', updateDropdownPos, true);
+    if (showSearchResults || showRoomDropdown || showStartTimeDropdown || showEndTimeDropdown) {
+      const currentRef = showSearchResults ? inputRef : 
+                         showRoomDropdown ? roomRef : 
+                         showStartTimeDropdown ? startTimeRef : 
+                         endTimeRef;
+      
+      const update = () => {
+        if (currentRef.current) {
+          const rect = currentRef.current.getBoundingClientRect();
+          setDropdownPos({
+            top: rect.bottom,
+            left: rect.left,
+            width: rect.width
+          });
+        }
+      };
+
+      update();
+      window.addEventListener('resize', update);
+      window.addEventListener('scroll', update, true);
+      return () => {
+        window.removeEventListener('resize', update);
+        window.removeEventListener('scroll', update, true);
+      };
     }
-    return () => {
-      window.removeEventListener('resize', updateDropdownPos);
-      window.removeEventListener('scroll', updateDropdownPos, true);
-    };
-  }, [showSearchResults, updateDropdownPos]);
+  }, [showSearchResults, showRoomDropdown, showStartTimeDropdown, showEndTimeDropdown, updateDropdownPos]);
 
   const filteredEmployees = searchQuery 
     ? allEmployees.filter(emp => {
@@ -380,18 +402,37 @@ const RoomHistory = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1.5 ml-1">회의실 선택</label>
-                  <select 
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-medium focus:outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 transition-all"
-                    value={editForm.room_seq}
-                    onChange={(e) => {
-                      const selected = meetingRooms.find(m => m.room_seq === Number(e.target.value));
-                      setEditForm({ ...editForm, room_seq: selected.room_seq, room_name: selected.room_name });
-                    }}
+                  <div 
+                    ref={roomRef}
+                    onClick={() => setShowRoomDropdown(!showRoomDropdown)}
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-medium cursor-pointer flex justify-between items-center"
                   >
-                    {meetingRooms.map(room => (
-                      <option key={room.room_seq} value={room.room_seq}>{room.room_name}</option>
-                    ))}
-                  </select>
+                    <span>{editForm.room_name}</span>
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  </div>
+                  {showRoomDropdown && createPortal(
+                    <>
+                      <div className="fixed inset-0 z-[9998]" onClick={() => setShowRoomDropdown(false)} />
+                      <div 
+                        className="fixed z-[9999] bg-white border border-gray-100 rounded-xl shadow-2xl max-h-48 overflow-y-auto custom-scrollbar"
+                        style={{ top: `${dropdownPos.top + 4}px`, left: `${dropdownPos.left}px`, width: `${dropdownPos.width}px` }}
+                      >
+                        {meetingRooms.map(room => (
+                          <div 
+                            key={room.room_seq}
+                            onClick={() => {
+                              setEditForm({ ...editForm, room_seq: room.room_seq, room_name: room.room_name });
+                              setShowRoomDropdown(false);
+                            }}
+                            className={`p-3 hover:bg-[#F0F4FF] cursor-pointer text-xs font-bold text-gray-700 border-b border-gray-50 last:border-0 ${editForm.room_seq === room.room_seq ? 'bg-[#F0F4FF]' : ''}`}
+                          >
+                            {room.room_name}
+                          </div>
+                        ))}
+                      </div>
+                    </>,
+                    document.body
+                  )}
                 </div>
 
                 <div>
@@ -441,50 +482,90 @@ const RoomHistory = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1.5 ml-1">시작 시간</label>
-                    <select 
-                      className={`w-full px-4 py-2.5 bg-gray-50 border ${isTimeInvalid || (timeError && (isStartOccupied(editForm.startTime) || isPastTime(editForm.startTime, editForm.date))) ? 'border-red-500' : 'border-gray-100'} rounded-xl text-xs font-medium focus:outline-none`}
-                      value={editForm.startTime}
-                      onChange={(e) => {
-                        setEditForm({ ...editForm, startTime: e.target.value });
-                        setTimeError(false);
-                      }}
+                    <div 
+                      ref={startTimeRef}
+                      onClick={() => setShowStartTimeDropdown(!showStartTimeDropdown)}
+                      className={`w-full px-4 py-2.5 bg-gray-50 border ${isTimeInvalid || (timeError && (isStartOccupied(editForm.startTime) || isPastTime(editForm.startTime, editForm.date))) ? 'border-red-500' : 'border-gray-100'} rounded-xl text-xs font-medium cursor-pointer flex justify-between items-center`}
                     >
-                      {timeSlots.map(time => {
-                        const isOccupied = isStartOccupied(time);
-                        const isPast = isPastTime(time, editForm.date);
-                        const isDisabled = isOccupied || isPast;
-                        return (
-                          <option key={time} value={time} disabled={isDisabled} style={isDisabled ? { color: '#ccc' } : {}}>
-                            {time} {isOccupied ? '(예약됨)' : ''}
-                          </option>
-                        );
-                      })}
-                    </select>
+                      <span>{editForm.startTime}</span>
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                    </div>
+                    {showStartTimeDropdown && createPortal(
+                      <>
+                        <div className="fixed inset-0 z-[9998]" onClick={() => setShowStartTimeDropdown(false)} />
+                        <div 
+                          className="fixed z-[9999] bg-white border border-gray-100 rounded-xl shadow-2xl max-h-48 overflow-y-auto custom-scrollbar"
+                          style={{ top: `${dropdownPos.top + 4}px`, left: `${dropdownPos.left}px`, width: `${dropdownPos.width}px` }}
+                        >
+                          {timeSlots.map(time => {
+                            const isOccupied = isStartOccupied(time);
+                            const isPast = isPastTime(time, editForm.date);
+                            const isDisabled = isOccupied || isPast;
+                            return (
+                              <div 
+                                key={time} 
+                                onClick={() => {
+                                  if (isDisabled) return;
+                                  setEditForm({ ...editForm, startTime: time });
+                                  setShowStartTimeDropdown(false);
+                                  setTimeError(false);
+                                }}
+                                className={`p-3 hover:bg-[#F0F4FF] cursor-pointer text-xs font-bold border-b border-gray-50 last:border-0 ${editForm.startTime === time ? 'bg-[#F0F4FF]' : ''} ${isDisabled ? 'text-gray-300 cursor-default' : 'text-gray-700'}`}
+                                style={isDisabled ? { color: '#ccc' } : {}}
+                              >
+                                {time} {isOccupied ? '(예약됨)' : ''}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </>,
+                      document.body
+                    )}
                     {timeError && (isStartOccupied(editForm.startTime) || isPastTime(editForm.startTime, editForm.date)) && (
                       <p className="text-[10px] text-red-500 font-bold ml-1 mt-1">해당 시간은 예약이 불가합니다.</p>
                     )}
                   </div>
                   <div>
                     <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1.5 ml-1">종료 시간</label>
-                    <select 
-                      className={`w-full px-4 py-2.5 bg-gray-50 border ${isTimeInvalid || (timeError && (isEndOccupied(editForm.endTime) || isPastTime(editForm.endTime, editForm.date))) ? 'border-red-500' : 'border-gray-100'} rounded-xl text-xs font-medium focus:outline-none`}
-                      value={editForm.endTime}
-                      onChange={(e) => {
-                        setEditForm({ ...editForm, endTime: e.target.value });
-                        setTimeError(false);
-                      }}
+                    <div 
+                      ref={endTimeRef}
+                      onClick={() => setShowEndTimeDropdown(!showEndTimeDropdown)}
+                      className={`w-full px-4 py-2.5 bg-gray-50 border ${isTimeInvalid || (timeError && (isEndOccupied(editForm.endTime) || isPastTime(editForm.endTime, editForm.date))) ? 'border-red-500' : 'border-gray-100'} rounded-xl text-xs font-medium cursor-pointer flex justify-between items-center`}
                     >
-                      {timeSlots.map(time => {
-                        const isOccupied = isEndOccupied(time);
-                        const isPast = isPastTime(time, editForm.date);
-                        const isDisabled = isOccupied || isPast;
-                        return (
-                          <option key={time} value={time} disabled={isDisabled} style={isDisabled ? { color: '#ccc' } : {}}>
-                            {time} {isOccupied ? '(예약됨)' : ''}
-                          </option>
-                        );
-                      })}
-                    </select>
+                      <span>{editForm.endTime}</span>
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                    </div>
+                    {showEndTimeDropdown && createPortal(
+                      <>
+                        <div className="fixed inset-0 z-[9998]" onClick={() => setShowEndTimeDropdown(false)} />
+                        <div 
+                          className="fixed z-[9999] bg-white border border-gray-100 rounded-xl shadow-2xl max-h-48 overflow-y-auto custom-scrollbar"
+                          style={{ top: `${dropdownPos.top + 4}px`, left: `${dropdownPos.left}px`, width: `${dropdownPos.width}px` }}
+                        >
+                          {timeSlots.map(time => {
+                            const isOccupied = isEndOccupied(time);
+                            const isPast = isPastTime(time, editForm.date);
+                            const isDisabled = isOccupied || isPast;
+                            return (
+                              <div 
+                                key={time} 
+                                onClick={() => {
+                                  if (isDisabled) return;
+                                  setEditForm({ ...editForm, endTime: time });
+                                  setShowEndTimeDropdown(false);
+                                  setTimeError(false);
+                                }}
+                                className={`p-3 hover:bg-[#F0F4FF] cursor-pointer text-xs font-bold border-b border-gray-50 last:border-0 ${editForm.endTime === time ? 'bg-[#F0F4FF]' : ''} ${isDisabled ? 'text-gray-300 cursor-default' : 'text-gray-700'}`}
+                                style={isDisabled ? { color: '#ccc' } : {}}
+                              >
+                                {time} {isOccupied ? '(예약됨)' : ''}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </>,
+                      document.body
+                    )}
                     {timeError && (isEndOccupied(editForm.endTime) || isPastTime(editForm.endTime, editForm.date)) && (
                       <p className="text-[10px] text-red-500 font-bold ml-1 mt-1">해당 시간은 예약이 불가합니다.</p>
                     )}

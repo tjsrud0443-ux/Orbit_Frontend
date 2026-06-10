@@ -30,6 +30,10 @@ const MeetingRooms = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showFormCalendar, setShowFormCalendar] = useState(false);
+  const [showStartTimeDropdown, setShowStartTimeDropdown] = useState(false);
+  const [showEndTimeDropdown, setShowEndTimeDropdown] = useState(false);
+  const startTimeRef = useRef(null);
+  const endTimeRef = useRef(null);
   const [showValidation, setShowValidation] = useState(false);
   const searchInputRef = useRef(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
@@ -79,7 +83,6 @@ const MeetingRooms = () => {
     fetchEmployees();
   }, [fetchEmployees]);
 
-  // --- Helpers ---
   const timeSlots = [];
   for (let i = 9; i <= 18; i++) {
     timeSlots.push(`${String(i).padStart(2, '0')}:00`);
@@ -152,7 +155,6 @@ const MeetingRooms = () => {
     const end = addMinutes(start, hours * 60);
     const endStr = format(end, 'HH:mm');
     
-    // Check if new end time causes overlap
     const hasOverlap = panelEvents.some(event => {
       const eStart = getTime(event.start_dt);
       const eEnd = getTime(event.end_dt);
@@ -166,16 +168,43 @@ const MeetingRooms = () => {
     }
   };
 
-  const updateDropdownPos = useCallback(() => {
-    if (searchInputRef.current) {
-      const rect = searchInputRef.current.getBoundingClientRect();
+  const updatePos = (ref) => {
+    if (ref.current) {
+      const rect = ref.current.getBoundingClientRect();
       setDropdownPos({
         top: rect.bottom,
         left: rect.left,
         width: rect.width
       });
     }
-  }, []);
+  };
+
+  useEffect(() => {
+    if (showSearchResults || showStartTimeDropdown || showEndTimeDropdown) {
+      const currentRef = showSearchResults ? searchInputRef : 
+                         showStartTimeDropdown ? startTimeRef : 
+                         endTimeRef;
+      
+      const update = () => {
+        if (currentRef.current) {
+          const rect = currentRef.current.getBoundingClientRect();
+          setDropdownPos({
+            top: rect.bottom,
+            left: rect.left,
+            width: rect.width
+          });
+        }
+      };
+
+      update();
+      window.addEventListener('resize', update);
+      window.addEventListener('scroll', update, true);
+      return () => {
+        window.removeEventListener('resize', update);
+        window.removeEventListener('scroll', update, true);
+      };
+    }
+  }, [showSearchResults, showStartTimeDropdown, showEndTimeDropdown]);
 
   const filteredEmployees = searchQuery 
     ? allEmployees.filter(emp => {
@@ -458,16 +487,13 @@ const MeetingRooms = () => {
                       <p className="text-[10px] text-red-500 font-bold ml-1">오늘 이 전 날짜는 선택 불가합니다.</p>
                     )}
                     {showFormCalendar && (
-                      <div className="absolute top-full left-0 right-0 z-50 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4">
+                      <div className="absolute bottom-5 left-0 right-4 z-50 p-4">
                         <Calendar 
                           value={form.date} 
                           onChange={(date) => 
                             { setForm({ ...form, date }); 
                               setShowFormCalendar(false); 
                               setCurrentDate(parse(date, 'yyyy-MM-dd', new Date()));
-                              // getReservations(date, selectedRoomSeq).then(resp => {
-                              //   setEvents(resp.data);
-                              // });
                             }} 
                           onClose={() => setShowFormCalendar(false)} 
                         />
@@ -478,52 +504,89 @@ const MeetingRooms = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">시작 시간</label>
-                      <select 
-                        className={`w-full px-5 py-3.5 bg-gray-50 border ${isTimeInvalid ? 'border-red-500' : 'border-gray-100'} rounded-2xl text-sm font-bold text-gray-700 focus:outline-none`}
-                        value={form.startTime}
-                        onChange={e => setForm({ ...form, startTime: e.target.value })}
+                      <div 
+                        ref={startTimeRef}
+                        onClick={() => setShowStartTimeDropdown(!showStartTimeDropdown)}
+                        className={`w-full px-5 py-3.5 bg-gray-50 border ${isTimeInvalid ? 'border-red-500' : 'border-gray-100'} rounded-2xl text-sm font-bold text-gray-700 flex items-center justify-between cursor-pointer hover:border-[#3530B8] transition-all`}
                       >
-                        {timeSlots.filter(t => t <= '17:30').map(time => {
-                          const isOccupied = panelEvents.some(e =>
-                            time >= getTime(e.start_dt) && time < getTime(e.end_dt)
-                          );
-                          const isPast = isPastTime(time, form.date);
-                          const isDisabled = isOccupied || isPast;
-                          return (
-                            <option key={time} value={time} disabled={isDisabled} style={isDisabled ? { color: '#ccc', backgroundColor: '#f9f9f9' } : {}}>
-                              {time} {isOccupied ? '(예약됨)' : ''}
-                            </option>
-                          );
-                        })}
-                      </select>
+                         {form.startTime}
+                         <FontAwesomeIcon icon={faChevronRight} className={`text-[10px] text-gray-300 transition-transform ${showStartTimeDropdown ? 'rotate-90' : ''}`} />
+                      </div>
+                      {showStartTimeDropdown && createPortal(
+                        <>
+                          <div className="fixed inset-0 z-[9998]" onClick={() => setShowStartTimeDropdown(false)} />
+                          <div 
+                            className="fixed z-[9999] bg-white border border-gray-100 rounded-2xl shadow-2xl max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95"
+                            style={{ top: `${dropdownPos.top + 8}px`, left: `${dropdownPos.left}px`, width: `${dropdownPos.width}px` }}
+                          >
+                            {timeSlots.filter(t => t <= '17:30').map(time => {
+                              const isOccupied = panelEvents.some(e =>
+                                time >= getTime(e.start_dt) && time < getTime(e.end_dt)
+                              );
+                              const isPast = isPastTime(time, form.date);
+                              const isDisabled = isOccupied || isPast;
+                              return (
+                                <div 
+                                  key={time} 
+                                  onClick={() => {
+                                    if (isDisabled) return;
+                                    setForm({ ...form, startTime: time });
+                                    setShowStartTimeDropdown(false);
+                                  }}
+                                  className={`p-4 hover:bg-[#F0F4FF] cursor-pointer text-xs font-bold border-b border-gray-50 last:border-0 ${form.startTime === time ? 'bg-[#F0F4FF]' : ''} ${isDisabled ? 'text-gray-300 cursor-default' : 'text-gray-700'}`}
+                                >
+                                  {time} {isOccupied ? '(예약됨)' : ''}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </>,
+                        document.body
+                      )}
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">종료 시간</label>
-                      <select 
-                        className={`w-full px-5 py-3.5 bg-gray-50 border ${isTimeInvalid ? 'border-red-500' : 'border-gray-100'} rounded-2xl text-sm font-bold text-gray-700 focus:outline-none`}
-                        value={form.endTime}
-                        onChange={e => setForm({ ...form, endTime: e.target.value })}
+                      <div 
+                        ref={endTimeRef}
+                        onClick={() => setShowEndTimeDropdown(!showEndTimeDropdown)}
+                        className={`w-full px-5 py-3.5 bg-gray-50 border ${isTimeInvalid ? 'border-red-500' : 'border-gray-100'} rounded-2xl text-sm font-bold text-gray-700 flex items-center justify-between cursor-pointer hover:border-[#3530B8] transition-all`}
                       >
-                        {timeSlots.concat('18:30').filter(t => t >= '09:30' && t <= '18:00').map(time => {
-                          const isBeforeStart = time <= form.startTime;
-                          const hasOverlap = panelEvents.some(event => {
-                            return (form.startTime < getTime(event.end_dt) && time > getTime(event.start_dt));
-                          });
-                          const isPast = isPastTime(time, form.date);
-                          const isDisabled = isBeforeStart || hasOverlap || isPast;
+                         {form.endTime}
+                         <FontAwesomeIcon icon={faChevronRight} className={`text-[10px] text-gray-300 transition-transform ${showEndTimeDropdown ? 'rotate-90' : ''}`} />
+                      </div>
+                      {showEndTimeDropdown && createPortal(
+                        <>
+                          <div className="fixed inset-0 z-[9998]" onClick={() => setShowEndTimeDropdown(false)} />
+                          <div 
+                            className="fixed z-[9999] bg-white border border-gray-100 rounded-2xl shadow-2xl max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95"
+                            style={{ top: `${dropdownPos.top + 8}px`, left: `${dropdownPos.left}px`, width: `${dropdownPos.width}px` }}
+                          >
+                            {timeSlots.concat('18:30').filter(t => t >= '09:30' && t <= '18:00').map(time => {
+                              const isBeforeStart = time <= form.startTime;
+                              const hasOverlap = panelEvents.some(event => {
+                                return (form.startTime < getTime(event.end_dt) && time > getTime(event.start_dt));
+                              });
+                              const isPast = isPastTime(time, form.date);
+                              const isDisabled = isBeforeStart || hasOverlap || isPast;
 
-                          return (
-                            <option 
-                              key={time} 
-                              value={time} 
-                              disabled={isDisabled}
-                              style={isDisabled ? { color: '#ccc', backgroundColor: '#f9f9f9' } : {}}
-                            >
-                              {time}
-                            </option>
-                          );
-                        })}
-                      </select>
+                              return (
+                                <div 
+                                  key={time} 
+                                  onClick={() => {
+                                    if (isDisabled) return;
+                                    setForm({ ...form, endTime: time });
+                                    setShowEndTimeDropdown(false);
+                                  }}
+                                  className={`p-4 hover:bg-[#F0F4FF] cursor-pointer text-xs font-bold border-b border-gray-50 last:border-0 ${form.endTime === time ? 'bg-[#F0F4FF]' : ''} ${isDisabled ? 'text-gray-300 cursor-default' : 'text-gray-700'}`}
+                                >
+                                  {time}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </>,
+                        document.body
+                      )}
                     </div>
                   </div>
                   {isTimeInvalid && (
@@ -573,11 +636,11 @@ const MeetingRooms = () => {
                       onChange={e => {
                         setSearchQuery(e.target.value);
                         setShowSearchResults(true);
-                        updateDropdownPos();
+                        updatePos(searchInputRef);
                       }}
                       onFocus={() => {
                         setShowSearchResults(true);
-                        updateDropdownPos();
+                        updatePos(searchInputRef);
                       }}
                     />
                     
