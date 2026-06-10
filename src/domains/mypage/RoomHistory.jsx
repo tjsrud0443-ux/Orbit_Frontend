@@ -32,7 +32,6 @@ const RoomHistory = () => {
   const [editingReservation, setEditingReservation] = useState(null);
   const [titleError, setTitleError] = useState(false);
   const [timeError, setTimeError] = useState(false);
-  const [attendeeError, setAttendeeError] = useState(false);
   const [editForm, setEditForm] = useState({
     room_seq: '',
     room_name: '',

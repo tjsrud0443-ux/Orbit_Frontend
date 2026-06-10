@@ -8,12 +8,15 @@ import Calendar from '../../components/common/Calendar';
 import useAuthStore from '../../store/authStore';
 import useUserStore from '../../store/userStore';
 import useEmployeeStore from '../../store/useEmployeeStore';
+import useLoadingStore from '../../store/useLoadingStore';
 import { createReservation, getAllRooms, getReservations } from './meetingRoomsApi';
 
 const MeetingRooms = () => {
   const { user } = useUserStore();
   const token = useAuthStore(state => state.token);
   const { allEmployees, fetchEmployees } = useEmployeeStore();
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
   
   const [rooms, setRooms] = useState([]);
   
@@ -64,9 +67,13 @@ const MeetingRooms = () => {
   );
 
   const loadRooms = () => {
+    showLoading();
     getAllRooms().then(resp => {
       setRooms(resp.data);
-    }).catch(err => console.error("회의실 목록 로드 실패:", err));
+    }).catch(err => console.error("회의실 목록 로드 실패:", err))
+      .finally(() => {
+        hideLoading();
+      })
   };
 
   useEffect(() => {
