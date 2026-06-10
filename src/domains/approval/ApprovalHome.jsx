@@ -3,10 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { IMAGES } from '../../images/images';
 import { getApprovalHomeData } from './approvalApi';
 import useAuthStore from '../../store/authStore';
+import useLoadingStore from '../../store/useLoadingStore';
 
 const ApprovalHome = () => {
   const navi = useNavigate();
   const { token } = useAuthStore();
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
+
   const [homeData, setHomeData] = useState({
     pendingCount: 0,
     inProgressCount: 0,
@@ -18,9 +22,13 @@ const ApprovalHome = () => {
   const [isDraftModalOpen, setIsDraftModalOpen] = React.useState(false);
 
   useEffect(() => {
+    showLoading();
     getApprovalHomeData().then(resp => {
       setHomeData(resp.data);
-    })
+    }).catch(err => console.error("정보 로드 실패:", err))
+      .finally(() => {
+        hideLoading();
+      });
   }, []);
 
   const getDocTypeLabel = (doc_type) => {
