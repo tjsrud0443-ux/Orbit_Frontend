@@ -228,7 +228,10 @@ const MeetingRooms = () => {
 
   const handleReserve = async () => {
     setShowValidation(true);
-    if (!form.title.trim()) {
+    if (!form.title.trim() || form.title.length > 20) {
+      return;
+    }
+    if (form.attendees.length > (selectedRoom?.max_people || 0)) {
       return;
     }
     if (!form.date) {
@@ -272,7 +275,9 @@ const MeetingRooms = () => {
   };
 
   const isDateInvalid = form.date && isBefore(parse(form.date, 'yyyy-MM-dd', new Date()), startOfDay(new Date()));
-  const isTitleInvalid = showValidation && !form.title.trim();
+  const isTitleInvalid = (showValidation && !form.title.trim()) || form.title.length > 20;
+  const isTitleLengthInvalid = form.title.length > 20;
+  const isAttendeeLimitExceeded = form.attendees.length > (selectedRoom?.max_people || 0);
   const isTimeInvalid = form.startTime >= form.endTime;
 
   return (
@@ -446,7 +451,9 @@ const MeetingRooms = () => {
                       onChange={e => setForm({ ...form, title: e.target.value })}
                     />
                     {isTitleInvalid && (
-                      <p className="text-[10px] text-red-500 font-bold ml-1">회의명을 입력해주세요.</p>
+                      <p className="text-[10px] text-red-500 font-bold ml-1">
+                        {form.title.length > 20 ? "20자까지만 입력 가능합니다." : "회의명을 입력해주세요."}
+                      </p>
                     )}
                   </div>
 
@@ -631,7 +638,7 @@ const MeetingRooms = () => {
                       ref={searchInputRef}
                       type="text" 
                       placeholder="이름 또는 부서 검색"
-                      className="w-full pl-12 pr-5 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 outline-none focus:border-[#3530B8] transition-all"
+                      className={`w-full pl-12 pr-5 py-3.5 bg-white border ${isAttendeeLimitExceeded ? 'border-red-500' : 'border-gray-200'} rounded-2xl text-sm font-bold text-gray-700 outline-none focus:border-[#3530B8] transition-all`}
                       value={searchQuery}
                       onChange={e => {
                         setSearchQuery(e.target.value);
@@ -673,6 +680,9 @@ const MeetingRooms = () => {
                       <div className="fixed inset-0 z-[9998]" onClick={() => setShowSearchResults(false)} />
                     )}
                   </div>
+                  {isAttendeeLimitExceeded && (
+                    <p className="text-[10px] text-red-500 font-bold ml-1">해당 회의실의 최대 인원수는 {selectedRoom?.max_people}명입니다.</p>
+                  )}
 
                   <div className="flex flex-wrap gap-2">
                     {form.attendees.map(attendee => (
