@@ -106,7 +106,26 @@ const AdminMeetingRooms = () => {
   const handleChange = (e) => {
     const {name, value} = e.target;
     setFormData(prev => ({...prev, [name]:value}));
-    if (errors[name]) {
+    
+    if (name === 'room_name') {
+      if (value.length > 10) {
+        setErrors(prev => ({ ...prev, room_name: "10자까지만 입력이 가능합니다." }));
+      } else {
+        setErrors(prev => ({ ...prev, room_name: null }));
+      }
+    } else if (name === 'room_floor') {
+      if (value.length > 15) {
+        setErrors(prev => ({ ...prev, room_floor: "15자까지만 입력이 가능합니다." }));
+      } else {
+        setErrors(prev => ({ ...prev, room_floor: null }));
+      }
+    } else if (name === 'max_people') {
+      if (value.length > 3) {
+        setErrors(prev => ({ ...prev, max_people: "3자리 수까지만 입력 가능합니다." }));
+      } else {
+        setErrors(prev => ({ ...prev, max_people: null }));
+      }
+    } else if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: null }));
     }
   }
@@ -118,14 +137,21 @@ const AdminMeetingRooms = () => {
     }
     if (!formData.room_name || !formData.room_name.trim()) {
       newErrors.room_name = "회의실명을 입력해주세요.";
+    } else if (formData.room_name.length > 10) {
+      newErrors.room_name = "10자까지만 입력이 가능합니다.";
     }
+
     if (!formData.max_people) {
       newErrors.max_people = "1 이상의 숫자를 입력해주세요.";
     } else if (!/^[1-9][0-9]*$/.test(formData.max_people.toString())) {
       newErrors.max_people = "1 이상의 숫자만 입력해주세요.";
+    } else if (formData.max_people.toString().length > 3) {
+      newErrors.max_people = "3자리 수까지만 입력 가능합니다.";
     }
     if (!formData.room_floor || !formData.room_floor.trim()) {
       newErrors.room_floor = "위치를 입력해주세요.";
+    } else if (formData.room_floor.length > 15) {
+      newErrors.room_floor = "15자까지만 입력이 가능합니다.";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -324,7 +350,7 @@ const AdminMeetingRooms = () => {
                     value={formData.max_people}
                     onChange={handleChange}
                     name="max_people"
-                    placeholder="최대 수용 인원을 입력하세요"
+                    placeholder="최대 수용 인원을 입력하세요 (예: 10)"
                     className={`w-full px-4 py-3 bg-gray-50 border rounded-xl focus:bg-white focus:ring-4 outline-none transition-all text-sm font-medium ${errors.max_people ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/5' : 'border-gray-100 focus:border-[#3530B8] focus:ring-[#3530B8]/5'}`}
                   />
                   {errors.max_people && <p className="text-xs text-rose-500 ml-1 mt-1">{errors.max_people}</p>}

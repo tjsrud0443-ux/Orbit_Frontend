@@ -25,7 +25,6 @@ import ProjectsList from './domains/projects/ProjectsList';
 import Kanban from './domains/projects/kanban';
 import DocumentsList from './domains/documents/DocumentsList';
 import MinutesList from './domains/meetingMinutes/MinutesList';
-import MinutesDetail from './domains/meetingMinutes/MinutesDetail';
 import MeetingRooms from './domains/meetingRooms/MeetingRooms';
 import SupplyRequest from './domains/supply/SupplyRequest';
 import BoardList from './domains/board/BoardList';
@@ -87,7 +86,6 @@ function App() {
           <Route path="/calendar" element={<Calendar />} />
 
           <Route path="/meetingMinutes" element={<MinutesList />} />
-          <Route path="/meetingMinutesDetail" element={<MinutesDetail />} />
 
           <Route path="/meetingRooms" element={<MeetingRooms />} />
           <Route path="/supply" element={<SupplyRequest />} />
