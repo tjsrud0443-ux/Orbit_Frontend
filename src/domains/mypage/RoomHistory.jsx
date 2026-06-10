@@ -30,6 +30,8 @@ const RoomHistory = () => {
   const [selectedReservation, setSelectedReservation] = useState(null);
 
   const [editingReservation, setEditingReservation] = useState(null);
+  const [titleError, setTitleError] = useState(false);
+  const [timeError, setTimeError] = useState(false);
   const [editForm, setEditForm] = useState({
     room_seq: '',
     room_name: '',
@@ -102,6 +104,8 @@ const RoomHistory = () => {
 
   const handleEditClick = async (res) => {
     setSelectedReservation(null);
+    setTitleError(false);
+    setTimeError(false);
     showLoading();
     try {
       const resp = await getMeetRsvnDetail(res.rsvn_seq);
@@ -127,6 +131,8 @@ const RoomHistory = () => {
         alert('예약이 취소되었습니다.');
         loadRsvn();
         setEditingReservation(null);
+        setTitleError(false);
+        setTimeError(false);
         setSelectedReservation(null);
       } catch (err) {
         console.error('예약 취소 실패 : ', err);
@@ -135,6 +141,21 @@ const RoomHistory = () => {
   };
 
   const handleUpdateSubmit = () => {
+    if (!editForm.title.trim()) {
+      setTitleError(true);
+      return;
+    }
+    setTitleError(false);
+
+    const isStartDisabled = isStartOccupied(editForm.startTime) || isPastTime(editForm.startTime, editForm.date);
+    const isEndDisabled = isEndOccupied(editForm.endTime) || isPastTime(editForm.endTime, editForm.date);
+
+    if (isStartDisabled || isEndDisabled) {
+      setTimeError(true);
+      return;
+    }
+    setTimeError(false);
+
     if (isTimeInvalid) return;
     setReservations(reservations.map(r => r.rsvn_seq === editForm.rsvn_seq ? editForm : r));
 
@@ -349,7 +370,7 @@ const RoomHistory = () => {
           <div className={`flex flex-col bg-white rounded-none md:rounded-[2rem] border-0 md:border border-[#F0F4FF] shadow-sm overflow-hidden min-h-0 animate-in slide-in-from-right duration-500 flex-1 md:flex-[0.4]`}>
             <div className="p-6 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
               <h2 className="text-lg font-bold text-gray-900">예약 정보 수정</h2>
-              <button onClick={() => setEditingReservation(null)} className="text-gray-300 hover:text-gray-500 transition-colors">
+              <button onClick={() => { setEditingReservation(null); setTitleError(false); }} className="text-gray-300 hover:text-gray-500 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -377,10 +398,16 @@ const RoomHistory = () => {
                   <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1.5 ml-1">회의명</label>
                   <input 
                     type="text" 
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-medium focus:outline-none focus:border-[#3530B8] transition-all"
+                    className={`w-full px-4 py-2.5 bg-gray-50 border ${titleError ? 'border-red-500' : 'border-gray-100'} rounded-xl text-xs font-medium focus:outline-none focus:border-[#3530B8] transition-all`}
                     value={editForm.title}
-                    onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                    onChange={(e) => {
+                      setEditForm({ ...editForm, title: e.target.value });
+                      if (e.target.value.trim()) setTitleError(false);
+                    }}
                   />
+                  {titleError && (
+                    <p className="text-[10px] text-red-500 font-bold ml-1 mt-1">회의명을 입력해주세요.</p>
+                  )}
                 </div>
               </div>
 
@@ -415,9 +442,12 @@ const RoomHistory = () => {
                   <div>
                     <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1.5 ml-1">시작 시간</label>
                     <select 
-                      className={`w-full px-4 py-2.5 bg-gray-50 border ${isTimeInvalid ? 'border-red-500' : 'border-gray-100'} rounded-xl text-xs font-medium focus:outline-none`}
+                      className={`w-full px-4 py-2.5 bg-gray-50 border ${isTimeInvalid || (timeError && (isStartOccupied(editForm.startTime) || isPastTime(editForm.startTime, editForm.date))) ? 'border-red-500' : 'border-gray-100'} rounded-xl text-xs font-medium focus:outline-none`}
                       value={editForm.startTime}
-                      onChange={(e) => setEditForm({ ...editForm, startTime: e.target.value })}
+                      onChange={(e) => {
+                        setEditForm({ ...editForm, startTime: e.target.value });
+                        setTimeError(false);
+                      }}
                     >
                       {timeSlots.map(time => {
                         const isOccupied = isStartOccupied(time);
@@ -430,13 +460,19 @@ const RoomHistory = () => {
                         );
                       })}
                     </select>
+                    {timeError && (isStartOccupied(editForm.startTime) || isPastTime(editForm.startTime, editForm.date)) && (
+                      <p className="text-[10px] text-red-500 font-bold ml-1 mt-1">해당 시간은 예약이 불가합니다.</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1.5 ml-1">종료 시간</label>
                     <select 
-                      className={`w-full px-4 py-2.5 bg-gray-50 border ${isTimeInvalid ? 'border-red-500' : 'border-gray-100'} rounded-xl text-xs font-medium focus:outline-none`}
+                      className={`w-full px-4 py-2.5 bg-gray-50 border ${isTimeInvalid || (timeError && (isEndOccupied(editForm.endTime) || isPastTime(editForm.endTime, editForm.date))) ? 'border-red-500' : 'border-gray-100'} rounded-xl text-xs font-medium focus:outline-none`}
                       value={editForm.endTime}
-                      onChange={(e) => setEditForm({ ...editForm, endTime: e.target.value })}
+                      onChange={(e) => {
+                        setEditForm({ ...editForm, endTime: e.target.value });
+                        setTimeError(false);
+                      }}
                     >
                       {timeSlots.map(time => {
                         const isOccupied = isEndOccupied(time);
@@ -449,6 +485,9 @@ const RoomHistory = () => {
                         );
                       })}
                     </select>
+                    {timeError && (isEndOccupied(editForm.endTime) || isPastTime(editForm.endTime, editForm.date)) && (
+                      <p className="text-[10px] text-red-500 font-bold ml-1 mt-1">해당 시간은 예약이 불가합니다.</p>
+                    )}
                   </div>
                 </div>
                 {isTimeInvalid && (
@@ -488,7 +527,7 @@ const RoomHistory = () => {
             {/* Action Buttons */}
             <div className="p-6 border-t border-gray-50 flex gap-3 flex-shrink-0 bg-white">
               <button 
-                onClick={() => setEditingReservation(null)}
+                onClick={() => { setEditingReservation(null); setTitleError(false); }}
                 className="flex-1 py-4 border-2 border-gray-100 text-gray-400 text-sm font-bold rounded-2xl hover:bg-gray-50 transition-all text-center"
               >
                 취소
