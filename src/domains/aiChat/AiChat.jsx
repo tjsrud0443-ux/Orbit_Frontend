@@ -6,7 +6,6 @@ import {
   faPlus,
   faFileAlt,
   faTimes,
-  faPaperclip,
   faTrashCan,
   faBars,
   faChevronDown,
@@ -15,11 +14,12 @@ import {
 import { IMAGES } from '../../images/images';
 import { deleteChat, getDetailChat, inputMsg, insertQuestion, sideChatTitleList } from './aiChatApi';
 import { getGroup } from '../departments/departmentsApi';
+import useAuthStore from '../../store/authStore';
 
 const AiChat = () => {
   // --- 1. States ---
   const [messages, setMessages] = useState([
-    { id: Date.now(), role: 'AI', content: '안녕하세요! Orbit 사내 업무지원 AI 비서입니다. 인사, 규정, 복리후생 등 궁금하신 내용을 질문해주세요.', isTyping: false }
+    { id: Date.now(), role: 'AI', content: '안녕하세요! Orbit AI 비서입니다.\n회사 문서와 회의록을 기반으로 필요한 정보를 찾아 답변해 드립니다. 궁금하신 내용을 질문해 주세요!', isTyping: false }
   ]);
 
   const [input, setInput] = useState("");
@@ -37,7 +37,7 @@ const AiChat = () => {
   const [selectedDept, setSelectedDept] = useState(null);
   const [inputQuestion, setInputQuestion] = useState("");
   const [deptList, setDeptList] = useState([]);
-
+  const token = useAuthStore(state => state.token);
   // --- 2. Effects ---
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -86,7 +86,7 @@ const AiChat = () => {
           {
             id: Date.now(),
             role: 'AI',
-            content: '안녕하세요! Orbit 사내 업무지원 AI 비서입니다. 인사, 규정, 복리후생 등 궁금하신 내용을 질문해주세요.',
+            content: '안녕하세요! Orbit AI 비서입니다.\n회사 문서와 회의록을 기반으로 필요한 정보를 찾아 답변해 드립니다. 궁금하신 내용을 질문해 주세요!',
             isTyping: false
           }
         ]);
@@ -101,7 +101,7 @@ const AiChat = () => {
       {
         id: Date.now(),
         role: 'AI',
-        content: '안녕하세요! Orbit 사내 업무지원 AI 비서입니다. 인사, 규정, 복리후생 등 궁금하신 내용을 질문해주세요.',
+        content: '안녕하세요! Orbit AI 비서입니다.\n회사 문서와 회의록을 기반으로 필요한 정보를 찾아 답변해 드립니다. 궁금하신 내용을 질문해 주세요!',
         isTyping: false
       }
     ]);
@@ -134,6 +134,7 @@ const AiChat = () => {
     inputMsg(chatData)
       .then(resp => {
         const aiResponseText = resp.data.aiAnswer;
+        const sourceFileName = resp.data.resultSources || [];
 
         if (!currentChatSeq) {
           setCurrentChatSeq(resp.data.chat_seq);
@@ -147,7 +148,7 @@ const AiChat = () => {
 
         setMessages(prev => prev.map(msg => {
           if (msg.id === aiMessageId) {
-            return { ...msg, content: "", isTyping: true, showInquiry: needInquiryButton };
+            return { ...msg, content: "", isTyping: true, showInquiry: needInquiryButton, sourceFileName: sourceFileName };
           }
           return msg;
         }));
@@ -158,7 +159,7 @@ const AiChat = () => {
         console.error("AI 통신 실패:", err);
         setMessages(prev => prev.map(msg => {
           if (msg.id === aiMessageId) {
-            return { ...msg, content: "서버와의 연결이 원활하지 않습니다. 잠시 후 다시 시도해주세요.", isTyping: false };
+            return { ...msg, content: "서버와의 연결이 원활하지 않습니다. 잠시 후 다시 시도해 주세요.", isTyping: false };
           }
           return msg;
         }));
@@ -173,11 +174,12 @@ const AiChat = () => {
       const mappedMessages = resp.data.map(msg => {
         if (msg.role === 'AI' && msg.content) {
           const needInquiryButton = msg.content.includes("찾지 못했습니다") || msg.content.includes("죄송합니다");
-
+          
           return {
             ...msg,
             showInquiry: needInquiryButton,
-            isInquiryComplete: msg.status === 'PENDING' // 백엔드 스펙에 맞게 조정 가능
+            isInquiryComplete: msg.status === 'PENDING', // 백엔드 스펙에 맞게 조정 가능
+            sourceFileName : msg.resultSources || []
           };
         }
         return msg;
@@ -226,11 +228,11 @@ const AiChat = () => {
   // 🔥 [수정] 문의 제출 성공 시 메시지 상태 변경
   const handleInsertQuestion = () => {
     if (!selectedDept) {
-      alert("부서를 선택해주세요.");
+      alert("부서를 선택해 주세요.");
       return;
     }
     if (!inputQuestion.trim()) {
-      alert("문의 내용을 작성해주세요.");
+      alert("문의 내용을 작성해 주세요.");
       return;
     }
 
@@ -268,7 +270,7 @@ const AiChat = () => {
       <button onClick={handleNewChat} className="w-full bg-[#3530B8] text-white rounded-xl py-3 font-bold text-sm mb-8 hover:bg-[#2a2594] transition-all">
         <FontAwesomeIcon icon={faPlus} className="mr-2" /> 새 대화 시작
       </button>
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
         <h3 className="text-xs font-bold text-[#8a92a6] uppercase mb-4 px-2">최근 대화</h3>
         {chatHistory.map(chat => (
           <div
@@ -311,6 +313,19 @@ const AiChat = () => {
         .animate-fadeIn {
           animation: fadeIn 0.3s ease-out forwards;
         }
+        @keyframes dot-pulse {
+          0%, 33.3% { content: '.'; }
+          33.4%, 66.6% { content: '..'; }
+          66.7%, 100% { content: '...'; }
+        }
+        .dot-animate::after {
+          content: '.';
+          animation: dot-pulse 3s infinite;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
       `}</style>
       {/* 1. Desktop Sidebar */}
       <div className="hidden md:flex md:w-80 flex-shrink-0 h-full border-r border-[#edf2f9]">
@@ -338,7 +353,13 @@ const AiChat = () => {
           {messages.map((msg, index) => (
             <div key={index} className={`flex ${msg.role === 'USER' ? 'justify-end' : 'justify-start'} animate-fadeIn`}>
               <div className={`max-w-[70%] p-4 rounded-2xl ${msg.role === 'USER' ? 'bg-[#3530B8] text-white' : 'bg-[#f4f7fc] text-[#1a1c3d]'}`}>
-                <div className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</div>
+                <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                  {msg.content === '데이터를 분석하고 있습니다...' ? (
+                    <span>데이터를 분석하고 있습니다<span className="dot-animate"></span> 🤖</span>
+                  ) : (
+                    msg.content
+                  )}
+                </div>
 
                 {/* 🔥 [수정] 관리자 문의하기 컴포넌트 유동 제어 및 문의 완료 분기 처리 */}
                 {msg.showInquiry && (
@@ -356,12 +377,19 @@ const AiChat = () => {
                 )}
 
                 {/* 임베딩 출처 메타데이터 바인딩 연동 문서 구역 */}
-                {!msg.isTyping && msg.role === 'AI' && !msg.showInquiry && (
-                  <div className="mt-4 pt-3 border-t border-[#edf2f9] flex items-center justify-between gap-4">
-                    <span className="text-xs font-medium text-[#8a92a6] truncate min-w-0"><FontAwesomeIcon icon={faFileAlt} className="mr-1.5" /> 사내_업무_규정_통합본.pdf</span>
-                    <button className="text-[10px] bg-white border border-[#edf2f9] px-2 py-1 rounded hover:bg-slate-50 transition-colors flex-shrink-0">📄 다운로드</button>
+                {msg.sourceFileName?.map(source => (
+                  <div key={source.rag_doc_seq} className="mt-4 pt-3 border-t border-[#edf2f9] flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4">
+                    <span className="text-xs font-medium text-[#8a92a6] whitespace-normal md:truncate min-w-0">
+                      <FontAwesomeIcon icon={faFileAlt} className="mr-1.5" />
+                      {source.file_name}
+                    </span>
+                    <a href={`http://localhost/file/download/${source.sysname}?token=${token}`} download className="self-end md:self-auto">
+                      <button className="text-[10px] font-medium bg-white border border-[#edf2f9] px-2 py-1 rounded hover:bg-[#F0F4FF] transition-colors flex-shrink-0 cursor-pointer">
+                        📄 다운로드
+                      </button>
+                    </a>
                   </div>
-                )}
+                ))}
               </div>
             </div>
           ))}
@@ -370,14 +398,13 @@ const AiChat = () => {
 
         {/* 입출력 입력창 섹션 */}
         <div className="p-6 border-t border-[#edf2f9] flex-shrink-0">
-          <div className="flex items-center gap-3 bg-[#f4f7fc] p-2 rounded-xl">
-            <button className="text-[#8a92a6] px-3"><FontAwesomeIcon icon={faPaperclip} /></button>
+          <div className="flex items-center gap-3 px-6 bg-[#f4f7fc] p-2 rounded-xl">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
               className="flex-1 bg-transparent py-2 text-sm outline-none"
-              placeholder="인사, 연차, 회사 복리후생에 대해 질문해보세요..."
+              placeholder="문서나 회의록에 대해 궁금한 내용을 질문해보세요..."
             />
             <button onClick={handleSend} className="bg-[#3530B8] text-white w-10 h-10 rounded-lg flex items-center justify-center hover:bg-[#2a2594] transition-all">
               <FontAwesomeIcon icon={faPaperPlane} />
@@ -433,7 +460,7 @@ const AiChat = () => {
                 <FontAwesomeIcon icon={isDropdownOpen ? faChevronUp : faChevronDown} className="text-slate-400 text-xs" />
               </div>
               {isDropdownOpen && (
-                <div className="absolute top-full left-0 w-full bg-white border border-[#edf2f9] rounded-lg mt-1 shadow-lg z-[70] max-h-48 overflow-y-auto">
+                <div className="absolute top-full left-0 w-full bg-white border border-[#edf2f9] rounded-lg mt-1 shadow-lg z-[70] max-h-48 overflow-y-auto custom-scrollbar">
                   {deptList.map(dept => (
                     <div
                       key={dept.deptSeq}
