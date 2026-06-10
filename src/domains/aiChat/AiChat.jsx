@@ -135,7 +135,6 @@ const AiChat = () => {
       .then(resp => {
         const aiResponseText = resp.data.aiAnswer;
         const sourceFileName = resp.data.resultSources || [];
-        console.log("출처 문서", resp.data)
 
         if (!currentChatSeq) {
           setCurrentChatSeq(resp.data.chat_seq);
