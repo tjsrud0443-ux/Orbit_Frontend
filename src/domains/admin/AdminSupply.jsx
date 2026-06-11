@@ -2,7 +2,7 @@
 import Pagination from '../../components/common/Pagination';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { getSupplies } from '../supply/supplyApi';
+import { getAdminSupplies} from '../supply/supplyApi';
 
 const CATEGORIES = ['전체', '사무용품', '전자기기', '가구', '네트워크 장비'];
 
@@ -190,19 +190,19 @@ const AdminSupply = () => {
   const [modal, setModal] = useState(null); // null | { mode: 'add'|'edit', supply? }
 
     useEffect(() => {
-    getSupplies().then(res => {
-      const mapped = res.data.map(item => ({
-        id: item.supply_seq,
-        name: item.supply_name,
-        category: item.category,
-        code: item.supply_code,
-        totalQty: item.total_qty,
-        stockQty: item.stock_qty,
-        minStockQty: item.min_stock_qty,
-      }));
-      setSupplies(mapped);
-    });
-  }, []);
+      getAdminSupplies().then(res => {
+        const mapped = res.data.map(item => ({
+          id: item.supply_seq,
+          name: item.supply_name,
+          category: item.category,
+          code: item.supply_code,
+          totalQty: item.total_qty,
+          stockQty: item.stock_qty,
+          minStockQty: item.min_stock_qty,
+        }));
+        setSupplies(mapped);
+      });
+    }, []);
 
   // ── 비품 목록 필터링
   const filtered = supplies.filter(item => {
