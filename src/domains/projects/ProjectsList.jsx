@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
 import { getAllEmp, insertProjectAndMembers } from './projectsApi';
+import useUserStore from '../../store/userStore';
 
 const MOCK_EMPLOYEES = [
   { id: 1, name: '김철수', dept: '개발팀' },
@@ -29,6 +30,7 @@ const ProjectsList = () => {
   const startCalendarRef = useRef(null);
   const endCalendarRef = useRef(null);
   const empDropdownRef = useRef(null);
+  const user = useUserStore(state => state.user);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -68,7 +70,8 @@ const ProjectsList = () => {
     const matchsSearch = e.name.includes(empSearch);
     const isAlreadyAdded = newProject.members.some(m => m.id === e.id);
     const targetLank = e.rank_name !== "대표";
-    return matchsSearch && !isAlreadyAdded && targetLank;
+    const targetMy = e.id !== user.id;
+    return matchsSearch && !isAlreadyAdded && targetLank && targetMy;
   });
 
   const isDropdownActive = showEmpDropdown && empSearch; // 검색창이 활성화되었는지 여부
@@ -115,7 +118,7 @@ const ProjectsList = () => {
       start_date: `${newProject.start_date}`,
       end_date: `${newProject.end_date}`,
       status: 'IN_PROGRESS',
-      members: newProject.members.map(m => m.id),
+      projectMembersDTO: newProject.members.map(m => ({users_id : m.id})),
       contents: newProject.contents
     };
 
@@ -149,11 +152,6 @@ const ProjectsList = () => {
     })
   }, []);
 
-  useEffect(() => {
-    insertProject(projects).then(resp => {
-
-    });
-  }, []);
   return (
     <div className="flex flex-col h-full bg-[#FFFFFF] py-8 px-1 md:px-7 overflow-y-auto md:overflow-hidden custom-scrollbar">
       <div className="mb-6 px-4 md:px-2">
