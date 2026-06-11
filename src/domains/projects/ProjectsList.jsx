@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
+import { getAllEmp, insertProjectAndMembers } from './projectsApi';
 
 const MOCK_EMPLOYEES = [
   { id: 1, name: '김철수', dept: '개발팀' },
@@ -12,10 +13,10 @@ const MOCK_EMPLOYEES = [
 ];
 
 const INITIAL_PROJECTS = [
-  { id: 1, title: 'Orbit 그룹웨어 고도화', period: '2026.05.01 ~ 2026.08.31', status: '진행 중', members: ['김철수', '이영희'], desc: '그룹웨어의 전반적인 고도화 작업 및 UI 개선' },
-  { id: 2, title: '사내 AI 챗봇 구축', period: '2026.04.10 ~ 2026.06.30', status: '진행 중', members: ['박지성'], desc: '사내 업무 자동화를 위한 AI 챗봇 개발' },
-  { id: 3, title: '연차 시스템 개선', period: '2026.03.01 ~ 2026.04.30', status: '완료', members: ['김철수', '박지성', '최민수'], desc: '연차 신청 프로세스 최적화' },
-  { id: 4, title: '마케팅 대시보드', period: '2026.06.01 ~ 2026.09.30', status: '진행 중', members: ['이영희'], desc: '마케팅 데이터 시각화' },
+  { id: 1, project_name: 'Orbit 그룹웨어 고도화', period: '2026.05.01 ~ 2026.08.31', status: '진행 중', members: ['김철수', '이영희'], contents: '그룹웨어의 전반적인 고도화 작업 및 UI 개선' },
+  { id: 2, project_name: '사내 AI 챗봇 구축', period: '2026.04.10 ~ 2026.06.30', status: '진행 중', members: ['박지성'], contents: '사내 업무 자동화를 위한 AI 챗봇 개발' },
+  { id: 3, project_name: '연차 시스템 개선', period: '2026.03.01 ~ 2026.04.30', status: '완료', members: ['김철수', '박지성', '최민수'], contents: '연차 신청 프로세스 최적화' },
+  { id: 4, project_name: '마케팅 대시보드', period: '2026.06.01 ~ 2026.09.30', status: '진행 중', members: ['이영희'], contents: '마케팅 데이터 시각화' },
 ];
 
 const ProjectsList = () => {
@@ -27,6 +28,7 @@ const ProjectsList = () => {
   const searchDropdownRef = useRef(null);
   const startCalendarRef = useRef(null);
   const endCalendarRef = useRef(null);
+  const empDropdownRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -39,6 +41,9 @@ const ProjectsList = () => {
       if (endCalendarRef.current && !endCalendarRef.current.contains(event.target)) {
         setIsEndCalendarOpen(false);
       }
+      if (empDropdownRef.current && !empDropdownRef.current.contains(event.target)) {
+        setShowEmpDropdown(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -48,21 +53,39 @@ const ProjectsList = () => {
   const itemsPerPage = 5;
 
   const [projects, setProjects] = useState(INITIAL_PROJECTS);
+  const [newProject, setNewProject] = useState({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
+  const [employess, setEmployess] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [newProject, setNewProject] = useState({ title: '', desc: '', start: '', end: '', members: [] });
   const [empSearch, setEmpSearch] = useState('');
   const [showEmpDropdown, setShowEmpDropdown] = useState(false);
   const [isStartCalendarOpen, setIsStartCalendarOpen] = useState(false);
   const [isEndCalendarOpen, setIsEndCalendarOpen] = useState(false);
   const [errors, setErrors] = useState({});
 
+  const filteredEmployees = employess.filter(e => {
+    const matchsSearch = e.name.includes(empSearch);
+    const isAlreadyAdded = newProject.members.some(m => m.id === e.id);
+    const targetLank = e.rank_name !== "대표";
+    return matchsSearch && !isAlreadyAdded && targetLank;
+  });
+
+  const isDropdownActive = showEmpDropdown && empSearch; // 검색창이 활성화되었는지 여부
+  const getDynamicMargin = () => {
+    if (!isDropdownActive) return 8; // 평소 간격 (mb-2 = 8px)
+    if (filteredEmployees.length === 0) {
+      return 64; // "검색 결과가 없습니다" (1줄 높이 약 64px)
+    }
+    const calculatedHeight = (filteredEmployees.length * 53) + 16;
+    return Math.min(calculatedHeight, 144);
+  };
+
   const filteredProjects = useMemo(() => {
     return projects.filter(p => {
       const matchesFilter = filter === '전체' || p.status === filter;
       const matchesSearch = searchBy === '프로젝트명'
-        ? p.title.includes(search)
+        ? p.project_name.includes(search)
         : p.members.some(m => m.includes(search));
       return matchesFilter && matchesSearch;
     });
@@ -77,9 +100,9 @@ const ProjectsList = () => {
 
   const handleCreate = () => {
     const newErrors = {};
-    if (!newProject.title) newErrors.title = '프로젝트명을 입력해주세요.';
-    if (!newProject.start) newErrors.start = '시작일을 선택해주세요.';
-    if (!newProject.end) newErrors.end = '종료일을 선택해주세요.';
+    if (!newProject.project_name) newErrors.project_name = '프로젝트명을 입력해주세요.';
+    if (!newProject.start_date) newErrors.start_date = '시작일을 선택해주세요.';
+    if (!newProject.end_date) newErrors.end_date = '종료일을 선택해주세요.';
     if (newProject.members.length === 0) newErrors.members = '참여자를 추가해주세요.';
 
     if (Object.keys(newErrors).length > 0) {
@@ -88,19 +111,23 @@ const ProjectsList = () => {
     }
 
     const newEntry = {
-      id: Date.now(),
-      title: newProject.title,
-      period: `${newProject.start} ~ ${newProject.end}`,
-      status: '진행 중',
-      members: newProject.members.map(m => m.name),
-      desc: newProject.desc
+      project_name: newProject.project_name,
+      start_date: `${newProject.start_date}`,
+      end_date: `${newProject.end_date}`,
+      status: 'IN_PROGRESS',
+      members: newProject.members.map(m => m.id),
+      contents: newProject.contents
     };
-    setProjects([...projects, newEntry]);
-    alert('개인 캘린더에 일정이 성공적으로 추가되었습니다.');
-    setIsModalOpen(false);
-    setNewProject({ title: '', desc: '', start: '', end: '', members: [] });
-    setEmpSearch('');
-    setErrors({});
+
+    insertProjectAndMembers(newEntry).then(resp => {
+      alert('개인 캘린더에 일정이 성공적으로 추가되었습니다.');
+      setProjects([...projects, newEntry]);
+      setIsModalOpen(false);
+      setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
+      setEmpSearch('');
+      setErrors({});
+    })
+
   };
 
   const addMember = (emp) => {
@@ -116,6 +143,17 @@ const ProjectsList = () => {
     setNewProject({ ...newProject, members: newProject.members.filter(m => m.id !== id) });
   };
 
+  useEffect(() => {
+    getAllEmp().then(resp => {
+      setEmployess(resp.data)
+    })
+  }, []);
+
+  useEffect(() => {
+    insertProject(projects).then(resp => {
+
+    });
+  }, []);
   return (
     <div className="flex flex-col h-full bg-[#FFFFFF] py-8 px-1 md:px-7 overflow-y-auto md:overflow-hidden custom-scrollbar">
       <div className="mb-6 px-4 md:px-2">
@@ -182,7 +220,7 @@ const ProjectsList = () => {
                 {paginatedProjects.map(p => (
                   <tr key={p.id} className="border-b border-gray-100 hover:bg-[#f8fbff] transition-colors block md:table-row w-full mb-4 md:mb-0">
                     <td className="py-2 px-2 block md:table-cell font-bold text-[#1a1c3d] text-base flex justify-between items-center md:items-start md:block">
-                      <span onClick={() => navigate('/kanban')} className="cursor-pointer hover:text-[#3530B8] text-sm">{p.title}</span>
+                      <span onClick={() => navigate('/kanban')} className="cursor-pointer hover:text-[#3530B8] text-sm">{p.project_name}</span>
                       <button onClick={() => setSelectedProject(p)} className="md:hidden text-[10px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-2 py-1 rounded">상세보기</button>
                     </td>
                     <td className="py-2 px-2 block md:table-cell text-sm text-gray-500">{p.period}</td>
@@ -230,11 +268,11 @@ const ProjectsList = () => {
               <h2 className="text-xl font-bold text-[#1a1c3d]">프로젝트 상세</h2>
               <button onClick={() => setSelectedProject(null)}><FontAwesomeIcon icon={faTimes} /></button>
             </div>
-            <h3 className="text-lg font-bold mb-2">{selectedProject.title}</h3>
+            <h3 className="text-lg font-bold mb-2">{selectedProject.project_name}</h3>
             <p className="text-sm text-gray-500 mb-8">{selectedProject.period}</p>
             <div className="bg-[#f4f7fc] p-6 rounded-2xl mb-8">
               <h4 className="text-xs font-bold text-[#8a92a6] uppercase mb-3">내용</h4>
-              <p className="text-sm text-gray-700">{selectedProject.desc}</p>
+              <p className="text-sm text-gray-700">{selectedProject.contents}</p>
             </div>
             <h4 className="text-xs font-bold text-[#8a92a6] uppercase mb-4">참여자</h4>
             <div className="flex flex-wrap gap-2 p-4 rounded-xl">{selectedProject.members.map((m, i) => <div key={i} className="px-3 py-1 border rounded-lg text-xs border border-[#edf2f9] shadow-sm">{m}</div>)}</div>
@@ -249,10 +287,10 @@ const ProjectsList = () => {
                 <h2 className="text-lg font-bold">프로젝트 상세</h2>
                 <button onClick={() => setSelectedProject(null)}><FontAwesomeIcon icon={faTimes} /></button>
               </div>
-              <h3 className="text-md font-bold mb-1">{selectedProject.title}</h3>
+              <h3 className="text-md font-bold mb-1">{selectedProject.project_name}</h3>
               <p className="text-xs text-gray-500 mb-4">{selectedProject.period}</p>
               <h4 className="text-[10px] font-bold text-[#8a92a6] uppercase mb-2">내용</h4>
-              <p className="text-xs text-gray-700 mb-4 bg-[#f4f7fc] p-3 rounded-lg">{selectedProject.desc}</p>
+              <p className="text-xs text-gray-700 mb-4 bg-[#f4f7fc] p-3 rounded-lg">{selectedProject.contents}</p>
               <h4 className="text-[10px] font-bold text-[#8a92a6] uppercase mb-2">참여자</h4>
               <div className="flex flex-wrap gap-2">{selectedProject.members.map((m, i) => <div key={i} className="px-2 py-1 border rounded-lg text-[10px] border-[#edf2f9] shadow-sm">{m}</div>)}</div>
             </div>
@@ -266,36 +304,36 @@ const ProjectsList = () => {
             <h2 className="text-2xl font-bold mb-8">새 프로젝트 생성</h2>
             <label className="block text-xs font-bold text-[#1a1c3d] mb-2 ">프로젝트명 *</label>
             <input
-              className={`w-full p-4 bg-[#f4f7fc] rounded-xl outline-none text-xs ${errors.title ? 'border border-red-500' : ''}`}
+              className={`w-full p-4 bg-[#f4f7fc] rounded-xl outline-none text-xs ${errors.project_name ? 'border border-red-500' : ''}`}
               onChange={e => {
-                setNewProject({ ...newProject, title: e.target.value });
-                if (errors.title) setErrors(prev => ({ ...prev, title: null }));
+                setNewProject({ ...newProject, project_name: e.target.value });
+                if (errors.project_name) setErrors(prev => ({ ...prev, project_name: null }));
               }}
             />
-            {errors.title && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1 mb-3">{errors.title}</p>}
-            {!errors.title && <div className="mb-4"></div>}
+            {errors.project_name && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1 mb-3">{errors.project_name}</p>}
+            {!errors.project_name && <div className="mb-4"></div>}
 
             <label className="block text-xs font-bold text-[#1a1c3d] mb-2">프로젝트 내용</label>
-            <textarea rows={3} className="w-full text-xs p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none" onChange={e => setNewProject({ ...newProject, desc: e.target.value })} />
+            <textarea rows={3} className="w-full text-xs p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none" onChange={e => setNewProject({ ...newProject, contents: e.target.value })} />
 
             <div className={`flex gap-4 mb-4 ${isStartCalendarOpen || isEndCalendarOpen ? 'relative z-50' : ''}`}>
               <div className="flex-1 relative" ref={startCalendarRef}>
                 <label className="block text-xs font-bold text-[#1a1c3d] mb-2">시작일 *</label>
-                <div onClick={() => { setIsStartCalendarOpen(!isStartCalendarOpen); setIsEndCalendarOpen(false); }} className={`w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-xs ${newProject.start ? 'text-black' : 'text-[#9CA3AF]'} ${errors.start ? 'border border-red-500' : ''}`}>
-                  {newProject.start || "날짜 선택"}
+                <div onClick={() => { setIsStartCalendarOpen(!isStartCalendarOpen); setIsEndCalendarOpen(false); }} className={`w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-xs ${newProject.start_date ? 'text-black' : 'text-[#9CA3AF]'} ${errors.start_date ? 'border border-red-500' : ''}`}>
+                  {newProject.start_date || "날짜 선택"}
                 </div>
-                {errors.start && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1">{errors.start}</p>}
+                {errors.start_date && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1">{errors.start_date}</p>}
                 {isStartCalendarOpen && (
                   <Calendar
                     value={newProject.start}
                     minDate={new Date().toISOString().split('T')[0]}
                     onChange={(date) => {
                       if (date < new Date().toISOString().split('T')[0]) {
-                        setErrors(prev => ({ ...prev, start: '시작일은 오늘 이후의 날짜만 선택할 수 있습니다.' }));
+                        setErrors(prev => ({ ...prev, start_date: '시작일은 오늘 이후의 날짜만 선택할 수 있습니다.' }));
                         return;
                       }
-                      setErrors(prev => ({ ...prev, start: null }));
-                      setNewProject(prev => ({ ...prev, start: date, end: prev.end && prev.end < date ? date : prev.end }));
+                      setErrors(prev => ({ ...prev, start_date: null }));
+                      setNewProject(prev => ({ ...prev, start_date: date, end: prev.end_date && prev.end_date < date ? date : prev.end_date }));
                       setIsStartCalendarOpen(false);
                     }}
                     onClose={() => setIsStartCalendarOpen(false)}
@@ -305,21 +343,21 @@ const ProjectsList = () => {
 
               <div className="flex-1 relative" ref={endCalendarRef}>
                 <label className="block text-xs font-bold text-[#1a1c3d] mb-2">종료일 *</label>
-                <div onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }} className={`w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-xs ${newProject.end ? 'text-black' : 'text-[#9CA3AF]'} ${errors.end ? 'border border-red-500' : ''}`}>
-                  {newProject.end || "날짜 선택"}
+                <div onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }} className={`w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-xs ${newProject.end_date ? 'text-black' : 'text-[#9CA3AF]'} ${errors.end_date ? 'border border-red-500' : ''}`}>
+                  {newProject.end_date || "날짜 선택"}
                 </div>
-                {errors.end && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1">{errors.end}</p>}
+                {errors.end_date && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1">{errors.end_date}</p>}
                 {isEndCalendarOpen && (
                   <Calendar
-                    value={newProject.end}
-                    minDate={newProject.start || new Date().toISOString().split('T')[0]}
+                    value={newProject.end_date}
+                    minDate={newProject.start_date || new Date().toISOString().split('T')[0]}
                     onChange={(date) => {
-                      if (newProject.start && date < newProject.start) {
+                      if (newProject.start_date && date < newProject.start_date) {
                         setErrors(prev => ({ ...prev, end: '종료일은 시작일보다 이전일 수 없습니다.' }));
                         return;
                       }
-                      setErrors(prev => ({ ...prev, end: null }));
-                      setNewProject(prev => ({ ...prev, end: date }));
+                      setErrors(prev => ({ ...prev, end_date: null }));
+                      setNewProject(prev => ({ ...prev, end_date: date }));
                       setIsEndCalendarOpen(false);
                     }}
                     onClose={() => setIsEndCalendarOpen(false)}
@@ -328,25 +366,68 @@ const ProjectsList = () => {
               </div>
             </div>
 
+
             <label className="block text-xs font-bold text-[#1a1c3d] mb-2">참여자 추가 *</label>
-            <div className="relative mb-2">
-              <input value={empSearch} onChange={e => { setEmpSearch(e.target.value); setShowEmpDropdown(true); }} className={`w-full p-4 bg-[#f4f7fc] rounded-xl outline-none text-xs ${errors.members ? 'border border-red-500' : ''}`} placeholder="이름으로 검색하여 참여자를 추가하세요." />
-              {showEmpDropdown && empSearch && (
-                <div className="absolute top-full left-0 w-full bg-white border border-[#edf2f9] rounded-xl shadow-lg mt-1 z-50 overflow-hidden">
-                  {MOCK_EMPLOYEES.filter(e => e.name.includes(empSearch)).map(e => (
-                    <div key={e.id} onClick={() => addMember(e)} className="p-3 hover:bg-[#f4f7fc] cursor-pointer text-xs">{e.name}</div>
-                  ))}
+            <div className="relative transition-all duration-200"
+              style={{ marginBottom: `${getDynamicMargin()}px` }} ref={empDropdownRef}>
+              <input
+                value={empSearch}
+                onChange={e => {
+                  setEmpSearch(e.target.value);
+                  setShowEmpDropdown(true);
+                  if (errors.members) setErrors(prev => ({ ...prev, members: null }));
+                }}
+                className={`w-full p-4 bg-white border ${errors.members ? 'border-red-500' : 'border-gray-200'} rounded-xl outline-none text-xs transition-all focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5`}
+                placeholder="이름으로 검색하여 참여자를 추가하세요."
+              />
+              {isDropdownActive && (
+                <div className="absolute z-[60] w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-32 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-200 custom-scrollbar">
+
+                  {filteredEmployees.length > 0 ? (
+                    /* 상황 A: 검색 결과가 존재할 때 목록 렌더링 */
+                    filteredEmployees.map(e => (
+                      <div
+                        key={e.id}
+                        onClick={() => addMember(e)}
+
+                        className="flex justify-between items-center px-5 py-3 hover:bg-[#F0F4FF] cursor-pointer border-b border-gray-50 last:border-0 transition-colors group"
+                      >
+                        {/* 왼쪽 영역: 이름과 부서 레이아웃 */}
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-xs font-bold text-[#1a1c3d] group-hover:text-[#3530B8] transition-colors">
+                            {e.name}
+                          </span>
+                          <span className="text-[10px] text-gray-400 font-medium">
+                            {e.dept_name || '소속 없음'}
+                          </span>
+                        </div>
+
+                        {/* 오른쪽 영역: 직급 배지(Badge) */}
+                        {e.rank_name && (
+                          <span className="px-2 py-0.5 text-[10px] font-bold text-[#3530B8] bg-[#F0F4FF] rounded-md border border-[#3530B8]/10 transition-all">
+                            {e.rank_name}
+                          </span>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    /* 상황 B: 검색 결과가 0개일 때 보여줄 문구 */
+                    <div className="px-4 py-6 text-xs text-center text-gray-400 font-medium bg-gray-50/50">
+                      검색 결과가 없습니다.
+                    </div>
+                  )}
+
                 </div>
               )}
             </div>
             {errors.members && <p className="text-[9px] text-red-500 font-medium ml-1 mb-2">{errors.members}</p>}
             <div className="flex flex-wrap gap-2 mb-8">
               {newProject.members.map(m => (
-                <div key={m.id} className="px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2 border border-[#3a36db]/20">{m.name} <FontAwesomeIcon icon={faTimes} className="cursor-pointer" onClick={() => removeMember(m.id)} /></div>
+                <div key={m.id} className="px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2 border border-[#3a36db]/20">{m.name} ({m.dept_name}) <FontAwesomeIcon icon={faTimes} className="cursor-pointer" onClick={() => removeMember(m.id)} /></div>
               ))}
             </div>
             <div className="flex justify-end gap-3">
-              <button onClick={() => { setIsModalOpen(false); setNewProject({ title: '', desc: '', start: '', end: '', members: [] }); setEmpSearch(''); setErrors({}); }} className="px-8 py-3 bg-gray-100 rounded-xl font-bold text-sm">취소</button>
+              <button onClick={() => { setIsModalOpen(false); setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] }); setEmpSearch(''); setErrors({}); }} className="px-8 py-3 bg-gray-100 rounded-xl font-bold text-sm">취소</button>
               <button onClick={handleCreate} className="px-8 py-3 bg-[#3a36db] text-white rounded-xl font-bold text-sm">등록</button>
             </div>
           </div>
