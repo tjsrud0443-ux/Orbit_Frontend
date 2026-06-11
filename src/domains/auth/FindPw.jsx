@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IMAGES } from '../../images/images';
 import { sendMailForPw, sendNewPw, verifyForFindPw } from './authApi';
+import useLoadingStore from '../../store/useLoadingStore';
 
 const FindPw = () => {
   const navigate = useNavigate();
@@ -11,7 +12,10 @@ const FindPw = () => {
   const [isVerified, setIsVerified] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-  React.useEffect(() => {
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
+
+  useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -45,6 +49,7 @@ const FindPw = () => {
     }
 
     try{
+      showLoading();
       const response = await sendMailForPw(formData);
       if (response.data.success) {
         alert(response.data.message);
@@ -53,6 +58,8 @@ const FindPw = () => {
     }catch (error){
       const msg = error.response?.data?.message || "인증번호 발송에 실패했습니다.";
       alert(msg);
+    }finally {
+      hideLoading();
     }
   };
 
@@ -118,24 +125,24 @@ const FindPw = () => {
         </div>
 
         {/* Right Side: Form Area */}
-        <div className="w-full flex-grow p-4 md:p-8 flex flex-col justify-start overflow-y-auto">
+        <div className="w-full flex-grow p-4 md:p-8 flex flex-col justify-start overflow-y-auto custom-scrollbar">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-800 text-center mb-4 md:mb-8 shrink-0">Forgot your password?</h2>
 
           <div className="space-y-4 shrink-0">
             <div className="space-y-1">
               <label className="text-xs font-bold text-gray-600 ml-1">성함</label>
-              <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="성함을 입력하세요" className={`w-full px-4 py-2 rounded-xl border ${errors.name ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`} />
+              <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="성함을 입력하세요" className={`w-full px-4 py-2 text-sm rounded-xl border ${errors.name ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`} />
               {errors.name && <p className="text-red-500 text-[10px] ml-1 mt-1 font-bold">{errors.name}</p>}
             </div>
             <div className="space-y-1">
               <label className="text-xs font-bold text-gray-600 ml-1">아이디</label>
-              <input type="text" name="id" value={formData.id} onChange={handleChange} placeholder="아이디를 입력하세요" className={`w-full px-4 py-2 rounded-xl border ${errors.id ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`} />
+              <input type="text" name="id" value={formData.id} onChange={handleChange} placeholder="아이디를 입력하세요" className={`w-full px-4 py-2 text-sm rounded-xl border ${errors.id ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`} />
               {errors.id && <p className="text-red-500 text-[10px] ml-1 mt-1 font-bold">{errors.id}</p>}
             </div>
             <div className="space-y-1">
               <label className="text-xs font-bold text-gray-600 ml-1">이메일</label>
               <div className="flex gap-2">
-                <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="가입 시 등록한 이메일" className={`w-full px-4 py-2 rounded-xl border ${errors.email ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`} />
+                <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="가입 시 등록한 이메일" className={`w-full px-4 py-2 text-sm rounded-xl border ${errors.email ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`} />
                 <button onClick={handleSendCode} className="px-2 md:px-4 py-2 bg-[#3530B8] text-white text-xs font-bold rounded-xl whitespace-nowrap hover:bg-[#28248a]">인증번호 전송</button>
               </div>
               {errors.email && <p className="text-red-500 text-[10px] ml-1 mt-1 font-bold">{errors.email}</p>}
@@ -145,7 +152,7 @@ const FindPw = () => {
               <div className="space-y-1 pt-2">
                 <label className="text-xs font-bold text-gray-600 ml-1">인증번호</label>
                 <div className="flex gap-2">
-                  <input type="text" name="code" value={formData.code} onChange={handleChange} placeholder="인증번호 6자리" className={`w-full px-4 py-2 rounded-xl border ${errors.code ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`} />
+                  <input type="text" name="code" value={formData.code} onChange={handleChange} placeholder="인증번호 6자리" className={`w-full px-4 py-2 text-sm rounded-xl border ${errors.code ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`} />
                   <button onClick={handleVerify} className="px-7 md:px-9 py-2 bg-[#3530B8] text-white text-xs font-bold rounded-xl whitespace-nowrap hover:bg-[#28248a]">인증</button>
                 </div>
                 {errors.code && <p className="text-red-500 text-[10px] ml-1 mt-1 font-bold">{errors.code}</p>}
@@ -156,12 +163,12 @@ const FindPw = () => {
               <div className="space-y-3 pt-4 border-t border-gray-100 animate-fadeIn">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-gray-600 ml-1">새 비밀번호</label>
-                  <input type="password" name="newPw" value={formData.newPw} onChange={handleChange} placeholder={getPasswordPlaceholder()} className={`w-full px-4 py-2 rounded-xl border ${errors.newPw ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`} />
+                  <input type="password" name="newPw" value={formData.newPw} onChange={handleChange} placeholder={getPasswordPlaceholder()} className={`w-full px-4 py-2 text-sm rounded-xl border ${errors.newPw ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`} />
                   {errors.newPw && <p className="text-red-500 text-[10px] ml-1 mt-1 font-bold">{errors.newPw}</p>}
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-gray-600 ml-1">비밀번호 확인</label>
-                  <input type="password" name="confirmPw" value={formData.confirmPw} onChange={handleChange} placeholder="비밀번호 확인" className={`w-full px-4 py-2 rounded-xl border ${errors.confirmPw ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`} />
+                  <input type="password" name="confirmPw" value={formData.confirmPw} onChange={handleChange} placeholder="비밀번호 확인" className={`w-full px-4 py-2 text-sm rounded-xl border ${errors.confirmPw ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`} />
                   {errors.confirmPw && <p className="text-red-500 text-[10px] ml-1 mt-1 font-bold">{errors.confirmPw}</p>}
                   {formData.confirmPw !== "" && !errors.confirmPw && (
                     <p className={`text-[10px] ml-1 mt-1 font-bold ${passwordMatch ? 'text-green-500' : 'text-red-500'}`}>
@@ -191,6 +198,13 @@ const FindPw = () => {
           </div>
         </div>
       </div>
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
+      `}} />
     </div>
   );
 };
