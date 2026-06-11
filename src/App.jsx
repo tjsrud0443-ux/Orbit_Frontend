@@ -6,6 +6,7 @@ import Departments from './domains/departments/Departments';
 import Layout from './components/layout/Layout';
 import './App.css';
 import Main from './domains/main/Main';
+import AdminAttendance from './domains/admin/AdminAttendance';
 import AdminSignup from './domains/admin/AdminSignup';
 import AdminMain from './domains/admin/AdminMain';
 import AdminUsers from './domains/admin/AdminUsers';
@@ -107,6 +108,7 @@ function App() {
             <Route path="/adminUsers" element={<AdminUsers />} />
             <Route path="/adminDepartments" element={<AdminDept />} />
             <Route path="/adminSignup" element={<AdminSignup />} />
+            <Route path="/adminAttendance" element={<AdminAttendance />} />
           </Route>
 
           <Route element={<ProtectedRoute

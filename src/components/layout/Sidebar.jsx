@@ -37,7 +37,8 @@ const generalMenuItems = [
     subItems: [
       { name: '직원 관리', path: '/adminUsers' },
       { name: '부서 관리', path: '/adminDepartments' },
-      { name: '회원가입 관리', path: '/adminSignup' }
+      { name: '회원가입 관리', path: '/adminSignup' },
+      { name: '근태 관리', path: '/adminAttendance'},
     ]
   },
   {
@@ -47,7 +48,7 @@ const generalMenuItems = [
       { name: '비품 관리', path: '/adminSupply' },
       { name: '비품 신청 관리', path: '/adminSupplyRequest' },
       { name: '비품 대여이력 관리', path: '/adminSupplyRental' },
-      { name: '회의실 관리', path: '/adminMeetingRoom' }
+      { name: '회의실 관리', path: '/adminMeetingRoom' },
     ]
   },
   {
