@@ -25,11 +25,19 @@ const ProjectsList = () => {
   const [searchBy, setSearchBy] = useState('프로젝트명');
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const searchDropdownRef = useRef(null);
+  const startCalendarRef = useRef(null);
+  const endCalendarRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (searchDropdownRef.current && !searchDropdownRef.current.contains(event.target)) {
         setIsSearchDropdownOpen(false);
+      }
+      if (startCalendarRef.current && !startCalendarRef.current.contains(event.target)) {
+        setIsStartCalendarOpen(false);
+      }
+      if (endCalendarRef.current && !endCalendarRef.current.contains(event.target)) {
+        setIsEndCalendarOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -91,6 +99,7 @@ const ProjectsList = () => {
     alert('개인 캘린더에 일정이 성공적으로 추가되었습니다.');
     setIsModalOpen(false);
     setNewProject({ title: '', desc: '', start: '', end: '', members: [] });
+    setEmpSearch('');
     setErrors({});
   };
 
@@ -256,18 +265,21 @@ const ProjectsList = () => {
           <div className="bg-white p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] w-full max-w-[550px] shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
             <h2 className="text-2xl font-bold mb-8">새 프로젝트 생성</h2>
             <label className="block text-xs font-bold text-[#1a1c3d] mb-2 ">프로젝트명 *</label>
-            <input 
-              className={`w-full p-4 bg-[#f4f7fc] rounded-xl outline-none text-xs ${errors.title ? 'border border-red-500' : ''}`} 
+            <input
+              className={`w-full p-4 bg-[#f4f7fc] rounded-xl outline-none text-xs ${errors.title ? 'border border-red-500' : ''}`}
               onChange={e => {
                 setNewProject({ ...newProject, title: e.target.value });
                 if (errors.title) setErrors(prev => ({ ...prev, title: null }));
-              }} 
+              }}
             />
             {errors.title && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1 mb-3">{errors.title}</p>}
             {!errors.title && <div className="mb-4"></div>}
 
-            <div className="flex gap-4 mb-4">
-              <div className="flex-1 relative">
+            <label className="block text-xs font-bold text-[#1a1c3d] mb-2">프로젝트 내용</label>
+            <textarea rows={3} className="w-full text-xs p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none" onChange={e => setNewProject({ ...newProject, desc: e.target.value })} />
+
+            <div className={`flex gap-4 mb-4 ${isStartCalendarOpen || isEndCalendarOpen ? 'relative z-50' : ''}`}>
+              <div className="flex-1 relative" ref={startCalendarRef}>
                 <label className="block text-xs font-bold text-[#1a1c3d] mb-2">시작일 *</label>
                 <div onClick={() => { setIsStartCalendarOpen(!isStartCalendarOpen); setIsEndCalendarOpen(false); }} className={`w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-xs ${newProject.start ? 'text-black' : 'text-[#9CA3AF]'} ${errors.start ? 'border border-red-500' : ''}`}>
                   {newProject.start || "날짜 선택"}
@@ -278,9 +290,9 @@ const ProjectsList = () => {
                     value={newProject.start}
                     minDate={new Date().toISOString().split('T')[0]}
                     onChange={(date) => {
-                      if (date < new Date().toISOString().split('T')[0]) { 
+                      if (date < new Date().toISOString().split('T')[0]) {
                         setErrors(prev => ({ ...prev, start: '시작일은 오늘 이후의 날짜만 선택할 수 있습니다.' }));
-                        return; 
+                        return;
                       }
                       setErrors(prev => ({ ...prev, start: null }));
                       setNewProject(prev => ({ ...prev, start: date, end: prev.end && prev.end < date ? date : prev.end }));
@@ -291,7 +303,7 @@ const ProjectsList = () => {
                 )}
               </div>
 
-              <div className="flex-1 relative">
+              <div className="flex-1 relative" ref={endCalendarRef}>
                 <label className="block text-xs font-bold text-[#1a1c3d] mb-2">종료일 *</label>
                 <div onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }} className={`w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-xs ${newProject.end ? 'text-black' : 'text-[#9CA3AF]'} ${errors.end ? 'border border-red-500' : ''}`}>
                   {newProject.end || "날짜 선택"}
@@ -302,9 +314,9 @@ const ProjectsList = () => {
                     value={newProject.end}
                     minDate={newProject.start || new Date().toISOString().split('T')[0]}
                     onChange={(date) => {
-                      if (newProject.start && date < newProject.start) { 
+                      if (newProject.start && date < newProject.start) {
                         setErrors(prev => ({ ...prev, end: '종료일은 시작일보다 이전일 수 없습니다.' }));
-                        return; 
+                        return;
                       }
                       setErrors(prev => ({ ...prev, end: null }));
                       setNewProject(prev => ({ ...prev, end: date }));
@@ -315,9 +327,6 @@ const ProjectsList = () => {
                 )}
               </div>
             </div>
-
-            <label className="block text-xs font-bold text-[#1a1c3d] mb-2">프로젝트 내용</label>
-            <textarea rows={3} className="w-full text-xs p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none" onChange={e => setNewProject({ ...newProject, desc: e.target.value })} />
 
             <label className="block text-xs font-bold text-[#1a1c3d] mb-2">참여자 추가 *</label>
             <div className="relative mb-2">
@@ -337,14 +346,15 @@ const ProjectsList = () => {
               ))}
             </div>
             <div className="flex justify-end gap-3">
-              <button onClick={() => { setIsModalOpen(false); setNewProject({ title: '', desc: '', start: '', end: '', members: [] }); setErrors({}); }} className="px-8 py-3 bg-gray-100 rounded-xl font-bold text-sm">취소</button>
+              <button onClick={() => { setIsModalOpen(false); setNewProject({ title: '', desc: '', start: '', end: '', members: [] }); setEmpSearch(''); setErrors({}); }} className="px-8 py-3 bg-gray-100 rounded-xl font-bold text-sm">취소</button>
               <button onClick={handleCreate} className="px-8 py-3 bg-[#3a36db] text-white rounded-xl font-bold text-sm">등록</button>
             </div>
           </div>
         </div>
       )}
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
