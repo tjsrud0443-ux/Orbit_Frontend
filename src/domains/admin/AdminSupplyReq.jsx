@@ -2,8 +2,6 @@
 import Pagination from '../../components/common/Pagination';
 import { getSuppyReqList, updateSupplyReqStatus } from '../admin/adminApi';
 
-const PER_PAGE = 8;
-
 const STATUS_TABS = [
   { key: '전체', label: '전체' },
   { key: '대기', label: '대기' },
@@ -92,6 +90,8 @@ const AdminSupplyReq = () => {
   };
 
   const handleReject = (id) => {
+    if (!window.confirm('정말 반려하시겠습니까?')) return;
+    
     const target = requests.find(r => r.id === id);
     updateSupplyReqStatus({
         req_seq: target.id,

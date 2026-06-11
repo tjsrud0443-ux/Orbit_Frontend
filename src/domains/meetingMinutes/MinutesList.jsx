@@ -732,9 +732,9 @@ const MinutesList = () => {
               <div className="flex-1 overflow-y-auto p-6 md:p-8 pt-0 custom-scrollbar">
                 <div className="max-w-3xl space-y-4">
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="flex flex-col md:flex-row gap-6 md:gap-8">
                     {/* 작성자 */}
-                    <div className="min-w-0">
+                    <div className="shrink-0 w-16 min-w-0">
                       <h4 className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-4">작성자</h4>
                       <div className="flex items-center gap-3">
                         {(() => {
@@ -758,11 +758,11 @@ const MinutesList = () => {
                     </div>
 
                     {/* 주최자 */}
-                    <div className="min-w-0">
+                    <div className="flex-1 min-w-0">
                       <h4 className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-4">주최자</h4>
                       {isEditing ? (
                         <div className="flex flex-col gap-1.5">
-                          <div className={`flex items-center gap-2 p-1.5 bg-white border rounded-2xl transition-all
+                          <div className={`flex items-center gap-2 p-2.5 bg-white border rounded-2xl transition-all
                             ${errors.host ? 'border-red-400 ring-4 ring-red-100' : 'border-gray-300 focus-within:ring-2 focus-within:ring-indigo-100'}`}>
                             <div className="flex flex-wrap gap-2 flex-1 items-center px-2">
                               {editMinutes.hostObj ? (
