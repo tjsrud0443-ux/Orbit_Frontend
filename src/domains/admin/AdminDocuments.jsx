@@ -133,6 +133,9 @@ const AdminDocuments = () => {
     if (!newDocTitle.trim()) {
       setTitleError('제목을 입력해주세요.');
       hasError = true;
+    } else if (newDocTitle.length > 30) {
+      setTitleError('30자까지만 입력 가능합니다.');
+      hasError = true;
     } else {
       setTitleError('');
     }
@@ -320,8 +323,13 @@ const AdminDocuments = () => {
                   type="text"
                   value={newDocTitle}
                   onChange={(e) => {
-                    setNewDocTitle(e.target.value);
-                    if (e.target.value.trim()) setTitleError('');
+                    const value = e.target.value;
+                    setNewDocTitle(value);
+                    if (value.length > 30) {
+                      setTitleError('30자까지만 입력 가능합니다.');
+                    } else if (value.trim()) {
+                      setTitleError('');
+                    }
                   }}
                   placeholder="제목을 입력하세요"
                   className={`w-full px-4 py-3 bg-gray-50 border ${titleError ? 'border-red-500' : 'border-gray-100'} rounded-xl focus:bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all text-sm font-medium`}
