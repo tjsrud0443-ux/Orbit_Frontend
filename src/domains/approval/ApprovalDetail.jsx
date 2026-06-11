@@ -7,7 +7,9 @@ import VacationForm from './forms/VacationForm';
 import PaymentForm from './forms/PaymentForm';
 import GeneralForm from './forms/GeneralForm';
 import PurchaseForm from './forms/PurchaseForm';
-import { submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail, approveDraft, rejectApproval, updateVacation, updateGeneral, updatePayment, updatePurchase, deleteDoc } from './approvalApi';
+import { submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail, approveDraft, rejectApproval, 
+  updateVacation, updateGeneral, updatePayment, updatePurchase, deleteDoc } from './approvalApi';
+import useLoadingStore from '../../store/useLoadingStore';
 
 // 결재자 선택 모달 컴포넌트
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
@@ -85,6 +87,9 @@ const ApprovalDetail = () => {
   const [rejectReason, setRejectReason] = useState('');
   const [rejectError, setRejectError] = useState(false);
 
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -105,6 +110,7 @@ const ApprovalDetail = () => {
     setRejectError(false);
 
     if (!docSeq) {
+      showLoading();
       // [작성 모드]
       setUserRole('DRAFTER');
       setMode('EDIT');
@@ -122,6 +128,7 @@ const ApprovalDetail = () => {
     } else {
       fetchDocumentData(type, docSeq);
     }
+    hideLoading();
   }, [type, docSeq, user?.id, refresh]);
 
   const fetchDocumentData = async (type, docSeq) => {
@@ -155,7 +162,7 @@ const ApprovalDetail = () => {
       })
     } catch (error) {
       console.error('기안 문서 조회 실패:', error);
-    }
+    } 
   };
 
   const [isSubmitClicked, setIsSubmitClicked] = useState(false);
@@ -251,7 +258,7 @@ const ApprovalDetail = () => {
         return;
       }
     }
-    // 2. 데이터 가공 및 Payload 조립
+    // 데이터 가공 및 Payload 조립
     try {
       const { referrers, title, ...restOfData } = formData;
       const isVacation = doc_type === 'VACATION';
