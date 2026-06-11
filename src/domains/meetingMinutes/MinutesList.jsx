@@ -295,10 +295,18 @@ const MinutesList = () => {
     const matchesSearch = title.toLowerCase().includes(searchKeyword.toLowerCase()) || meetingDt.includes(searchKeyword);
     const isAuthor = item?.users_id === user?.id;
     const isAttendee = (item?.attendees || []).some(a => a.users_id === user?.id);
-    return matchesSearch && (isAuthor || isAttendee);
+    const isHost = item?.host_users_id === user?.id;
+    return matchesSearch && (isAuthor || isAttendee || isHost);
   }).map(item => ({
     ...item,
-    badgeType: item?.users_id === user?.id ? 'author' : 'attendee'
+    badgeType: (() => {
+      const isAuthor = item?.users_id === user?.id;
+      const isHost = item?.host_users_id === user?.id;
+      if (isAuthor && isHost) return 'author_host';
+      if (isAuthor) return 'author';
+      if (isHost) return 'host';
+      return 'attendee';
+    })()
   })) : [];
 
   const totalCount = filteredMinutes.length;
@@ -537,7 +545,7 @@ const MinutesList = () => {
   };
 
   return (
-    <div className="w-full h-auto lg:h-full flex flex-col p-6 md:p-8 lg:px-10 box-border bg-white font-sans overflow-hidden">
+    <div className="w-full h-screen lg:h-full flex flex-col p-6 md:p-8 lg:px-10 box-border bg-white font-sans overflow-hidden">
       <style>{`
         @media (min-width: 64rem) { main.flex-1 { overflow: hidden !important; } }
         .custom-scrollbar::-webkit-scrollbar { width: 10px; }
@@ -605,7 +613,13 @@ const MinutesList = () => {
                       className={`cursor-pointer hover:bg-indigo-50/50 transition-colors group px-4 py-5 md:py-4 flex flex-col md:grid md:grid-cols-12 md:items-center gap-3 md:gap-4 ${activeId === item.minute_seq ? 'bg-indigo-50/50' : ''}`}>
                       <div className="md:col-span-5 flex items-center gap-2 min-w-0">
                         <span className={`text-sm font-bold group-hover:text-indigo-600 transition-colors ${activeId === item.minute_seq ? 'text-indigo-600' : 'text-gray-700'} truncate`}>{item.title}</span>
-                        {item.badgeType !== 'author' && (
+                        {item.badgeType === 'author_host' && (
+                        <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">주최자</span>
+                        )}
+                        {item.badgeType === 'host' && (
+                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">주최자</span>
+                        )}
+                        {item.badgeType === 'attendee' && (
                           <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
                         )}
                       </div>
@@ -695,7 +709,9 @@ const MinutesList = () => {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <h2 className="text-xl md:text-2xl font-bold text-indigo-950">{activeDetail.title}</h2>
-                      {activeDetail.users_id !== user?.id && (
+                      {activeDetail.host_users_id === user?.id ? (
+                        <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">주최자</span>
+                      ) : activeDetail.users_id !== user?.id && (
                         <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
                       )}
                     </div>
@@ -716,101 +732,98 @@ const MinutesList = () => {
               <div className="flex-1 overflow-y-auto p-6 md:p-8 pt-0 custom-scrollbar">
                 <div className="max-w-3xl space-y-4">
 
-                  {/* 작성자 */}
-                  <div>
-                    <h4 className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-4">작성자</h4>
-                    <div className="flex items-center gap-3">
-                      {(() => {
-                        const author = (allEmployees || []).find(emp => emp.id === activeDetail.users_id);
-                        return author ? (
-                          <div className="flex flex-col items-center gap-1.5">
-                            <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm border-2 border-white overflow-hidden bg-slate-100">
-                              {author.sysname && author.sysname !== 'system' && token ? (
-                                <img src={`http://localhost/file/profile/view?sysname=${author.sysname}&token=${token}`} alt={author.name} className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: author.color || '#6366F1' }}>
-                                  {author.name ? author.name.slice(0, 1) : '?'}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* 작성자 */}
+                    <div className="min-w-0">
+                      <h4 className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-4">작성자</h4>
+                      <div className="flex items-center gap-3">
+                        {(() => {
+                          const author = (allEmployees || []).find(emp => emp.id === activeDetail.users_id);
+                          return author ? (
+                            <div className="flex flex-col items-center gap-1.5">
+                              <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm border-2 border-white overflow-hidden bg-slate-100">
+                                {author.sysname && author.sysname !== 'system' && token ? (
+                                  <img src={`http://localhost/file/profile/view?sysname=${author.sysname}&token=${token}`} alt={author.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: author.color || '#6366F1' }}>
+                                    {author.name ? author.name.slice(0, 1) : '?'}
+                                  </div>
+                                )}
+                              </div>
+                              <span className="text-[11px] font-bold text-gray-600">{author.name}</span>
+                            </div>
+                          ) : <span className="text-sm text-gray-400">-</span>;
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* 주최자 */}
+                    <div className="min-w-0">
+                      <h4 className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-4">주최자</h4>
+                      {isEditing ? (
+                        <div className="flex flex-col gap-1.5">
+                          <div className={`flex items-center gap-2 p-1.5 bg-white border rounded-2xl transition-all
+                            ${errors.host ? 'border-red-400 ring-4 ring-red-100' : 'border-gray-300 focus-within:ring-2 focus-within:ring-indigo-100'}`}>
+                            <div className="flex flex-wrap gap-2 flex-1 items-center px-2">
+                              {editMinutes.hostObj ? (
+                                <div className="flex items-center gap-1.5 bg-white border border-indigo-100 px-2.5 py-1 rounded-full text-[11px] font-bold text-indigo-700 shadow-sm">
+                                  <span>{editMinutes.hostObj.name}</span>
+                                  <button onClick={() => {setEditMinutes({...editMinutes, hostObj: null}); setHostInAttendeesWarning(false);}} className="text-indigo-300 hover:text-indigo-500 transition-colors">✕</button>
                                 </div>
+                              ) : (
+                                <input
+                                  ref={hostInputRef}
+                                  type="text"
+                                  placeholder="검색"
+                                  className="w-full bg-transparent border-none outline-none text-xs font-bold text-gray-700 p-1"
+                                  value={hostQuery}
+                                  onClick={() => { setShowHostResults(true); updateHostDropdownPos(); }}
+                                  onChange={(e) => { setHostQuery(e.target.value); setShowHostResults(true); updateHostDropdownPos(); }}
+                                  onFocus={() => { setShowHostResults(true); updateHostDropdownPos(); }}
+                                />
                               )}
                             </div>
-                            <span className="text-[11px] font-bold text-gray-600">{author.name}</span>
                           </div>
-                        ) : <span className="text-sm text-gray-400">-</span>;
-                      })()}
-                    </div>
-                  </div>
-
-                {/* 주최자 */}
-                <div>
-                  <h4 className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-4">주최자</h4>
-                  {isEditing ? (
-                    <div className="flex flex-col gap-1.5">
-                      <div className={`flex items-center gap-2 p-1.5 bg-white border rounded-2xl transition-all
-                        ${errors.host ? 'border-red-400 ring-4 ring-red-100' : 'border-gray-300 focus-within:ring-2 focus-within:ring-indigo-100'}`}>
-                        <div className="flex flex-wrap gap-2 flex-1 items-center px-2">
-                          {editMinutes.hostObj ? (
-                            <div className="flex items-center gap-1.5 bg-white border border-indigo-100 px-2.5 py-1 rounded-full text-[11px] font-bold text-indigo-700 shadow-sm">
-                              <span>{editMinutes.hostObj.name}</span>
-                              <button onClick={() => {setEditMinutes({...editMinutes, hostObj: null}); setHostInAttendeesWarning(false);}} className="text-indigo-300 hover:text-indigo-500 transition-colors">✕</button>
-                            </div>
-                          ) : (
-                            <input
-                              ref={hostInputRef}
-                              type="text"
-                              placeholder="주최자 검색..."
-                              className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-xs font-bold text-gray-700 p-1"
-                              value={hostQuery}
-                              onClick={() => { setShowHostResults(true); updateHostDropdownPos(); }}
-                              onChange={(e) => { setHostQuery(e.target.value); setShowHostResults(true); updateHostDropdownPos(); }}
-                              onFocus={() => { setShowHostResults(true); updateHostDropdownPos(); }}
-                            />
-                          )}
+                          {errors.host && <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">필수 선택</p>}
+                          {renderHostDropdown((emp) => {
+                            const empId = emp.users_id || emp.id;
+                            const isAlreadyAttendee = (editMinutes.attendees || []).some(
+                              a => (a.users_id || a.id) === empId
+                            );
+                            setHostInAttendeesWarning(isAlreadyAttendee);
+                            setEditMinutes({...editMinutes, hostObj: emp});
+                            setErrors(prev => ({...prev, host: false}));
+                            setHostQuery('');
+                            setShowHostResults(false);
+                          })}
                         </div>
-                      </div>
-                      {errors.host && <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">주최자를 선택해주세요.</p>}
-                      {renderHostDropdown((emp) => {
-                        const empId = emp.users_id || emp.id;
-                        const isAlreadyAttendee = (editMinutes.attendees || []).some(
-                          a => (a.users_id || a.id) === empId
-                        );
-                        setHostInAttendeesWarning(isAlreadyAttendee);
-                        setEditMinutes({...editMinutes, hostObj: emp});
-                        setErrors(prev => ({...prev, host: false}));
-                        setHostQuery('');
-                        setShowHostResults(false);
-                      })}
-                      {hostInAttendeesWarning && (
-                        <div className="mt-2 flex items-center gap-2 bg-red-50 border border-red-200 text-red-600 text-[11px] font-bold px-3 py-2 rounded-xl">
-                          <span>주최자는 참석자 명단에 포함될 수 없습니다. 저장 시 참석자 목록에서 자동으로 제외됩니다.</span>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          {activeDetail.host_users_id ? (() => {
+                            const hostPerson =  (activeDetail.attendees || []).find(a => a.users_id === activeDetail.host_users_id) ||
+                                                (allEmployees || []).find(emp => emp.id === activeDetail.host_users_id);
+                            return hostPerson ? (
+                              <div className="flex flex-col items-center gap-1.5">
+                                <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm border-2 border-white overflow-hidden bg-slate-100">
+                                  {hostPerson.sysname  && hostPerson.sysname !== 'system' && token ? (
+                                     <img src={`http://localhost/file/profile/view?sysname=${hostPerson.sysname}&token=${token}`} alt={hostPerson.name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: hostPerson.color || '#6366F1' }}>
+                                      {hostPerson.name ? hostPerson.name.slice(0, 1) : '?'}
+                                    </div>
+                                  )}
+                                </div>
+                                <span className="text-[11px] font-bold text-gray-600">{hostPerson.name}</span>
+                              </div>
+                            ) : null;
+                          })() : <span className="text-sm text-gray-400">-</span>}
                         </div>
                       )}
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      {activeDetail.host_users_id ? (() => {
-                        const hostPerson =  (activeDetail.attendees || []).find(a => a.users_id === activeDetail.host_users_id) ||
-                                            (allEmployees || []).find(emp => emp.id === activeDetail.host_users_id);
-                        return hostPerson ? (
-                          <div className="flex flex-col items-center gap-1.5">
-                            <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm border-2 border-white overflow-hidden bg-slate-100">
-                              {hostPerson.sysname  && hostPerson.sysname !== 'system' && token ? (
-                                 <img src={`http://localhost/file/profile/view?sysname=${hostPerson.sysname}&token=${token}`} alt={hostPerson.name} className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: hostPerson.color || '#6366F1' }}>
-                                  {hostPerson.name ? hostPerson.name.slice(0, 1) : '?'}
-                                </div>
-                              )}
-                            </div>
-                            <span className="text-[11px] font-bold text-gray-600">{hostPerson.name}</span>
-                          </div>
-                        ) : null;
-                      })() : <span className="text-sm text-gray-400">-</span>}
-                    </div>
-                  )}
-                </div>
+                  </div>
 
                   {/* 참석자 */}
-                  <div>
+                  <div className="min-w-0">
                     <h4 className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-4">참석자</h4>
                     {isEditing ? (
                       <div className="relative">
@@ -822,14 +835,14 @@ const MinutesList = () => {
                                 <button onClick={() => setEditMinutes({...editMinutes, attendees: editMinutes.attendees.filter((_, i) => i !== idx)})} className="text-indigo-300 hover:text-indigo-500 transition-colors">✕</button>
                               </div>
                             ))}
-                            <input ref={attendeeInputRef} type="text" placeholder={editMinutes.attendees.length === 0 ? "참석자 검색..." : ""}
-                              className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-xs font-bold text-gray-700 p-1"
+                            <input ref={attendeeInputRef} type="text" placeholder={editMinutes.attendees.length === 0 ? "검색" : ""}
+                              className="w-full bg-transparent border-none outline-none text-xs font-bold text-gray-700 p-1"
                               value={searchQuery}
                               onChange={(e) => { setSearchQuery(e.target.value); setShowResults(true); updateDropdownPos(); }}
                               onFocus={() => { setShowResults(true); updateDropdownPos(); }} />
                           </div>
                         </div>
-                        {errors.attendees && <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">참석자를 한 명 이상 추가해주세요.</p>}
+                        {errors.attendees && <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">필수 입력</p>}
                         {renderAttendeeDropdownForEdit()}
                       </div>
                     ) : (
@@ -851,6 +864,11 @@ const MinutesList = () => {
                       </div>
                     )}
                   </div>
+                  {isEditing && hostInAttendeesWarning && (
+                    <div className="mt-4 flex items-center gap-2 bg-red-50 border border-red-200 text-red-600 text-[11px] font-bold px-3 py-2 rounded-xl">
+                      <span>주최자는 참석자 명단에 포함될 수 없습니다. 저장 시 참석자 목록에서 자동으로 제외됩니다.</span>
+                    </div>
+                  )}
 
                   {/* 주요 내용 */}
                   <div>
@@ -1032,8 +1050,8 @@ const MinutesList = () => {
                             <input
                               ref={hostInputRef}
                               type="text"
-                              placeholder="주최자 검색..."
-                              className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-xs font-bold text-gray-700 p-1"
+                              placeholder="검색"
+                              className="w-full bg-transparent border-none outline-none text-xs font-bold text-gray-700 p-1"
                               value={hostQuery}
                               onClick={() => { setShowHostResults(true); updateHostDropdownPos(); }}
                               onChange={(e) => { setHostQuery(e.target.value); setShowHostResults(true); updateHostDropdownPos(); }}
@@ -1042,7 +1060,7 @@ const MinutesList = () => {
                           )}
                         </div>
                       </div>
-                      {errors.host && <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">주최자를 선택해주세요.</p>}
+                      {errors.host && <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">필수 선택</p>}
                       {renderHostDropdown((emp) => {
                         setNewMinutes({...newMinutes, hostObj: emp, host_users_id: emp.id});
                         setErrors(prev => ({...prev, host: false}));
@@ -1065,14 +1083,14 @@ const MinutesList = () => {
                               <button onClick={() => handleRemoveAttendee(idx)} className="text-indigo-300 hover:text-indigo-500 transition-colors">✕</button>
                             </div>
                           ))}
-                          <input ref={attendeeInputRef} type="text" placeholder={newMinutes.attendees.length === 0 ? "참석자 검색..." : ""}
-                            className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-xs font-bold text-gray-700 p-1"
+                          <input ref={attendeeInputRef} type="text" placeholder={newMinutes.attendees.length === 0 ? "검색" : ""}
+                            className="w-full bg-transparent border-none outline-none text-xs font-bold text-gray-700 p-1"
                             value={searchQuery}
                             onChange={(e) => { setSearchQuery(e.target.value); setShowResults(true); updateDropdownPos(); }}
                             onFocus={() => { setShowResults(true); updateDropdownPos(); }} />
                         </div>
                       </div>
-                      {errors.attendees && <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">참석자를 한 명 이상 추가해주세요.</p>}
+                      {errors.attendees && <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">필수 입력</p>}
                       {renderAttendeeDropdown()}
                     </div>
                   </div>
