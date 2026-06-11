@@ -1,13 +1,13 @@
 import { Client } from "@stomp/stompjs";
 import useNotificationStore from "../../store/useNotificationStore";
+import { toast } from "react-toastify";
 
 let socket = null;
 
 export const connectSocket = (usersId) => {
-    const addNotification = useNotificationStore(state => state.addNotification);
     const token = sessionStorage.getItem("token");
-
-    if (!token || !usersId) {
+    console.log(usersId)
+    if (!token) {
         return;
     }
 
@@ -24,9 +24,13 @@ export const connectSocket = (usersId) => {
                 (message) => {
 
                     const noti = JSON.parse(message.body);
-                    console.log("알림 수신", noti);
+                    console.log("알림 수신", noti.content);
 
-                    addNotification(noti);
+                    useNotificationStore
+                        .getState()
+                        .addNotification(noti);
+
+                toast.info(noti.content);
                 }
             );
         },

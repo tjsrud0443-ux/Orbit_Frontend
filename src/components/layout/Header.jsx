@@ -3,10 +3,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBell } from '@fortawesome/free-regular-svg-icons';
 import useAuthStore from '../../store/authStore';
 import useUserStore from '../../store/userStore';
+import useNotificationStore from '../../store/useNotificationStore';
 
 const Header = ({ onMenuClick }) => {
   const token = useAuthStore(state => state.token);
   const user = useUserStore(state => state.user);
+  const notifications = useNotificationStore(state => state.notifications);
+
+  console.log(notifications);
 
   return (
     <header className="h-14 bg-white border-b border-slate-200 flex items-center
@@ -21,7 +25,7 @@ const Header = ({ onMenuClick }) => {
         <button className="relative hover:text-slate-800 cursor-pointer">
           <FontAwesomeIcon icon={faBell} className="text-lg text-slate-500" />
           <span className="absolute -top-1 -right-1 bg-red-500 text-[8px] text-white
-            font-bold px-1 rounded-full"></span>
+            font-bold px-1 rounded-full">{notifications.length}</span>
         </button>
 
         <Link
