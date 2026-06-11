@@ -88,7 +88,7 @@ const FindId = () => {
                     value={formData.name}
                     onChange={handleChange}
                     placeholder="성함을 입력하세요"
-                    className={`w-full px-4 py-2 rounded-xl border ${errors.name ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`}
+                    className={`w-full px-4 py-2 text-sm rounded-xl border ${errors.name ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`}
                   />
                   {errors.name && <p className="text-red-500 text-[10px] ml-1 mt-1 font-bold">{errors.name}</p>}
                 </div>
@@ -103,7 +103,7 @@ const FindId = () => {
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="가입 시 등록한 이메일"
-                      className={`w-full px-4 py-2 rounded-xl border ${errors.email ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`}
+                      className={`w-full px-4 py-2 text-sm rounded-xl border ${errors.email ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`}
                     />
                     <button
                       onClick={handleSendCode}
@@ -126,7 +126,7 @@ const FindId = () => {
                         value={formData.code}
                         onChange={handleChange}
                         placeholder="인증번호 6자리"
-                        className={`w-full px-4 py-2 rounded-xl border ${errors.code ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`}
+                        className={`w-full px-4 py-2 text-sm rounded-xl border ${errors.code ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#3530B8]`}
                       />
                       <button
                         onClick={handleVerify}
