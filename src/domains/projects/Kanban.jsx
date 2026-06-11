@@ -55,6 +55,7 @@ const Kanban = () => {
 
   // 인라인 폼 상태
   const [inlineForm, setInlineForm] = useState({ status: null, title: '', assignee: '나 (관리자)', priority: 'Medium', startDate: new Date().toISOString().split('T')[0], endDate: '' });
+  const [errors, setErrors] = useState({});
 
   // 상세 모달 오픈 시 제목 포커스 (최초 1회만)
   useEffect(() => {
@@ -72,10 +73,12 @@ const Kanban = () => {
       // 1. 인라인 폼 외부 클릭 시 초기화
       if (inlineFormRef.current && !inlineFormRef.current.contains(event.target)) {
         setInlineForm({ status: null, title: '', assignee: '나 (관리자)', priority: 'Medium', startDate: new Date().toISOString().split('T')[0], endDate: '' });
+        setErrors({});
       }
 
       // 2. 드롭다운/캘린더 외부 클릭 시 닫기 처리
       // 드롭다운이나 캘린더 컨테이너(.relative) 외부를 클릭했을 때만 닫히도록 함
+      // 단, 달력 내부의 클릭은 무시하지 않도록 .relative 내부인지 확인
       if (!event.target.closest('.relative')) {
         setOpenDropdown(null);
         setOpenCalendar(null);
@@ -117,8 +120,15 @@ const Kanban = () => {
 
   // 핸들러: 전역 생성
   const handleGlobalCreate = () => {
-    if (!newGlobalTask.title) return alert('제목을 입력해주세요.');
-    if (!newGlobalTask.endDate) return alert('마감일을 선택해주세요.');
+    const newErrors = {};
+    if (!newGlobalTask.title) newErrors.globalTitle = '제목을 입력해주세요.';
+    if (!newGlobalTask.endDate) newErrors.globalEndDate = '마감일을 선택해주세요.';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     const task = {
       ...newGlobalTask,
       id: Date.now(),
@@ -126,12 +136,20 @@ const Kanban = () => {
     setTasks([...tasks, task]);
     setIsModalOpen(false);
     setNewGlobalTask({ title: '', assignee: '나 (관리자)', priority: 'Medium', status: 'TODO', startDate: new Date().toISOString().split('T')[0], endDate: '', desc: '' });
+    setErrors({});
   };
 
   // 핸들러: 인라인 생성
   const handleInlineCreate = (status) => {
-    if (!inlineForm.title) return alert('제목을 입력해주세요.');
-    if (!inlineForm.endDate) return alert('마감일을 선택해주세요.');
+    const newErrors = {};
+    if (!inlineForm.title) newErrors[`inlineTitle-${status}`] = '제목을 입력해주세요.';
+    if (!inlineForm.endDate) newErrors[`inlineEndDate-${status}`] = '마감일을 선택해주세요.';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     const task = {
       id: Date.now(),
       title: inlineForm.title,
@@ -144,6 +162,7 @@ const Kanban = () => {
     };
     setTasks([...tasks, task]);
     setInlineForm({ status: null, title: '', assignee: '나 (관리자)', priority: 'Medium', startDate: new Date().toISOString().split('T')[0], endDate: '' });
+    setErrors({});
   };
 
   // 핸들러: 상세 수정 저장
@@ -244,17 +263,27 @@ const Kanban = () => {
                     {inlineForm.status === status ? (
                       <div 
                         ref={inlineFormRef} 
-                        onClick={(e) => e.stopPropagation()}
-                        onMouseDown={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          // 폼 내부 클릭 시, 달력/드롭다운 영역(.relative) 외부라면 닫기 처리
+                          if (!e.target.closest('.relative')) {
+                            setOpenCalendar(null);
+                            setOpenDropdown(null);
+                          }
+                        }}
                         className="bg-white rounded-2xl p-5 shadow-xl border-2 border-[#3530B8]/20 space-y-4 animate-in fade-in zoom-in duration-200"
                       >
                         <input
                           autoFocus
                           placeholder="Task 제목"
-                          className="w-full text-base font-bold outline-none placeholder:text-slate-300"
+                          className={`w-full text-base font-bold outline-none placeholder:text-slate-300 transition-all ${errors[`inlineTitle-${status}`] ? 'border-2 border-red-500 p-2 rounded-xl mb-2' : 'border-none p-0'}`}
                           value={inlineForm.title}
-                          onChange={(e) => setInlineForm({ ...inlineForm, title: e.target.value })}
+                          onChange={(e) => {
+                            setInlineForm({ ...inlineForm, title: e.target.value });
+                            if (errors[`inlineTitle-${status}`]) setErrors(prev => ({ ...prev, [`inlineTitle-${status}`]: null }));
+                          }}
                         />
+                        {errors[`inlineTitle-${status}`] && <p className="text-[10px] text-red-500 font-bold mt-[-8px] ml-1">{errors[`inlineTitle-${status}`]}</p>}
                         <div className="grid grid-cols-2 gap-2">
                           <div className="bg-slate-50 rounded-lg p-2 text-sm font-bold text-slate-400 flex items-center gap-1.5 border border-transparent">
                             <FontAwesomeIcon icon={faUser} className="text-sm" /> {inlineForm.assignee}
@@ -300,7 +329,11 @@ const Kanban = () => {
                                   minDate={new Date().toISOString().split('T')[0]}
                                   onChange={(date) => {
                                     const today = new Date().toISOString().split('T')[0];
-                                    if (date < today) { alert('시작일은 오늘 이후의 날짜만 선택할 수 있습니다.'); return; }
+                                    if (date < today) { 
+                                      setErrors(prev => ({ ...prev, [`inlineStartDate-${status}`]: '시작일은 오늘 이후의 날짜만 선택할 수 있습니다.' }));
+                                      return; 
+                                    }
+                                    setErrors(prev => ({ ...prev, [`inlineStartDate-${status}`]: null }));
                                     setInlineForm(prev => ({ ...prev, startDate: date, endDate: prev.endDate && prev.endDate < date ? date : prev.endDate }));
                                     setOpenCalendar(null);
                                   }}
@@ -308,11 +341,12 @@ const Kanban = () => {
                                 />
                               </div>
                             )}
+                            {errors[`inlineStartDate-${status}`] && <p className="text-[9px] text-red-500 font-bold mt-1 ml-1">{errors[`inlineStartDate-${status}`]}</p>}
                             </div>
                             <div className="relative">
                             <div 
                               onClick={() => setOpenCalendar(openCalendar === `inlineEnd-${status}` ? null : `inlineEnd-${status}`)}
-                              className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${inlineForm.endDate ? 'text-black' : 'text-[#9CA3AF]'}`}
+                              className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${inlineForm.endDate ? 'text-black' : 'text-[#9CA3AF]'} ${errors[`inlineEndDate-${status}`] ? 'border border-red-500' : ''}`}
                             >
                               {inlineForm.endDate || "마감일"}
                               <FontAwesomeIcon icon={faCalendarAlt} className="text-sm text-slate-400" />
@@ -323,7 +357,11 @@ const Kanban = () => {
                                   value={inlineForm.endDate} 
                                   minDate={inlineForm.startDate || new Date().toISOString().split('T')[0]}
                                   onChange={(date) => {
-                                    if (inlineForm.startDate && date < inlineForm.startDate) { alert('종료일은 시작일보다 이전일 수 없습니다.'); return; }
+                                    if (inlineForm.startDate && date < inlineForm.startDate) { 
+                                      setErrors(prev => ({ ...prev, [`inlineEndDate-${status}`]: '종료일은 시작일보다 이전일 수 없습니다.' }));
+                                      return; 
+                                    }
+                                    setErrors(prev => ({ ...prev, [`inlineEndDate-${status}`]: null }));
                                     setInlineForm(prev => ({ ...prev, endDate: date }));
                                     setOpenCalendar(null);
                                   }}
@@ -331,12 +369,13 @@ const Kanban = () => {
                                 />
                               </div>
                             )}
+                            {errors[`inlineEndDate-${status}`] && <p className="text-[9px] text-red-500 font-bold mt-1 ml-1">{errors[`inlineEndDate-${status}`]}</p>}
                             </div>
                         </div>
 
                         <div className="flex gap-2">
                           <button onClick={() => handleInlineCreate(status)} className="flex-1 bg-[#3530B8] text-white py-2 rounded-xl text-xs font-bold">추가</button>
-                          <button onClick={() => setInlineForm({ status: null, title: '', assignee: '나 (관리자)', priority: 'Medium', startDate: new Date().toISOString().split('T')[0], endDate: '' })} className="flex-1 bg-slate-100 text-slate-400 py-2 rounded-xl text-xs font-bold">취소</button>
+                          <button onClick={() => { setInlineForm({ status: null, title: '', assignee: '나 (관리자)', priority: 'Medium', startDate: new Date().toISOString().split('T')[0], endDate: '' }); setErrors({}); }} className="flex-1 bg-slate-100 text-slate-400 py-2 rounded-xl text-xs font-bold">취소</button>
                         </div>
                       </div>
                     ) : (
@@ -439,17 +478,26 @@ const Kanban = () => {
           {inlineForm.status === activeTab ? (
             <div 
               ref={inlineFormRef} 
-              onClick={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                if (!e.target.closest('.relative')) {
+                  setOpenCalendar(null);
+                  setOpenDropdown(null);
+                }
+              }}
               className="bg-white rounded-2xl p-5 shadow-xl border-2 border-[#3530B8]/20 space-y-4 animate-in fade-in zoom-in duration-200"
             >
               <input
                 autoFocus
                 placeholder="Task 제목"
-                className="w-full text-base font-bold outline-none placeholder:text-slate-300"
+                className={`w-full text-base font-bold outline-none placeholder:text-slate-300 transition-all ${errors[`inlineTitle-${activeTab}`] ? 'border-2 border-red-500 p-2 rounded-xl mb-2' : 'border-none p-0'}`}
                 value={inlineForm.title}
-                onChange={(e) => setInlineForm({ ...inlineForm, title: e.target.value })}
+                onChange={(e) => {
+                  setInlineForm({ ...inlineForm, title: e.target.value });
+                  if (errors[`inlineTitle-${activeTab}`]) setErrors(prev => ({ ...prev, [`inlineTitle-${activeTab}`]: null }));
+                }}
               />
+              {errors[`inlineTitle-${activeTab}`] && <p className="text-[10px] text-red-500 font-bold mt-[-8px] ml-1">{errors[`inlineTitle-${activeTab}`]}</p>}
               <div className="grid grid-cols-2 gap-2">
                 <div className="bg-slate-50 rounded-lg p-2 text-sm font-bold text-slate-400 flex items-center gap-1.5 border border-transparent">
                   <FontAwesomeIcon icon={faUser} className="text-sm" /> {inlineForm.assignee}
@@ -495,7 +543,11 @@ const Kanban = () => {
                         minDate={new Date().toISOString().split('T')[0]}
                         onChange={(date) => {
                           const today = new Date().toISOString().split('T')[0];
-                          if (date < today) { alert('시작일은 오늘 이후의 날짜만 선택할 수 있습니다.'); return; }
+                          if (date < today) { 
+                            setErrors(prev => ({ ...prev, [`inlineStartDate-${activeTab}`]: '시작일은 오늘 이후의 날짜만 선택할 수 있습니다.' }));
+                            return; 
+                          }
+                          setErrors(prev => ({ ...prev, [`inlineStartDate-${activeTab}`]: null }));
                           setInlineForm(prev => ({ ...prev, startDate: date, endDate: prev.endDate && prev.endDate < date ? date : prev.endDate }));
                           setOpenCalendar(null);
                         }}
@@ -503,11 +555,12 @@ const Kanban = () => {
                       />
                     </div>
                   )}
+                  {errors[`inlineStartDate-${activeTab}`] && <p className="text-[9px] text-red-500 font-bold mt-1">{errors[`inlineStartDate-${activeTab}`]}</p>}
                 </div>
                 <div className="relative">
                   <div 
                     onClick={() => setOpenCalendar(openCalendar === `inlineEnd-${activeTab}` ? null : `inlineEnd-${activeTab}`)}
-                    className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${inlineForm.endDate ? 'text-black' : 'text-[#9CA3AF]'}`}
+                    className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${inlineForm.endDate ? 'text-black' : 'text-[#9CA3AF]'} ${errors[`inlineEndDate-${activeTab}`] ? 'border border-red-500' : ''}`}
                   >
                     {inlineForm.endDate || "마감일"}
                     <FontAwesomeIcon icon={faCalendarAlt} className="text-sm text-slate-400" />
@@ -518,7 +571,11 @@ const Kanban = () => {
                         value={inlineForm.endDate} 
                         minDate={inlineForm.startDate || new Date().toISOString().split('T')[0]}
                         onChange={(date) => {
-                          if (inlineForm.startDate && date < inlineForm.startDate) { alert('종료일은 시작일보다 이전일 수 없습니다.'); return; }
+                          if (inlineForm.startDate && date < inlineForm.startDate) { 
+                            setErrors(prev => ({ ...prev, [`inlineEndDate-${activeTab}`]: '종료일은 시작일보다 이전일 수 없습니다.' }));
+                            return; 
+                          }
+                          setErrors(prev => ({ ...prev, [`inlineEndDate-${activeTab}`]: null }));
                           setInlineForm(prev => ({ ...prev, endDate: date }));
                           setOpenCalendar(null);
                         }}
@@ -526,12 +583,13 @@ const Kanban = () => {
                       />
                     </div>
                   )}
+                  {errors[`inlineEndDate-${activeTab}`] && <p className="text-[9px] text-red-500 font-bold mt-1">{errors[`inlineEndDate-${activeTab}`]}</p>}
                 </div>
               </div>
 
               <div className="flex gap-2">
                 <button onClick={() => handleInlineCreate(activeTab)} className="flex-1 bg-[#3530B8] text-white py-2 rounded-xl text-xs font-bold">추가</button>
-                <button onClick={() => setInlineForm({ status: null, title: '', assignee: '나 (관리자)', priority: 'Medium', startDate: new Date().toISOString().split('T')[0], endDate: '' })} className="flex-1 bg-slate-100 text-slate-400 py-2 rounded-xl text-xs font-bold">취소</button>
+                <button onClick={() => { setInlineForm({ status: null, title: '', assignee: '나 (관리자)', priority: 'Medium', startDate: new Date().toISOString().split('T')[0], endDate: '' }); setErrors({}); }} className="flex-1 bg-slate-100 text-slate-400 py-2 rounded-xl text-xs font-bold">취소</button>
               </div>
             </div>
           ) : (
@@ -556,6 +614,7 @@ const Kanban = () => {
                 onClick={() => {
                   setIsModalOpen(false);
                   setNewGlobalTask({ title: '', assignee: '나 (관리자)', priority: 'Medium', status: 'TODO', startDate: new Date().toISOString().split('T')[0], endDate: '', desc: '' });
+                  setErrors({});
                 }} 
                 className="text-slate-400 hover:text-slate-600 transition-colors"
               >
@@ -567,11 +626,15 @@ const Kanban = () => {
               {/* 1. 제목 */}
               <div>
                 <input
-                  className="w-full text-2xl font-black text-[#1a1c3d] border-none p-0 focus:ring-0 outline-none placeholder:font-semibold"
+                  className={`w-full text-2xl font-black text-[#1a1c3d] focus:ring-0 outline-none placeholder:font-semibold transition-all ${errors.globalTitle ? 'border-2 border-red-500 p-2 rounded-xl' : 'border-none p-0'}`}
                   placeholder="제목을 입력하세요."
                   value={newGlobalTask.title}
-                  onChange={e => setNewGlobalTask({ ...newGlobalTask, title: e.target.value })}
+                  onChange={e => {
+                    setNewGlobalTask({ ...newGlobalTask, title: e.target.value });
+                    if (errors.globalTitle) setErrors(prev => ({ ...prev, globalTitle: null }));
+                  }}
                 />
+                {errors.globalTitle && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">{errors.globalTitle}</p>}
               </div>
 
               {/* 2. 담당자 */}
@@ -653,7 +716,11 @@ const Kanban = () => {
                         minDate={new Date().toISOString().split('T')[0]}
                         onChange={(date) => {
                           const today = new Date().toISOString().split('T')[0];
-                          if (date < today) { alert('시작일은 오늘 이후의 날짜만 선택할 수 있습니다.'); return; }
+                          if (date < today) { 
+                            setErrors(prev => ({ ...prev, globalStartDate: '시작일은 오늘 이후의 날짜만 선택할 수 있습니다.' }));
+                            return; 
+                          }
+                          setErrors(prev => ({ ...prev, globalStartDate: null }));
                           setNewGlobalTask(prev => ({ ...prev, startDate: date, endDate: prev.endDate && prev.endDate < date ? date : prev.endDate }));
                           setOpenCalendar(null);
                         }}
@@ -661,12 +728,13 @@ const Kanban = () => {
                       />
                     </div>
                   )}
+                  {errors.globalStartDate && <p className="text-[9px] text-red-500 font-bold mt-1">{errors.globalStartDate}</p>}
                 </div>
                 <div className="space-y-2 relative">
                   <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">마감일</p>
                   <div
                     onClick={() => setOpenCalendar(openCalendar === 'end' ? null : 'end')}
-                    className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${newGlobalTask.endDate ? 'text-black' : 'text-[#9CA3AF]'}`}
+                    className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${newGlobalTask.endDate ? 'text-black' : 'text-[#9CA3AF]'} ${errors.globalEndDate ? 'border border-red-500' : ''}`}
                   >
                     {newGlobalTask.endDate || "날짜 선택"}
                     <FontAwesomeIcon icon={faCalendarAlt} className="text-slate-400 text-[10px]" />
@@ -677,7 +745,11 @@ const Kanban = () => {
                         value={newGlobalTask.endDate}
                         minDate={newGlobalTask.startDate || new Date().toISOString().split('T')[0]}
                         onChange={(date) => {
-                          if (newGlobalTask.startDate && date < newGlobalTask.startDate) { alert('종료일은 시작일보다 이전일 수 없습니다.'); return; }
+                          if (newGlobalTask.startDate && date < newGlobalTask.startDate) { 
+                            setErrors(prev => ({ ...prev, globalEndDate: '종료일은 시작일보다 이전일 수 없습니다.' }));
+                            return; 
+                          }
+                          setErrors(prev => ({ ...prev, globalEndDate: null }));
                           setNewGlobalTask(prev => ({ ...prev, endDate: date }));
                           setOpenCalendar(null);
                         }}
@@ -685,6 +757,7 @@ const Kanban = () => {
                       />
                     </div>
                   )}
+                  {errors.globalEndDate && <p className="text-[9px] text-red-500 font-bold mt-1">{errors.globalEndDate}</p>}
                 </div>
               </div>
 
@@ -706,6 +779,7 @@ const Kanban = () => {
                 onClick={() => {
                   setIsModalOpen(false);
                   setNewGlobalTask({ title: '', assignee: '나 (관리자)', priority: 'Medium', status: 'TODO', startDate: new Date().toISOString().split('T')[0], endDate: '', desc: '' });
+                  setErrors({});
                 }} 
                 className="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-bold text-sm hover:bg-slate-200 transition-all"
               >
