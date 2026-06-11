@@ -2,6 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { IMAGES } from '../../images/images';
 import { sendMailForId, verifyForFindId } from './authApi';
+import useLoadingStore from '../../store/useLoadingStore';
 
 const FindId = () => {
   const navigate = useNavigate();
@@ -10,6 +11,9 @@ const FindId = () => {
   const [isEmailSent, setIsEmailSent] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [foundId, setFoundId] = useState("");
+
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,6 +34,7 @@ const FindId = () => {
     }
 
     try{
+      showLoading();
       const response = await sendMailForId(formData);
       if (response.data.success) {
         alert(response.data.message);
@@ -38,6 +43,8 @@ const FindId = () => {
     }catch (error){
       const msg = error.response?.data?.message || "인증번호 발송에 실패했습니다.";
       alert(msg);
+    }finally {
+      hideLoading();
     }
   };
 
