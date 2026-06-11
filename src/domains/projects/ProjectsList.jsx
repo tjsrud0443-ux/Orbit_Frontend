@@ -48,6 +48,7 @@ const ProjectsList = () => {
   const [showEmpDropdown, setShowEmpDropdown] = useState(false);
   const [isStartCalendarOpen, setIsStartCalendarOpen] = useState(false);
   const [isEndCalendarOpen, setIsEndCalendarOpen] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const filteredProjects = useMemo(() => {
     return projects.filter(p => {
@@ -67,7 +68,17 @@ const ProjectsList = () => {
   const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
 
   const handleCreate = () => {
-    if (!newProject.title || newProject.members.length === 0) return alert('필수 항목을 모두 입력해주세요.');
+    const newErrors = {};
+    if (!newProject.title) newErrors.title = '프로젝트명을 입력해주세요.';
+    if (!newProject.start) newErrors.start = '시작일을 선택해주세요.';
+    if (!newProject.end) newErrors.end = '종료일을 선택해주세요.';
+    if (newProject.members.length === 0) newErrors.members = '참여자를 추가해주세요.';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     const newEntry = {
       id: Date.now(),
       title: newProject.title,
@@ -80,11 +91,13 @@ const ProjectsList = () => {
     alert('개인 캘린더에 일정이 성공적으로 추가되었습니다.');
     setIsModalOpen(false);
     setNewProject({ title: '', desc: '', start: '', end: '', members: [] });
+    setErrors({});
   };
 
   const addMember = (emp) => {
     if (!newProject.members.find(m => m.id === emp.id)) {
       setNewProject({ ...newProject, members: [...newProject.members, emp] });
+      if (errors.members) setErrors(prev => ({ ...prev, members: null }));
     }
     setEmpSearch('');
     setShowEmpDropdown(false);
@@ -243,20 +256,33 @@ const ProjectsList = () => {
           <div className="bg-white p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] w-full max-w-[550px] shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
             <h2 className="text-2xl font-bold mb-8">새 프로젝트 생성</h2>
             <label className="block text-xs font-bold text-[#1a1c3d] mb-2 ">프로젝트명 *</label>
-            <input className="w-full p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none text-xs" onChange={e => setNewProject({ ...newProject, title: e.target.value })} />
+            <input 
+              className={`w-full p-4 bg-[#f4f7fc] rounded-xl outline-none text-xs ${errors.title ? 'border border-red-500' : ''}`} 
+              onChange={e => {
+                setNewProject({ ...newProject, title: e.target.value });
+                if (errors.title) setErrors(prev => ({ ...prev, title: null }));
+              }} 
+            />
+            {errors.title && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1 mb-3">{errors.title}</p>}
+            {!errors.title && <div className="mb-4"></div>}
 
             <div className="flex gap-4 mb-4">
               <div className="flex-1 relative">
                 <label className="block text-xs font-bold text-[#1a1c3d] mb-2">시작일 *</label>
-                <div onClick={() => { setIsStartCalendarOpen(!isStartCalendarOpen); setIsEndCalendarOpen(false); }} className={`w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-xs ${newProject.start ? 'text-black' : 'text-[#9CA3AF]'}`}>
+                <div onClick={() => { setIsStartCalendarOpen(!isStartCalendarOpen); setIsEndCalendarOpen(false); }} className={`w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-xs ${newProject.start ? 'text-black' : 'text-[#9CA3AF]'} ${errors.start ? 'border border-red-500' : ''}`}>
                   {newProject.start || "날짜 선택"}
                 </div>
+                {errors.start && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1">{errors.start}</p>}
                 {isStartCalendarOpen && (
                   <Calendar
                     value={newProject.start}
                     minDate={new Date().toISOString().split('T')[0]}
                     onChange={(date) => {
-                      if (date < new Date().toISOString().split('T')[0]) { alert('시작일은 오늘 이후의 날짜만 선택할 수 있습니다.'); return; }
+                      if (date < new Date().toISOString().split('T')[0]) { 
+                        setErrors(prev => ({ ...prev, start: '시작일은 오늘 이후의 날짜만 선택할 수 있습니다.' }));
+                        return; 
+                      }
+                      setErrors(prev => ({ ...prev, start: null }));
                       setNewProject(prev => ({ ...prev, start: date, end: prev.end && prev.end < date ? date : prev.end }));
                       setIsStartCalendarOpen(false);
                     }}
@@ -267,15 +293,20 @@ const ProjectsList = () => {
 
               <div className="flex-1 relative">
                 <label className="block text-xs font-bold text-[#1a1c3d] mb-2">종료일 *</label>
-                <div onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }} className={`w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-xs ${newProject.end ? 'text-black' : 'text-[#9CA3AF]'}`}>
+                <div onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }} className={`w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-xs ${newProject.end ? 'text-black' : 'text-[#9CA3AF]'} ${errors.end ? 'border border-red-500' : ''}`}>
                   {newProject.end || "날짜 선택"}
                 </div>
+                {errors.end && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1">{errors.end}</p>}
                 {isEndCalendarOpen && (
                   <Calendar
                     value={newProject.end}
                     minDate={newProject.start || new Date().toISOString().split('T')[0]}
                     onChange={(date) => {
-                      if (newProject.start && date < newProject.start) { alert('종료일은 시작일보다 이전일 수 없습니다.'); return; }
+                      if (newProject.start && date < newProject.start) { 
+                        setErrors(prev => ({ ...prev, end: '종료일은 시작일보다 이전일 수 없습니다.' }));
+                        return; 
+                      }
+                      setErrors(prev => ({ ...prev, end: null }));
                       setNewProject(prev => ({ ...prev, end: date }));
                       setIsEndCalendarOpen(false);
                     }}
@@ -290,7 +321,7 @@ const ProjectsList = () => {
 
             <label className="block text-xs font-bold text-[#1a1c3d] mb-2">참여자 추가 *</label>
             <div className="relative mb-2">
-              <input value={empSearch} onChange={e => { setEmpSearch(e.target.value); setShowEmpDropdown(true); }} className="w-full p-4 bg-[#f4f7fc] rounded-xl outline-none text-xs" placeholder="이름으로 검색하여 참여자를 추가하세요." />
+              <input value={empSearch} onChange={e => { setEmpSearch(e.target.value); setShowEmpDropdown(true); }} className={`w-full p-4 bg-[#f4f7fc] rounded-xl outline-none text-xs ${errors.members ? 'border border-red-500' : ''}`} placeholder="이름으로 검색하여 참여자를 추가하세요." />
               {showEmpDropdown && empSearch && (
                 <div className="absolute top-full left-0 w-full bg-white border border-[#edf2f9] rounded-xl shadow-lg mt-1 z-50 overflow-hidden">
                   {MOCK_EMPLOYEES.filter(e => e.name.includes(empSearch)).map(e => (
@@ -299,13 +330,14 @@ const ProjectsList = () => {
                 </div>
               )}
             </div>
+            {errors.members && <p className="text-[9px] text-red-500 font-medium ml-1 mb-2">{errors.members}</p>}
             <div className="flex flex-wrap gap-2 mb-8">
               {newProject.members.map(m => (
                 <div key={m.id} className="px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2 border border-[#3a36db]/20">{m.name} <FontAwesomeIcon icon={faTimes} className="cursor-pointer" onClick={() => removeMember(m.id)} /></div>
               ))}
             </div>
             <div className="flex justify-end gap-3">
-              <button onClick={() => { setIsModalOpen(false); setNewProject({ title: '', desc: '', start: '', end: '', members: [] }); }} className="px-8 py-3 bg-gray-100 rounded-xl font-bold text-sm">취소</button>
+              <button onClick={() => { setIsModalOpen(false); setNewProject({ title: '', desc: '', start: '', end: '', members: [] }); setErrors({}); }} className="px-8 py-3 bg-gray-100 rounded-xl font-bold text-sm">취소</button>
               <button onClick={handleCreate} className="px-8 py-3 bg-[#3a36db] text-white rounded-xl font-bold text-sm">등록</button>
             </div>
           </div>
