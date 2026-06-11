@@ -139,7 +139,7 @@ const AdminAttendance = () => {
                     <td className="py-4 pl-2 text-sm font-bold text-slate-800">{item.applicant}</td>
                     <td className="py-4 text-xs text-slate-500 font-medium">{item.deptRank}</td>
                     <td className="py-4 pl-1 text-[0.6875rem] text-slate-400 font-mono">{item.targetDate}</td>
-                    <td className="py-4 pl-1 text-xs text-slate-600 font-medium">{item.originalTime}</td>
+                    <td className="py-4 pl-2 text-xs text-[#3530B8] font-bold">{item.originalTime}</td>
                     <td className="py-4 pl-4 text-xs text-[#3530B8] font-bold">{item.requestedTime}</td>
                     <td className="py-4 text-xs text-slate-500 max-w-xs truncate" title={item.reason}>
                       {item.reason}
