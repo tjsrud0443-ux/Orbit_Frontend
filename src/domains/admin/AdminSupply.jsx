@@ -1,8 +1,8 @@
-﻿import React, { useState,useEffect } from 'react';
+﻿import React, { useState,useEffect, useRef } from 'react';
 import Pagination from '../../components/common/Pagination';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { getSupplies } from '../supply/supplyApi';
+import { getAdminSupplies} from '../admin/adminApi';
 
 const CATEGORIES = ['전체', '사무용품', '전자기기', '가구', '네트워크 장비'];
 
@@ -31,6 +31,19 @@ const SupplyModal = ({ mode, supply, onClose, onSave }) => {
   const [form, setForm] = useState(
     supply || { name: '', category: '사무용품', code: '', totalQty: '', stockQty: '', minStockQty: '' }
   );
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const categoryRef = useRef(null); 
+
+    // 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (categoryRef.current && !categoryRef.current.contains(e.target)) {
+        setIsCategoryOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleChange = (field, val) => setForm(prev => ({ ...prev, [field]: val }));
 
@@ -64,15 +77,35 @@ const SupplyModal = ({ mode, supply, onClose, onSave }) => {
           {/* 카테고리 */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[0.6875rem] font-bold text-slate-400 uppercase tracking-wider">카테고리</label>
-            <select
-              value={form.category}
-              onChange={e => handleChange('category', e.target.value)}
-              className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 transition-all"
-            >
-              {CATEGORIES.filter(c => c !== '전체').map(c => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+            <div className="relative" ref={categoryRef}>
+              <button
+                type="button"
+                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 transition-all flex items-center justify-between"
+              >
+                <span>{form.category}</span>
+                <svg className={`w-4 h-4 text-gray-400 transition-transform ${isCategoryOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {isCategoryOpen && (
+                <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden py-1">
+                  {CATEGORIES.filter(c => c !== '전체').map(cat => (
+                    <div
+                      key={cat}
+                      onClick={() => { handleChange('category', cat); setIsCategoryOpen(false); }}
+                      className={`px-4 py-2.5 text-sm cursor-pointer transition-colors
+                        ${form.category === cat
+                          ? 'bg-[#3530B8] text-white font-bold'
+                          : 'text-gray-700 hover:bg-indigo-50 hover:text-[#3530B8] font-medium'}`}
+                    >
+                      {cat}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* 비품코드 */}
@@ -157,19 +190,19 @@ const AdminSupply = () => {
   const [modal, setModal] = useState(null); // null | { mode: 'add'|'edit', supply? }
 
     useEffect(() => {
-    getSupplies().then(res => {
-      const mapped = res.data.map(item => ({
-        id: item.supply_seq,
-        name: item.supply_name,
-        category: item.category,
-        code: item.supply_code,
-        totalQty: item.total_qty,
-        stockQty: item.stock_qty,
-        minStockQty: item.min_stock_qty,
-      }));
-      setSupplies(mapped);
-    });
-  }, []);
+      getAdminSupplies().then(res => {
+        const mapped = res.data.map(item => ({
+          id: item.supply_seq,
+          name: item.supply_name,
+          category: item.category,
+          code: item.supply_code,
+          totalQty: item.total_qty,
+          stockQty: item.stock_qty,
+          minStockQty: item.min_stock_qty,
+        }));
+        setSupplies(mapped);
+      });
+    }, []);
 
   // ── 비품 목록 필터링
   const filtered = supplies.filter(item => {
@@ -249,7 +282,7 @@ const AdminSupply = () => {
   };
 
   return (
-    <div className="w-full min-h-screen bg-white p-6 md:p-8 font-sans">
+    <div className="w-full h-full bg-white p-6 md:p-8 font-sans flex flex-col overflow-hidden">
       {/* 모달 */}
       {modal && (
         <SupplyModal
@@ -261,13 +294,13 @@ const AdminSupply = () => {
       )}
 
       {/* 헤더 */}
-      <div className="mb-7">
+      <div className="mb-7 shrink-0">
         <h1 className="text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">비품 관리</h1>
         <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">등록된 비품 현황을 확인하고 관리할 수 있습니다.</p>
       </div>
 
       {/* 탭 + 비품 추가 버튼 */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between mb-5 shrink-0">
         <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-[#F0F4FF] flex-shrink-0 overflow-x-auto no-scrollbar">
           <button
             onClick={() => handleTabChange('list')}
@@ -299,10 +332,10 @@ const AdminSupply = () => {
       </div>
 
       {/* 카드 */}
-      <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-6">
+      <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-6 flex-1 flex flex-col min-h-0 overflow-hidden">
 
         {/* 검색 + 필터 */}
-        <div className="flex flex-wrap items-center gap-3 mb-5">
+        <div className="flex flex-wrap items-center gap-3 mb-5 shrink-0">
           <div className="relative flex-1 min-w-[200px]">
             <input
               type="text"
@@ -354,10 +387,10 @@ const AdminSupply = () => {
 
         {/* ── 비품 목록 탭 ── */}
         {activeTab === 'list' && (
-          <>
-            <div className="rounded-xl border border-gray-100 overflow-hidden">
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            <div className="rounded-xl border border-gray-100 overflow-hidden flex flex-col flex-1 min-h-0">
               {/* 테이블 헤더 */}
-              <div className="grid grid-cols-12 bg-gray-50 border-b border-gray-100">
+              <div className="grid grid-cols-12 bg-gray-50 border-b border-gray-100 shrink-0">
                 <div className="col-span-1 px-4 py-3 flex items-center justify-center">
                   <input
                     type="checkbox"
@@ -375,70 +408,74 @@ const AdminSupply = () => {
               </div>
 
               {/* 테이블 바디 */}
-              {paginated.length > 0 ? paginated.map(item => {
-                const stockStatus = getStockStatus(item);
-                return (
-                  <div key={item.id} className="grid grid-cols-12 border-b border-gray-50 last:border-0 items-center hover:bg-gray-50/60 transition-colors">
-                    <div className="col-span-1 px-4 py-3.5 flex items-center justify-center">
-                      <input
-                        type="checkbox"
-                        checked={checkedIds.includes(item.id)}
-                        onChange={() => toggleCheck(item.id)}
-                        className="accent-indigo-600 w-4 h-4 cursor-pointer"
-                      />
+              <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0">
+                {paginated.length > 0 ? paginated.map(item => {
+                  const stockStatus = getStockStatus(item);
+                  return (
+                    <div key={item.id} className="grid grid-cols-12 border-b border-gray-50 last:border-0 items-center hover:bg-gray-50/60 transition-colors">
+                      <div className="col-span-1 px-4 py-3.5 flex items-center justify-center">
+                        <input
+                          type="checkbox"
+                          checked={checkedIds.includes(item.id)}
+                          onChange={() => toggleCheck(item.id)}
+                          className="accent-indigo-600 w-4 h-4 cursor-pointer"
+                        />
+                      </div>
+                      <div className="col-span-3 px-4 py-3.5">
+                        <p className="text-sm font-bold text-gray-800">{item.name}</p>
+                      </div>
+                      <div className="col-span-2 px-4 py-3.5">
+                        <span className="text-xs font-bold px-2 py-1 rounded-lg bg-gray-100 text-gray-500">{item.category}</span>
+                      </div>
+                      <div className="col-span-2 px-4 py-3.5 text-center">
+                        <span className="text-sm text-gray-500 font-mono">{item.code}</span>
+                      </div>
+                      <div className="col-span-1 px-4 py-3.5 text-center">
+                        <span className="text-sm font-bold text-gray-700">{item.totalQty}</span>
+                      </div>
+                      <div className="col-span-1 px-4 py-3.5 text-center">
+                        <span className="text-sm font-bold text-gray-700">{item.stockQty}</span>
+                      </div>
+                      <div className="col-span-1 px-4 py-3.5 text-center">
+                        <StockBadge status={stockStatus} />
+                      </div>
+                      <div className="col-span-1 px-4 py-3.5 flex items-center justify-center gap-1.5">
+                        <button
+                          onClick={() => setModal({ mode: 'edit', supply: item })}
+                          className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-[#3530B8] transition-all flex items-center justify-center cursor-pointer"
+                          title="수정"
+                        >
+                          <FontAwesomeIcon icon={faEdit} className="text-xs" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center cursor-pointer"
+                          title="삭제"
+                        >
+                          <FontAwesomeIcon icon={faTrashAlt} className="text-xs" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="col-span-3 px-4 py-3.5">
-                      <p className="text-sm font-bold text-gray-800">{item.name}</p>
-                    </div>
-                    <div className="col-span-2 px-4 py-3.5">
-                      <span className="text-xs font-bold px-2 py-1 rounded-lg bg-gray-100 text-gray-500">{item.category}</span>
-                    </div>
-                    <div className="col-span-2 px-4 py-3.5 text-center">
-                      <span className="text-sm text-gray-500 font-mono">{item.code}</span>
-                    </div>
-                    <div className="col-span-1 px-4 py-3.5 text-center">
-                      <span className="text-sm font-bold text-gray-700">{item.totalQty}</span>
-                    </div>
-                    <div className="col-span-1 px-4 py-3.5 text-center">
-                      <span className="text-sm font-bold text-gray-700">{item.stockQty}</span>
-                    </div>
-                    <div className="col-span-1 px-4 py-3.5 text-center">
-                      <StockBadge status={stockStatus} />
-                    </div>
-                    <div className="col-span-1 px-4 py-3.5 flex items-center justify-center gap-1.5">
-                      <button
-                        onClick={() => setModal({ mode: 'edit', supply: item })}
-                        className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-[#3530B8] transition-all flex items-center justify-center cursor-pointer"
-                        title="수정"
-                      >
-                        <FontAwesomeIcon icon={faEdit} className="text-xs" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center cursor-pointer"
-                        title="삭제"
-                      >
-                        <FontAwesomeIcon icon={faTrashAlt} className="text-xs" />
-                      </button>
-                    </div>
+                  );
+                }) : (
+                  <div className="py-16 text-center text-sm text-gray-400 font-bold">
+                    검색 결과가 없습니다.
                   </div>
-                );
-              }) : (
-                <div className="py-16 text-center text-sm text-gray-400 font-bold">
-                  검색 결과가 없습니다.
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
-            <Pagination count={Math.ceil(filtered.length / PER_PAGE)} page={page} onChange={(_, v) => setPage(v)} />
-          </>
+            <div className="shrink-0 pt-4">
+              <Pagination count={Math.ceil(filtered.length / PER_PAGE)} page={page} onChange={(_, v) => setPage(v)} />
+            </div>
+          </div>
         )}
 
         {/* ── 대여 중 탭 ── */}
         {activeTab === 'rental' && (
-          <>
-            <div className="rounded-xl border border-gray-100 overflow-hidden">
-              <div className="grid grid-cols-12 bg-gray-50 border-b border-gray-100">
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            <div className="rounded-xl border border-gray-100 overflow-hidden flex flex-col flex-1 min-h-0">
+              <div className="grid grid-cols-12 bg-gray-50 border-b border-gray-100 shrink-0">
                 {['비품명', '카테고리', '비품코드', '대여 부서', '대여자', '대여일', '관리'].map((h, i) => (
                   <div key={h} className={`py-3 text-[0.68rem] font-extrabold text-gray-400 uppercase tracking-wider px-4
                     ${i === 0 ? 'col-span-2' : i === 1 ? 'col-span-2' : i === 2 ? 'col-span-2 text-center' : i === 3 ? 'col-span-2' : i === 4 ? 'col-span-2' : i === 5 ? 'col-span-1' : 'col-span-1 text-center'}`}>
@@ -447,44 +484,48 @@ const AdminSupply = () => {
                 ))}
               </div>
 
-              {paginatedRentals.length > 0 ? paginatedRentals.map(item => (
-                <div key={item.id} className="grid grid-cols-12 border-b border-gray-50 last:border-0 items-center hover:bg-gray-50/60 transition-colors">
-                  <div className="col-span-2 px-4 py-3.5">
-                    <p className="text-sm font-bold text-gray-800">{item.name}</p>
+              <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0">
+                {paginatedRentals.length > 0 ? paginatedRentals.map(item => (
+                  <div key={item.id} className="grid grid-cols-12 border-b border-gray-50 last:border-0 items-center hover:bg-gray-50/60 transition-colors">
+                    <div className="col-span-2 px-4 py-3.5">
+                      <p className="text-sm font-bold text-gray-800">{item.name}</p>
+                    </div>
+                    <div className="col-span-2 px-4 py-3.5">
+                      <span className="text-xs font-bold px-2 py-1 rounded-lg bg-gray-100 text-gray-500">{item.category}</span>
+                    </div>
+                    <div className="col-span-2 px-4 py-3.5 text-center">
+                      <span className="text-sm text-gray-500 font-mono">{item.code}</span>
+                    </div>
+                    <div className="col-span-2 px-4 py-3.5">
+                      <span className="text-sm text-gray-700 font-medium">{item.dept}</span>
+                    </div>
+                    <div className="col-span-2 px-4 py-3.5">
+                      <span className="text-sm text-gray-700 font-medium">{item.renter}</span>
+                    </div>
+                    <div className="col-span-1 px-4 py-3.5">
+                      <span className="text-xs text-gray-500">{item.rentalDate}</span>
+                    </div>
+                    <div className="col-span-1 px-4 py-3.5 flex justify-center">
+                      <button
+                        onClick={() => handleReturn(item.id)}
+                        className="px-4 py-1 text-xs font-bold text-emerald-600 bg-white border border-emerald-300 rounded-full hover:bg-emerald-50 transition-colors shadow-sm"
+                      >
+                        반납
+                      </button>
+                    </div>
                   </div>
-                  <div className="col-span-2 px-4 py-3.5">
-                    <span className="text-xs font-bold px-2 py-1 rounded-lg bg-gray-100 text-gray-500">{item.category}</span>
+                )) : (
+                  <div className="py-16 text-center text-sm text-gray-400 font-bold">
+                    대여 중인 비품이 없습니다.
                   </div>
-                  <div className="col-span-2 px-4 py-3.5 text-center">
-                    <span className="text-sm text-gray-500 font-mono">{item.code}</span>
-                  </div>
-                  <div className="col-span-2 px-4 py-3.5">
-                    <span className="text-sm text-gray-700 font-medium">{item.dept}</span>
-                  </div>
-                  <div className="col-span-2 px-4 py-3.5">
-                    <span className="text-sm text-gray-700 font-medium">{item.renter}</span>
-                  </div>
-                  <div className="col-span-1 px-4 py-3.5">
-                    <span className="text-xs text-gray-500">{item.rentalDate}</span>
-                  </div>
-                  <div className="col-span-1 px-4 py-3.5 flex justify-center">
-                    <button
-                      onClick={() => handleReturn(item.id)}
-                      className="px-4 py-1 text-xs font-bold text-emerald-600 bg-white border border-emerald-300 rounded-full hover:bg-emerald-50 transition-colors shadow-sm"
-                    >
-                      반납
-                    </button>
-                  </div>
-                </div>
-              )) : (
-                <div className="py-16 text-center text-sm text-gray-400 font-bold">
-                  대여 중인 비품이 없습니다.
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
-            <Pagination count={Math.ceil(filteredRentals.length / PER_PAGE)} page={page} onChange={(_, v) => setPage(v)} />
-          </>
+            <div className="shrink-0 pt-4">
+              <Pagination count={Math.ceil(filteredRentals.length / PER_PAGE)} page={page} onChange={(_, v) => setPage(v)} />
+            </div>
+          </div>
         )}
       </div>
     </div>
