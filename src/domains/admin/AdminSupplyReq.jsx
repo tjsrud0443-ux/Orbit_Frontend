@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import Pagination from '../../components/common/Pagination';
-import { getSuppyReqList, updateSupplyReqStatus } from '../supply/supplyApi';
+import { getSuppyReqList, updateSupplyReqStatus } from '../admin/adminApi';
 
 const PER_PAGE = 8;
 

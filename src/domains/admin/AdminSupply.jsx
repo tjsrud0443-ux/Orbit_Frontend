@@ -2,7 +2,7 @@
 import Pagination from '../../components/common/Pagination';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { getAdminSupplies} from '../supply/supplyApi';
+import { getAdminSupplies} from '../admin/adminApi';
 
 const CATEGORIES = ['전체', '사무용품', '전자기기', '가구', '네트워크 장비'];
 
