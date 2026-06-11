@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTimes, faUser, faChevronDown, faCircle, faCalendarAlt, faChevronLeft } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTimes, faUser, faChevronDown, faCircle, faCalendarAlt, faChevronLeft, faEllipsisV, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
 
 // 초기 Mock 데이터
@@ -56,6 +56,7 @@ const Kanban = () => {
   // 인라인 폼 상태
   const [inlineForm, setInlineForm] = useState({ status: null, title: '', assignee: '나 (관리자)', priority: 'Medium', startDate: new Date().toISOString().split('T')[0], endDate: '' });
   const [errors, setErrors] = useState({});
+  const [activeMenuId, setActiveMenuId] = useState(null);
 
   // 상세 모달 오픈 시 제목 포커스 (최초 1회만)
   useEffect(() => {
@@ -82,6 +83,7 @@ const Kanban = () => {
       if (!event.target.closest('.relative')) {
         setOpenDropdown(null);
         setOpenCalendar(null);
+        setActiveMenuId(null);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -96,6 +98,14 @@ const Kanban = () => {
   const onDrop = (e, status) => {
     const taskId = parseInt(e.dataTransfer.getData('taskId'));
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status } : t));
+  };
+
+  // 핸들러: 삭제
+  const handleDeleteTask = (taskId) => {
+    if (window.confirm('정말 삭제하시겠습니까?')) {
+      setTasks(prev => prev.filter(t => t.id !== taskId));
+      setActiveMenuId(null);
+    }
   };
 
   // 날짜 포맷 (MM/DD)
@@ -240,9 +250,35 @@ const Kanban = () => {
                         draggable
                         onDragStart={(e) => onDragStart(e, task)}
                         onClick={() => setDetailModalTask(task)}
-                        className="group bg-white rounded-2xl p-5 shadow-sm border border-slate-100/80 hover:shadow-xl hover:shadow-indigo-50/50 hover:border-indigo-100 transition-all cursor-pointer"
+                        className="group bg-white rounded-2xl p-5 shadow-sm border border-slate-100/80 hover:shadow-xl hover:shadow-indigo-50/50 hover:border-indigo-100 transition-all cursor-pointer relative"
                       >
-                        <h3 className="font-bold text-base text-[#1a1c3d] mb-4 leading-relaxed group-hover:text-[#3530B8] transition-colors">{task.title}</h3>
+                        <div className="flex justify-between items-center mb-4 gap-2">
+                          <h3 className="font-bold text-base text-[#1a1c3d] leading-relaxed group-hover:text-[#3530B8] transition-colors flex-1">{task.title}</h3>
+                          <div className="relative">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveMenuId(activeMenuId === task.id ? null : task.id);
+                              }}
+                              className="text-slate-300 hover:text-slate-500 flex items-center justify-center transition-colors h-7 w-7 cursor-pointer"
+                            >
+                              <FontAwesomeIcon icon={faEllipsisV} className="text-xs" />
+                            </button>
+                            {activeMenuId === task.id && (
+                              <div 
+                                onClick={(e) => e.stopPropagation()} 
+                                className="absolute right-0 top-full mt-1 w-24 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-50 animate-in fade-in zoom-in duration-200"
+                              >
+                                <button 
+                                  onClick={() => handleDeleteTask(task.id)}
+                                  className="w-full text-left px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 transition-colors"
+                                >
+                                  <FontAwesomeIcon icon={faTrashCan} className="mr-2" /> 삭제
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                         <div className="flex items-end justify-between">
                           <div className="flex items-center gap-2">
                             <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] overflow-hidden border border-white shrink-0">
@@ -454,9 +490,35 @@ const Kanban = () => {
             <div
               key={task.id}
               onClick={() => setDetailModalTask(task)}
-              className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 active:scale-[0.98] transition-all"
+              className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 active:scale-[0.98] transition-all relative"
             >
-              <h3 className="font-bold text-sm text-[#1a1c3d] mb-4 leading-relaxed">{task.title}</h3>
+              <div className="flex justify-between items-center mb-4 gap-2">
+                <h3 className="font-bold text-sm text-[#1a1c3d] leading-relaxed flex-1">{task.title}</h3>
+                <div className="relative">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveMenuId(activeMenuId === task.id ? null : task.id);
+                    }}
+                    className="text-slate-300 flex items-center justify-center h-5"
+                  >
+                    <FontAwesomeIcon icon={faEllipsisV} className="text-xs" />
+                  </button>
+                  {activeMenuId === task.id && (
+                    <div 
+                      onClick={(e) => e.stopPropagation()} 
+                      className="absolute right-0 top-full mt-1 w-24 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-50 animate-in fade-in zoom-in duration-200"
+                    >
+                      <button 
+                        onClick={() => handleDeleteTask(task.id)}
+                        className="w-full text-left px-4 py-2 text-xs font-bold text-red-500"
+                      >
+                        <FontAwesomeIcon icon={faTrashCan} className="mr-2" /> 삭제
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
               <div className="flex items-end justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] overflow-hidden border border-white shrink-0">
