@@ -188,8 +188,8 @@ const Kanban = () => {
         </header>
 
         {/* 2. 칸반 보드 영역 */}
-        <main className="flex-1 overflow-x-auto p-10 custom-scrollbar flex justify-center bg-white">
-          <div className="flex gap-[100px] h-full min-w-fit max-w-full justify-center">
+        <main className="flex-1 overflow-x-auto p-6 xl:p-10 custom-scrollbar flex lg:justify-center bg-white">
+          <div className="flex gap-6 xl:gap-10 2xl:gap-[100px] h-full min-w-fit max-w-full lg:justify-center">
             {['TODO', 'DOING', 'DONE'].map(status => {
               const columnTasks = tasks
                 .filter(t => t.status === status)
@@ -200,7 +200,7 @@ const Kanban = () => {
               return (
                 <div
                   key={status}
-                  className={`flex-1 max-w-[440px] min-w-[380px] rounded-none p-6 flex flex-col ${columnBg} border border-slate-200/60 transition-all duration-300`}
+                  className={`flex-1 max-w-[440px] min-w-[280px] xl:min-w-[320px] 2xl:min-w-[380px] rounded-none p-6 flex flex-col ${columnBg} border border-slate-200/60 transition-all duration-300`}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => onDrop(e, status)}
                 >
