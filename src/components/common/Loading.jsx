@@ -36,7 +36,7 @@ const Loading = ({ type = "default" }) => {
 
   return (<div className="flex flex-col items-center justify-center text-center">
     <ClockLoader size={60} color="#bcd8fc"></ClockLoader> 
-    <p className="text-lg text-[#FFFFFF] mt-4">페이지 로딩 중입니다.</p>
+    <p className="text-lg text-[#FFFFFF] mt-4">잠시만 기다려주세요...</p>
   </div>
   )
 };

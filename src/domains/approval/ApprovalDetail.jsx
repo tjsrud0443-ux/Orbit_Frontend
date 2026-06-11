@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import useUserStore from '../../store/userStore';
 import useEmployeeStore from '../../store/useEmployeeStore';
 import ApprovalDocumentContainer from './components/ApprovalDocumentContainer';
@@ -7,7 +7,53 @@ import VacationForm from './forms/VacationForm';
 import PaymentForm from './forms/PaymentForm';
 import GeneralForm from './forms/GeneralForm';
 import PurchaseForm from './forms/PurchaseForm';
-import { submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail, approveDraft, rejectApproval, updateVacation, updateGeneral, updatePayment, updatePurchase, deleteDoc } from './approvalApi';
+import { submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail, approveDraft, rejectApproval, 
+  updateVacation, updateGeneral, updatePayment, updatePurchase, deleteDoc } from './approvalApi';
+import useLoadingStore from '../../store/useLoadingStore';
+
+const getDefaultApprovers = (docType, user, allEmployees) => {
+  if(!user || !allEmployees?.length) return [];
+
+  const isStaff = !['부서장', '본부장', '대표'].includes(user.rank_name);
+  const isManager = user.rank_name === '부서장';
+  const isDirector = user.rank_name === '본부장';
+
+  const myManager = allEmployees.find(e => e.rank_name === '부서장' && e.dept_seq === user.dept_seq && e.users_seq !== user.users_seq) || null;
+  const myDirector = allEmployees.find(e => e.rank_name === '본부장' && e.dept_seq === user.parent_dept_seq) || null;
+  const fnManager = allEmployees.find(e => e.rank_name === '부서장' && e.auth_group === 'ROLE_FN_ADMIN') || null;
+  const ceo = allEmployees.find(e => e.rank_name === '대표') || null;
+
+  const lines = {
+    VACATION: {
+      staff: [myManager],
+      manager: [myDirector],
+      director: [ceo],
+    },
+    PURCHASE: {
+      staff: [myManager, myDirector, ceo],
+      manager: [myDirector, ceo],
+      director: [ceo],
+    },
+    PAYMENT: {
+      staff: [myManager, fnManager, myDirector, ceo],
+      manager: [fnManager, myDirector, ceo],
+      director: [ceo],
+    },
+    GENERAL: {
+      staff: [myManager, myDirector, ceo],
+      manager: [myDirector, ceo],
+      director: [ceo],
+    },
+  };
+
+  const role = isStaff ? 'staff' : isManager ? 'manager' : 'director';
+
+  const candidates = (lines[docType]?.[role] ?? []).filter(Boolean);
+  const unique = candidates.filter(
+    (e, idx, arr) => arr.findIndex(i => i.users_seq === e.users_seq) === idx
+  );
+  return unique.map(e => ({...e, status: 'WAITING'}));
+};
 
 // 결재자 선택 모달 컴포넌트
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
@@ -68,9 +114,8 @@ const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
 
 const ApprovalDetail = () => {
   const { type, docSeq } = useParams();
-  const location = useLocation();
   const { user } = useUserStore();
-  const { fetchEmployees } = useEmployeeStore();
+  const { fetchEmployees, allEmployees } = useEmployeeStore();
 
   const [mode, setMode] = useState('VIEW'); // EDIT or VIEW
   const [userRole, setUserRole] = useState('REFERRER'); // DRAFTER, APPROVER, REFERRER
@@ -84,6 +129,9 @@ const ApprovalDetail = () => {
   const [isRejecting, setIsRejecting] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [rejectError, setRejectError] = useState(false);
+
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
 
   const navigate = useNavigate();
 
@@ -105,10 +153,11 @@ const ApprovalDetail = () => {
     setRejectError(false);
 
     if (!docSeq) {
+      showLoading();
       // [작성 모드]
       setUserRole('DRAFTER');
       setMode('EDIT');
-      setApprovers([]);
+      setApprovers(getDefaultApprovers(upperType, user, allEmployees));
       
       if (upperType === 'VACATION') {
         setFormData({ title: '', vac_type: '연차', start_date: '', end_date: '', days: 0, reason: '' });
@@ -119,12 +168,14 @@ const ApprovalDetail = () => {
       } else if (upperType === 'PURCHASE') {
         setFormData({ title: '', purpose: '', vendor: '', purchase_date: '', items: [{ item_order: 1, item_name: '', ea: 1, unit_price: 0, note: '' }], attachments: [] });
       }
+      hideLoading();
     } else {
       fetchDocumentData(type, docSeq);
     }
   }, [type, docSeq, user?.id, refresh]);
 
   const fetchDocumentData = async (type, docSeq) => {
+    showLoading();
     try {
       await getApprovalDetail(type, docSeq).then(resp => {
         setFormData({
@@ -155,6 +206,8 @@ const ApprovalDetail = () => {
       })
     } catch (error) {
       console.error('기안 문서 조회 실패:', error);
+    } finally {
+      hideLoading();
     }
   };
 
@@ -251,8 +304,9 @@ const ApprovalDetail = () => {
         return;
       }
     }
-    // 2. 데이터 가공 및 Payload 조립
+    // 데이터 가공 및 Payload 조립
     try {
+      showLoading();
       const { referrers, title, ...restOfData } = formData;
       const isVacation = doc_type === 'VACATION';
       const isHalfVacation = isVacation && formData.vac_type?.includes('반차');
@@ -336,6 +390,8 @@ const ApprovalDetail = () => {
       }else{
         alert("기안 문서 처리 중 오류가 발생했습니다.");
       }
+    } finally {
+      hideLoading();
     }
   };
 
