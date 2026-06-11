@@ -32,9 +32,13 @@ const AdminDocuments = () => {
   const hideLoading = useLoadingStore(state => state.hideLoading);
   // 문서 불러오기
   const loadDocuments = () => {
+    showLoading();
     getAllDocs().then(resp => {
       setDocuments(resp.data);
-    }).catch(err => console.error("목록 로드 실패:", err));
+    }).catch(err => console.error("목록 로드 실패:", err))
+      .finally(() => {
+        hideLoading();
+      })
   };
 
   useEffect(() => {
@@ -128,6 +132,9 @@ const AdminDocuments = () => {
 
     if (!newDocTitle.trim()) {
       setTitleError('제목을 입력해주세요.');
+      hasError = true;
+    } else if (newDocTitle.length > 30) {
+      setTitleError('30자까지만 입력 가능합니다.');
       hasError = true;
     } else {
       setTitleError('');
@@ -235,7 +242,7 @@ const AdminDocuments = () => {
               <tr className="border-b border-slate-100">
                 <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-130 whitespace-nowrap">제목 (클릭 시 미리보기 가능)</th>
                 <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-50 whitespace-nowrap">작성자</th>
-                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-35 whitespace-nowrap">등록일</th>
+                <th className="pb-4 pl-3 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-35 whitespace-nowrap">등록일</th>
                 <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-50 whitespace-nowrap">관리</th>
               </tr>
             </thead>
@@ -255,7 +262,7 @@ const AdminDocuments = () => {
                       </button>
                     </td>
                     <td className="py-4 text-xs text-slate-500 font-medium whitespace-nowrap">
-                      {doc.users_id}
+                      {doc.name}
                     </td>
                     <td className="py-4 text-[0.6875rem] text-slate-400 font-mono whitespace-nowrap">
                       {doc.created_at?.substring(0, 10)}
@@ -316,8 +323,13 @@ const AdminDocuments = () => {
                   type="text"
                   value={newDocTitle}
                   onChange={(e) => {
-                    setNewDocTitle(e.target.value);
-                    if (e.target.value.trim()) setTitleError('');
+                    const value = e.target.value;
+                    setNewDocTitle(value);
+                    if (value.length > 30) {
+                      setTitleError('30자까지만 입력 가능합니다.');
+                    } else if (value.trim()) {
+                      setTitleError('');
+                    }
                   }}
                   placeholder="제목을 입력하세요"
                   className={`w-full px-4 py-3 bg-gray-50 border ${titleError ? 'border-red-500' : 'border-gray-100'} rounded-xl focus:bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all text-sm font-medium`}

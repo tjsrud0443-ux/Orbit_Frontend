@@ -3,10 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { IMAGES } from '../../images/images';
 import { getApprovalHomeData } from './approvalApi';
 import useAuthStore from '../../store/authStore';
+import useLoadingStore from '../../store/useLoadingStore';
 
 const ApprovalHome = () => {
   const navi = useNavigate();
   const { token } = useAuthStore();
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
+
   const [homeData, setHomeData] = useState({
     pendingCount: 0,
     inProgressCount: 0,
@@ -18,9 +22,13 @@ const ApprovalHome = () => {
   const [isDraftModalOpen, setIsDraftModalOpen] = React.useState(false);
 
   useEffect(() => {
+    showLoading();
     getApprovalHomeData().then(resp => {
       setHomeData(resp.data);
-    })
+    }).catch(err => console.error("정보 로드 실패:", err))
+      .finally(() => {
+        hideLoading();
+      });
   }, []);
 
   const getDocTypeLabel = (doc_type) => {
@@ -148,7 +156,7 @@ const ApprovalHome = () => {
   ];
 
   return (
-    <div className="p-4 md:p-6 font-sans bg-white overflow-hidden relative">
+    <div className="md:h-full p-4 md:p-6 font-sans bg-white md:overflow-hidden relative">
       
       {/* Draft Selection Modal */}
       {isDraftModalOpen && (
@@ -197,7 +205,7 @@ const ApprovalHome = () => {
         </div>
       )}
 
-      <div className="max-w-[100rem] mx-auto flex flex-col gap-6">
+      <div className="md:h-full max-w-[100rem] mx-auto flex flex-col gap-6">
         
         {/* Header Section */}
         <div className="flex-shrink-0 px-2">
@@ -274,7 +282,7 @@ const ApprovalHome = () => {
 
           {/* Table Area - Scrollable on Mobile */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="overflow-x-auto custom-scrollbar">
+            <div className="overflow-x-auto overflow-y-hidden custom-scrollbar">
               <div className="min-w-[900px]">
                 {/* Table Header */}
                 <div className="grid grid-cols-12 px-10 py-4 border-b border-gray-50 text-[0.8125rem] font-bold text-gray-400 bg-gray-50/10 flex-shrink-0">
@@ -286,7 +294,7 @@ const ApprovalHome = () => {
                 </div>
 
                 {/* List Content */}
-                <div className="flex-1 custom-scrollbar">
+                <div className="flex-1">
                   {
                     homeData.recentDocs.map((doc, idx) => (
                       <div key={doc.doc_seq || idx} className="grid grid-cols-12 px-10 py-5 border-b border-gray-50 items-center hover:bg-gray-50/50 transition-colors cursor-pointer group whitespace-nowrap">

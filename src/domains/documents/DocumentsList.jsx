@@ -3,6 +3,7 @@ import Pagination from '../../components/common/Pagination';
 import { addFavorite, getAllDocs, getFavorites, removeFavorite } from './documentsApi';
 import useAuthStore from '../../store/authStore';
 import Preview from '../../components/common/Preview';
+import useLoadingStore from '../../store/useLoadingStore';
 
 const DocumentsList = () => {
   const [activeTab, setActiveTab] = useState('전체 문서');
@@ -13,9 +14,12 @@ const DocumentsList = () => {
   const [previewDoc, setPreviewDoc] = useState(null);
 
   const token = useAuthStore(state => state.token);
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
 
   const loadDocuments = async () => {
     try {
+      showLoading();
       const docsResp = await getAllDocs();
       setDocuments(docsResp.data);
 
@@ -25,6 +29,8 @@ const DocumentsList = () => {
 
     } catch (err) {
       console.error("데이터 로드 실패:", err);
+    } finally {
+      hideLoading();
     }
   };
 
@@ -135,7 +141,7 @@ const DocumentsList = () => {
                 <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-50 whitespace-nowrap">다운로드</th>
                 <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-110 whitespace-nowrap">제목 (클릭 시 미리보기 가능)</th>
                 <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-50 whitespace-nowrap">작성자</th>
-                <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-30 whitespace-nowrap">등록일</th>
+                <th className="pb-4 pl-3 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-30 whitespace-nowrap">등록일</th>
                 <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-50 whitespace-nowrap">즐겨찾기</th>
               </tr>
             </thead>
@@ -166,7 +172,7 @@ const DocumentsList = () => {
                       </button>
                     </td>
                     <td className="py-4 text-xs text-slate-500 font-medium whitespace-nowrap">
-                      {doc.users_id}
+                      {doc.name}
                     </td>
                     <td className="py-4 text-[0.6875rem] text-slate-400 font-mono whitespace-nowrap">
                       {doc.created_at?.substring(0,10)}
