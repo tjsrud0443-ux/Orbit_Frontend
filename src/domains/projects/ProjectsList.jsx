@@ -7,20 +7,6 @@ import { getAllEmp, getAllProject, insertProjectAndMembers } from './projectsApi
 import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
 
-const MOCK_EMPLOYEES = [
-  { id: 1, name: '김철수', dept: '개발팀' },
-  { id: 2, name: '이영희', dept: '인사팀' },
-  { id: 3, name: '박지성', dept: '디자인팀' },
-  { id: 4, name: '최민수', dept: '영업팀' },
-];
-
-// const INITIAL_PROJECTS = [
-//   { id: 1, project_name: 'Orbit 그룹웨어 고도화', period: '2026.05.01 ~ 2026.08.31', status: '진행 중', members: ['김철수', '이영희'], contents: '그룹웨어의 전반적인 고도화 작업 및 UI 개선' },
-//   { id: 2, project_name: '사내 AI 챗봇 구축', period: '2026.04.10 ~ 2026.06.30', status: '진행 중', members: ['박지성'], contents: '사내 업무 자동화를 위한 AI 챗봇 개발' },
-//   { id: 3, project_name: '연차 시스템 개선', period: '2026.03.01 ~ 2026.04.30', status: '완료', members: ['김철수', '박지성', '최민수'], contents: '연차 신청 프로세스 최적화' },
-//   { id: 4, project_name: '마케팅 대시보드', period: '2026.06.01 ~ 2026.09.30', status: '진행 중', members: ['이영희'], contents: '마케팅 데이터 시각화' },
-// ];
-
 const ProjectsList = () => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState('전체');
@@ -234,7 +220,12 @@ const ProjectsList = () => {
                 {paginatedProjects.map(p => (
                   <tr key={p.id} className="border-b border-gray-100 hover:bg-[#f8fbff] transition-colors block md:table-row w-full mb-4 md:mb-0">
                     <td className="py-2 px-2 block md:table-cell font-bold text-[#1a1c3d] text-base flex justify-between items-center md:items-start md:table-cell">
-                      <span onClick={() => navigate('/kanban')} className="cursor-pointer hover:text-[#3530B8] text-sm md:block md:truncate">{p.project_name}</span>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span onClick={() => navigate('/kanban')} className="cursor-pointer hover:text-[#3530B8] text-sm md:block md:truncate">{p.project_name}</span>
+                        {p.projectMembersDTO?.some(m => String(m.users_id) === String(user?.id)) && (
+                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
+                        )}
+                      </div>
                       <button onClick={() => setSelectedProject(p)} className="md:hidden text-[10px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-2 py-1 rounded">상세보기</button>
                     </td>
                     <td className="py-2 px-2 block md:table-cell text-sm text-gray-500 md:whitespace-nowrap md:truncate">{p.start_date.substring(0, 10)}~{p.end_date.substring(0, 10)}</td>
@@ -307,7 +298,12 @@ const ProjectsList = () => {
               <h2 className="text-xl font-bold text-[#1a1c3d]">프로젝트 상세</h2>
               <button onClick={() => setSelectedProject(null)}><FontAwesomeIcon icon={faTimes} /></button>
             </div>
-            <h3 className="text-lg font-bold mb-2">{selectedProject.project_name}</h3>
+            <div className="flex items-center gap-2 min-w-0 mb-2">
+              <h3 className="text-lg font-bold">{selectedProject.project_name}</h3>
+              {selectedProject.projectMembersDTO?.some(m => String(m.users_id) === String(user?.id)) && (
+                <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
+              )}
+            </div>
             <p className="text-sm text-gray-500 mb-8">{selectedProject.start_date.substring(0, 10)}~{selectedProject.end_date.substring(0, 10)}</p>
             <div className="bg-[#f4f7fc] p-6 rounded-2xl mb-8">
               <h4 className="text-xs font-bold text-[#8a92a6] uppercase mb-3">내용</h4>
@@ -329,6 +325,12 @@ const ProjectsList = () => {
                 </div>
               ))}
             </div>
+            {selectedProject.users_id === user?.id && (
+              <div className="mt-auto pt-8 flex gap-3">
+                <button className="flex-1 py-3 bg-white border border-[#3530B8]/20 text-[#3530B8] font-bold rounded-2xl hover:bg-[#F0F4FF] transition-all">수정</button>
+                <button className="flex-1 py-3 bg-white border border-red-200 text-red-500 font-bold rounded-2xl hover:bg-red-50 transition-all">삭제</button>
+              </div>
+            )}
           </div>
         )}
 
@@ -340,7 +342,12 @@ const ProjectsList = () => {
                 <h2 className="text-lg font-bold">프로젝트 상세</h2>
                 <button onClick={() => setSelectedProject(null)}><FontAwesomeIcon icon={faTimes} /></button>
               </div>
-              <h3 className="text-md font-bold mb-1">{selectedProject.project_name}</h3>
+              <div className="flex items-center gap-2 min-w-0 mb-2">
+                <h3 className="text-lg font-bold">{selectedProject.project_name}</h3>
+                {selectedProject.projectMembersDTO?.some(m => String(m.users_id) === String(user?.id)) && (
+                  <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
+                )}
+              </div>
               <p className="text-xs text-gray-500 mb-4">{selectedProject.start_date.substring(0, 10)}~{selectedProject.end_date.substring(0, 10)}</p>
               <h4 className="text-[10px] font-bold text-[#8a92a6] uppercase mb-2">내용</h4>
               <p className="text-xs text-gray-700 mb-4 bg-[#f4f7fc] p-3 rounded-lg">{selectedProject.contents}</p>
@@ -360,6 +367,12 @@ const ProjectsList = () => {
                   </div>
                 ))}
               </div>
+              {selectedProject.users_id === user?.id && (
+                <div className="mt-6 flex gap-2">
+                  <button className="flex-1 py-2.5 bg-white border border-[#3530B8]/20 text-[#3530B8] font-bold rounded-xl text-xs hover:bg-[#F0F4FF] transition-all">수정</button>
+                  <button className="flex-1 py-2.5 bg-white border border-red-200 text-red-500 font-bold rounded-xl text-xs hover:bg-red-50 transition-all">삭제</button>
+                </div>
+              )}
             </div>
           </div>
         )}
