@@ -174,18 +174,22 @@ const ProjectsList = () => {
       <div className="flex flex-col md:flex-row h-auto md:flex-1 gap-6 min-h-0 max-w-[1450px] mx-auto w-full">
         <div className={`bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-3 md:p-8 flex flex-col transition-all duration-300 md:overflow-hidden min-w-0 ${selectedProject ? 'md:w-[65%] w-full' : 'w-full'}`}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
-            <div className="flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit overflow-x-auto items-center">
+            <div className="flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit overflow-x-auto md:overflow-x-visible items-center">
               {['전체', '진행중', '완료'].map(tab => (
-                <button key={tab} onClick={() => { setFilter(tab === '진행중' ? '진행 중' : tab); setCurrentPage(1); }}
-                  className={`flex-1 md:flex-none px-6 py-1.5 rounded-xl text-sm font-bold transition-all ${filter === tab || (tab === '진행중' && filter === '진행 중') ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>
+                <button key={tab} onClick={() => {
+                  if (tab === '전체') setFilter('전체');
+                  else if (tab === '진행중') setFilter('IN_PROGRESS');
+                  else setFilter('DONE'); setCurrentPage(1);
+                }}
+                  className={`flex-1 md:flex-none px-4 md:px-6 py-1.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${filter === tab || (tab === '진행중' && filter === 'IN_PROGRESS') || (tab === '완료' && filter === 'DONE') ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>
                   {tab}
                 </button>
               ))}
             </div>
 
-            <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto items-end md:items-center">
-              <div className="flex gap-2 w-full md:w-auto justify-end">
-                <div className="relative w-fit md:w-auto" ref={searchDropdownRef}>
+            <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto items-end md:items-center min-w-0">
+              <div className="flex gap-2 w-full md:w-auto justify-end md:flex-1 min-w-0">
+                <div className="relative w-fit md:w-auto shrink-0" ref={searchDropdownRef}>
                   <div className="bg-[#f4f7fc] px-4 h-[40px] rounded-xl text-xs text-[#8a92a6] outline-none cursor-pointer flex items-center justify-between gap-3 whitespace-nowrap"
                     onClick={() => setIsSearchDropdownOpen(!isSearchDropdownOpen)}>
                     {searchBy}
@@ -203,44 +207,63 @@ const ProjectsList = () => {
                     </div>
                   )}
                 </div>
-                <div className="relative flex items-center flex-1 md:w-48">
+                <div className="relative flex items-center flex-1 md:w-auto md:max-w-48 md:min-w-[100px]">
                   <FontAwesomeIcon icon={faSearch} className="absolute left-4 text-[#8a92a6]" />
                   <input placeholder="검색" value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
                     className="pl-12 pr-4 h-[40px] bg-[#f4f7fc] rounded-xl text-sm w-full outline-none placeholder:text-[#8a92a6]" />
                 </div>
               </div>
-              <button onClick={() => setIsModalOpen(true)} className="bg-[#3530B8] text-white text-xs md:text-sm px-2.5 md:px-6 py-2.5 rounded-xl font-bold hover:bg-[#2a2594] whitespace-nowrap w-fit md:w-auto">
+              <button onClick={() => setIsModalOpen(true)} className="bg-[#3530B8] text-white text-xs md:text-sm px-2.5 md:px-4 py-2.5 rounded-xl font-bold hover:bg-[#2a2594] whitespace-nowrap shrink-0">
                 <FontAwesomeIcon icon={faPlus} className="mr-2" /> 새 프로젝트
               </button>
             </div>
           </div>
 
           <div className="flex-1 md:overflow-y-auto md:min-h-0 custom-scrollbar">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse md:table-fixed">
               <thead className="hidden md:table-header-group">
                 <tr className="text-[#8a92a6] text-sm border-b border-gray-100">
-                  <th className="pb-4 font-medium px-2 text-left">프로젝트명</th>
-                  <th className="pb-4 font-medium px-2 text-left">기간</th>
-                  <th className="pb-4 font-medium px-2 text-left">진행상황</th>
-                  <th className="pb-4 font-medium px-2 text-left">참여자</th>
-                  <th className="pb-4 font-medium px-2 text-left">상세보기</th>
+                  <th className="pb-4 font-medium px-2 text-left md:w-[35%]">프로젝트명</th>
+                  <th className="pb-4 font-medium px-2 text-left md:w-[25%]">기간</th>
+                  <th className="pb-4 font-medium px-2 text-left md:w-[15%]">진행상황</th>
+                  <th className="pb-4 font-medium px-2 text-left md:w-[15%]">참여자</th>
+                  <th className="pb-4 font-medium px-2 text-left md:w-[10%]">상세보기</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedProjects.map(p => (
                   <tr key={p.id} className="border-b border-gray-100 hover:bg-[#f8fbff] transition-colors block md:table-row w-full mb-4 md:mb-0">
-                    <td className="py-2 px-2 block md:table-cell font-bold text-[#1a1c3d] text-base flex justify-between items-center md:items-start md:block">
-                      <span onClick={() => navigate('/kanban')} className="cursor-pointer hover:text-[#3530B8] text-sm">{p.project_name}</span>
+                    <td className="py-2 px-2 block md:table-cell font-bold text-[#1a1c3d] text-base flex justify-between items-center md:items-start md:table-cell">
+                      <span onClick={() => navigate('/kanban')} className="cursor-pointer hover:text-[#3530B8] text-sm md:block md:truncate">{p.project_name}</span>
                       <button onClick={() => setSelectedProject(p)} className="md:hidden text-[10px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-2 py-1 rounded">상세보기</button>
                     </td>
-                    <td className="py-2 px-2 block md:table-cell text-sm text-gray-500">{p.start_date.substring(0, 10)}~{p.end_date.substring(0, 10)}</td>
-                    <td className="py-2 px-2 block md:table-cell flex items-center gap-4">
-                      <span className={`inline-block px-4 py-1.5 rounded-full text-[11px] font-bold ${p.status === '완료' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
-                        {p.status}
-                      </span>
-                      <div className="flex gap-1 md:hidden">
-                        {p.projectMembersDTO?.map((member, index) => (
-                          <div key={index} className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[9px] font-bold text-[#3530B8] border border-white">
+                    <td className="py-2 px-2 block md:table-cell text-sm text-gray-500 md:whitespace-nowrap md:truncate">{p.start_date.substring(0, 10)}~{p.end_date.substring(0, 10)}</td>
+                    <td className="py-2 px-2 block md:table-cell">
+                      <div className="flex items-center gap-4">
+                        <span className={`inline-block px-4 py-1.5 rounded-full text-[11px] font-bold md:whitespace-nowrap ${p.status === '완료' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
+                          {p.status === 'IN_PROGRESS'
+                          ? '진행 중'
+                          : '완료'}
+                        </span>
+                        <div className="flex gap-1 md:hidden">
+                          {p.projectMembersDTO?.map((member, index) => (
+                            <div key={index} className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[9px] font-bold text-[#3530B8] border border-white">
+                              <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
+                                <img
+                                  src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`}
+                                  alt={member?.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="hidden md:table-cell py-4 px-2">
+                      <div className={`flex items-center ${p.projectMembersDTO?.length >= 4 ? 'md:-space-x-2.5' : 'md:gap-2'}`}>
+                        {p.projectMembersDTO?.slice(0, 3).map((member, index) => (
+                          <div key={index} className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-[#3530B8] border-2 border-white shrink-0">
                             <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
                               <img
                                 src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`}
@@ -250,25 +273,15 @@ const ProjectsList = () => {
                             </div>
                           </div>
                         ))}
-                      </div>
-                    </td>
-                    <td className="hidden md:table-cell py-4 px-2">
-                      <div className="flex gap-2">
-                        {p.projectMembersDTO?.map((member, index) => (
-                          <div key={index} className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-[#3530B8] border border-white">
-                            <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
-                              <img
-                                src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`}
-                                alt={member?.name}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
+                        {p.projectMembersDTO?.length > 3 && (
+                          <div className="w-8 h-8 rounded-full bg-[#F0F4FF] border-2 border-white flex items-center justify-center text-[10px] font-bold text-[#3530B8] shrink-0 z-10 shadow-sm">
+                            +{p.projectMembersDTO.length - 3}
                           </div>
-                        ))}
+                        )}
                       </div>
                     </td>
-                    <td className="hidden md:table-cell py-4 px-2">
-                      <button onClick={() => setSelectedProject(p)} className="text-[11px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-3 py-1.5 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all">
+                    <td className="hidden md:table-cell py-4 px-2 md:whitespace-nowrap">
+                      <button onClick={() => setSelectedProject(p)} className="text-[11px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-3 py-1.5 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all whitespace-nowrap">
                         상세보기
                       </button>
                     </td>
@@ -295,7 +308,7 @@ const ProjectsList = () => {
               <button onClick={() => setSelectedProject(null)}><FontAwesomeIcon icon={faTimes} /></button>
             </div>
             <h3 className="text-lg font-bold mb-2">{selectedProject.project_name}</h3>
-            <p className="text-sm text-gray-500 mb-8">{selectedProject.start_date.substring(0,10)}~{selectedProject.end_date.substring(0,10)}</p>
+            <p className="text-sm text-gray-500 mb-8">{selectedProject.start_date.substring(0, 10)}~{selectedProject.end_date.substring(0, 10)}</p>
             <div className="bg-[#f4f7fc] p-6 rounded-2xl mb-8">
               <h4 className="text-xs font-bold text-[#8a92a6] uppercase mb-3">내용</h4>
               <p className="text-sm text-gray-700">{selectedProject.contents}</p>
@@ -314,7 +327,7 @@ const ProjectsList = () => {
                 <button onClick={() => setSelectedProject(null)}><FontAwesomeIcon icon={faTimes} /></button>
               </div>
               <h3 className="text-md font-bold mb-1">{selectedProject.project_name}</h3>
-              <p className="text-xs text-gray-500 mb-4">{selectedProject.start_date.substring(0,10)}~{selectedProject.end_date.substring(0,10)}</p>
+              <p className="text-xs text-gray-500 mb-4">{selectedProject.start_date.substring(0, 10)}~{selectedProject.end_date.substring(0, 10)}</p>
               <h4 className="text-[10px] font-bold text-[#8a92a6] uppercase mb-2">내용</h4>
               <p className="text-xs text-gray-700 mb-4 bg-[#f4f7fc] p-3 rounded-lg">{selectedProject.contents}</p>
               <h4 className="text-[10px] font-bold text-[#8a92a6] uppercase mb-2">참여자</h4>
