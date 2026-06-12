@@ -1,28 +1,30 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faUser, faChevronDown, faCircle, faCalendarAlt, faChevronLeft, faEllipsisV, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
+import { getKanbanTaskList } from './projectsApi';
+import useAuthStore from '../../store/authStore';
 
 // 초기 Mock 데이터
-const INITIAL_TASKS = [
-  { id: 1, title: '디자인 시스템 가이드 작성', assignee: '나 (관리자)', startDate: '2026-05-28', endDate: '2026-06-05', status: 'TODO', priority: 'High', desc: '그룹웨어 디자인 시스템 문서화 및 가이드 배포' },
-  { id: 2, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-  { id: 3, title: 'API 문서 정비', assignee: '나 (관리자)', startDate: '2026-05-30', endDate: '2026-06-15', status: 'DONE', priority: 'Low', desc: 'Swagger 문서 최신화 및 예외 처리 가이드 추가' },
-  { id: 4, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-  { id: 5, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-  { id: 6, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-  { id: 7, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-  { id: 8, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-  { id: 9, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-  { id: 10, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-  { id: 11, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-  { id: 12, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-  { id: 13, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-  { id: 14, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-  { id: 15, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+// const INITIAL_TASKS = [
+//   { id: 1, title: '디자인 시스템 가이드 작성', assignee: '나 (관리자)', startDate: '2026-05-28', endDate: '2026-06-05', status: 'TODO', priority: 'High', desc: '그룹웨어 디자인 시스템 문서화 및 가이드 배포' },
+//   { id: 2, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+//   { id: 3, title: 'API 문서 정비', assignee: '나 (관리자)', startDate: '2026-05-30', endDate: '2026-06-15', status: 'DONE', priority: 'Low', desc: 'Swagger 문서 최신화 및 예외 처리 가이드 추가' },
+//   { id: 4, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+//   { id: 5, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+//   { id: 6, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+//   { id: 7, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+//   { id: 8, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+//   { id: 9, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+//   { id: 10, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+//   { id: 11, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+//   { id: 12, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+//   { id: 13, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+//   { id: 14, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
+//   { id: 15, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
 
-];
+// ];
 
 const PROJECT_MEMBERS = [
   { id: 0, name: '나 (관리자)', avatar: 'https://i.pravatar.cc/150?u=admin' },
@@ -33,8 +35,11 @@ const PROJECT_MEMBERS = [
 ];
 
 const Kanban = () => {
+  const { projectSeq } = useParams();
   const navigate = useNavigate();
-  const [tasks, setTasks] = useState(INITIAL_TASKS);
+  const token = useAuthStore(state => state.token);
+
+  const [tasks, setTasks] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [detailModalTask, setDetailModalTask] = useState(null);
   const [activeTab, setActiveTab] = useState('TODO'); // 모바일 탭 상태
@@ -181,6 +186,13 @@ const Kanban = () => {
     setDetailModalTask(null);
   };
 
+  useEffect(() => {
+    getKanbanTaskList(projectSeq).then(resp => {
+      console.log(resp.data)
+      setTasks(resp.data);
+    })
+  },[projectSeq]);
+
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
       {/* 1. 데스크탑 뷰 (기존 코드 유지) */}
@@ -246,7 +258,7 @@ const Kanban = () => {
                   <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar pr-3">
                     {columnTasks.map(task => (
                       <div
-                        key={task.id}
+                        key={task.task_seq}
                         draggable
                         onDragStart={(e) => onDragStart(e, task)}
                         onClick={() => setDetailModalTask(task)}
@@ -258,19 +270,19 @@ const Kanban = () => {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setActiveMenuId(activeMenuId === task.id ? null : task.id);
+                                setActiveMenuId(activeMenuId === task.task_seq ? null : task.task_seq);
                               }}
                               className="text-slate-300 hover:text-slate-500 flex items-center justify-center transition-colors h-7 w-7 cursor-pointer"
                             >
                               <FontAwesomeIcon icon={faEllipsisV} className="text-xs" />
                             </button>
-                            {activeMenuId === task.id && (
+                            {activeMenuId === task.task_seq && (
                               <div 
                                 onClick={(e) => e.stopPropagation()} 
                                 className="absolute right-0 top-full mt-1 w-24 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-50 animate-in fade-in zoom-in duration-200"
                               >
                                 <button 
-                                  onClick={() => handleDeleteTask(task.id)}
+                                  onClick={() => handleDeleteTask(task.task_seq)}
                                   className="w-full text-left px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 transition-colors"
                                 >
                                   <FontAwesomeIcon icon={faTrashCan} className="mr-2" /> 삭제
@@ -281,16 +293,20 @@ const Kanban = () => {
                         </div>
                         <div className="flex items-end justify-between">
                           <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] overflow-hidden border border-white shrink-0">
-                              <img src={`https://i.pravatar.cc/150?u=${task.assignee}`} alt="" className="w-full h-full object-cover" />
+                            <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
+                              <img
+                                src={`http://localhost/file/profile/view?sysname=${task?.sysname}&token=${token}`}
+                                alt={task?.name}
+                                className="w-full h-full object-cover"
+                              />
                             </div>
-                            <span className="text-sm font-bold text-slate-500 leading-none">{task.assignee}</span>
+                            <span className="text-sm font-bold text-slate-500 leading-none">{task.users_c_id}</span>
                           </div>
                           <div className="flex flex-col items-end gap-2">
                             <span className={`text-sm font-black px-2 py-0.5 rounded-full ${getPriorityStyle(task.priority)} leading-none`}>
                               {task.priority}
                             </span>
-                            <span className="text-xs font-medium text-slate-400 font-mono tracking-tight leading-none">{formatDate(task.endDate)}</span>
+                            <span className="text-xs font-medium text-slate-400 font-mono tracking-tight leading-none">{formatDate(task.due_date)}</span>
                           </div>
                         </div>
                       </div>
@@ -322,7 +338,7 @@ const Kanban = () => {
                         {errors[`inlineTitle-${status}`] && <p className="text-[10px] text-red-500 font-bold mt-[-8px] ml-1">{errors[`inlineTitle-${status}`]}</p>}
                         <div className="grid grid-cols-2 gap-2">
                           <div className="bg-slate-50 rounded-lg p-2 text-sm font-bold text-slate-400 flex items-center gap-1.5 border border-transparent">
-                            <FontAwesomeIcon icon={faUser} className="text-sm" /> {inlineForm.assignee}
+                            <FontAwesomeIcon icon={faUser} className="text-sm" /> {inlineForm.users_c_id}
                           </div>
                           <div className="relative">
                             <div
@@ -353,15 +369,15 @@ const Kanban = () => {
                           <div className="relative">
                             <div
                               onClick={() => setOpenCalendar(openCalendar === `inlineStart-${status}` ? null : `inlineStart-${status}`)}
-                              className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${inlineForm.startDate ? 'text-black' : 'text-[#9CA3AF]'}`}
+                              className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${inlineForm.start_date ? 'text-black' : 'text-[#9CA3AF]'}`}
                             >
-                              {inlineForm.startDate || "시작일"}
+                              {inlineForm.start_date || "시작일"}
                               <FontAwesomeIcon icon={faCalendarAlt} className="text-sm text-slate-400" />
                             </div>
                             {openCalendar === `inlineStart-${status}` && (
                               <div className="absolute top-full left-0 z-[120] mt-1 w-[240px] transform origin-top-left scale-90">
                                 <Calendar 
-                                  value={inlineForm.startDate} 
+                                  value={inlineForm.start_date} 
                                   minDate={new Date().toISOString().split('T')[0]}
                                   onChange={(date) => {
                                     const today = new Date().toISOString().split('T')[0];
@@ -370,7 +386,7 @@ const Kanban = () => {
                                       return; 
                                     }
                                     setErrors(prev => ({ ...prev, [`inlineStartDate-${status}`]: null }));
-                                    setInlineForm(prev => ({ ...prev, startDate: date, endDate: prev.endDate && prev.endDate < date ? date : prev.endDate }));
+                                    setInlineForm(prev => ({ ...prev, start_date: date, due_date: prev.due_date && prev.due_date < date ? date : prev.due_date }));
                                     setOpenCalendar(null);
                                   }}
                                   onClose={() => setOpenCalendar(null)}
@@ -382,7 +398,7 @@ const Kanban = () => {
                             <div className="relative">
                             <div 
                               onClick={() => setOpenCalendar(openCalendar === `inlineEnd-${status}` ? null : `inlineEnd-${status}`)}
-                              className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${inlineForm.endDate ? 'text-black' : 'text-[#9CA3AF]'} ${errors[`inlineEndDate-${status}`] ? 'border border-red-500' : ''}`}
+                              className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${inlineForm.due_date ? 'text-black' : 'text-[#9CA3AF]'} ${errors[`inlineEndDate-${status}`] ? 'border border-red-500' : ''}`}
                             >
                               {inlineForm.endDate || "마감일"}
                               <FontAwesomeIcon icon={faCalendarAlt} className="text-sm text-slate-400" />
@@ -390,15 +406,15 @@ const Kanban = () => {
                             {openCalendar === `inlineEnd-${status}` && (
                               <div className="absolute top-full right-0 z-[120] mt-1 w-[240px] transform origin-top-right scale-90">
                                 <Calendar 
-                                  value={inlineForm.endDate} 
-                                  minDate={inlineForm.startDate || new Date().toISOString().split('T')[0]}
+                                  value={inlineForm.due_date} 
+                                  minDate={inlineForm.start_date || new Date().toISOString().split('T')[0]}
                                   onChange={(date) => {
-                                    if (inlineForm.startDate && date < inlineForm.startDate) { 
+                                    if (inlineForm.start_date && date < inlineForm.start_date) { 
                                       setErrors(prev => ({ ...prev, [`inlineEndDate-${status}`]: '종료일은 시작일보다 이전일 수 없습니다.' }));
                                       return; 
                                     }
                                     setErrors(prev => ({ ...prev, [`inlineEndDate-${status}`]: null }));
-                                    setInlineForm(prev => ({ ...prev, endDate: date }));
+                                    setInlineForm(prev => ({ ...prev, due_date: date }));
                                     setOpenCalendar(null);
                                   }}
                                   onClose={() => setOpenCalendar(null)}
@@ -411,7 +427,7 @@ const Kanban = () => {
 
                         <div className="flex gap-2">
                           <button onClick={() => handleInlineCreate(status)} className="flex-1 bg-[#3530B8] text-white py-2 rounded-xl text-xs font-bold">추가</button>
-                          <button onClick={() => { setInlineForm({ status: null, title: '', assignee: '나 (관리자)', priority: 'Medium', startDate: new Date().toISOString().split('T')[0], endDate: '' }); setErrors({}); }} className="flex-1 bg-slate-100 text-slate-400 py-2 rounded-xl text-xs font-bold">취소</button>
+                          <button onClick={() => { setInlineForm({ status: null, title: '', users_c_id: '나 (관리자)', priority: 'Medium', start_date: new Date().toISOString().split('T')[0], due_date: '' }); setErrors({}); }} className="flex-1 bg-slate-100 text-slate-400 py-2 rounded-xl text-xs font-bold">취소</button>
                         </div>
                       </div>
                     ) : (
@@ -522,15 +538,15 @@ const Kanban = () => {
               <div className="flex items-end justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] overflow-hidden border border-white shrink-0">
-                    <img src={`https://i.pravatar.cc/150?u=${task.assignee}`} alt="" className="w-full h-full object-cover" />
+                    <img src={`https://i.pravatar.cc/150?u=${task.sysname}`} alt="" className="w-full h-full object-cover" />
                   </div>
-                  <span className="text-xs font-bold text-slate-500 leading-none">{task.assignee}</span>
+                  <span className="text-xs font-bold text-slate-500 leading-none">{task.users_c_id}</span>
                 </div>
                 <div className="flex flex-col items-end gap-1.5">
                   <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${getPriorityStyle(task.priority)} leading-none`}>
                     {task.priority}
                   </span>
-                  <span className="text-[10px] font-medium text-slate-400 font-mono tracking-tight leading-none">{formatDate(task.endDate)}</span>
+                  <span className="text-[10px] font-medium text-slate-400 font-mono tracking-tight leading-none">{formatDate(task.due_date)}</span>
                 </div>
               </div>
             </div>
@@ -595,13 +611,13 @@ const Kanban = () => {
                     onClick={() => setOpenCalendar(openCalendar === `inlineStart-${activeTab}` ? null : `inlineStart-${activeTab}`)}
                     className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${inlineForm.startDate ? 'text-black' : 'text-[#9CA3AF]'}`}
                   >
-                    {inlineForm.startDate || "시작일"}
+                    {inlineForm.start_date || "시작일"}
                     <FontAwesomeIcon icon={faCalendarAlt} className="text-sm text-slate-400" />
                   </div>
                   {openCalendar === `inlineStart-${activeTab}` && (
                     <div className="absolute top-full left-0 z-[120] mt-1 w-[240px] transform origin-top-left scale-90">
                       <Calendar 
-                        value={inlineForm.startDate} 
+                        value={inlineForm.start_date} 
                         minDate={new Date().toISOString().split('T')[0]}
                         onChange={(date) => {
                           const today = new Date().toISOString().split('T')[0];
@@ -610,7 +626,7 @@ const Kanban = () => {
                             return; 
                           }
                           setErrors(prev => ({ ...prev, [`inlineStartDate-${activeTab}`]: null }));
-                          setInlineForm(prev => ({ ...prev, startDate: date, endDate: prev.endDate && prev.endDate < date ? date : prev.endDate }));
+                          setInlineForm(prev => ({ ...prev, start_date: date, due_date: prev.due_date && prev.due_date < date ? date : prev.due_date }));
                           setOpenCalendar(null);
                         }}
                         onClose={() => setOpenCalendar(null)}
@@ -622,23 +638,23 @@ const Kanban = () => {
                 <div className="relative">
                   <div 
                     onClick={() => setOpenCalendar(openCalendar === `inlineEnd-${activeTab}` ? null : `inlineEnd-${activeTab}`)}
-                    className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${inlineForm.endDate ? 'text-black' : 'text-[#9CA3AF]'} ${errors[`inlineEndDate-${activeTab}`] ? 'border border-red-500' : ''}`}
+                    className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${inlineForm.due_date ? 'text-black' : 'text-[#9CA3AF]'} ${errors[`inlineEndDate-${activeTab}`] ? 'border border-red-500' : ''}`}
                   >
-                    {inlineForm.endDate || "마감일"}
+                    {inlineForm.due_date || "마감일"}
                     <FontAwesomeIcon icon={faCalendarAlt} className="text-sm text-slate-400" />
                   </div>
                   {openCalendar === `inlineEnd-${activeTab}` && (
                     <div className="absolute top-full right-0 z-[120] mt-1 w-[240px] transform origin-top-right scale-90">
                       <Calendar 
-                        value={inlineForm.endDate} 
-                        minDate={inlineForm.startDate || new Date().toISOString().split('T')[0]}
+                        value={inlineForm.due_date} 
+                        minDate={inlineForm.start_date || new Date().toISOString().split('T')[0]}
                         onChange={(date) => {
-                          if (inlineForm.startDate && date < inlineForm.startDate) { 
+                          if (inlineForm.start_date && date < inlineForm.startDate) { 
                             setErrors(prev => ({ ...prev, [`inlineEndDate-${activeTab}`]: '종료일은 시작일보다 이전일 수 없습니다.' }));
                             return; 
                           }
                           setErrors(prev => ({ ...prev, [`inlineEndDate-${activeTab}`]: null }));
-                          setInlineForm(prev => ({ ...prev, endDate: date }));
+                          setInlineForm(prev => ({ ...prev, due_date: date }));
                           setOpenCalendar(null);
                         }}
                         onClose={() => setOpenCalendar(null)}
@@ -651,7 +667,7 @@ const Kanban = () => {
 
               <div className="flex gap-2">
                 <button onClick={() => handleInlineCreate(activeTab)} className="flex-1 bg-[#3530B8] text-white py-2 rounded-xl text-xs font-bold">추가</button>
-                <button onClick={() => { setInlineForm({ status: null, title: '', assignee: '나 (관리자)', priority: 'Medium', startDate: new Date().toISOString().split('T')[0], endDate: '' }); setErrors({}); }} className="flex-1 bg-slate-100 text-slate-400 py-2 rounded-xl text-xs font-bold">취소</button>
+                <button onClick={() => { setInlineForm({ status: null, title: '', assignee: '나 (관리자)', priority: 'Medium', start_date: new Date().toISOString().split('T')[0], due_date: '' }); setErrors({}); }} className="flex-1 bg-slate-100 text-slate-400 py-2 rounded-xl text-xs font-bold">취소</button>
               </div>
             </div>
           ) : (

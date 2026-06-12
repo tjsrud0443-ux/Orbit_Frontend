@@ -99,7 +99,7 @@ function App() {
               <Route path="/approval/detail/:type/:docSeq" element={<ApprovalDetail />} />
 
               <Route path="/projects" element={<ProjectsList />} />
-              <Route path="/kanban" element={<Kanban />} />
+              <Route path="/kanban/:projectSeq" element={<Kanban />} />
               <Route path="/documents" element={<DocumentsList />} />
               <Route path="/calendar" element={<Calendar />} />
 

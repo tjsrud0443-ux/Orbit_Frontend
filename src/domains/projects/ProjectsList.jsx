@@ -587,7 +587,7 @@ const ProjectsList = () => {
                   <tr key={p.project_seq} className="border-b border-gray-100 hover:bg-[#f8fbff] transition-colors block md:table-row w-full mb-4 md:mb-0">
                     <td className="py-2 px-2 block md:table-cell font-bold text-[#1a1c3d] text-base flex justify-between items-center md:items-start md:table-cell">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span onClick={() => navigate('/kanban')} className="cursor-pointer hover:text-[#3530B8] text-sm md:block md:truncate">{p.project_name}</span>
+                        <span onClick={() => navigate(`/kanban/${p.project_seq}`)} className="cursor-pointer hover:text-[#3530B8] text-sm md:block md:truncate">{p.project_name}</span>
                         {p.projectMembersDTO?.some(m => String(m.users_id) === String(user?.id)) && (
                           <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
                         )}
