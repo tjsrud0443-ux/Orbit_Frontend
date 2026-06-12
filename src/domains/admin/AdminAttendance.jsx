@@ -130,20 +130,20 @@ const AdminAttendance = () => {
                 {activePageTab === '근무시간 정정' ? (
                   <>
                     <th className="pb-4 pl-3 text-[0.6875rem] font-bold text-slate-400 tracking-wider">신청자</th>
-                    <th className="pb-4 pl-6.5 text-[0.6875rem] font-bold text-slate-400 tracking-wider">부서/직급</th>
-                    <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">변경 희망 일자</th>
-                    <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">기존 시간</th>
-                    <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">변경 요청 시간</th>
-                    <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">사유</th>
+                    <th className="pb-4 pl-6 text-[0.6875rem] font-bold text-slate-400 tracking-wider">부서/직급</th>
+                    <th className="pb-4 pl-12 text-[0.6875rem] font-bold text-slate-400 tracking-wider">변경 희망 일자</th>
+                    <th className="pb-4 pl-7 text-[0.6875rem] font-bold text-slate-400 tracking-wider">기존 시간</th>
+                    <th className="pb-4 pl-7 text-[0.6875rem] font-bold text-slate-400 tracking-wider">변경 요청 시간</th>
+                    <th className="pb-4 pl-20 text-[0.6875rem] font-bold text-slate-400 tracking-wider">사유</th>
                     <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">관리자</th>
-                    <th className="pb-4 pl-5 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center">상태</th>
+                    <th className="pb-4 pl-15 text-[0.6875rem] font-bold text-slate-400 tracking-wider">상태</th>
                     <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center">관리</th>
                   </>
                 ) : (
                   <>
                     <th className="pb-4 pl-3 text-[0.6875rem] font-bold text-slate-400 tracking-wider">신청자</th>
-                    <th className="pb-4 pl-13 text-[0.6875rem] font-bold text-slate-400 tracking-wider">부서/직급</th>
-                    <th className="pb-4 pl-13 text-[0.6875rem] font-bold text-slate-400 tracking-wider">연장 근무 날짜</th>
+                    <th className="pb-4 pl-6 text-[0.6875rem] font-bold text-slate-400 tracking-wider">부서/직급</th>
+                    <th className="pb-4 pl-12 text-[0.6875rem] font-bold text-slate-400 tracking-wider">연장 근무 날짜</th>
                     <th className="pb-4 pl-7 text-[0.6875rem] font-bold text-slate-400 tracking-wider">시작 시간</th>
                     <th className="pb-4 pl-7 text-[0.6875rem] font-bold text-slate-400 tracking-wider">종료 시간</th>
                     <th className="pb-4 pl-20 text-[0.6875rem] font-bold text-slate-400 tracking-wider">사유</th>
@@ -165,11 +165,11 @@ const AdminAttendance = () => {
                   checkoutRequest.map((req) => (
                     <tr key={req.checkout_seq} className="hover:bg-slate-50/40 transition-colors">
                       <td className="py-4 pl-2 text-sm font-bold text-slate-800">{req.name}</td>
-                      <td className="py-4 text-xs text-slate-500 font-medium">{req.dept_name} / {req.rank_name}</td>
-                      <td className="py-4 text-[0.6875rem] text-slate-400 font-mono">{req.checkout_date.split(" ")[0]}</td>
-                      <td className="py-4 pl-1 text-xs text-[#3530B8] font-bold">{req.checkout_date.substring(11,16)}</td>
-                      <td className="py-4 pl-4 text-xs text-[#3530B8] font-bold">{req.req_check_out.substring(11,16)}</td>
-                      <td className="py-4 text-xs text-slate-500 max-w-xs truncate" title={req.reason}>
+                      <td className="py-4 pl-6 text-xs text-slate-500 font-medium">{req.dept_name} / {req.rank_name}</td>
+                      <td className="py-4 pl-13 text-[0.6875rem] text-slate-400 font-mono">{req.checkout_date.split(" ")[0]}</td>
+                      <td className="py-4 pl-8 text-xs text-[#3530B8] font-bold">{req.checkout_date.substring(11,16)}</td>
+                      <td className="py-4 pl-11 text-xs text-[#3530B8] font-bold">{req.req_check_out.substring(11,16)}</td>
+                      <td className="py-4 pl-19 text-xs text-slate-500 w-130 truncate" title={req.reason}>
                         {req.reason}
                       </td>
                       {
@@ -178,7 +178,7 @@ const AdminAttendance = () => {
                         :
                         <td className="py-4 pl-3 text-xs text-slate-600 font-medium">-</td>
                       }
-                      <td className="py-4 pl-5 text-center">
+                      <td className="py-4 pl-13">
                         {
                           req.status === 'PENDING' ? 
                           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#FFF9F0] text-[#FF9800]">대기</span>
