@@ -261,7 +261,7 @@ const ProjectsList = () => {
     }));
 
     const updatedEntry = {
-      id: selectedProject.id,
+      project_seq: selectedProject.project_seq,
       project_name: editData.project_name,
       contents: editData.contents,
       start_date: editData.start_date,
@@ -273,7 +273,7 @@ const ProjectsList = () => {
 
     updateProject(updatedEntry).then(() => {
       alert('프로젝트가 성공적으로 수정되었습니다.');
-      setProjects(prev => prev.map(p => (p.id === selectedProject.id ? { ...p, ...updatedEntry } : p)));
+      setProjects(prev => prev.map(p => (p.project_seq === selectedProject.project_seq ? { ...p, ...updatedEntry } : p)));
       setSelectedProject(prev => ({ ...prev, ...updatedEntry }));
       setIsEditing(false);
       setEditEmpSearch('');
@@ -437,8 +437,8 @@ const ProjectsList = () => {
 
           {/* 저장 / 취소 */}
           <div className={`${mobile ? 'mt-6' : 'mt-8'} flex gap-3`}>
-            <button onClick={cancelEdit} className={`flex-1 ${mobile ? 'py-2.5 text-xs rounded-xl' : 'py-3 rounded-2xl'} bg-gray-100 text-gray-600 font-bold hover:bg-gray-200 transition-all`}>취소</button>
             <button onClick={handleUpdate} className={`flex-1 ${mobile ? 'py-2.5 text-xs rounded-xl' : 'py-3 rounded-2xl'} bg-[#3530B8] text-white font-bold hover:bg-[#2a2594] transition-all`}>저장</button>
+            <button onClick={cancelEdit} className={`flex-1 ${mobile ? 'py-2.5 text-xs rounded-xl' : 'py-3 rounded-2xl'} bg-gray-100 text-gray-600 font-bold hover:bg-gray-200 transition-all`}>취소</button>
           </div>
         </div>
       );
@@ -526,23 +526,23 @@ const ProjectsList = () => {
             <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto items-end md:items-center min-w-0">
               <div className="flex gap-2 w-full md:w-auto justify-end md:flex-1 min-w-0">
                 <div className="relative w-fit md:w-auto shrink-0" ref={searchDropdownRef}>
-                <div className="bg-[#f4f7fc] px-4 h-[40px] rounded-xl text-xs text-[#8a92a6] outline-none cursor-pointer flex items-center justify-between gap-3 whitespace-nowrap"
-                  onClick={() => setIsSearchDropdownOpen(!isSearchDropdownOpen)}>
-                  {searchBy}
-                  <FontAwesomeIcon icon={faChevronDown} className="text-[10px]" />
-                </div>
-                {isSearchDropdownOpen && (
-                  <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-lg z-50 overflow-hidden border border-[#edf2f9]">
-                    {['프로젝트명', '참여자'].map(option => (
-                      <div key={option}
-                        className="px-4 py-2.5 text-xs text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors whitespace-nowrap"
-                        onClick={() => { setSearchBy(option); setIsSearchDropdownOpen(false); }}>
-                        {option}
-                      </div>
-                    ))}
+                  <div className="bg-[#f4f7fc] px-4 h-[40px] rounded-xl text-xs text-[#8a92a6] outline-none cursor-pointer flex items-center justify-between gap-3 whitespace-nowrap"
+                    onClick={() => setIsSearchDropdownOpen(!isSearchDropdownOpen)}>
+                    {searchBy}
+                    <FontAwesomeIcon icon={faChevronDown} className="text-[10px]" />
                   </div>
-                )}
-              </div>
+                  {isSearchDropdownOpen && (
+                    <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-lg z-50 overflow-hidden border border-[#edf2f9]">
+                      {['프로젝트명', '참여자'].map(option => (
+                        <div key={option}
+                          className="px-4 py-2.5 text-xs text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors whitespace-nowrap"
+                          onClick={() => { setSearchBy(option); setIsSearchDropdownOpen(false); }}>
+                          {option}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <div className="relative flex items-center flex-1 md:w-auto md:max-w-48 md:min-w-[100px]">
                   <FontAwesomeIcon icon={faSearch} className="absolute left-4 text-[#8a92a6]" />
                   <input placeholder="검색" value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
@@ -561,14 +561,14 @@ const ProjectsList = () => {
                 <tr className="text-[#8a92a6] text-sm border-b border-gray-100">
                   <th className="pb-4 font-medium px-2 text-left md:w-[32%]">프로젝트명</th>
                   <th className="pb-4 font-medium px-2 text-left md:w-[24%]">기간</th>
-                  <th className="pb-4 font-medium px-2 text-left md:w-[15%]">진행상황</th>
+                  <th className="pb-4 font-medium px-3 text-left md:w-[15%]">진행상황</th>
                   <th className="pb-4 font-medium px-2 text-left md:w-[17%]">참여자</th>
                   <th className="pb-4 font-medium px-2 text-left md:w-[12%]">상세보기</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedProjects.map(p => (
-                  <tr key={p.id} className="border-b border-gray-100 hover:bg-[#f8fbff] transition-colors block md:table-row w-full mb-4 md:mb-0">
+                  <tr key={p.project_seq} className="border-b border-gray-100 hover:bg-[#f8fbff] transition-colors block md:table-row w-full mb-4 md:mb-0">
                     <td className="py-2 px-2 block md:table-cell font-bold text-[#1a1c3d] text-base flex justify-between items-center md:items-start md:table-cell">
                       <div className="flex items-center gap-2 min-w-0">
                         <span onClick={() => navigate('/kanban')} className="cursor-pointer hover:text-[#3530B8] text-sm md:block md:truncate">{p.project_name}</span>
