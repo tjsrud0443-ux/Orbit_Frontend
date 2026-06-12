@@ -30,9 +30,46 @@ export const connectSocket = (usersId) => {
                         .getState()
                         .addNotification(noti);
 
-                    toast(noti.content, {
-                        icon: () => "📅"
-                    });
+                    switch (noti.noti_type) {
+                        // 프로젝트 알림
+                        case "PROJECT":
+                            toast(noti.content, {
+                                icon: () => "📅"
+                            });
+                            break;
+
+                        // 결재 요청 알림
+                        case "APPROVAL":
+                            toast(noti.content, {
+                                icon: () => "📅"
+                            });
+                            break;
+                        
+                        // 결재 승인 알림
+                        case "APPROVED":
+                            toast(noti.content, {
+                                icon: () => "📅"
+                            });
+                            break;
+
+                        // 결재 반려 알림
+                        case "REJECTED":
+                            toast(noti.content, {
+                                icon: () => "📅"
+                            });
+                            break;
+
+                        // 미팅 참석 알림
+                        case "MEETING":
+                            toast(noti.content, {
+                                icon: () => "📅"
+                            });
+                            break;
+
+                        default:
+                            toast(noti.content);
+                    }
+
                 }
             );
         },
