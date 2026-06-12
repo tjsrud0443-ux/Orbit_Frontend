@@ -121,26 +121,26 @@ const AdminAttendance = () => {
               <tr className="border-b border-slate-100">
                 {activePageTab === '근무시간 정정' ? (
                   <>
-                    <th className="pb-4 pl-2 text-[0.6875rem] font-bold text-slate-400 tracking-wider">신청자</th>
+                    <th className="pb-4 pl-3 text-[0.6875rem] font-bold text-slate-400 tracking-wider">신청자</th>
                     <th className="pb-4 pl-2 text-[0.6875rem] font-bold text-slate-400 tracking-wider">부서/직급</th>
                     <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">변경 희망 일자</th>
                     <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">기존 시간</th>
                     <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">변경 요청 시간</th>
                     <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">사유</th>
                     <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">관리자</th>
-                    <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center">상태</th>
+                    <th className="pb-4 pl-5 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center">상태</th>
                     <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center">관리</th>
                   </>
                 ) : (
                   <>
-                    <th className="pb-4 pl-2 text-[0.6875rem] font-bold text-slate-400 tracking-wider">신청자</th>
-                    <th className="pb-4 pl-2 text-[0.6875rem] font-bold text-slate-400 tracking-wider">부서/직급</th>
-                    <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">연장 근무 날짜</th>
+                    <th className="pb-4 pl-3 text-[0.6875rem] font-bold text-slate-400 tracking-wider">신청자</th>
+                    <th className="pb-4 pl-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">부서/직급</th>
+                    <th className="pb-4 pl-5 text-[0.6875rem] font-bold text-slate-400 tracking-wider">연장 근무 날짜</th>
                     <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">시작 시간</th>
-                    <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">종료 시간</th>
-                    <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">사유</th>
+                    <th className="pb-4 pl-3 text-[0.6875rem] font-bold text-slate-400 tracking-wider">종료 시간</th>
+                    <th className="pb-4 pl-9 text-[0.6875rem] font-bold text-slate-400 tracking-wider">사유</th>
                     <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">관리자</th>
-                    <th className="pb-4 pl-8.5 text-[0.6875rem] font-bold text-slate-400 tracking-wider">상태</th>
+                    <th className="pb-4 pl-15 text-[0.6875rem] font-bold text-slate-400 tracking-wider">상태</th>
                     <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center">관리</th>
                   </>
                 )}
@@ -160,14 +160,14 @@ const AdminAttendance = () => {
                       <>
                         <td className="py-4 pl-2 text-sm font-bold text-slate-800">{item.applicant}</td>
                         <td className="py-4 text-xs text-slate-500 font-medium">{item.deptRank}</td>
-                        <td className="py-4 pl-1 text-[0.6875rem] text-slate-400 font-mono">{item.targetDate}</td>
-                        <td className="py-4 pl-2 text-xs text-[#3530B8] font-bold">{item.originalTime}</td>
+                        <td className="py-4 text-[0.6875rem] text-slate-400 font-mono">{item.targetDate}</td>
+                        <td className="py-4 pl-1 text-xs text-[#3530B8] font-bold">{item.originalTime}</td>
                         <td className="py-4 pl-4 text-xs text-[#3530B8] font-bold">{item.requestedTime}</td>
                         <td className="py-4 text-xs text-slate-500 max-w-xs truncate" title={item.reason}>
                           {item.reason}
                         </td>
                         <td className="py-4 text-xs text-slate-600 font-medium">{item.manager}</td>
-                        <td className="py-4 text-center">
+                        <td className="py-4 pl-5 text-center">
                           <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
                             item.status === '대기' ? 'bg-[#FFF9F0] text-[#FF9800]' :
                             item.status === '승인' ? 'bg-[#F0FDF4] text-[#10B981]' :
@@ -180,15 +180,15 @@ const AdminAttendance = () => {
                     ) : (
                       <>
                         <td className="py-4 pl-2 text-sm font-bold text-slate-800">{item.applicant}</td>
-                        <td className="py-4 text-xs text-slate-500 font-medium">{item.deptRank}</td>
-                        <td className="py-4 pl-1 text-[0.6875rem] text-slate-400 font-mono">{item.targetDate}</td>
+                        <td className="py-4 pl-2 text-xs text-slate-500 font-medium">{item.deptRank}</td>
+                        <td className="py-4 pl-5 text-[0.6875rem] text-slate-400 font-mono">{item.targetDate}</td>
                         <td className="py-4 pl-1.5 text-xs text-[#3530B8] font-bold">{item.originalTime}</td>
-                        <td className="py-4 pl-1.5 text-xs text-[#3530B8] font-bold">{item.requestedTime}</td>
-                        <td className="py-4 text-xs text-slate-500 w-130 truncate" title={item.reason}>
+                        <td className="py-4 pl-4 text-xs text-[#3530B8] font-bold">{item.requestedTime}</td>
+                        <td className="py-4 pl-9 text-xs text-slate-500 w-130 truncate" title={item.reason}>
                           {item.reason}
                         </td>
                         <td className="py-4 text-xs text-slate-600 font-medium">{item.manager}</td>
-                        <td className="py-4 pl-6">
+                        <td className="py-4 pl-13">
                           <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
                             item.status === '대기' ? 'bg-[#FFF9F0] text-[#FF9800]' :
                             item.status === '승인' ? 'bg-[#F0FDF4] text-[#10B981]' :
