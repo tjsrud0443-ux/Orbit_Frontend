@@ -57,7 +57,8 @@ export const getAdminSupplies = () => maxios.get("/admin/supply");
 export const getSuppyReqList = (params) => maxios.get("/admin/supplyReq",{ params });
 export const updateSupplyReqStatus = (upData) => maxios.put("/admin/supplyReqStatus",upData);
 //비품 대여 관련
-
+export const getSupplyRentalList =(params)=>maxios.get("/admin/supplyRental",{params});
+export const updateRentalStatus = (upRental) => maxios.put("/admin/returnSupply",upRental);
 
 
 

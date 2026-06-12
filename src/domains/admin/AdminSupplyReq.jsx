@@ -39,6 +39,7 @@ const AdminSupplyReq = () => {
       const { list, totalPages: newTotalPages, totalCount, pendingCount, approvedCount, rejectedCount } = res.data;
       const mapped = list.map(item => ({      
         id: item.req_seq,
+        users_id: item.users_id,
         requestDate: item.req_date,
         applicantName: item.user_name,
         dept: item.dept_name,
@@ -76,9 +77,12 @@ const AdminSupplyReq = () => {
   };
 
   const handleApprove = (id) => {
+    if (!window.confirm('승인하시겠습니까?')) return;
     const target = requests.find(r => r.id === id); 
     updateSupplyReqStatus({
         req_seq: target.id,
+        users_id: target.users_id,
+        req_date: target.requestDate,
         status: 'APPROVED',
         items: target.items
     }).then(() => {
