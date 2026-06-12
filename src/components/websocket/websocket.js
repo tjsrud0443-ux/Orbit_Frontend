@@ -30,7 +30,9 @@ export const connectSocket = (usersId) => {
                         .getState()
                         .addNotification(noti);
 
-                    toast.info(noti.content);
+                    toast(noti.content, {
+                        icon: () => "📅"
+                    });
                 }
             );
         },

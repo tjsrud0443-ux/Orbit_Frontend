@@ -9,9 +9,7 @@ const Header = ({ onMenuClick }) => {
   const token = useAuthStore(state => state.token);
   const user = useUserStore(state => state.user);
   const notifications = useNotificationStore(state => state.notifications);
-
-  console.log(notifications);
-
+  
   return (
     <header className="h-14 bg-white border-b border-slate-200 flex items-center
       justify-between lg:justify-end px-4 lg:px-6 shrink-0">

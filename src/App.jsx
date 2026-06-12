@@ -43,7 +43,7 @@ import RoomHistory from './domains/mypage/RoomHistory';
 import useLoadingStore from './store/useLoadingStore';
 import Loading from './components/common/Loading';
 import NotificationProvider from "./components/websocket/NotificationProvider";
-import { ToastContainer } from "react-toastify";
+import { ToastContainer, Zoom } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 function App() {
@@ -56,7 +56,19 @@ function App() {
           <Loading type={loadingType} />
         </div>
       )}
-      <ToastContainer />
+      <ToastContainer
+        position="bottom-right"
+        transition={Zoom}
+        autoClose={3000}
+        hideProgressBar
+        toastStyle={{
+          minWidth: "360px",
+          minHeight: "80px",
+          borderRadius: "16px",
+          padding: "16px",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.12)"
+        }}
+      />
       <NotificationProvider>
         <Router>
           <Routes>
