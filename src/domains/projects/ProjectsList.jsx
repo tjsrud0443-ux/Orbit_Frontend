@@ -174,14 +174,15 @@ const ProjectsList = () => {
     };
 
     insertProjectAndMembers(newEntry).then(resp => {
-      alert('개인 캘린더에 일정이 성공적으로 추가되었습니다.');
-      setProjects([...projects, newEntry]);
-      setIsModalOpen(false);
-      setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
-      setEmpSearch('');
-      setErrors({});
-    })
-
+      getAllProject().then(resp => {
+        setProjects(resp.data);
+        setIsModalOpen(false);
+        setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
+        setEmpSearch('');
+        setErrors({});
+        alert('개인 캘린더에 일정이 성공적으로 추가되었습니다.');
+      });
+    });
   };
 
   const addMember = (emp) => {
