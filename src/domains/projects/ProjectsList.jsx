@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
-import { getAllEmp, insertProjectAndMembers } from './projectsApi';
+import { getAllEmp, getAllProject, insertProjectAndMembers } from './projectsApi';
 import useUserStore from '../../store/userStore';
+import useAuthStore from '../../store/authStore';
 
 const MOCK_EMPLOYEES = [
   { id: 1, name: '김철수', dept: '개발팀' },
@@ -13,12 +14,12 @@ const MOCK_EMPLOYEES = [
   { id: 4, name: '최민수', dept: '영업팀' },
 ];
 
-const INITIAL_PROJECTS = [
-  { id: 1, project_name: 'Orbit 그룹웨어 고도화', period: '2026.05.01 ~ 2026.08.31', status: '진행 중', members: ['김철수', '이영희'], contents: '그룹웨어의 전반적인 고도화 작업 및 UI 개선' },
-  { id: 2, project_name: '사내 AI 챗봇 구축', period: '2026.04.10 ~ 2026.06.30', status: '진행 중', members: ['박지성'], contents: '사내 업무 자동화를 위한 AI 챗봇 개발' },
-  { id: 3, project_name: '연차 시스템 개선', period: '2026.03.01 ~ 2026.04.30', status: '완료', members: ['김철수', '박지성', '최민수'], contents: '연차 신청 프로세스 최적화' },
-  { id: 4, project_name: '마케팅 대시보드', period: '2026.06.01 ~ 2026.09.30', status: '진행 중', members: ['이영희'], contents: '마케팅 데이터 시각화' },
-];
+// const INITIAL_PROJECTS = [
+//   { id: 1, project_name: 'Orbit 그룹웨어 고도화', period: '2026.05.01 ~ 2026.08.31', status: '진행 중', members: ['김철수', '이영희'], contents: '그룹웨어의 전반적인 고도화 작업 및 UI 개선' },
+//   { id: 2, project_name: '사내 AI 챗봇 구축', period: '2026.04.10 ~ 2026.06.30', status: '진행 중', members: ['박지성'], contents: '사내 업무 자동화를 위한 AI 챗봇 개발' },
+//   { id: 3, project_name: '연차 시스템 개선', period: '2026.03.01 ~ 2026.04.30', status: '완료', members: ['김철수', '박지성', '최민수'], contents: '연차 신청 프로세스 최적화' },
+//   { id: 4, project_name: '마케팅 대시보드', period: '2026.06.01 ~ 2026.09.30', status: '진행 중', members: ['이영희'], contents: '마케팅 데이터 시각화' },
+// ];
 
 const ProjectsList = () => {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ const ProjectsList = () => {
   const endCalendarRef = useRef(null);
   const empDropdownRef = useRef(null);
   const user = useUserStore(state => state.user);
+  const token = useAuthStore(state => state.token);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -54,7 +56,7 @@ const ProjectsList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  const [projects, setProjects] = useState(INITIAL_PROJECTS);
+  const [projects, setProjects] = useState([{}]);
   const [newProject, setNewProject] = useState({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
   const [employess, setEmployess] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -88,7 +90,7 @@ const ProjectsList = () => {
     return projects.filter(p => {
       const matchesFilter = filter === '전체' || p.status === filter;
       const matchesSearch = searchBy === '프로젝트명'
-        ? p.project_name.includes(search)
+        ? p.project_name?.includes(search)
         : p.members.some(m => m.includes(search));
       return matchesFilter && matchesSearch;
     });
@@ -118,7 +120,7 @@ const ProjectsList = () => {
       start_date: `${newProject.start_date}`,
       end_date: `${newProject.end_date}`,
       status: 'IN_PROGRESS',
-      projectMembersDTO: newProject.members.map(m => ({users_id : m.id})),
+      projectMembersDTO: newProject.members.map(m => ({ users_id: m.id })),
       contents: newProject.contents
     };
 
@@ -152,6 +154,16 @@ const ProjectsList = () => {
     })
   }, []);
 
+  useEffect(() => {
+    getAllProject().then(resp => {
+      console.log(resp.data);
+      setProjects(resp.data);
+      setIsModalOpen(false);
+      setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
+      setEmpSearch('');
+      setErrors({});
+    })
+  }, []);
   return (
     <div className="flex flex-col h-full bg-[#FFFFFF] py-8 px-1 md:px-7 overflow-y-auto md:overflow-hidden custom-scrollbar">
       <div className="mb-6 px-4 md:px-2">
@@ -221,21 +233,37 @@ const ProjectsList = () => {
                       <span onClick={() => navigate('/kanban')} className="cursor-pointer hover:text-[#3530B8] text-sm">{p.project_name}</span>
                       <button onClick={() => setSelectedProject(p)} className="md:hidden text-[10px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-2 py-1 rounded">상세보기</button>
                     </td>
-                    <td className="py-2 px-2 block md:table-cell text-sm text-gray-500">{p.period}</td>
+                    <td className="py-2 px-2 block md:table-cell text-sm text-gray-500">{p.start_date.substring(0, 10)}~{p.end_date.substring(0, 10)}</td>
                     <td className="py-2 px-2 block md:table-cell flex items-center gap-4">
                       <span className={`inline-block px-4 py-1.5 rounded-full text-[11px] font-bold ${p.status === '완료' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
                         {p.status}
                       </span>
                       <div className="flex gap-1 md:hidden">
-                        {p.members.map((m, i) => (
-                          <div key={i} className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[9px] font-bold text-[#3530B8] border border-white">{m.charAt(0)}</div>
+                        {p.projectMembersDTO?.map((member, index) => (
+                          <div key={index} className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[9px] font-bold text-[#3530B8] border border-white">
+                            <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
+                              <img
+                                src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`}
+                                alt={member?.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          </div>
                         ))}
                       </div>
                     </td>
                     <td className="hidden md:table-cell py-4 px-2">
                       <div className="flex gap-2">
-                        {p.members.map((m, i) => (
-                          <div key={i} className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-[#3530B8] border border-white">{m.charAt(0)}</div>
+                        {p.projectMembersDTO?.map((member, index) => (
+                          <div key={index} className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-[#3530B8] border border-white">
+                            <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
+                              <img
+                                src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`}
+                                alt={member?.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          </div>
                         ))}
                       </div>
                     </td>
@@ -267,13 +295,13 @@ const ProjectsList = () => {
               <button onClick={() => setSelectedProject(null)}><FontAwesomeIcon icon={faTimes} /></button>
             </div>
             <h3 className="text-lg font-bold mb-2">{selectedProject.project_name}</h3>
-            <p className="text-sm text-gray-500 mb-8">{selectedProject.period}</p>
+            <p className="text-sm text-gray-500 mb-8">{selectedProject.start_date.substring(0,10)}~{selectedProject.end_date.substring(0,10)}</p>
             <div className="bg-[#f4f7fc] p-6 rounded-2xl mb-8">
               <h4 className="text-xs font-bold text-[#8a92a6] uppercase mb-3">내용</h4>
               <p className="text-sm text-gray-700">{selectedProject.contents}</p>
             </div>
             <h4 className="text-xs font-bold text-[#8a92a6] uppercase mb-4">참여자</h4>
-            <div className="flex flex-wrap gap-2 p-4 rounded-xl">{selectedProject.members.map((m, i) => <div key={i} className="px-3 py-1 border rounded-lg text-xs border border-[#edf2f9] shadow-sm">{m}</div>)}</div>
+            <div className="flex flex-wrap gap-2 p-4 rounded-xl">{selectedProject.projectMembersDTO?.map((member, index) => <div key={index} className="px-3 py-1 border rounded-lg text-xs border border-[#edf2f9] shadow-sm">{member.name}</div>)}</div>
           </div>
         )}
 
@@ -286,11 +314,11 @@ const ProjectsList = () => {
                 <button onClick={() => setSelectedProject(null)}><FontAwesomeIcon icon={faTimes} /></button>
               </div>
               <h3 className="text-md font-bold mb-1">{selectedProject.project_name}</h3>
-              <p className="text-xs text-gray-500 mb-4">{selectedProject.period}</p>
+              <p className="text-xs text-gray-500 mb-4">{selectedProject.start_date.substring(0,10)}~{selectedProject.end_date.substring(0,10)}</p>
               <h4 className="text-[10px] font-bold text-[#8a92a6] uppercase mb-2">내용</h4>
               <p className="text-xs text-gray-700 mb-4 bg-[#f4f7fc] p-3 rounded-lg">{selectedProject.contents}</p>
               <h4 className="text-[10px] font-bold text-[#8a92a6] uppercase mb-2">참여자</h4>
-              <div className="flex flex-wrap gap-2">{selectedProject.members.map((m, i) => <div key={i} className="px-2 py-1 border rounded-lg text-[10px] border-[#edf2f9] shadow-sm">{m}</div>)}</div>
+              <div className="flex flex-wrap gap-2">{selectedProject.projectMembersDTO?.map((member, index) => <div key={index} className="px-2 py-1 border rounded-lg text-[10px] border-[#edf2f9] shadow-sm">{member.name}</div>)}</div>
             </div>
           </div>
         )}
@@ -420,7 +448,7 @@ const ProjectsList = () => {
             </div>
             {errors.members && <p className="text-[9px] text-red-500 font-medium ml-1 mb-2">{errors.members}</p>}
             <div className="flex flex-wrap gap-2 mb-8">
-              {newProject.members.map(m => (
+              {newProject.members?.map(m => (
                 <div key={m.id} className="px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2 border border-[#3a36db]/20">{m.name} ({m.dept_name}) <FontAwesomeIcon icon={faTimes} className="cursor-pointer" onClick={() => removeMember(m.id)} /></div>
               ))}
             </div>
