@@ -111,14 +111,6 @@ const ProjectsList = () => {
   });
   const isEditDropdownActive = showEditEmpDropdown && editEmpSearch;
 
-  // 수정 모드 참여자 드롭다운용 동적 간격 (생성 모달과 동일한 방식)
-  const getEditDynamicMargin = () => {
-    if (!isEditDropdownActive) return 8;
-    if (filteredEditEmployees.length === 0) return 64;
-    const calculatedHeight = (filteredEditEmployees.length * 53) + 16;
-    return Math.min(calculatedHeight, 144);
-  };
-
   // 수정 관련 상태 전체 초기화
   const resetEditState = () => {
     setIsEditing(false);
@@ -318,7 +310,7 @@ const ProjectsList = () => {
       const empRef = mobile ? editEmpRefMobile : editEmpRefDesktop;
 
       return (
-        <>
+        <div className="shrink-0">
           {/* 1. 프로젝트명 */}
           <label className="block text-xs font-bold text-[#1a1c3d] mb-2">프로젝트명 *</label>
           <input
@@ -397,7 +389,7 @@ const ProjectsList = () => {
 
           {/* 4. 참여자 */}
           <label className="block text-xs font-bold text-[#1a1c3d] mb-2 mt-4">참여자 *</label>
-          <div className="relative transition-all duration-200" style={{ marginBottom: `${getEditDynamicMargin()}px` }} ref={empRef}>
+          <div className="relative" ref={empRef}>
             <input
               value={editEmpSearch}
               onChange={e => {
@@ -409,7 +401,7 @@ const ProjectsList = () => {
               placeholder="이름으로 검색하여 참여자를 추가하세요."
             />
             {isEditDropdownActive && (
-              <div className="absolute z-[70] w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-32 overflow-y-auto custom-scrollbar">
+              <div className="w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-32 overflow-y-auto custom-scrollbar">
                 {filteredEditEmployees.length > 0 ? (
                   filteredEditEmployees.map(e => (
                     <div
@@ -444,11 +436,11 @@ const ProjectsList = () => {
           </div>
 
           {/* 저장 / 취소 */}
-          <div className={`${mobile ? 'mt-6' : 'mt-auto pt-8'} flex gap-3`}>
+          <div className={`${mobile ? 'mt-6' : 'mt-8'} flex gap-3`}>
             <button onClick={cancelEdit} className={`flex-1 ${mobile ? 'py-2.5 text-xs rounded-xl' : 'py-3 rounded-2xl'} bg-gray-100 text-gray-600 font-bold hover:bg-gray-200 transition-all`}>취소</button>
             <button onClick={handleUpdate} className={`flex-1 ${mobile ? 'py-2.5 text-xs rounded-xl' : 'py-3 rounded-2xl'} bg-[#3530B8] text-white font-bold hover:bg-[#2a2594] transition-all`}>저장</button>
           </div>
-        </>
+        </div>
       );
     }
 
