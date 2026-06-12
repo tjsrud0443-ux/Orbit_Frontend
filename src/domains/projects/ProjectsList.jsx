@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
 // updateProject 추가 (projectsApi.js 에 구현 필요)
-import { deleteProject, getAllEmp, getAllProject, insertProjectAndMembers, updateProject } from './projectsApi';
+import { deleteProject, getAllEmp, getMyAllProject, insertProjectAndMembers, updateProject } from './projectsApi';
 import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
 
@@ -174,7 +174,7 @@ const ProjectsList = () => {
     };
 
     insertProjectAndMembers(newEntry).then(resp => {
-      getAllProject().then(resp => {
+      getMyAllProject().then(resp => {
         setProjects(resp.data);
         setIsModalOpen(false);
         setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
@@ -287,7 +287,7 @@ const ProjectsList = () => {
     if (window.confirm('정말 삭제하시겠습니까? 삭제 시 복구는 불가합니다.')) {
       deleteProject(project_seq).then(resp => {
         alert("삭제되었습니다.")
-        getAllProject().then(resp => {
+        getMyAllProject().then(resp => {
           setProjects(resp.data);
           setIsModalOpen(false);
           handleCloseDetail();
@@ -306,8 +306,7 @@ const ProjectsList = () => {
   }, []);
 
   useEffect(() => {
-    getAllProject().then(resp => {
-      console.log(resp.data);
+    getMyAllProject().then(resp => {
       setProjects(resp.data);
       setIsModalOpen(false);
       setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
