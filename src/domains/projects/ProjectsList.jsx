@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
 // updateProject 추가 (projectsApi.js 에 구현 필요)
-import { getAllEmp, getAllProject, insertProjectAndMembers, updateProject } from './projectsApi';
+import { deleteProject, getAllEmp, getAllProject, insertProjectAndMembers, updateProject } from './projectsApi';
 import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
 
@@ -282,6 +282,22 @@ const ProjectsList = () => {
     });
   };
 
+  const handleDelete = (project_seq) => {
+    if (window.confirm('정말 삭제하시겠습니까? 삭제 시 복구는 불가합니다.')) {
+      deleteProject(project_seq).then(resp => {
+        alert("삭제되었습니다.")
+        getAllProject().then(resp => {
+          setProjects(resp.data);
+          setIsModalOpen(false);
+          handleCloseDetail();
+          setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
+          setEmpSearch('');
+          setErrors({});
+        })
+      });
+    }
+  };
+
   useEffect(() => {
     getAllEmp().then(resp => {
       setEmployess(resp.data)
@@ -492,7 +508,7 @@ const ProjectsList = () => {
             >
               수정
             </button>
-            <button className={`flex-1 ${mobile ? 'py-2.5 text-xs rounded-xl' : 'py-3 rounded-2xl'} bg-white border border-red-200 text-red-500 font-bold hover:bg-red-50 transition-all`}>삭제</button>
+            <button onClick={() => { handleDelete(selectedProject.project_seq) }} className={`flex-1 ${mobile ? 'py-2.5 text-xs rounded-xl' : 'py-3 rounded-2xl'} bg-white border border-red-200 text-red-500 font-bold hover:bg-red-50 transition-all`}>삭제</button>
           </div>
         )}
       </>
