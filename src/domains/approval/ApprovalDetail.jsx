@@ -181,6 +181,19 @@ const ApprovalDetail = () => {
     hideLoading();
   }, [allEmployees, user, doc_type, docSeq]);
 
+  const handleReorderApprover = (index, direction) => {
+    setApprovers(prev => {
+      const newApprovers = [...prev];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      
+      if (targetIndex < 0 || targetIndex >= newApprovers.length) return prev;
+      
+      [newApprovers[index], newApprovers[targetIndex]] = [newApprovers[targetIndex], newApprovers[index]];
+      
+      return newApprovers;
+    });
+  };
+
   const fetchDocumentData = async (type, docSeq) => {
     showLoading();
     try {
@@ -534,6 +547,7 @@ const ApprovalDetail = () => {
         referrers={formData.referrers}
         onAddApprover={handleAddApprover}
         onRemoveApprover={handleRemoveApprover}
+        onReorderApprover={handleReorderApprover}
         onAction={handleAction}
         isRejecting={isRejecting}
         setIsRejecting={setIsRejecting}

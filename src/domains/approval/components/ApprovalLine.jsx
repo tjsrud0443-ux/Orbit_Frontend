@@ -1,6 +1,6 @@
 import React from 'react';
 
-const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, drafter }) => {
+const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, onReorder, drafter }) => {
   
   const getStatusText = (approver, idx) => {
     // 이전 결재자 중 반려가 있는지 확인
@@ -45,10 +45,12 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, drafter }) => {
             <span className="truncate w-full text-center">{drafter?.name || '기안'}</span>
             {!isEditMode && <span className="text-[0.7rem] mt-1 font-bold text-white">기안</span>}
           </div>
-          {!isEditMode && (
+          {!isEditMode ? (
             <div className="h-7 border-t border-white/30 flex items-center justify-center text-[9px] font-medium text-white/60 bg-white/5">
               {drafter?.created_at?.slice(0, 10) || '-'}
             </div>
+          ) : (
+            <div className="h-7 border-t border-white/30 flex items-center justify-center text-[9px] font-medium text-white/60 bg-white/5">-</div>
           )}
         </div>
 
@@ -61,7 +63,7 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, drafter }) => {
           return (
             <div key={idx} className="w-16 border-y border-r border-white/30 flex flex-col border-l-0 relative">
               <div className="bg-white/10 text-[0.7rem] py-0.5 text-center font-bold border-b border-white/30 text-white/90">
-                {approver.rank_name || approver.rank || '결재'}
+                {approver.rank_name}
                 {isEditMode && (
                   <button 
                     onClick={() => onRemove(idx)}
@@ -79,11 +81,21 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, drafter }) => {
                   </span>
                 )}
               </div>
-              {!isEditMode && (
+              
                 <div className="h-7 border-t border-white/30 flex items-center justify-center text-[9px] font-medium text-white/60 bg-white/5">
-                  {(showDetails && approver.handle_at) ? approver.handle_at.slice(0, 10) : '-'}
+                {isEditMode ? (
+                  <div className="flex gap-1">
+                    {idx > 0 && (
+                      <button onClick={() => onReorder(idx, 'up')} className="hover:text-white transition-colors">◀</button>
+                    )}
+                    {idx < approvers.length - 1 && (
+                      <button onClick={() => onReorder(idx, 'down')} className="hover:text-white transition-colors">▶</button>
+                    )}
+                  </div>
+                ) : (
+                  <span>{(showDetails && approver.handle_at) ? approver.handle_at.slice(0, 10) : '-'}</span>
+                )} 
                 </div>
-              )}
             </div>
           );
         })}

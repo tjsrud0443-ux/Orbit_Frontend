@@ -11,6 +11,7 @@ const ApprovalDocumentContainer = ({
   approvers, 
   onAddApprover, 
   onRemoveApprover, 
+  onReorderApprover,
   onAction,
   isRejecting,
   setIsRejecting,
@@ -36,6 +37,7 @@ const ApprovalDocumentContainer = ({
             isEditMode={mode === 'EDIT' && userRole === 'DRAFTER'} 
             onAdd={onAddApprover}
             onRemove={onRemoveApprover}
+            onReorder={onReorderApprover}
             drafter={drafter}
           />
         </div>
@@ -75,6 +77,7 @@ const ApprovalDocumentContainer = ({
             isEditMode={mode === 'EDIT' && userRole === 'DRAFTER'} 
             onAdd={onAddApprover}
             onRemove={onRemoveApprover}
+            onReorder={onReorderApprover}
             drafter={drafter}
           />
         </div>
