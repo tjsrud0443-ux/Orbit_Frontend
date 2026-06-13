@@ -77,8 +77,25 @@ const AdminSupplyReq = () => {
   };
 
   const handleApprove = (id) => {
-    if (!window.confirm('승인하시겠습니까?')) return;
-    const target = requests.find(r => r.id === id); 
+    const target = requests.find(r => r.id === id);
+//재고가 0인 비품/ 재고가 최소수량 이하인 비품이 1개 이상 있냐
+    const emptyItems = target.items.filter(item => item.stock_qty === 0);
+    const lowItems = target.items.filter(item => item.stock_qty > 0 && item.stock_qty <= item.min_stock_qty);
+
+    let message = '승인하시겠습니까?';
+
+    if (emptyItems.length > 0 || lowItems.length > 0) {
+      const warnings = [];
+      if (emptyItems.length > 0) {
+        warnings.push(`• ${emptyItems.map(i => i.supply_name).join(', ')} : 재고 없음`);
+      }
+      if (lowItems.length > 0) {
+        warnings.push(`• ${lowItems.map(i => i.supply_name).join(', ')} : 재고 부족`);
+      }
+      message = `\n${warnings.join('\n')}\n\n그래도 승인하시겠습니까?`;
+    }
+    if (!window.confirm(message)) return;
+
     updateSupplyReqStatus({
         req_seq: target.id,
         users_id: target.users_id,

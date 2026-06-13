@@ -262,18 +262,24 @@ const AdminSupply = () => {
   const [modal, setModal] = useState(null); // null | { mode: 'add'|'edit', supply? }
 
     useEffect(() => {
-      getAdminSupplies().then(res => {
-        const mapped = res.data.map(item => ({
-          id: item.supply_seq,
-          name: item.supply_name,
-          category: item.category,
-          code: item.supply_code,
-          totalQty: item.total_qty,
-          stockQty: item.stock_qty,
-          minStockQty: item.min_stock_qty,
-        }));
-        setSupplies(mapped);
-      });
+      const fetchSupplies = () => {
+        getAdminSupplies().then(res => {
+          const mapped = res.data.map(item => ({
+            id: item.supply_seq,
+            name: item.supply_name,
+            category: item.category,
+            code: item.supply_code,
+            totalQty: item.total_qty,
+            stockQty: item.stock_qty,
+            minStockQty: item.min_stock_qty,
+          }));
+          setSupplies(mapped);
+        });
+      };
+
+      fetchSupplies(); // 최초 실행
+      window.addEventListener('focus', fetchSupplies); // 탭 포커스될 때마다 갱신
+      return () => window.removeEventListener('focus', fetchSupplies); // 클린업
     }, []);
 
   // ── 비품 목록 필터링
