@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown, faCheck } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
 // updateProject 추가 (projectsApi.js 에 구현 필요)
 import { deleteProject, getAllEmp, getMyAllProject, insertProjectAndMembers, updateProject } from './projectsApi';
@@ -299,6 +299,19 @@ const ProjectsList = () => {
     }
   };
 
+  const handleComplete = (p) => {
+    if (window.confirm('프로젝트를 완료 처리하시겠습니까?')) {
+      const updatedEntry = {
+        ...p,
+        status: 'DONE',
+      };
+      updateProject(updatedEntry).then(() => {
+        alert('프로젝트가 완료되었습니다.');
+        setProjects(prev => prev.map(item => item.project_seq === p.project_seq ? { ...item, status: 'DONE' } : item));
+      });
+    }
+  };
+
   useEffect(() => {
     getAllEmp().then(resp => {
       setEmployess(resp.data)
@@ -575,16 +588,17 @@ const ProjectsList = () => {
             <table className="w-full text-left border-collapse md:table-fixed">
               <thead className="hidden md:table-header-group">
                 <tr className="text-[#8a92a6] text-sm border-b border-gray-100">
-                  <th className="pb-4 font-medium px-2 text-left md:w-[32%]">프로젝트명</th>
+                  <th className="pb-4 font-medium px-2 text-left md:w-[32%]">프로젝트명 (클릭 시 칸반 보드로 이동)</th>
                   <th className="pb-4 font-medium px-2 text-left md:w-[24%]">기간</th>
                   <th className="pb-4 font-medium px-3 text-left md:w-[15%]">진행상황</th>
-                  <th className="pb-4 font-medium px-2 text-left md:w-[17%]">참여자</th>
-                  <th className="pb-4 font-medium px-2 text-left md:w-[12%]">상세보기</th>
+                  <th className="pb-4 font-medium px-2 text-left md:w-[12%]">참여자</th>
+                  <th className="pb-4 font-medium px-2 text-left md:w-[8%]">상세보기</th>
+                  <th className="pb-4 font-medium px-2 text-left md:w-[5%]">완료</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedProjects.map(p => (
-                  <tr key={p.project_seq} className="border-b border-gray-100 hover:bg-[#f8fbff] transition-colors block md:table-row w-full mb-4 md:mb-0">
+                  <tr key={p.project_seq} className="border-b border-gray-100  transition-colors block md:table-row w-full mb-4 md:mb-0">
                     <td className="py-2 px-2 block md:table-cell font-bold text-[#1a1c3d] text-base flex justify-between items-center md:items-start md:table-cell">
                       <div className="flex items-center gap-2 min-w-0">
                         <span onClick={() => navigate(`/kanban/${p.project_seq}`)} className="cursor-pointer hover:text-[#3530B8] text-sm md:block md:truncate">{p.project_name}</span>
@@ -592,7 +606,17 @@ const ProjectsList = () => {
                           <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
                         )}
                       </div>
-                      <button onClick={() => handleSelectProject(p)} className="md:hidden text-[10px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-2 py-1 rounded">상세보기</button>
+                      <div className="flex flex-col items-end gap-1 md:hidden">
+                        <button onClick={() => handleSelectProject(p)} className="text-[10px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-2 py-1 rounded">상세보기</button>
+                        {p.users_id === user?.id && (
+                          <button
+                            onClick={() => handleComplete(p)}
+                            className="w-7 h-7 flex items-center justify-center bg-red-50 text-red-500 rounded-md hover:bg-red-100 transition-all"
+                          >
+                            <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td className="py-2 px-2 block md:table-cell text-sm text-gray-500 md:whitespace-nowrap md:truncate">{p.start_date?.substring(0, 10)}~{p.end_date?.substring(0, 10)}</td>
                     <td className="py-2 px-2 block md:table-cell">
@@ -639,6 +663,16 @@ const ProjectsList = () => {
                       <button onClick={() => handleSelectProject(p)} className="text-[11px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-3 py-1.5 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all whitespace-nowrap">
                         상세보기
                       </button>
+                    </td>
+                    <td className="hidden md:table-cell py-4 px-2 md:whitespace-nowrap">
+                      {p.users_id === user?.id && (
+                        <button
+                          onClick={() => handleComplete(p)}
+                          className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-all"
+                        >
+                          <FontAwesomeIcon icon={faCheck} />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
