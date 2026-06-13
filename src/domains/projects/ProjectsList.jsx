@@ -333,7 +333,7 @@ const ProjectsList = () => {
 
   // ===== 상세 패널(수정/보기) 공통 렌더 =====
   const renderDetailBody = (mobile = false) => {
-    const canEdit = selectedProject.users_id === user?.id;
+    const canEdit = selectedProject.users_id === user?.id && selectedProject.status !== 'DONE';
 
     if (isEditing) {
       // 데스크탑/모바일 인스턴스별 ref 선택
@@ -677,8 +677,8 @@ const ProjectsList = () => {
                     <td className="hidden md:table-cell py-4 px-2 md:whitespace-nowrap">
                       {p.users_id === user?.id ? (
                         <button
-                          onClick={() => handleComplete(p)}
-                          className="w-6 h-6 flex items-center justify-center bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-all"
+                          onClick={() => p.status !== 'DONE' && handleComplete(p.project_seq)}
+                          className={`w-6 h-6 flex items-center justify-center rounded-lg transition-all ${p.status === 'DONE' ? 'bg-emerald-50 text-emerald-500 cursor-default' : 'bg-red-50 text-red-500 hover:bg-red-100'}`}
                         >
                           <FontAwesomeIcon icon={faCheck} className="text-[9px]" />
                         </button>
