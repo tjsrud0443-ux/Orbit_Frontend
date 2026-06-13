@@ -33,7 +33,7 @@ const ProjectsList = () => {
 
   const [projects, setProjects] = useState([{}]);
   const [newProject, setNewProject] = useState({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
-  const [employess, setEmployess] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -83,7 +83,7 @@ const ProjectsList = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filteredEmployees = employess.filter(e => {
+  const filteredEmployees = employees.filter(e => {
     const matchsSearch = e.name.includes(empSearch);
     const isAlreadyAdded = newProject.members.some(m => m.id === e.id);
     const targetLank = e.rank_name !== "대표";
@@ -102,7 +102,7 @@ const ProjectsList = () => {
   };
 
   // ===== 수정 모드 참여자 검색 =====
-  const filteredEditEmployees = employess.filter(e => {
+  const filteredEditEmployees = employees.filter(e => {
     const matchesSearch = e.name.includes(editEmpSearch);
     const isAlreadyAdded = editData.members.some(m => m.id === e.id);
     const targetRank = e.rank_name !== "대표";
@@ -203,16 +203,17 @@ const ProjectsList = () => {
 
   // ===== 인라인 수정 시작 =====
   const startEdit = () => {
-    const members = (selectedProject.projectMembersDTO || []).map(m => {
-      const emp = employess.find(e => String(e.id) === String(m.users_id));
-      return emp || {
-        id: m.users_id,
-        name: m.name,
-        sysname: m.sysname,
-        dept_name: m.dept_name,
-        rank_name: m.rank_name,
-      };
-    });
+    const members = (selectedProject.projectMembersDTO || [])
+      .filter(m => String(m.users_id) !== String(selectedProject.users_id)).map(m => {
+        const emp = employees.find(e => String(e.id) === String(m.users_id));
+        return emp || {
+          id: m.users_id,
+          name: m.name,
+          sysname: m.sysname,
+          dept_name: m.dept_name,
+          rank_name: m.rank_name,
+        };
+      });
     setEditData({
       project_name: selectedProject.project_name || '',
       contents: selectedProject.contents || '',
@@ -325,7 +326,7 @@ const ProjectsList = () => {
 
   useEffect(() => {
     getAllEmp().then(resp => {
-      setEmployess(resp.data)
+      setEmployees(resp.data)
     })
   }, []);
 
@@ -641,7 +642,8 @@ const ProjectsList = () => {
                             {p.status === 'IN_PROGRESS' ? '진행 중' : '완료'}
                           </span>
                           <div className="flex items-center -space-x-2 md:hidden">
-                            {p.projectMembersDTO?.slice(0, 3).map((member, index) => (
+                            {p.projectMembersDTO?.filter(member =>
+                              String(member.users_id) !== String(p.users_id)).slice(0, 3).map((member, index) => (
                               <div key={index} className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[9px] font-bold text-[#3530B8] border border-white shrink-0">
                                 <div className="w-6 h-6 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
                                   <img
@@ -666,7 +668,8 @@ const ProjectsList = () => {
                       </td>
                       <td className="hidden md:table-cell py-4 px-2">
                         <div className={`flex items-center ${p.projectMembersDTO?.length > 1 ? 'md:-space-x-3' : ''}`}>
-                          {p.projectMembersDTO?.slice(0, 3).map((member, index) => (
+                          {p.projectMembersDTO?.filter(member =>
+                            String(member.users_id) !== String(p.users_id)).slice(0, 3).map((member, index) => (
                             <div key={index} className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-[#3530B8] border-2 border-white shrink-0">
                               <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
                                 <img
@@ -779,7 +782,7 @@ const ProjectsList = () => {
                   {errors.start_date && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1">{errors.start_date}</p>}
                   {isStartCalendarOpen && (
                     <Calendar
-                      value={newProject.start}
+                      value={newProject.start_date}
                       minDate={new Date().toISOString().split('T')[0]}
                       onChange={(date) => {
                         if (date < new Date().toISOString().split('T')[0]) {
