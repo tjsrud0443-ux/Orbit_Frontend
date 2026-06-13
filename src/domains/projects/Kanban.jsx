@@ -262,16 +262,17 @@ const Kanban = () => {
             <div className="flex -space-x-3">
               {members.filter(member =>
                 String(member.users_id) !== String(user?.id)).map((member, index) => (
-
                   <div key={index} className="w-9 h-9 rounded-full border-2 border-white overflow-hidden shadow-sm hover:z-10 transition-all cursor-pointer">
                     <img src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`} alt={member?.name} className="w-full h-full object-cover" />
                   </div>
                 ))}
-              {members.length > 5 && (
-                <div className="w-9 h-9 rounded-full border-2 border-white bg-slate-50 flex items-center justify-center text-[10px] font-bold text-slate-400 shadow-sm cursor-pointer">
-                  +{members.length - 5}
-                </div>
-              )}
+              {members.filter(member =>
+                String(member.users_id) !== String(user?.id)).length > 5 && (
+                  <div className="w-9 h-9 rounded-full border-2 border-white bg-slate-50 flex items-center justify-center text-[10px] font-bold text-slate-400 shadow-sm cursor-pointer">
+                    +{members.filter(member =>
+                      String(member.users_id) !== String(user?.id)).length - 5}
+                  </div>
+                )}
             </div>
             <button
               onClick={() => setIsModalOpen(true)}
@@ -523,11 +524,13 @@ const Kanban = () => {
                   <img src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`} alt={member?.name} className="w-full h-full object-cover" />
                 </div>
               ))}
-            {members.length > 5 && (
-              <div className="w-8 h-8 rounded-full border-2 border-white bg-slate-50 flex items-center justify-center text-[10px] font-bold text-slate-400 shadow-sm cursor-pointer">
-                +{members.length - 5}
-              </div>
-            )}
+            {members.filter(member =>
+              String(member.users_id) !== String(user?.id)).length > 5 && (
+                <div className="w-8 h-8 rounded-full border-2 border-white bg-slate-50 flex items-center justify-center text-[10px] font-bold text-slate-400 shadow-sm cursor-pointer">
+                  +{members.filter(member =>
+                    String(member.users_id) !== String(user?.id)).length - 5}
+                </div>
+              )}
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
