@@ -8,3 +8,4 @@ export const deleteProject = (project_seq) => maxios.delete("/project/projectDel
 export const completeProject = (project_seq) => maxios.put("/project/projectComplete/" + project_seq);
 
 export const getKanbanTaskList = (projectSeq) => maxios.get("/project/getKanbanTaskList/" + projectSeq);
+export const getProjectMembers = (projectSeq) => maxios.get("/project/getProjectMembers/" + projectSeq);
