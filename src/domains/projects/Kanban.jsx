@@ -56,7 +56,7 @@ const Kanban = () => {
 
   // 신규 Task 생성을 위한 폼 상태
   const [newGlobalTask, setNewGlobalTask] = useState({
-    title: '', name: '나 (관리자)', priority: 'Medium', status: 'TODO', start_date: new Date().toISOString().split('T')[0], due_date: '', content: ''
+    title: '', users_pic_id: '', name: '', sysname: '', priority: 'Medium', status: 'TODO', start_date: new Date().toISOString().split('T')[0], due_date: '', content: ''
   });
 
   // 인라인 폼 상태
@@ -137,8 +137,9 @@ const Kanban = () => {
   // 핸들러: 전역 생성
   const handleGlobalCreate = () => {
     const newErrors = {};
-    if (!newGlobalTask.title) newErrors.globalTitle = '제목을 입력해주세요.';
-    if (!newGlobalTask.due_date) newErrors.globalEndDate = '마감일을 선택해주세요.';
+    if (!newGlobalTask.title) newErrors.globalTitle = '제목을 입력해 주세요.';
+    if (!newGlobalTask.users_pic_id) newErrors.globalAssignee = '담당자를 선택해 주세요';
+    if (!newGlobalTask.due_date) newErrors.globalEndDate = '마감일을 선택해 주세요.';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -151,7 +152,7 @@ const Kanban = () => {
     };
     setTasks([...tasks, task]);
     setIsModalOpen(false);
-    setNewGlobalTask({ title: '', name: '나 (관리자)', priority: 'Medium', status: 'TODO', start_date: new Date().toISOString().split('T')[0], due_date: '', content: '' });
+    setNewGlobalTask({ title: '', users_pic_id: '', name: '', sysname: '', priority: 'Medium', status: 'TODO', start_date: new Date().toISOString().split('T')[0], due_date: '', content: '' });
     setErrors({});
   };
 
@@ -702,7 +703,7 @@ const Kanban = () => {
               <button
                 onClick={() => {
                   setIsModalOpen(false);
-                  setNewGlobalTask({ title: '', name: '나 (관리자)', priority: 'Medium', status: 'TODO', start_date: new Date().toISOString().split('T')[0], due_date: '', content: '' });
+                  setNewGlobalTask({ title: '', users_pic_id: '', name: '', sysname: '', priority: 'Medium', status: 'TODO', start_date: new Date().toISOString().split('T')[0], due_date: '', content: '' });
                   setErrors({});
                 }}
                 className="text-slate-400 hover:text-slate-600 transition-colors"
@@ -727,14 +728,41 @@ const Kanban = () => {
               </div>
 
               {/* 2. 담당자 */}
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 relative">
                 <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">담당자</p>
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-indigo-50 flex items-center justify-center text-[10px] text-[#3530B8] font-bold border border-white">
-                    {newGlobalTask.name.charAt(0)}
+                <div
+                  onClick={() => setOpenDropdown(openDropdown === 'globalAssignee' ? null : 'globalAssignee')}
+                  className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition-colors"
+                >
+                  <div className="w-7 h-7 rounded-full bg-indigo-50 flex items-center justify-center overflow-hidden border border-white">
+                    {newGlobalTask.sysname ? (
+                      <img src={`http://localhost/file/profile/view?sysname=${newGlobalTask.sysname}&token=${token}`} alt={newGlobalTask.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-[10px] text-[#3530B8] font-bold">{newGlobalTask.name?.charAt(0) || '+'}</span>
+                    )}
                   </div>
-                  <span className="text-sm font-bold text-slate-600">{newGlobalTask.name}</span>
+                  <span className="text-sm font-bold text-slate-600">{newGlobalTask.name || '담당자를 선택하세요.'}</span>
+                  <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-400 ml-auto" />
                 </div>
+                {openDropdown === 'globalAssignee' && (
+                  <div className="absolute top-full left-0 z-[110] mt-1 w-full max-h-48 overflow-y-auto bg-white border border-slate-100 rounded-xl shadow-xl animate-in fade-in zoom-in duration-200 custom-scrollbar">
+                    {members.map((member, idx) => (
+                      <div
+                        key={member.employee_seq || idx}
+                        onClick={() => {
+                          setNewGlobalTask({ ...newGlobalTask, users_pic_id: member.users_pic_id, name: member.name, sysname: member.sysname });
+                          setOpenDropdown(null);
+                        }}
+                        className="px-4 py-3 flex items-center gap-3 hover:bg-[#F0F4FF] cursor-pointer transition-colors"
+                      >
+                        <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-100">
+                          <img src={`http://localhost/file/profile/view?sysname=${member.sysname}&token=${token}`} alt={member.name} className="w-full h-full object-cover" />
+                        </div>
+                        <span className="text-sm font-bold text-slate-600">{member.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* 3. 상태 / 우선순위 (한 줄) */}
@@ -867,7 +895,7 @@ const Kanban = () => {
               <button
                 onClick={() => {
                   setIsModalOpen(false);
-                  setNewGlobalTask({ title: '', name: '나 (관리자)', priority: 'Medium', status: 'TODO', start_date: new Date().toISOString().split('T')[0], due_date: '', content: '' });
+                  setNewGlobalTask({ title: '', users_pic_id: '', name: '', sysname: '', priority: 'Medium', status: 'TODO', start_date: new Date().toISOString().split('T')[0], due_date: '', content: '' });
                   setErrors({});
                 }}
                 className="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-bold text-sm hover:bg-slate-200 transition-all"
@@ -904,14 +932,41 @@ const Kanban = () => {
               </div>
 
               {/* 담당자 */}
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 relative">
                 <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">담당자</p>
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-indigo-50 flex items-center justify-center text-[10px] text-[#3530B8] font-bold border border-white">
-                    {detailModalTask.name.charAt(0)}
+                <div
+                  onClick={() => setOpenDropdown(openDropdown === 'detailAssignee' ? null : 'detailAssignee')}
+                  className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition-colors"
+                >
+                  <div className="w-7 h-7 rounded-full bg-indigo-50 flex items-center justify-center overflow-hidden border border-white">
+                    {detailModalTask.sysname ? (
+                      <img src={`http://localhost/file/profile/view?sysname=${detailModalTask.sysname}&token=${token}`} alt={detailModalTask.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-[10px] text-[#3530B8] font-bold">{detailModalTask.name?.charAt(0) || 'U'}</span>
+                    )}
                   </div>
                   <span className="text-sm font-bold text-slate-600">{detailModalTask.name}</span>
+                  <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-400 ml-auto" />
                 </div>
+                {openDropdown === 'detailAssignee' && (
+                  <div className="absolute top-full left-0 z-[110] mt-1 w-full max-h-48 overflow-y-auto bg-white border border-slate-100 rounded-xl shadow-xl animate-in fade-in zoom-in duration-200 custom-scrollbar">
+                    {members.map((member, idx) => (
+                      <div
+                        key={member.employee_seq || idx}
+                        onClick={() => {
+                          setDetailModalTask({ ...detailModalTask, users_pic_id: member.users_pic_id, name: member.name, sysname: member.sysname });
+                          setOpenDropdown(null);
+                        }}
+                        className="px-4 py-3 flex items-center gap-3 hover:bg-[#F0F4FF] cursor-pointer transition-colors"
+                      >
+                        <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-100">
+                          <img src={`http://localhost/file/profile/view?sysname=${member.sysname}&token=${token}`} alt={member.name} className="w-full h-full object-cover" />
+                        </div>
+                        <span className="text-sm font-bold text-slate-600">{member.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* 현재 상태, 우선순위 (한 줄) */}

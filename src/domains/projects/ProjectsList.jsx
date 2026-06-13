@@ -489,7 +489,7 @@ const ProjectsList = () => {
       <>
         <div className="flex items-center gap-2 min-w-0 mb-2">
           <h3 className="text-lg font-bold">{selectedProject.project_name}</h3>
-          {selectedProject.projectMembersDTO?.some(m => String(m.users_id) === String(user?.id)) && (
+          {selectedProject.users_id !== user.id && selectedProject.projectMembersDTO?.some(m => String(m.users_id) === String(user?.id)) && (
             <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
           )}
         </div>
@@ -511,17 +511,18 @@ const ProjectsList = () => {
 
         <h4 className={`${mobile ? 'text-[10px]' : 'text-xs'} font-bold text-[#8a92a6] uppercase mb-2`}>참여자</h4>
         <div className="flex flex-wrap gap-4 rounded-xl">
-          {selectedProject.projectMembersDTO?.map((member, index) => (
-            <div key={index} className="flex flex-col items-center gap-2 px-3 py-3">
-              <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-300">
-                <img
-                  src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`}
-                  alt={member?.name}
-                  className="w-full h-full object-cover" />
+          {selectedProject.projectMembersDTO?.filter(member =>
+            String(member.users_id) !== String(selectedProject.users_id)).map((member, index) => (
+              <div key={index} className="flex flex-col items-center gap-2 px-3 py-3">
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-300">
+                  <img
+                    src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`}
+                    alt={member?.name}
+                    className="w-full h-full object-cover" />
+                </div>
+                <span className="text-xs font-medium">{member.name}</span>
               </div>
-              <span className="text-xs font-medium">{member.name}</span>
-            </div>
-          ))}
+            ))}
         </div>
 
         {canEdit && (
@@ -615,7 +616,7 @@ const ProjectsList = () => {
                       <td className="py-2 px-2 block md:table-cell font-bold text-[#1a1c3d] text-base flex justify-between items-center md:items-start md:table-cell">
                         <div className="flex items-center gap-2 min-w-0">
                           <span onClick={() => navigate(`/kanban/${p.project_seq}`)} className="cursor-pointer hover:text-[#3530B8] text-sm md:block md:truncate">{p.project_name}</span>
-                          {p.projectMembersDTO?.some(m => String(m.users_id) === String(user?.id)) && (
+                          {p.users_id !== user.id && p.projectMembersDTO?.some(m => String(m.users_id) === String(user?.id)) && (
                             <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
                           )}
                         </div>
