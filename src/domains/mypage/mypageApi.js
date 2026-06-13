@@ -15,6 +15,10 @@ export const getAnuualSummary = () => maxios.get("/mypage/annualSummary");
 export const getMyQuestions = () => maxios.get("/mypage/myQuestions");
 export const deleteMyQuestions = (question_seq) => maxios.delete("/mypage/deleteMyQuestions/" + question_seq);
 
+// 내 비품 신청 내역
+export const getMySupplyRequest = () => maxios.get('/mypage/getMySupplyRequest');
+export const deleteMySupplyRequest = (req_seq) => maxios.delete(`/mypage/deleteMySupplyRequest/${req_seq}`);
+
 // 내 회의실 신청 내역
 export const getAllMyMeetRsvn = () => maxios.get("/mypage/getAllMyMeetRsvn");
 export const getMeetRsvnDetail = (rsvn_seq) => maxios.get(`/mypage/getMeetRsvnDetail/${rsvn_seq}`);
