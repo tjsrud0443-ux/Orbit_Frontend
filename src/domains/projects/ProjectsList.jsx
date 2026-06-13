@@ -587,16 +587,16 @@ const ProjectsList = () => {
             </div>
           </div>
 
-          <div className="flex-1 lg:overflow-y-auto lg:min-h-0 custom-scrollbar">
-            <table className="w-full text-left border-collapse md:table-fixed">
+          <div className="flex-1 lg:overflow-y-auto lg:overflow-x-auto lg:min-h-0 custom-scrollbar">
+            <table className={`w-full text-left border-collapse md:table-fixed ${selectedProject ? 'min-w-[800px]' : 'min-w-full'}`}>
               <thead className="hidden md:table-header-group">
                 <tr className="text-[#8a92a6] text-sm border-b border-gray-100">
-                  <th className="pb-4 font-medium px-2 text-left md:w-[32%]">프로젝트명 (클릭 시 칸반 보드로 이동)</th>
-                  <th className="pb-4 font-medium px-2 text-left md:w-[24%]">기간</th>
-                  <th className="pb-4 font-medium px-3 text-left md:w-[15%]">진행상황</th>
-                  <th className="pb-4 font-medium px-2 text-left md:w-[12%]">참여자</th>
-                  <th className="pb-4 font-medium px-2 text-left md:w-[8%]">상세보기</th>
-                  <th className="pb-4 font-medium px-2 text-left md:w-[5%]">완료</th>
+                  <th className={`pb-4 font-medium px-2 text-left ${selectedProject ? 'md:w-[20%]' : 'md:w-[32%]'}`}>프로젝트명 (클릭 시 칸반 보드로 이동)</th>
+                  <th className={`pb-4 font-medium px-2 text-left whitespace-nowrap ${selectedProject ? 'md:w-[15%]' : 'md:w-[24%]'}`}>기간</th>
+                  <th className={`pb-4 font-medium px-3 text-left whitespace-nowrap ${selectedProject ? 'md:w-[11%]' : 'md:w-[15%]'}`}>진행상황</th>
+                  <th className={`pb-4 font-medium px-2 text-left whitespace-nowrap min-w-[120px] ${selectedProject ? 'md:w-[25%]' : 'md:w-[12%]'}`}>참여자</th>
+                  <th className={`pb-4 font-medium px-2 text-left whitespace-nowrap min-w-[90px] ${selectedProject ? 'md:w-[16%]' : 'md:w-[8%]'}`}>상세보기</th>
+                  <th className={`pb-4 font-medium px-2 text-left whitespace-nowrap min-w-[60px] ${selectedProject ? 'md:w-[13%]' : 'md:w-[5%]'}`}>완료</th>
                 </tr>
               </thead>
               <tbody>
