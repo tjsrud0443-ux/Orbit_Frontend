@@ -135,6 +135,7 @@ const ProjectsList = () => {
   };
 
 
+
   const filteredProjects = useMemo(() => {
     return projects.filter(p => {
       const matchesFilter = filter === '전체' || p.status === filter;
@@ -643,22 +644,24 @@ const ProjectsList = () => {
                           </span>
                           <div className="flex items-center -space-x-2 md:hidden">
                             {p.projectMembersDTO?.filter(member =>
-                              String(member.users_id) !== String(p.users_id)).slice(0, 3).map((member, index) => (
-                              <div key={index} className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[9px] font-bold text-[#3530B8] border border-white shrink-0">
-                                <div className="w-6 h-6 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
-                                  <img
-                                    src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`}
-                                    alt={member?.name}
-                                    className="w-full h-full object-cover"
-                                  />
+                              String(member?.users_id) !== String(p?.users_id)).slice(0, 3).map((member, index) => (
+                                <div key={index} className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[9px] font-bold text-[#3530B8] border border-white shrink-0">
+                                  <div className="w-6 h-6 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
+                                    <img
+                                      src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`}
+                                      alt={member?.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
-                            {p.projectMembersDTO?.length > 3 && (
-                              <div className="w-6 h-6 rounded-full bg-[#F0F4FF] border border-white flex items-center justify-center text-[8px] font-bold text-[#3530B8] shrink-0 z-10 shadow-sm">
-                                +{p.projectMembersDTO.length - 3}
-                              </div>
-                            )}
+                              ))}
+                            {p.projectMembersDTO?.filter(member =>
+                              String(member.users_id) !== String(p.users_id)).length > 3 && (
+                                <div className="w-6 h-6 rounded-full bg-[#F0F4FF] border border-white flex items-center justify-center text-[8px] font-bold text-[#3530B8] shrink-0 z-10 shadow-sm">
+                                  +{p.projectMembersDTO?.filter(member =>
+                                    String(member.users_id) !== String(p.users_id)).length - 3}
+                                </div>
+                              )}
                           </div>
                         </div>
                       </td>
@@ -670,21 +673,23 @@ const ProjectsList = () => {
                         <div className={`flex items-center ${p.projectMembersDTO?.length > 1 ? 'md:-space-x-3' : ''}`}>
                           {p.projectMembersDTO?.filter(member =>
                             String(member.users_id) !== String(p.users_id)).slice(0, 3).map((member, index) => (
-                            <div key={index} className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-[#3530B8] border-2 border-white shrink-0">
-                              <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
-                                <img
-                                  src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`}
-                                  alt={member?.name}
-                                  className="w-full h-full object-cover"
-                                />
+                              <div key={index} className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-[#3530B8] border-2 border-white shrink-0">
+                                <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
+                                  <img
+                                    src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`}
+                                    alt={member?.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
                               </div>
-                            </div>
-                          ))}
-                          {p.projectMembersDTO?.length > 3 && (
-                            <div className="w-8 h-8 rounded-full bg-[#F0F4FF] border-2 border-white flex items-center justify-center text-[10px] font-bold text-[#3530B8] shrink-0 z-10 shadow-sm">
-                              +{p.projectMembersDTO.length - 3}
-                            </div>
-                          )}
+                            ))}
+                          {p.projectMembersDTO?.filter(member =>
+                            String(member.users_id) !== String(p.users_id)).length > 3 && (
+                              <div className="w-8 h-8 rounded-full bg-[#F0F4FF] border-2 border-white flex items-center justify-center text-[10px] font-bold text-[#3530B8] shrink-0 z-10 shadow-sm">
+                                +{p.projectMembersDTO?.filter(member =>
+                                  String(member.users_id) !== String(p.users_id)).length - 3}
+                              </div>
+                            )}
                         </div>
                       </td>
                       <td className="hidden md:table-cell py-4 px-2 md:whitespace-nowrap">
