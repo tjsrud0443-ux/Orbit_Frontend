@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import Pagination from '../../components/common/Pagination';
 import useLoadingStore from '../../store/useLoadingStore';
-import { getAllCheckoutRQ, getAllOvertimeRQ } from './adminApi';
+import { approveCheckout, approveOvertime, getAllCheckoutRQ, getAllOvertimeRQ, rejectCheckout, rejectOvertime } from './adminApi';
+import useUserStore from '../../store/userStore';
 
 const AdminAttendance = () => {
   // 페이지 탭 (근무시간 정정 / 연장근무 관리)
@@ -16,6 +17,7 @@ const AdminAttendance = () => {
 
   const showLoading = useLoadingStore(state => state.showLoading);
   const hideLoading = useLoadingStore(state => state.hideLoading);
+  const { user } = useUserStore();
 
   const statusMap = {
     '전체': 'TOTAL',
@@ -65,6 +67,48 @@ const AdminAttendance = () => {
     setActiveStatusTab(tab);
     setPage(1);
   };
+
+  const handleCheckoutApp = async (seq) => {
+    try {
+      await approveCheckout(seq);
+      loadRequest();
+    } catch (err) {
+      console.error('신청 승인 실패 : ', err);
+      alert('신청을 승인하는데 실패했습니다.');
+    }
+  }
+
+  const handleCheckoutRej = async (seq) => {
+    if (!window.confirm('신청을 반려하시겠습니까?')) return;
+    try {
+      await rejectCheckout(seq);
+      loadRequest();
+    } catch(err) {
+      console.error('신청 반려 실패 : ', err);
+      alert('신청을 반려하는데 실패했습니다.');
+    }
+  }
+
+  const handleOvertimeApp = async (seq) => {
+    try {
+      await approveOvertime(seq);
+      loadRequest();
+    } catch (err) {
+      console.error('신청 승인 실패 : ', err);
+      alert('신청을 승인하는데 실패했습니다.');
+    }
+  }
+
+  const handleOvertimeRej = async (seq) => {
+    if (!window.confirm('신청을 반려하시겠습니까?')) return;
+    try {
+      await rejectOvertime(seq);
+      loadRequest();
+    } catch (err) {
+      console.error('신청 반려 실패 : ', err);
+      alert('신청을 반려하는데 실패했습니다.');
+    }
+  }
 
   return (
     <div className="h-full flex flex-col bg-white font-sans p-6 md:p-8">
@@ -192,27 +236,34 @@ const AdminAttendance = () => {
                       <td className="py-4 text-center">
                         <div className="flex justify-center gap-2">
                           {
-                            req.status === 'PENDING' ?
-                            <>
-                            <button className="px-3 py-1 text-[10px] font-bold text-[#10B981] bg-white border border-[#10B981] rounded-lg hover:bg-[#F0FDF4] transition-all cursor-pointer">
-                              승인
-                            </button>
-                            <button className="px-3 py-1 text-[10px] font-bold text-[#FF4D4F] bg-white border border-[#FF4D4F] rounded-lg hover:bg-[#FFF0F0] transition-all cursor-pointer">
-                              반려
-                            </button>
-                            </>
-                            :
-                            req.status === 'APPROVED' ?
-                            <>
+                            req.status === 'PENDING' ? (
+                              user?.id !== req.users_id ? (
+                              <>
+                                <button 
+                                  className="px-3 py-1 text-[10px] font-bold text-[#10B981] bg-white border border-[#10B981] rounded-lg hover:bg-[#F0FDF4] transition-all cursor-pointer"
+                                  onClick={() => handleCheckoutApp(req.checkout_seq)}
+                                >
+                                  승인
+                                </button>
+                                <button 
+                                  className="px-3 py-1 text-[10px] font-bold text-[#FF4D4F] bg-white border border-[#FF4D4F] rounded-lg hover:bg-[#FFF0F0] transition-all cursor-pointer"
+                                  onClick={() => handleCheckoutRej(req.checkout_seq)}
+                                >
+                                  반려
+                                </button>
+                              </>
+                            ) : (
+                              <span className="text-xs text-slate-400">-</span>
+                            )
+                          ) : req.status === 'APPROVED' ? (
                             <button className="px-3 py-1 text-[10px] font-bold text-[#10B981] bg-white border border-[#10B981] rounded-lg hover:bg-[#F0FDF4] transition-all cursor-pointer">
                               승인됨
                             </button>
-                            </>
-                            :
+                          ) : (
                             <button className="px-3 py-1 text-[10px] font-bold text-[#10B981] bg-white border border-[#10B981] rounded-lg hover:bg-[#F0FDF4] transition-all cursor-pointer">
                               반려됨
                             </button>
-                          }
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -248,27 +299,34 @@ const AdminAttendance = () => {
                           <td className="py-4 text-center">
                           <div className="flex justify-center gap-2">
                             {
-                              req.status === 'PENDING' ?
-                              <>
-                              <button className="px-3 py-1 text-[10px] font-bold text-[#10B981] bg-white border border-[#10B981] rounded-lg hover:bg-[#F0FDF4] transition-all cursor-pointer">
-                                승인
-                              </button>
-                              <button className="px-3 py-1 text-[10px] font-bold text-[#FF4D4F] bg-white border border-[#FF4D4F] rounded-lg hover:bg-[#FFF0F0] transition-all cursor-pointer">
-                                반려
-                              </button>
-                              </>
-                              :
-                              req.status === 'APPROVED' ?
-                              <>
-                              <button className="px-3 py-1 text-[10px] font-bold text-[#10B981] bg-white border border-[#10B981] rounded-lg hover:bg-[#F0FDF4] transition-all cursor-pointer">
-                                승인됨
-                              </button>
-                              </>
-                              :
-                              <button className="px-3 py-1 text-[10px] font-bold text-[#10B981] bg-white border border-[#10B981] rounded-lg hover:bg-[#F0FDF4] transition-all cursor-pointer">
-                                반려됨
-                              </button>
-                            }
+                              req.status === 'PENDING' ? (
+                                 user?.id !== req.users_id ? (
+                                  <>
+                                    <button 
+                                      className="px-3 py-1 text-[10px] font-bold text-[#10B981] bg-white border border-[#10B981] rounded-lg hover:bg-[#F0FDF4] transition-all cursor-pointer"
+                                      onClick={() => handleOvertimeApp(req.overtime_seq)}
+                                    >
+                                      승인
+                                    </button>
+                                    <button 
+                                      className="px-3 py-1 text-[10px] font-bold text-[#FF4D4F] bg-white border border-[#FF4D4F] rounded-lg hover:bg-[#FFF0F0] transition-all cursor-pointer"
+                                      onClick={() => handleOvertimeRej(req.overtime_seq)}
+                                    >
+                                      반려
+                                    </button>
+                                  </>
+                                ) : (
+                                  <span className="text-xs text-slate-400">-</span>
+                                )
+                              ) : req.status === 'APPROVED' ? (
+                                <button className="px-3 py-1 text-[10px] font-bold text-[#10B981] bg-white border border-[#10B981] rounded-lg hover:bg-[#F0FDF4] transition-all cursor-pointer">
+                                  승인됨
+                                </button>
+                              ) : (
+                                <button className="px-3 py-1 text-[10px] font-bold text-[#10B981] bg-white border border-[#10B981] rounded-lg hover:bg-[#F0FDF4] transition-all cursor-pointer">
+                                  반려됨
+                                </button>
+                              )}
                           </div>
                         </td>
                       </tr>

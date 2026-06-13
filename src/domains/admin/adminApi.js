@@ -200,3 +200,7 @@ export const deleteMyAnswer = (question_seq) => maxios.put("/admin/ai/deleteAnsw
 // 근무시간 정정 신청 관리
 export const getAllCheckoutRQ = (page, status) => maxios.get("/admin/hr/getAllCheckoutRQ", {params: {cPage: page, status: status}});
 export const getAllOvertimeRQ = (page, status) => maxios.get("/admin/hr/getAllOvertimeRQ", {params: {cPage: page, status: status}});
+export const approveCheckout = (seq) => maxios.put(`/admin/hr/approveCheckout/${seq}`);
+export const rejectCheckout = (seq) => maxios.put(`/admin/hr/rejectCheckout/${seq}`);
+export const approveOvertime = (seq) => maxios.put(`/admin/hr/approveOvertime/${seq}`);
+export const rejectOvertime = (seq) => maxios.put(`admin/hr/rejectOvertime/${seq}`);
