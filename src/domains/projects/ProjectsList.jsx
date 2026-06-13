@@ -300,16 +300,16 @@ const ProjectsList = () => {
   };
 
   const handleComplete = (p) => {
-    if (window.confirm('프로젝트를 완료 처리하시겠습니까?')) {
-      const updatedEntry = {
-        ...p,
-        status: 'DONE',
-      };
-      updateProject(updatedEntry).then(() => {
-        alert('프로젝트가 완료되었습니다.');
-        setProjects(prev => prev.map(item => item.project_seq === p.project_seq ? { ...item, status: 'DONE' } : item));
-      });
-    }
+    // if (window.confirm('프로젝트를 완료 처리하시겠습니까?')) {
+    //   const updatedEntry = {
+    //     ...p,
+    //     status: 'DONE',
+    //   };
+    //   updateProject(updatedEntry).then(() => {
+    //     alert('프로젝트가 완료되었습니다.');
+    //     setProjects(prev => prev.map(item => item.project_seq === p.project_seq ? { ...item, status: 'DONE' } : item));
+    //   });
+    // }
   };
 
   useEffect(() => {
@@ -640,7 +640,7 @@ const ProjectsList = () => {
                       </div>
                     </td>
                     <td className="hidden md:table-cell py-4 px-2">
-                      <div className={`flex items-center ${p.projectMembersDTO?.length >= 4 ? 'md:-space-x-2.5' : 'md:gap-2'}`}>
+                      <div className={`flex items-center ${p.projectMembersDTO?.length > 1 ? 'md:-space-x-3' : ''}`}>
                         {p.projectMembersDTO?.slice(0, 3).map((member, index) => (
                           <div key={index} className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-[#3530B8] border-2 border-white shrink-0">
                             <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
@@ -668,9 +668,9 @@ const ProjectsList = () => {
                       {p.users_id === user?.id && (
                         <button
                           onClick={() => handleComplete(p)}
-                          className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-all"
+                          className="w-6 h-6 flex items-center justify-center bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-all"
                         >
-                          <FontAwesomeIcon icon={faCheck} />
+                          <FontAwesomeIcon icon={faCheck} className="text-[9px]" />
                         </button>
                       )}
                     </td>
