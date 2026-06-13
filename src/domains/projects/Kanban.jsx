@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faUser, faChevronDown, faCircle, faCalendarAlt, faChevronLeft, faEllipsisV, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
-import { deleteTask, getKanbanTaskList, getProject, getProjectMembers, insertTask, updateTask } from './projectsApi';
+import { deleteTask, getKanbanTaskList, getProject, getProjectMembers, insertTask, updateTask, updateTaskStatus } from './projectsApi';
 import useAuthStore from '../../store/authStore';
 import useUserStore from '../../store/userStore';
 
@@ -79,6 +79,11 @@ const Kanban = () => {
   const onDrop = (e, status) => {
     const taskSeq = parseInt(e.dataTransfer.getData('taskSeq'));
     setTasks(prev => prev.map(t => t.task_seq === taskSeq ? { ...t, status } : t));
+
+    updateTaskStatus({
+      task_seq: taskSeq,
+      status: status
+    })
   };
 
   // 핸들러: 삭제
