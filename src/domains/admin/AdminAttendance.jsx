@@ -69,6 +69,7 @@ const AdminAttendance = () => {
   };
 
   const handleCheckoutApp = async (seq) => {
+    if (!window.confirm('신청을 승인하시겠습니까?')) return;
     try {
       await approveCheckout(seq);
       loadRequest();
@@ -90,6 +91,7 @@ const AdminAttendance = () => {
   }
 
   const handleOvertimeApp = async (seq) => {
+    if (!window.confirm('신청을 승인하시겠습니까?')) return;
     try {
       await approveOvertime(seq);
       loadRequest();
@@ -136,7 +138,7 @@ const AdminAttendance = () => {
               className={`px-4 py-2 text-sm font-bold transition-all relative whitespace-nowrap ${
                 activePageTab === tab
                   ? 'text-[#3530B8]'
-                  : 'text-gray-400 hover:text-gray-600'
+                  : 'text-gray-400 hover:text-[#3530B8]'
               }`}
             >
               {tab}
@@ -188,8 +190,7 @@ const AdminAttendance = () => {
                     <th className="pb-4 pl-3 text-[0.6875rem] font-bold text-slate-400 tracking-wider">신청자</th>
                     <th className="pb-4 pl-6 text-[0.6875rem] font-bold text-slate-400 tracking-wider">부서/직급</th>
                     <th className="pb-4 pl-12 text-[0.6875rem] font-bold text-slate-400 tracking-wider">연장 근무 날짜</th>
-                    <th className="pb-4 pl-7 text-[0.6875rem] font-bold text-slate-400 tracking-wider">시작 시간</th>
-                    <th className="pb-4 pl-7 text-[0.6875rem] font-bold text-slate-400 tracking-wider">종료 시간</th>
+                    <th className="pb-4 pl-5 text-[0.6875rem] font-bold text-slate-400 tracking-wider">근무 종료 시간</th>
                     <th className="pb-4 pl-20 text-[0.6875rem] font-bold text-slate-400 tracking-wider">사유</th>
                     <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider">관리자</th>
                     <th className="pb-4 pl-15 text-[0.6875rem] font-bold text-slate-400 tracking-wider">상태</th>
@@ -218,7 +219,7 @@ const AdminAttendance = () => {
                       </td>
                       {
                         req.approver_name ?
-                        <td className="py-4 text-xs text-slate-600 font-medium">{req.approver_name}</td>
+                        <td className="py-4 pl-1.5 text-xs text-slate-600 font-medium">{req.approver_name}</td>
                         :
                         <td className="py-4 pl-3 text-xs text-slate-600 font-medium">-</td>
                       }
@@ -256,11 +257,11 @@ const AdminAttendance = () => {
                               <span className="text-xs text-slate-400">-</span>
                             )
                           ) : req.status === 'APPROVED' ? (
-                            <button className="px-3 py-1 text-[10px] font-bold text-[#10B981] bg-white border border-[#10B981] rounded-lg hover:bg-[#F0FDF4] transition-all cursor-pointer">
+                            <button className="px-3 py-1 text-[10px] font-bold text-[#10B981] bg-white border border-[#10B981] rounded-lg">
                               승인됨
                             </button>
                           ) : (
-                            <button className="px-3 py-1 text-[10px] font-bold text-[#10B981] bg-white border border-[#10B981] rounded-lg hover:bg-[#F0FDF4] transition-all cursor-pointer">
+                            <button className="px-3 py-1 text-[10px] font-bold text-[#FF4D4F] bg-white border border-[#FF4D4F] rounded-lg">
                               반려됨
                             </button>
                           )}
@@ -274,8 +275,7 @@ const AdminAttendance = () => {
                           <td className="py-4 pl-2 text-sm font-bold text-slate-800">{req.name}</td>
                           <td className="py-4 pl-6 text-xs text-slate-500 font-medium">{req.dept_name} / {req.rank_name}</td>
                           <td className="py-4 pl-13 text-[0.6875rem] text-slate-400 font-mono">{req.work_date.split(" ")[0]}</td>
-                          <td className="py-4 pl-8 text-xs text-[#3530B8] font-bold">{req.start_dt.substring(11, 16)}</td>
-                          <td className="py-4 pl-8 text-xs text-[#3530B8] font-bold">{req.end_dt.substring(11, 16)}</td>
+                          <td className="py-4 pl-9 text-xs text-[#3530B8] font-bold">{req.end_dt.substring(11, 16)}</td>
                           <td className="py-4 pl-19 text-xs text-slate-500 w-130 truncate" title={req.reason}>
                             {req.reason}
                           </td>
@@ -319,11 +319,11 @@ const AdminAttendance = () => {
                                   <span className="text-xs text-slate-400">-</span>
                                 )
                               ) : req.status === 'APPROVED' ? (
-                                <button className="px-3 py-1 text-[10px] font-bold text-[#10B981] bg-white border border-[#10B981] rounded-lg hover:bg-[#F0FDF4] transition-all cursor-pointer">
+                                <button className="px-3 py-1 text-[10px] font-bold text-[#10B981] bg-white border border-[#10B981] rounded-lg">
                                   승인됨
                                 </button>
                               ) : (
-                                <button className="px-3 py-1 text-[10px] font-bold text-[#10B981] bg-white border border-[#10B981] rounded-lg hover:bg-[#F0FDF4] transition-all cursor-pointer">
+                                <button className="px-3 py-1 text-[10px] font-bold text-[#FF4D4F] bg-white border border-[#FF4D4F] rounded-lg">
                                   반려됨
                                 </button>
                               )}
