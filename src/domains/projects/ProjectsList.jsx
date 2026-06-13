@@ -33,7 +33,7 @@ const ProjectsList = () => {
 
   const [projects, setProjects] = useState([{}]);
   const [newProject, setNewProject] = useState({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
-  const [employess, setEmployess] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -83,7 +83,7 @@ const ProjectsList = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filteredEmployees = employess.filter(e => {
+  const filteredEmployees = employees.filter(e => {
     const matchsSearch = e.name.includes(empSearch);
     const isAlreadyAdded = newProject.members.some(m => m.id === e.id);
     const targetLank = e.rank_name !== "대표";
@@ -102,7 +102,7 @@ const ProjectsList = () => {
   };
 
   // ===== 수정 모드 참여자 검색 =====
-  const filteredEditEmployees = employess.filter(e => {
+  const filteredEditEmployees = employees.filter(e => {
     const matchesSearch = e.name.includes(editEmpSearch);
     const isAlreadyAdded = editData.members.some(m => m.id === e.id);
     const targetRank = e.rank_name !== "대표";
@@ -135,12 +135,13 @@ const ProjectsList = () => {
   };
 
 
+
   const filteredProjects = useMemo(() => {
     return projects.filter(p => {
       const matchesFilter = filter === '전체' || p.status === filter;
       const matchesSearch = searchBy === '프로젝트명'
         ? p.project_name?.includes(search)
-        : p.members.some(m => m.includes(search));
+        : p.projectMembersDTO?.some(m => m.name?.includes(search));
       return matchesFilter && matchesSearch;
     });
   }, [filter, search, searchBy, projects]);
@@ -203,16 +204,17 @@ const ProjectsList = () => {
 
   // ===== 인라인 수정 시작 =====
   const startEdit = () => {
-    const members = (selectedProject.projectMembersDTO || []).map(m => {
-      const emp = employess.find(e => String(e.id) === String(m.users_id));
-      return emp || {
-        id: m.users_id,
-        name: m.name,
-        sysname: m.sysname,
-        dept_name: m.dept_name,
-        rank_name: m.rank_name,
-      };
-    });
+    const members = (selectedProject.projectMembersDTO || [])
+      .filter(m => String(m.users_id) !== String(selectedProject.users_id)).map(m => {
+        const emp = employees.find(e => String(e.id) === String(m.users_id));
+        return emp || {
+          id: m.users_id,
+          name: m.name,
+          sysname: m.sysname,
+          dept_name: m.dept_name,
+          rank_name: m.rank_name,
+        };
+      });
     setEditData({
       project_name: selectedProject.project_name || '',
       contents: selectedProject.contents || '',
@@ -325,7 +327,7 @@ const ProjectsList = () => {
 
   useEffect(() => {
     getAllEmp().then(resp => {
-      setEmployess(resp.data)
+      setEmployees(resp.data)
     })
   }, []);
 
@@ -489,7 +491,7 @@ const ProjectsList = () => {
       <>
         <div className="flex items-center gap-2 min-w-0 mb-2">
           <h3 className="text-lg font-bold">{selectedProject.project_name}</h3>
-          {selectedProject.projectMembersDTO?.some(m => String(m.users_id) === String(user?.id)) && (
+          {selectedProject.users_id !== user.id && selectedProject.projectMembersDTO?.some(m => String(m.users_id) === String(user?.id)) && (
             <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
           )}
         </div>
@@ -511,17 +513,18 @@ const ProjectsList = () => {
 
         <h4 className={`${mobile ? 'text-[10px]' : 'text-xs'} font-bold text-[#8a92a6] uppercase mb-2`}>참여자</h4>
         <div className="flex flex-wrap gap-4 rounded-xl">
-          {selectedProject.projectMembersDTO?.map((member, index) => (
-            <div key={index} className="flex flex-col items-center gap-2 px-3 py-3">
-              <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-300">
-                <img
-                  src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`}
-                  alt={member?.name}
-                  className="w-full h-full object-cover" />
+          {selectedProject.projectMembersDTO?.filter(member =>
+            String(member.users_id) !== String(selectedProject.users_id)).map((member, index) => (
+              <div key={index} className="flex flex-col items-center gap-2 px-3 py-3">
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-300">
+                  <img
+                    src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`}
+                    alt={member?.name}
+                    className="w-full h-full object-cover" />
+                </div>
+                <span className="text-xs font-medium">{member.name}</span>
               </div>
-              <span className="text-xs font-medium">{member.name}</span>
-            </div>
-          ))}
+            ))}
         </div>
 
         {canEdit && (
@@ -599,103 +602,125 @@ const ProjectsList = () => {
             <table className={`w-full text-left border-collapse md:table-fixed ${selectedProject ? 'min-w-[800px]' : 'min-w-full'}`}>
               <thead className="hidden md:table-header-group">
                 <tr className="text-[#8a92a6] text-sm border-b border-gray-100">
-                  <th className={`pb-4 font-medium px-2 text-left ${selectedProject ? 'md:w-[20%]' : 'md:w-[32%]'}`}>프로젝트명 (클릭 시 칸반 보드로 이동)</th>
-                  <th className={`pb-4 font-medium px-2 text-left whitespace-nowrap ${selectedProject ? 'md:w-[15%]' : 'md:w-[24%]'}`}>기간</th>
-                  <th className={`pb-4 font-medium px-3 text-left whitespace-nowrap ${selectedProject ? 'md:w-[11%]' : 'md:w-[15%]'}`}>진행상황</th>
-                  <th className={`pb-4 font-medium px-2 text-left whitespace-nowrap min-w-[120px] ${selectedProject ? 'md:w-[25%]' : 'md:w-[12%]'}`}>참여자</th>
-                  <th className={`pb-4 font-medium px-2 text-left whitespace-nowrap min-w-[90px] ${selectedProject ? 'md:w-[16%]' : 'md:w-[8%]'}`}>상세보기</th>
-                  <th className={`pb-4 font-medium px-2 text-left whitespace-nowrap min-w-[60px] ${selectedProject ? 'md:w-[13%]' : 'md:w-[5%]'}`}>완료</th>
+                  <th className={`pb-4 font-medium px-2 text-left ${selectedProject ? 'md:w-[18%]' : 'md:w-[30%]'}`}>프로젝트명 (클릭 시 칸반 보드로 이동)</th>
+                  <th className={`pb-4 font-medium px-2 text-left whitespace-nowrap ${selectedProject ? 'md:w-[12%]' : 'md:w-[18%]'}`}>기간</th>
+                  <th className={`pb-4 font-medium px-3 text-left whitespace-nowrap ${selectedProject ? 'md:w-[10%]' : 'md:w-[12%]'}`}>진행상황</th>
+                  <th className={`pb-4 font-medium px-2 text-left whitespace-nowrap min-w-[70px] ${selectedProject ? 'md:w-[12%]' : 'md:w-[10%]'}`}>생성자</th>
+                  <th className={`pb-4 font-medium px-2 text-left whitespace-nowrap min-w-[120px] ${selectedProject ? 'md:w-[22%]' : 'md:w-[15%]'}`}>참여자</th>
+                  <th className={`pb-4 font-medium px-2 text-left whitespace-nowrap min-w-[90px] ${selectedProject ? 'md:w-[14%]' : 'md:w-[10%]'}`}>상세보기</th>
+                  <th className={`pb-4 font-medium px-2 text-left whitespace-nowrap min-w-[60px] ${selectedProject ? 'md:w-[12%]' : 'md:w-[5%]'}`}>완료</th>
                 </tr>
               </thead>
               <tbody>
-                {paginatedProjects.map(p => (
-                  <tr key={p.project_seq} className="border-b border-gray-100  transition-colors block md:table-row w-full mb-4 md:mb-0">
-                    <td className="py-2 px-2 block md:table-cell font-bold text-[#1a1c3d] text-base flex justify-between items-center md:items-start md:table-cell">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span onClick={() => navigate(`/kanban/${p.project_seq}`)} className="cursor-pointer hover:text-[#3530B8] text-sm md:block md:truncate">{p.project_name}</span>
-                        {p.projectMembersDTO?.some(m => String(m.users_id) === String(user?.id)) && (
-                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 md:hidden shrink-0">
-                        <button onClick={() => handleSelectProject(p)} className="text-[10px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-2 py-1 rounded">상세보기</button>
+                {paginatedProjects.length > 0 ? (
+                  paginatedProjects.map(p => (
+                    <tr key={p.project_seq} className="border-b border-gray-100  transition-colors block md:table-row w-full mb-4 md:mb-0">
+                      <td className="py-2 px-2 block md:table-cell font-bold text-[#1a1c3d] text-base flex justify-between items-center md:items-start md:table-cell">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span onClick={() => navigate(`/kanban/${p.project_seq}`)} className="cursor-pointer hover:text-[#3530B8] text-sm md:block md:truncate">{p.project_name}</span>
+                          {p.users_id !== user.id && p.projectMembersDTO?.some(m => String(m.users_id) === String(user?.id)) && (
+                            <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 md:hidden shrink-0">
+                          <button onClick={() => handleSelectProject(p)} className="text-[10px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-2 py-1 rounded">상세보기</button>
+                          {p.users_id === user?.id ? (
+                            <button
+                              onClick={() => p.status !== 'DONE' && handleComplete(p.project_seq)}
+                              className={`w-7 h-7 flex items-center justify-center rounded-md transition-all ${p.status === 'DONE' ? 'bg-emerald-50 text-emerald-500 cursor-default' : 'bg-red-50 text-red-500 hover:bg-red-100'}`}
+                            >
+                              <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
+                            </button>
+                          ) : (
+                            <span className="text-gray-400 text-xs w-7 h-7 flex items-center justify-center">-</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-2 px-2 block md:table-cell text-sm text-gray-500 md:whitespace-nowrap md:truncate">{p.start_date?.substring(0, 10)}~{p.end_date?.substring(0, 10)}</td>
+                      <td className="py-2 px-2 block md:table-cell">
+                        <div className="flex items-center gap-4">
+                          <span className={`inline-block px-4 py-1.5 rounded-full text-[11px] font-bold md:whitespace-nowrap ${p.status === 'DONE' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
+                            {p.status === 'IN_PROGRESS' ? '진행 중' : '완료'}
+                          </span>
+                          <div className="flex items-center -space-x-2 md:hidden">
+                            {p.projectMembersDTO?.filter(member =>
+                              String(member?.users_id) !== String(p?.users_id)).slice(0, 3).map((member, index) => (
+                                <div key={index} className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[9px] font-bold text-[#3530B8] border border-white shrink-0">
+                                  <div className="w-6 h-6 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
+                                    <img
+                                      src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`}
+                                      alt={member?.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+                            {p.projectMembersDTO?.filter(member =>
+                              String(member.users_id) !== String(p.users_id)).length > 3 && (
+                                <div className="w-6 h-6 rounded-full bg-[#F0F4FF] border border-white flex items-center justify-center text-[8px] font-bold text-[#3530B8] shrink-0 z-10 shadow-sm">
+                                  +{p.projectMembersDTO?.filter(member =>
+                                    String(member.users_id) !== String(p.users_id)).length - 3}
+                                </div>
+                              )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-2 px-2 block md:table-cell text-sm text-gray-500 md:whitespace-nowrap md:truncate">
+                        <span className="md:hidden text-gray-400 mr-2">생성자</span>
+                        {p.created_name || '알 수 없음'}
+                      </td>
+                      <td className="hidden md:table-cell py-4 px-2">
+                        <div className={`flex items-center ${p.projectMembersDTO?.length > 1 ? 'md:-space-x-3' : ''}`}>
+                          {p.projectMembersDTO?.filter(member =>
+                            String(member.users_id) !== String(p.users_id)).slice(0, 3).map((member, index) => (
+                              <div key={index} className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-[#3530B8] border-2 border-white shrink-0">
+                                <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
+                                  <img
+                                    src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`}
+                                    alt={member?.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          {p.projectMembersDTO?.filter(member =>
+                            String(member.users_id) !== String(p.users_id)).length > 3 && (
+                              <div className="w-8 h-8 rounded-full bg-[#F0F4FF] border-2 border-white flex items-center justify-center text-[10px] font-bold text-[#3530B8] shrink-0 z-10 shadow-sm">
+                                +{p.projectMembersDTO?.filter(member =>
+                                  String(member.users_id) !== String(p.users_id)).length - 3}
+                              </div>
+                            )}
+                        </div>
+                      </td>
+                      <td className="hidden md:table-cell py-4 px-2 md:whitespace-nowrap">
+                        <button onClick={() => handleSelectProject(p)} className="text-[11px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-3 py-1.5 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all whitespace-nowrap">
+                          상세보기
+                        </button>
+                      </td>
+                      <td className="hidden md:table-cell py-4 px-2 md:whitespace-nowrap">
                         {p.users_id === user?.id ? (
                           <button
                             onClick={() => p.status !== 'DONE' && handleComplete(p.project_seq)}
-                            className={`w-7 h-7 flex items-center justify-center rounded-md transition-all ${p.status === 'DONE' ? 'bg-emerald-50 text-emerald-500 cursor-default' : 'bg-red-50 text-red-500 hover:bg-red-100'}`}
+                            className={`w-6 h-6 flex items-center justify-center rounded-lg transition-all ${p.status === 'DONE' ? 'bg-emerald-50 text-emerald-500 cursor-default' : 'bg-red-50 text-red-500 hover:bg-red-100'}`}
                           >
-                            <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
+                            <FontAwesomeIcon icon={faCheck} className="text-[9px]" />
                           </button>
                         ) : (
-                          <span className="text-gray-400 text-xs w-7 h-7 flex items-center justify-center">-</span>
+                          <span className="text-gray-400 text-xs w-6 h-6 flex items-center justify-center">-</span>
                         )}
-                      </div>
-                    </td>
-                    <td className="py-2 px-2 block md:table-cell text-sm text-gray-500 md:whitespace-nowrap md:truncate">{p.start_date?.substring(0, 10)}~{p.end_date?.substring(0, 10)}</td>
-                    <td className="py-2 px-2 block md:table-cell">
-                      <div className="flex items-center gap-4">
-                        <span className={`inline-block px-4 py-1.5 rounded-full text-[11px] font-bold md:whitespace-nowrap ${p.status === 'DONE' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
-                          {p.status === 'IN_PROGRESS' ? '진행 중' : '완료'}
-                        </span>
-                        <div className="flex items-center -space-x-2 md:hidden">
-                          {p.projectMembersDTO?.slice(0, 3).map((member, index) => (
-                            <div key={index} className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[9px] font-bold text-[#3530B8] border border-white shrink-0">
-                              <div className="w-6 h-6 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
-                                <img
-                                  src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`}
-                                  alt={member?.name}
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                            </div>
-                          ))}
-                          {p.projectMembersDTO?.length > 3 && (
-                            <div className="w-6 h-6 rounded-full bg-[#F0F4FF] border border-white flex items-center justify-center text-[8px] font-bold text-[#3530B8] shrink-0 z-10 shadow-sm">
-                              +{p.projectMembersDTO.length - 3}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="hidden md:table-cell py-4 px-2">
-                      <div className={`flex items-center ${p.projectMembersDTO?.length > 1 ? 'md:-space-x-3' : ''}`}>
-                        {p.projectMembersDTO?.slice(0, 3).map((member, index) => (
-                          <div key={index} className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-[#3530B8] border-2 border-white shrink-0">
-                            <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
-                              <img
-                                src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`}
-                                alt={member?.name}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          </div>
-                        ))}
-                        {p.projectMembersDTO?.length > 3 && (
-                          <div className="w-8 h-8 rounded-full bg-[#F0F4FF] border-2 border-white flex items-center justify-center text-[10px] font-bold text-[#3530B8] shrink-0 z-10 shadow-sm">
-                            +{p.projectMembersDTO.length - 3}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="hidden md:table-cell py-4 px-2 md:whitespace-nowrap">
-                      <button onClick={() => handleSelectProject(p)} className="text-[11px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-3 py-1.5 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all whitespace-nowrap">
-                        상세보기
-                      </button>
-                    </td>
-                    <td className="hidden md:table-cell py-4 px-2 md:whitespace-nowrap">
-                      {p.users_id === user?.id ? (
-                        <button
-                          onClick={() => p.status !== 'DONE' && handleComplete(p.project_seq)}
-                          className={`w-6 h-6 flex items-center justify-center rounded-lg transition-all ${p.status === 'DONE' ? 'bg-emerald-50 text-emerald-500 cursor-default' : 'bg-red-50 text-red-500 hover:bg-red-100'}`}
-                        >
-                          <FontAwesomeIcon icon={faCheck} className="text-[9px]" />
-                        </button>
-                      ) : (
-                        <span className="text-gray-400 text-xs w-6 h-6 flex items-center justify-center">-</span>
-                      )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan="7" className="py-20 text-center text-gray-400 text-sm"
+                    >
+                      프로젝트가 없습니다.
                     </td>
                   </tr>
-                ))}
+                )
+                }
               </tbody>
             </table>
           </div>
@@ -762,7 +787,7 @@ const ProjectsList = () => {
                   {errors.start_date && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1">{errors.start_date}</p>}
                   {isStartCalendarOpen && (
                     <Calendar
-                      value={newProject.start}
+                      value={newProject.start_date}
                       minDate={new Date().toISOString().split('T')[0]}
                       onChange={(date) => {
                         if (date < new Date().toISOString().split('T')[0]) {
