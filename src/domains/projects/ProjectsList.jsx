@@ -608,13 +608,15 @@ const ProjectsList = () => {
                       </div>
                       <div className="flex flex-col items-end gap-1 md:hidden">
                         <button onClick={() => handleSelectProject(p)} className="text-[10px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-2 py-1 rounded">상세보기</button>
-                        {p.users_id === user?.id && (
+                        {p.users_id === user?.id ? (
                           <button
                             onClick={() => handleComplete(p)}
                             className="w-7 h-7 flex items-center justify-center bg-red-50 text-red-500 rounded-md hover:bg-red-100 transition-all"
                           >
                             <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
                           </button>
+                        ) : (
+                          <span className="text-gray-400 text-xs w-7 h-7 flex items-center justify-center">-</span>
                         )}
                       </div>
                     </td>
@@ -624,10 +626,10 @@ const ProjectsList = () => {
                         <span className={`inline-block px-4 py-1.5 rounded-full text-[11px] font-bold md:whitespace-nowrap ${p.status === 'DONE' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
                           {p.status === 'IN_PROGRESS' ? '진행 중' : '완료'}
                         </span>
-                        <div className="flex gap-1 md:hidden">
-                          {p.projectMembersDTO?.map((member, index) => (
-                            <div key={index} className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[9px] font-bold text-[#3530B8] border border-white">
-                              <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
+                        <div className="flex items-center -space-x-2 md:hidden">
+                          {p.projectMembersDTO?.slice(0, 3).map((member, index) => (
+                            <div key={index} className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[9px] font-bold text-[#3530B8] border border-white shrink-0">
+                              <div className="w-6 h-6 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
                                 <img
                                   src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`}
                                   alt={member?.name}
@@ -636,6 +638,11 @@ const ProjectsList = () => {
                               </div>
                             </div>
                           ))}
+                          {p.projectMembersDTO?.length > 3 && (
+                            <div className="w-6 h-6 rounded-full bg-[#F0F4FF] border border-white flex items-center justify-center text-[8px] font-bold text-[#3530B8] shrink-0 z-10 shadow-sm">
+                              +{p.projectMembersDTO.length - 3}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -665,13 +672,15 @@ const ProjectsList = () => {
                       </button>
                     </td>
                     <td className="hidden md:table-cell py-4 px-2 md:whitespace-nowrap">
-                      {p.users_id === user?.id && (
+                      {p.users_id === user?.id ? (
                         <button
                           onClick={() => handleComplete(p)}
                           className="w-6 h-6 flex items-center justify-center bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-all"
                         >
                           <FontAwesomeIcon icon={faCheck} className="text-[9px]" />
                         </button>
+                      ) : (
+                        <span className="text-gray-400 text-xs w-6 h-6 flex items-center justify-center">-</span>
                       )}
                     </td>
                   </tr>
