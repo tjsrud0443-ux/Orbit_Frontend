@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faUser, faChevronDown, faCircle, faCalendarAlt, faChevronLeft, faEllipsisV, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
-import { getKanbanTaskList, getProject, getProjectMembers, insertTask } from './projectsApi';
+import { deleteTask, getKanbanTaskList, getProject, getProjectMembers, insertTask, updateTask } from './projectsApi';
 import useAuthStore from '../../store/authStore';
 import useUserStore from '../../store/userStore';
 
@@ -84,8 +84,11 @@ const Kanban = () => {
   // 핸들러: 삭제
   const handleDeleteTask = (taskSeq) => {
     if (window.confirm('정말 삭제하시겠습니까?')) {
-      setTasks(prev => prev.filter(t => t.task_seq !== taskSeq));
-      setActiveMenuId(null);
+      deleteTask(taskSeq).then(resp => {
+        getKanbanTaskList(projectSeq).then(resp => {
+          setTasks(resp.data);
+        });
+      });
     }
   };
 
@@ -186,8 +189,24 @@ const Kanban = () => {
 
   // 핸들러: 상세 수정 저장
   const handleUpdateTask = () => {
-    setTasks(prev => prev.map(t => t.id === detailModalTask.task_seq ? detailModalTask : t));
-    setDetailModalTask(null);
+    const params = {
+      task_seq: detailModalTask.task_seq,
+      project_seq: projectSeq,
+      title: detailModalTask.title,
+      content: detailModalTask.content || "",
+      status: detailModalTask.status,
+      priority: detailModalTask.priority,
+      users_pic_id: detailModalTask.users_pic_id,
+      start_date: detailModalTask.start_date,
+      due_date: detailModalTask.due_date
+    };
+
+    updateTask(params).then(resp => {
+      getKanbanTaskList(projectSeq).then(resp => {
+        setTasks(resp.data);
+        setDetailModalTask(null);
+      });
+    });
   };
 
   useEffect(() => {
@@ -218,7 +237,7 @@ const Kanban = () => {
     getProject(projectSeq).then(resp => {
       setProject(resp.data);
     })
-  },[])
+  }, [])
 
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
@@ -992,7 +1011,7 @@ const Kanban = () => {
                       <div
                         key={member.employee_seq || idx}
                         onClick={() => {
-                          setDetailModalTask({ ...detailModalTask, users_pic_id: member.users_pic_id, name: member.name, sysname: member.sysname });
+                          setDetailModalTask({ ...detailModalTask, users_pic_id: member.users_id, name: member.name, sysname: member.sysname });
                           setOpenDropdown(null);
                         }}
                         className="px-4 py-3 flex items-center gap-3 hover:bg-[#F0F4FF] cursor-pointer transition-colors"
