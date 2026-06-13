@@ -606,7 +606,7 @@ const ProjectsList = () => {
                           <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
                         )}
                       </div>
-                      <div className="flex flex-col items-end gap-1 md:hidden">
+                      <div className="flex items-center gap-2 md:hidden shrink-0">
                         <button onClick={() => handleSelectProject(p)} className="text-[10px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-2 py-1 rounded">상세보기</button>
                         {p.users_id === user?.id ? (
                           <button
