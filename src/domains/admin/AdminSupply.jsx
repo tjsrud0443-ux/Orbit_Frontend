@@ -170,6 +170,7 @@ const SupplyModal = ({ mode, supply, onClose, onSave }) => {
               onChange={e => handleChange('code', e.target.value)}
               placeholder="예: EQP-0001"
               readOnly={mode === 'edit'}
+              maxLength={50}
               className={`px-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none font-mono transition-all
               ${mode === 'edit'
                 ? 'bg-gray-50 text-gray-400 cursor-not-allowed'  // 수정 모드 - 회색
