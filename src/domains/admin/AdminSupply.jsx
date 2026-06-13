@@ -1,9 +1,9 @@
-import React, { useState,useEffect, useRef } from 'react';
+﻿import React, { useState,useEffect, useRef } from 'react';
 import { Pagination as MuiPagination, Stack, useMediaQuery, useTheme } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { deleteAdminSupplies, getAdminSupplies, insertAdminSupplies} from '../admin/adminApi';
+import { deleteAdminSupplies, getAdminSupplies, insertAdminSupplies, updateAdminSupplies} from '../admin/adminApi';
 
 const CATEGORIES = ['전체', '사무용품', '전자기기', '가구', '네트워크 장비'];
 
@@ -12,7 +12,7 @@ const StyledAdminPagination = styled(MuiPagination)(({ theme }) => ({
   '& .MuiPaginationItem-root': {
     fontFamily: 'inherit',
     fontWeight: 'bold',
-    borderRadius: '12px',
+    borderRadius: '0.75rem',
     '&.Mui-selected': {
       backgroundColor: '#3530B8',
       color: '#fff',
@@ -25,9 +25,9 @@ const StyledAdminPagination = styled(MuiPagination)(({ theme }) => ({
       color: '#3530B8',
     },
     [theme.breakpoints.down('sm')]: {
-      minWidth: '32px',
-      height: '32px',
-      margin: '0 1px',
+      minWidth: '2rem',
+      height: '2rem',
+      margin: '0 0.0625rem',
     },
   },
 }));
@@ -67,7 +67,7 @@ const StockBadge = ({ status }) => {
     '재고 없음': 'bg-[#FFF0F0] text-[#FF4D4F] border border-[#FF4D4F]/30',
   };
   return (
-    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-center whitespace-nowrap ${styles[status]}`}>
+    <span className={`px-2.5 py-0.5 rounded-full text-[0.625rem] font-semibold text-center whitespace-nowrap ${styles[status]}`}>
       {status}
     </span>
   );
@@ -96,7 +96,7 @@ const SupplyModal = ({ mode, supply, onClose, onSave }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div className="bg-white rounded-[32px] shadow-xl w-full max-w-md mx-4 p-8">
+      <div className="bg-white rounded-[2rem] shadow-xl w-full max-w-md mx-4 p-8">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-lg font-bold text-slate-900">
             {mode === 'add' ? '비품 추가' : '비품 수정'}
@@ -374,6 +374,7 @@ const handleSave = async (form) => {
         minStockQty: item.min_stock_qty,
       })));
     } catch (error) {
+      console.log(error);  // ← 추가
       alert(error.response?.data || '수정 중 오류가 발생했습니다.');
     }
   }
@@ -410,13 +411,13 @@ const handleSave = async (form) => {
       </div>
 
       {/* 카드 */}
-      <div className="bg-white rounded-[24px] md:rounded-[32px] border border-slate-100 shadow-sm p-4 md:p-6 flex-1 flex flex-col min-h-0 overflow-hidden">
+      <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 shadow-sm p-4 md:p-6 flex-1 flex flex-col min-h-0 overflow-hidden">
 
         {/* 검색 + 필터 */}
         <div className="flex flex-wrap items-center gap-3 mb-5 shrink-0">
-          
+          <div className="flex-1" />
           {/* 검색창 */}
-          <div className="relative flex-1 min-w-[240px]">
+          <div className="relative w-70">
             <input
               type="text"
               value={keyword}
@@ -430,10 +431,10 @@ const handleSave = async (form) => {
               <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
             </svg>
           </div>
-
+          
           <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
             {/* 카테고리 드롭다운 */}
-            <div className="relative flex-1 lg:min-w-[140px]" ref={catRef}>
+            <div className="relative flex-1 lg:min-w-[8.75rem]" ref={catRef}>
               <button
                 onClick={() => setIsCatOpen(!isCatOpen)}
                 className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 outline-none focus:border-[#3530B8] transition-all flex items-center justify-between shadow-sm hover:border-gray-300"
@@ -462,7 +463,7 @@ const handleSave = async (form) => {
             </div>
 
             {/* 상태 드롭다운 */}
-            <div className="relative flex-1 lg:min-w-[130px]" ref={statusRef}>
+            <div className="relative flex-1 lg:min-w-[8.125rem]" ref={statusRef}>
               <button
                 onClick={() => setIsStatusOpen(!isStatusOpen)}
                 className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 outline-none focus:border-[#3530B8] transition-all flex items-center justify-between shadow-sm hover:border-gray-300"
@@ -510,7 +511,7 @@ const handleSave = async (form) => {
 
         {/* ── 비품 목록 ── */}
         <div className="flex-1 flex flex-col min-h-0 overflow-x-auto custom-scrollbar">
-          <div className="min-w-[900px] flex-1 flex flex-col min-h-0">
+          <div className="min-w-[56.25rem] flex-1 flex flex-col min-h-0">
             <div className="rounded-xl border border-gray-100 overflow-hidden flex flex-col flex-1 min-h-0">
             {/* 테이블 헤더 */}
             <div className="grid grid-cols-12 bg-gray-50 border-b border-gray-100 shrink-0">
@@ -522,9 +523,16 @@ const handleSave = async (form) => {
                   className="accent-indigo-600 w-4 h-4 cursor-pointer"
                 />
               </div>
-              {['비품명', '카테고리', '비품코드', '총 수량', '재고', '상태', '관리'].map((h, i) => (
+              {['비품명', '카테고리', '비품코드', '전체재고', ' 현재재고', '최소재고' ,'상태', '관리'].map((h, i) => (
                 <div key={h} className={`py-3 text-[0.68rem] font-extrabold text-gray-400 uppercase tracking-wider
-                  ${i === 0 ? 'col-span-3 px-4' : i === 1 ? 'col-span-2 px-4' : i === 2 ? 'col-span-2 px-4 text-center' : i === 3 ? 'col-span-1 px-4 text-center' : i === 4 ? 'col-span-1 px-4 text-center' : i === 5 ? 'col-span-1 px-4 text-center' : 'col-span-1 px-4 text-center'}`}>
+                  ${i === 0 ? 'col-span-2 px-4' 
+                  : i === 1 ? 'col-span-2 px-4' 
+                  : i === 2 ? 'col-span-2 px-4 text-center' 
+                  : i === 3 ? 'col-span-1 px-4 text-center' 
+                  : i === 4 ? 'col-span-1 px-4 text-center' 
+                  : i === 5 ? 'col-span-1 px-4 text-center' 
+                  : i === 6 ? 'col-span-1 px-4 text-center' 
+                  : 'col-span-1 px-4 text-center'}`}>
                   {h}
                 </div>
               ))}
@@ -544,7 +552,7 @@ const handleSave = async (form) => {
                         className="accent-indigo-600 w-4 h-4 cursor-pointer"
                       />
                     </div>
-                    <div className="col-span-3 px-4 py-3.5">
+                    <div className="col-span-2 px-4 py-3.5">
                       <p className="text-sm font-bold text-gray-800">{item.name}</p>
                     </div>
                     <div className="col-span-2 px-4 py-3.5">
@@ -558,6 +566,9 @@ const handleSave = async (form) => {
                     </div>
                     <div className="col-span-1 px-4 py-3.5 text-center">
                       <span className="text-sm font-bold text-gray-700">{item.stockQty}</span>
+                    </div>
+                    <div className="col-span-1 px-4 py-3.5 text-center"> 
+                      <span className="text-sm font-bold text-gray-700">{item.minStockQty}</span>
                     </div>
                     <div className="col-span-1 px-4 py-3.5 text-center">
                       <StockBadge status={stockStatus} />
