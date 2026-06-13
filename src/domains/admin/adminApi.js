@@ -53,11 +53,15 @@ export const deleteMeetingRoom = (seq) => maxios.delete(`/admin/ga/deleteMeeting
 /*비품 관리 */
 //비품 전체 리스트
 export const getAdminSupplies = () => maxios.get("/admin/supply");
+export const insertAdminSupplies = (inData) => maxios.post("/admin/supplyInsert",inData);
+export const deleteAdminSupplies = (ids) => maxios.delete('/admin/supplyDelete', { data: { ids } });
+export const updateAdminSupplies = (upData) => maxios.put('/admin/supplyUpdate', upData);
 //비품 신청 관리 신청 리스트
 export const getSuppyReqList = (params) => maxios.get("/admin/supplyReq",{ params });
 export const updateSupplyReqStatus = (upData) => maxios.put("/admin/supplyReqStatus",upData);
 //비품 대여 관련
-
+export const getSupplyRentalList =(params)=>maxios.get("/admin/supplyRental",{params});
+export const updateRentalStatus = (upRental) => maxios.put("/admin/returnSupply",upRental);
 
 
 
