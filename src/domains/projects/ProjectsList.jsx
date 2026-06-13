@@ -140,7 +140,7 @@ const ProjectsList = () => {
       const matchesFilter = filter === '전체' || p.status === filter;
       const matchesSearch = searchBy === '프로젝트명'
         ? p.project_name?.includes(search)
-        : p.members.some(m => m.includes(search));
+        : p.projectMembersDTO?.some(m => m.name?.includes(search));
       return matchesFilter && matchesSearch;
     });
   }, [filter, search, searchBy, projects]);
