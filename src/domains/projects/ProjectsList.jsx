@@ -613,8 +613,8 @@ const ProjectsList = () => {
                         <button onClick={() => handleSelectProject(p)} className="text-[10px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-2 py-1 rounded">상세보기</button>
                         {p.users_id === user?.id ? (
                           <button
-                            onClick={() => handleComplete(p.project_seq)}
-                            className="w-7 h-7 flex items-center justify-center bg-red-50 text-red-500 rounded-md hover:bg-red-100 transition-all"
+                            onClick={() => p.status !== 'DONE' && handleComplete(p.project_seq)}
+                            className={`w-7 h-7 flex items-center justify-center rounded-md transition-all ${p.status === 'DONE' ? 'bg-emerald-50 text-emerald-500 cursor-default' : 'bg-red-50 text-red-500 hover:bg-red-100'}`}
                           >
                             <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
                           </button>
