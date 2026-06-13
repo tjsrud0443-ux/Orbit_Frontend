@@ -3,41 +3,23 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faUser, faChevronDown, faCircle, faCalendarAlt, faChevronLeft, faEllipsisV, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
-import { getKanbanTaskList, getProjectMembers } from './projectsApi';
+import { getKanbanTaskList, getProjectMembers, insertTask } from './projectsApi';
 import useAuthStore from '../../store/authStore';
+import useUserStore from '../../store/userStore';
 
-// 초기 Mock 데이터
-// const INITIAL_TASKS = [
-//   { id: 1, title: '디자인 시스템 가이드 작성', assignee: '나 (관리자)', startDate: '2026-05-28', endDate: '2026-06-05', status: 'TODO', priority: 'High', desc: '그룹웨어 디자인 시스템 문서화 및 가이드 배포' },
-//   { id: 2, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-//   { id: 3, title: 'API 문서 정비', assignee: '나 (관리자)', startDate: '2026-05-30', endDate: '2026-06-15', status: 'DONE', priority: 'Low', desc: 'Swagger 문서 최신화 및 예외 처리 가이드 추가' },
-//   { id: 4, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-//   { id: 5, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-//   { id: 6, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-//   { id: 7, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-//   { id: 8, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-//   { id: 9, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-//   { id: 10, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-//   { id: 11, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-//   { id: 12, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-//   { id: 13, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-//   { id: 14, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-//   { id: 15, title: '로그인 페이지 UI 고도화', assignee: '나 (관리자)', startDate: '2026-05-29', endDate: '2026-06-10', status: 'DOING', priority: 'Medium', desc: 'JWT 로그인 처리 및 반응형 스타일링 적용' },
-
+// const PROJECT_MEMBERS = [
+//   { id: 0, name: '나 (관리자)', avatar: 'https://i.pravatar.cc/150?u=admin' },
+//   { id: 1, name: '김철수', avatar: 'https://i.pravatar.cc/150?u=1' },
+//   { id: 2, name: '이영희', avatar: 'https://i.pravatar.cc/150?u=2' },
+//   { id: 3, name: '박지성', avatar: 'https://i.pravatar.cc/150?u=3' },
+//   { id: 4, name: '최민수', avatar: 'https://i.pravatar.cc/150?u=4' },
 // ];
-
-const PROJECT_MEMBERS = [
-  { id: 0, name: '나 (관리자)', avatar: 'https://i.pravatar.cc/150?u=admin' },
-  { id: 1, name: '김철수', avatar: 'https://i.pravatar.cc/150?u=1' },
-  { id: 2, name: '이영희', avatar: 'https://i.pravatar.cc/150?u=2' },
-  { id: 3, name: '박지성', avatar: 'https://i.pravatar.cc/150?u=3' },
-  { id: 4, name: '최민수', avatar: 'https://i.pravatar.cc/150?u=4' },
-];
 
 const Kanban = () => {
   const { projectSeq } = useParams();
   const navigate = useNavigate();
   const token = useAuthStore(state => state.token);
+  const user = useUserStore(state => state.user);
 
   const [tasks, setTasks] = useState([]);
   const [members, setMembers] = useState([]);
@@ -56,11 +38,11 @@ const Kanban = () => {
 
   // 신규 Task 생성을 위한 폼 상태
   const [newGlobalTask, setNewGlobalTask] = useState({
-    title: '', users_pic_id: '', name: '', sysname: '', priority: 'Medium', status: 'TODO', start_date: new Date().toISOString().split('T')[0], due_date: '', content: ''
+    title: '', users_pic_id: '', name: '', sysname: '', priority: 'medium', status: 'TODO', start_date: new Date().toISOString().split('T')[0], due_date: '', content: ''
   });
 
   // 인라인 폼 상태
-  const [inlineForm, setInlineForm] = useState({ status: null, title: '', name: '나 (관리자)', priority: 'Medium', start_date: new Date().toISOString().split('T')[0], due_date: '' });
+  const [inlineForm, setInlineForm] = useState({ status: null, title: '', users_pic_id: user?.id, name: user?.name, sysname: user?.sysname, priority: 'medium', start_date: new Date().toISOString().split('T')[0], due_date: '' });
   const [errors, setErrors] = useState({});
   const [activeMenuId, setActiveMenuId] = useState(null);
 
@@ -79,7 +61,7 @@ const Kanban = () => {
     const handleClickOutside = (event) => {
       // 1. 인라인 폼 외부 클릭 시 초기화
       if (inlineFormRef.current && !inlineFormRef.current.contains(event.target)) {
-        setInlineForm({ status: null, title: '', name: '나 (관리자)', priority: 'Medium', start_date: new Date().toISOString().split('T')[0], due_date: '' });
+        setInlineForm({ status: null, title: '', users_pic_id: user?.id, name: user?.name, sysname: user?.sysname, priority: 'medium', start_date: new Date().toISOString().split('T')[0], due_date: '' });
         setErrors({});
       }
 
@@ -136,6 +118,7 @@ const Kanban = () => {
 
   // 핸들러: 전역 생성
   const handleGlobalCreate = () => {
+
     const newErrors = {};
     if (!newGlobalTask.title) newErrors.globalTitle = '제목을 입력해 주세요.';
     if (!newGlobalTask.users_pic_id) newErrors.globalAssignee = '담당자를 선택해 주세요';
@@ -146,13 +129,26 @@ const Kanban = () => {
       return;
     }
 
-    const task = {
-      ...newGlobalTask,
-      id: Date.now(),
+    const params = {
+      project_seq: projectSeq,
+      title: newGlobalTask.title,
+      content: newGlobalTask.content || "",
+      status: newGlobalTask.status,
+      priority: newGlobalTask.priority,
+      users_pic_id: newGlobalTask.users_pic_id,
+      start_date: newGlobalTask.start_date,
+      due_date: newGlobalTask.due_date
     };
-    setTasks([...tasks, task]);
-    setIsModalOpen(false);
-    setNewGlobalTask({ title: '', users_pic_id: '', name: '', sysname: '', priority: 'Medium', status: 'TODO', start_date: new Date().toISOString().split('T')[0], due_date: '', content: '' });
+
+    console.log("전송 파라미터", params);
+
+    insertTask(params).then(resp => {
+      getKanbanTaskList(projectSeq).then(resp => {
+        setTasks(resp.data);
+      });
+      setIsModalOpen(false);
+      setNewGlobalTask({ title: '', users_pic_id: '', name: '', sysname: '', priority: 'medium', status: 'TODO', start_date: new Date().toISOString().split('T')[0], due_date: '', content: '' });
+    });
     setErrors({});
   };
 
@@ -167,18 +163,33 @@ const Kanban = () => {
       return;
     }
 
-    const task = {
-      id: Date.now(),
+    const params = {
+      project_seq: projectSeq,
       title: inlineForm.title,
-      name: inlineForm.name,
-      priority: inlineForm.priority,
+      content: "",
       status: status,
+      priority: inlineForm.priority,
+      users_pic_id: inlineForm.users_pic_id,
       start_date: inlineForm.start_date,
-      due_date: inlineForm.due_date,
-      content: ''
+      due_date: inlineForm.due_date
     };
-    setTasks([...tasks, task]);
-    setInlineForm({ status: null, title: '', name: '나 (관리자)', priority: 'Medium', start_date: new Date().toISOString().split('T')[0], due_date: '' });
+
+    insertTask(params).then(resp => {
+      getKanbanTaskList(projectSeq).then(resp => {
+        setTasks(resp.data);
+      });
+      setInlineForm({
+        status: null,
+        title: '',
+        users_pic_id: user?.id,
+        name: user?.name,
+        sysname: user?.sysname,
+        priority: 'medium',
+        start_date: new Date().toISOString().split('T')[0],
+        due_date: '',
+        content: ''
+      });
+    });
     setErrors({});
   };
 
@@ -187,6 +198,17 @@ const Kanban = () => {
     setTasks(prev => prev.map(t => t.id === detailModalTask.task_seq ? detailModalTask : t));
     setDetailModalTask(null);
   };
+
+  useEffect(() => {
+    if (user) {
+      setInlineForm(prev => ({
+        ...prev,
+        users_pic_id: user.id,
+        name: user.name,
+        sysname: user.sysname
+      }));
+    }
+  }, [user]);
 
   useEffect(() => {
     getKanbanTaskList(projectSeq).then(resp => {
@@ -200,6 +222,7 @@ const Kanban = () => {
       setMembers(resp.data);
     });
   }, []);
+
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
       {/* 1. 데스크탑 뷰 (기존 코드 유지) */}
@@ -217,11 +240,13 @@ const Kanban = () => {
           </div>
           <div className="flex items-center gap-6">
             <div className="flex -space-x-3">
-              {members.slice(0, 5).map((member, index) => (
-                <div key={index} className="w-9 h-9 rounded-full border-2 border-white overflow-hidden shadow-sm hover:z-10 transition-all cursor-pointer">
-                  <img src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`} alt={member?.name} className="w-full h-full object-cover" />
-                </div>
-              ))}
+              {members.filter(member =>
+                String(member.users_id) !== String(user?.id)).map((member, index) => (
+
+                  <div key={index} className="w-9 h-9 rounded-full border-2 border-white overflow-hidden shadow-sm hover:z-10 transition-all cursor-pointer">
+                    <img src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`} alt={member?.name} className="w-full h-full object-cover" />
+                  </div>
+                ))}
               {members.length > 5 && (
                 <div className="w-9 h-9 rounded-full border-2 border-white bg-slate-50 flex items-center justify-center text-[10px] font-bold text-slate-400 shadow-sm cursor-pointer">
                   +{members.length - 5}
@@ -347,7 +372,7 @@ const Kanban = () => {
                         {errors[`inlineTitle-${status}`] && <p className="text-[10px] text-red-500 font-bold mt-[-8px] ml-1">{errors[`inlineTitle-${status}`]}</p>}
                         <div className="grid grid-cols-2 gap-2">
                           <div className="bg-slate-50 rounded-lg p-2 text-sm font-bold text-slate-400 flex items-center gap-1.5 border border-transparent">
-                            <FontAwesomeIcon icon={faUser} className="text-sm" /> {inlineForm.name}
+                            <FontAwesomeIcon icon={faUser} className="text-sm" /> {inlineForm?.name || '담당자 선택'}
                           </div>
                           <div className="relative">
                             <div
@@ -359,7 +384,7 @@ const Kanban = () => {
                             </div>
                             {openDropdown === `inlinePriority-${status}` && (
                               <div className="absolute top-full left-0 z-[120] mt-1 w-full bg-white border border-slate-100 rounded-lg shadow-lg overflow-hidden">
-                                {['High', 'Medium', 'Low'].map(p => (
+                                {['high', 'medium', 'low'].map(p => (
                                   <div
                                     key={p}
                                     onClick={() => { setInlineForm({ ...inlineForm, priority: p }); setOpenDropdown(null); }}
@@ -436,12 +461,12 @@ const Kanban = () => {
 
                         <div className="flex gap-2">
                           <button onClick={() => handleInlineCreate(status)} className="flex-1 bg-[#3530B8] text-white py-2 rounded-xl text-xs font-bold">추가</button>
-                          <button onClick={() => { setInlineForm({ status: null, title: '', name: '나 (관리자)', priority: 'Medium', start_date: new Date().toISOString().split('T')[0], due_date: '' }); setErrors({}); }} className="flex-1 bg-slate-100 text-slate-400 py-2 rounded-xl text-xs font-bold">취소</button>
+                          <button onClick={() => { setInlineForm({ status: null, title: '', users_pic_id: user?.id, name: user?.name, sysname: user?.sysname, priority: 'medium', start_date: new Date().toISOString().split('T')[0], due_date: '' }); setErrors({}); }} className="flex-1 bg-slate-100 text-slate-400 py-2 rounded-xl text-xs font-bold">취소</button>
                         </div>
                       </div>
                     ) : (
                       <button
-                        onClick={() => setInlineForm({ ...inlineForm, status })}
+                        onClick={() => setInlineForm({ ...inlineForm, status, users_pic_id: user?.id, name: user?.name, sysname: user?.sysname })}
                         className="w-full py-4 border-2 border-dashed border-slate-400/50 rounded-2xl text-slate-500 hover:text-[#3530B8] hover:border-[#3530B8]/30 hover:bg-white transition-all flex items-center justify-center gap-2 group"
                       >
                         <FontAwesomeIcon icon={faPlus} className="text-xs group-hover:scale-110 transition-transform" />
@@ -472,14 +497,17 @@ const Kanban = () => {
         {/* 참여자 & Task 생성 버튼 */}
         <div className="flex justify-between items-center mb-8">
           <div className="flex -space-x-2">
-            {PROJECT_MEMBERS.slice(0, 4).map(m => (
-              <div key={m.id} className="w-8 h-8 rounded-full border-2 border-white overflow-hidden shadow-sm">
-                <img src={m.avatar} alt={m.name} className="w-full h-full object-cover" />
+            {members.filter(member =>
+              String(member.users_id) !== String(user?.id)).map((member, index) => (
+                <div key={index} className="w-8 h-8 rounded-full border-2 border-white overflow-hidden shadow-sm hover:z-10 transition-all cursor-pointer">
+                  <img src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`} alt={member?.name} className="w-full h-full object-cover" />
+                </div>
+              ))}
+            {members.length > 5 && (
+              <div className="w-8 h-8 rounded-full border-2 border-white bg-slate-50 flex items-center justify-center text-[10px] font-bold text-slate-400 shadow-sm cursor-pointer">
+                +{members.length - 5}
               </div>
-            ))}
-            <div className="w-8 h-8 rounded-full border-2 border-white bg-slate-50 flex items-center justify-center text-[9px] font-bold text-slate-400 shadow-sm">
-              +2
-            </div>
+            )}
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
@@ -590,7 +618,7 @@ const Kanban = () => {
               {errors[`inlineTitle-${activeTab}`] && <p className="text-[10px] text-red-500 font-bold mt-[-8px] ml-1">{errors[`inlineTitle-${activeTab}`]}</p>}
               <div className="grid grid-cols-2 gap-2">
                 <div className="bg-slate-50 rounded-lg p-2 text-sm font-bold text-slate-400 flex items-center gap-1.5 border border-transparent">
-                  <FontAwesomeIcon icon={faUser} className="text-sm" /> {inlineForm.name}
+                  <FontAwesomeIcon icon={faUser} className="text-sm" /> {inlineForm?.name || '담당자 선택'}
                 </div>
                 <div className="relative">
                   <div
@@ -602,7 +630,7 @@ const Kanban = () => {
                   </div>
                   {openDropdown === `inlinePriority-${activeTab}` && (
                     <div className="absolute top-full left-0 z-[120] mt-1 w-full bg-white border border-slate-100 rounded-lg shadow-lg overflow-hidden">
-                      {['High', 'Medium', 'Low'].map(p => (
+                      {['high', 'medium', 'low'].map(p => (
                         <div
                           key={p}
                           onClick={() => { setInlineForm({ ...inlineForm, priority: p }); setOpenDropdown(null); }}
@@ -679,12 +707,12 @@ const Kanban = () => {
 
               <div className="flex gap-2">
                 <button onClick={() => handleInlineCreate(activeTab)} className="flex-1 bg-[#3530B8] text-white py-2 rounded-xl text-xs font-bold">추가</button>
-                <button onClick={() => { setInlineForm({ status: null, title: '', name: '나 (관리자)', priority: 'Medium', start_date: new Date().toISOString().split('T')[0], due_date: '' }); setErrors({}); }} className="flex-1 bg-slate-100 text-slate-400 py-2 rounded-xl text-xs font-bold">취소</button>
+                <button onClick={() => { setInlineForm({ status: null, title: '', users_pic_id: user?.id, name: user?.name, sysname: user?.sysname, priority: 'medium', start_date: new Date().toISOString().split('T')[0], due_date: '' }); setErrors({}); }} className="flex-1 bg-slate-100 text-slate-400 py-2 rounded-xl text-xs font-bold">취소</button>
               </div>
             </div>
           ) : (
             <button
-              onClick={() => setInlineForm({ ...inlineForm, status: activeTab })}
+              onClick={() => setInlineForm({ ...inlineForm, status: activeTab, users_pic_id: user?.id, name: user?.name, sysname: user?.sysname })}
               className="w-full py-4 border-2 border-dashed border-slate-300/50 rounded-2xl text-slate-400 flex items-center justify-center gap-2 group active:bg-slate-50 transition-all cursor-pointer"
             >
               <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
@@ -703,7 +731,7 @@ const Kanban = () => {
               <button
                 onClick={() => {
                   setIsModalOpen(false);
-                  setNewGlobalTask({ title: '', users_pic_id: '', name: '', sysname: '', priority: 'Medium', status: 'TODO', start_date: new Date().toISOString().split('T')[0], due_date: '', content: '' });
+                  setNewGlobalTask({ title: '', users_pic_id: '', name: '', sysname: '', priority: 'medium', status: 'TODO', start_date: new Date().toISOString().split('T')[0], due_date: '', content: '' });
                   setErrors({});
                 }}
                 className="text-slate-400 hover:text-slate-600 transition-colors"
@@ -731,9 +759,12 @@ const Kanban = () => {
               <div className="space-y-1.5 relative">
                 <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">담당자</p>
                 <div
-                  onClick={() => setOpenDropdown(openDropdown === 'globalAssignee' ? null : 'globalAssignee')}
-                  className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition-colors"
-                >
+                  onClick={() => setOpenDropdown(
+                    openDropdown === 'globalAssignee'
+                      ? null
+                      : 'globalAssignee'
+                  )}
+                  className={`flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition-colors ${errors.globalAssignee ? 'border border-red-500' : ''}`}>
                   <div className="w-7 h-7 rounded-full bg-indigo-50 flex items-center justify-center overflow-hidden border border-white">
                     {newGlobalTask.sysname ? (
                       <img src={`http://localhost/file/profile/view?sysname=${newGlobalTask.sysname}&token=${token}`} alt={newGlobalTask.name} className="w-full h-full object-cover" />
@@ -744,13 +775,23 @@ const Kanban = () => {
                   <span className="text-sm font-bold text-slate-600">{newGlobalTask.name || '담당자를 선택하세요.'}</span>
                   <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-400 ml-auto" />
                 </div>
+                {errors.globalAssignee && (
+                  <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">
+                    {errors.globalAssignee}
+                  </p>
+                )}
                 {openDropdown === 'globalAssignee' && (
                   <div className="absolute top-full left-0 z-[110] mt-1 w-full max-h-48 overflow-y-auto bg-white border border-slate-100 rounded-xl shadow-xl animate-in fade-in zoom-in duration-200 custom-scrollbar">
                     {members.map((member, idx) => (
                       <div
                         key={member.employee_seq || idx}
                         onClick={() => {
-                          setNewGlobalTask({ ...newGlobalTask, users_pic_id: member.users_pic_id, name: member.name, sysname: member.sysname });
+                          setNewGlobalTask({ ...newGlobalTask, users_pic_id: member.users_id, name: member.name, sysname: member.sysname });
+                          if (errors.globalAssignee) {
+                            setErrors(prev => ({
+                              ...prev, globalAssignee: null
+                            }));
+                          }
                           setOpenDropdown(null);
                         }}
                         className="px-4 py-3 flex items-center gap-3 hover:bg-[#F0F4FF] cursor-pointer transition-colors"
@@ -801,7 +842,7 @@ const Kanban = () => {
                   </div>
                   {openDropdown === 'globalPriority' && (
                     <div className="absolute top-full left-0 z-[110] mt-1 w-32 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
-                      {['High', 'Medium', 'Low'].map(p => (
+                      {['high', 'medium', 'low'].map(p => (
                         <div
                           key={p}
                           onClick={() => { setNewGlobalTask({ ...newGlobalTask, priority: p }); setOpenDropdown(null); }}
@@ -895,7 +936,7 @@ const Kanban = () => {
               <button
                 onClick={() => {
                   setIsModalOpen(false);
-                  setNewGlobalTask({ title: '', users_pic_id: '', name: '', sysname: '', priority: 'Medium', status: 'TODO', start_date: new Date().toISOString().split('T')[0], due_date: '', content: '' });
+                  setNewGlobalTask({ title: '', users_pic_id: '', name: '', sysname: '', priority: 'medium', status: 'TODO', start_date: new Date().toISOString().split('T')[0], due_date: '', content: '' });
                   setErrors({});
                 }}
                 className="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-bold text-sm hover:bg-slate-200 transition-all"
@@ -1005,7 +1046,7 @@ const Kanban = () => {
                   </div>
                   {openDropdown === 'detailPriority' && (
                     <div className="absolute top-full left-0 z-[110] mt-1 w-32 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
-                      {['High', 'Medium', 'Low'].map(p => (
+                      {['high', 'medium', 'low'].map(p => (
                         <div
                           key={p}
                           onClick={() => { setDetailModalTask({ ...detailModalTask, priority: p }); setOpenDropdown(null); }}
@@ -1024,7 +1065,7 @@ const Kanban = () => {
                 <div className="space-y-2">
                   <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">시작일</p>
                   <div className="text-sm font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg flex items-center h-[32px]">
-                    {detailModalTask.start_date}
+                    {detailModalTask.start_date?.substring(0, 10)}
                   </div>
                 </div>
                 <div className="space-y-2 relative">
@@ -1033,7 +1074,7 @@ const Kanban = () => {
                     onClick={() => setOpenCalendar(openCalendar === 'detailEnd' ? null : 'detailEnd')}
                     className="text-sm font-bold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg cursor-pointer flex justify-between items-center min-w-[150px] h-[32px]"
                   >
-                    {detailModalTask.due_date}
+                    {detailModalTask.due_date.substring(0, 10)}
                     <FontAwesomeIcon icon={faCalendarAlt} className="text-slate-400 text-[10px]" />
                   </div>
                   {openCalendar === 'detailEnd' && (
