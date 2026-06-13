@@ -227,7 +227,6 @@ const Kanban = () => {
 
   useEffect(() => {
     getKanbanTaskList(projectSeq).then(resp => {
-      console.log(resp.data)
       setTasks(resp.data);
     })
   }, [projectSeq]);
@@ -430,7 +429,7 @@ const Kanban = () => {
                               <FontAwesomeIcon icon={faCalendarAlt} className="text-sm text-slate-400" />
                             </div>
                             {openCalendar === `inlineStart-${status}` && (
-                              <div className="absolute top-full left-0 z-[120] mt-1 w-[240px] transform origin-top-left scale-90">
+                              <div className={`absolute top-full left-0 z-[120] mt-1 w-[240px] transform origin-top-left scale-90 ${tasks.filter(t => t.status === status).length === 0 ? '[&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-0 [&>div]:mb-0' : ''}`}>
                                 <Calendar
                                   value={inlineForm.start_date}
                                   minDate={new Date().toISOString().split('T')[0]}
@@ -459,7 +458,7 @@ const Kanban = () => {
                               <FontAwesomeIcon icon={faCalendarAlt} className="text-sm text-slate-400" />
                             </div>
                             {openCalendar === `inlineEnd-${status}` && (
-                              <div className="absolute top-full right-0 z-[120] mt-1 w-[240px] transform origin-top-right scale-90">
+                              <div className={`absolute top-full right-0 z-[120] mt-1 w-[240px] transform origin-top-right scale-90 ${tasks.filter(t => t.status === status).length === 0 ? '[&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-0 [&>div]:mb-0' : ''}`}>
                                 <Calendar
                                   value={inlineForm.due_date}
                                   minDate={inlineForm.start_date || new Date().toISOString().split('T')[0]}
@@ -676,7 +675,7 @@ const Kanban = () => {
                     <FontAwesomeIcon icon={faCalendarAlt} className="text-sm text-slate-400" />
                   </div>
                   {openCalendar === `inlineStart-${activeTab}` && (
-                    <div className="absolute top-full left-0 z-[120] mt-1 w-[240px] transform origin-top-left scale-90">
+                    <div className={`absolute top-full left-0 z-[120] mt-1 w-[240px] transform origin-top-left scale-90 ${tasks.filter(t => t.status === activeTab).length === 0 ? '[&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-0 [&>div]:mb-0' : ''}`}>
                       <Calendar
                         value={inlineForm.start_date}
                         minDate={new Date().toISOString().split('T')[0]}
@@ -705,7 +704,7 @@ const Kanban = () => {
                     <FontAwesomeIcon icon={faCalendarAlt} className="text-sm text-slate-400" />
                   </div>
                   {openCalendar === `inlineEnd-${activeTab}` && (
-                    <div className="absolute top-full right-0 z-[120] mt-1 w-[240px] transform origin-top-right scale-90">
+                    <div className={`absolute top-full right-0 z-[120] mt-1 w-[240px] transform origin-top-right scale-90 ${tasks.filter(t => t.status === activeTab).length === 0 ? '[&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-0 [&>div]:mb-0' : ''}`}>
                       <Calendar
                         value={inlineForm.due_date}
                         minDate={inlineForm.start_date || new Date().toISOString().split('T')[0]}
@@ -889,7 +888,7 @@ const Kanban = () => {
                     <FontAwesomeIcon icon={faCalendarAlt} className="text-slate-400 text-[10px]" />
                   </div>
                   {openCalendar === 'start' && (
-                    <div className="absolute top-full left-0 z-[110] mt-2 w-[280px]">
+                    <div className="absolute top-full left-0 z-[110] mt-2 w-[280px] [&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-0 [&>div]:mb-0">
                       <Calendar
                         value={newGlobalTask.start_date}
                         minDate={new Date().toISOString().split('T')[0]}
@@ -919,7 +918,7 @@ const Kanban = () => {
                     <FontAwesomeIcon icon={faCalendarAlt} className="text-slate-400 text-[10px]" />
                   </div>
                   {openCalendar === 'end' && (
-                    <div className="absolute top-full right-0 z-[110] mt-2 w-[280px]">
+                    <div className="absolute top-full right-0 z-[110] mt-2 w-[280px] [&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-0 [&>div]:mb-0">
                       <Calendar
                         value={newGlobalTask.due_date}
                         minDate={newGlobalTask.start_date || new Date().toISOString().split('T')[0]}
@@ -1099,7 +1098,7 @@ const Kanban = () => {
                     <FontAwesomeIcon icon={faCalendarAlt} className="text-slate-400 text-[10px]" />
                   </div>
                   {openCalendar === 'detailEnd' && (
-                    <div className="absolute top-full right-0 z-[110] mt-2 w-[280px]">
+                    <div className="absolute top-full right-0 z-[110] mt-2 w-[280px] [&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-0 [&>div]:mb-0">
                       <Calendar
                         value={detailModalTask.due_date}
                         minDate={detailModalTask.start_date}
