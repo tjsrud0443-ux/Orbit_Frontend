@@ -609,39 +609,65 @@ const ProjectsList = () => {
                 </tr>
               </thead>
               <tbody>
-                {paginatedProjects.map(p => (
-                  <tr key={p.project_seq} className="border-b border-gray-100  transition-colors block md:table-row w-full mb-4 md:mb-0">
-                    <td className="py-2 px-2 block md:table-cell font-bold text-[#1a1c3d] text-base flex justify-between items-center md:items-start md:table-cell">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span onClick={() => navigate(`/kanban/${p.project_seq}`)} className="cursor-pointer hover:text-[#3530B8] text-sm md:block md:truncate">{p.project_name}</span>
-                        {p.projectMembersDTO?.some(m => String(m.users_id) === String(user?.id)) && (
-                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 md:hidden shrink-0">
-                        <button onClick={() => handleSelectProject(p)} className="text-[10px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-2 py-1 rounded">상세보기</button>
-                        {p.users_id === user?.id ? (
-                          <button
-                            onClick={() => p.status !== 'DONE' && handleComplete(p.project_seq)}
-                            className={`w-7 h-7 flex items-center justify-center rounded-md transition-all ${p.status === 'DONE' ? 'bg-emerald-50 text-emerald-500 cursor-default' : 'bg-red-50 text-red-500 hover:bg-red-100'}`}
-                          >
-                            <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
-                          </button>
-                        ) : (
-                          <span className="text-gray-400 text-xs w-7 h-7 flex items-center justify-center">-</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-2 px-2 block md:table-cell text-sm text-gray-500 md:whitespace-nowrap md:truncate">{p.start_date?.substring(0, 10)}~{p.end_date?.substring(0, 10)}</td>
-                    <td className="py-2 px-2 block md:table-cell">
-                      <div className="flex items-center gap-4">
-                        <span className={`inline-block px-4 py-1.5 rounded-full text-[11px] font-bold md:whitespace-nowrap ${p.status === 'DONE' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
-                          {p.status === 'IN_PROGRESS' ? '진행 중' : '완료'}
-                        </span>
-                        <div className="flex items-center -space-x-2 md:hidden">
+                {paginatedProjects.length > 0 ? (
+                  paginatedProjects.map(p => (
+                    <tr key={p.project_seq} className="border-b border-gray-100  transition-colors block md:table-row w-full mb-4 md:mb-0">
+                      <td className="py-2 px-2 block md:table-cell font-bold text-[#1a1c3d] text-base flex justify-between items-center md:items-start md:table-cell">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span onClick={() => navigate(`/kanban/${p.project_seq}`)} className="cursor-pointer hover:text-[#3530B8] text-sm md:block md:truncate">{p.project_name}</span>
+                          {p.projectMembersDTO?.some(m => String(m.users_id) === String(user?.id)) && (
+                            <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 md:hidden shrink-0">
+                          <button onClick={() => handleSelectProject(p)} className="text-[10px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-2 py-1 rounded">상세보기</button>
+                          {p.users_id === user?.id ? (
+                            <button
+                              onClick={() => p.status !== 'DONE' && handleComplete(p.project_seq)}
+                              className={`w-7 h-7 flex items-center justify-center rounded-md transition-all ${p.status === 'DONE' ? 'bg-emerald-50 text-emerald-500 cursor-default' : 'bg-red-50 text-red-500 hover:bg-red-100'}`}
+                            >
+                              <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
+                            </button>
+                          ) : (
+                            <span className="text-gray-400 text-xs w-7 h-7 flex items-center justify-center">-</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-2 px-2 block md:table-cell text-sm text-gray-500 md:whitespace-nowrap md:truncate">{p.start_date?.substring(0, 10)}~{p.end_date?.substring(0, 10)}</td>
+                      <td className="py-2 px-2 block md:table-cell">
+                        <div className="flex items-center gap-4">
+                          <span className={`inline-block px-4 py-1.5 rounded-full text-[11px] font-bold md:whitespace-nowrap ${p.status === 'DONE' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
+                            {p.status === 'IN_PROGRESS' ? '진행 중' : '완료'}
+                          </span>
+                          <div className="flex items-center -space-x-2 md:hidden">
+                            {p.projectMembersDTO?.slice(0, 3).map((member, index) => (
+                              <div key={index} className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[9px] font-bold text-[#3530B8] border border-white shrink-0">
+                                <div className="w-6 h-6 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
+                                  <img
+                                    src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`}
+                                    alt={member?.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                            {p.projectMembersDTO?.length > 3 && (
+                              <div className="w-6 h-6 rounded-full bg-[#F0F4FF] border border-white flex items-center justify-center text-[8px] font-bold text-[#3530B8] shrink-0 z-10 shadow-sm">
+                                +{p.projectMembersDTO.length - 3}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-2 px-2 block md:table-cell text-sm text-gray-500 md:whitespace-nowrap md:truncate">
+                        <span className="md:hidden text-gray-400 mr-2">생성자</span>
+                        {p.created_name || '알 수 없음'}
+                      </td>
+                      <td className="hidden md:table-cell py-4 px-2">
+                        <div className={`flex items-center ${p.projectMembersDTO?.length > 1 ? 'md:-space-x-3' : ''}`}>
                           {p.projectMembersDTO?.slice(0, 3).map((member, index) => (
-                            <div key={index} className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[9px] font-bold text-[#3530B8] border border-white shrink-0">
-                              <div className="w-6 h-6 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
+                            <div key={index} className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-[#3530B8] border-2 border-white shrink-0">
+                              <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
                                 <img
                                   src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`}
                                   alt={member?.name}
@@ -651,56 +677,41 @@ const ProjectsList = () => {
                             </div>
                           ))}
                           {p.projectMembersDTO?.length > 3 && (
-                            <div className="w-6 h-6 rounded-full bg-[#F0F4FF] border border-white flex items-center justify-center text-[8px] font-bold text-[#3530B8] shrink-0 z-10 shadow-sm">
+                            <div className="w-8 h-8 rounded-full bg-[#F0F4FF] border-2 border-white flex items-center justify-center text-[10px] font-bold text-[#3530B8] shrink-0 z-10 shadow-sm">
                               +{p.projectMembersDTO.length - 3}
                             </div>
                           )}
                         </div>
-                      </div>
-                    </td>
-                    <td className="py-2 px-2 block md:table-cell text-sm text-gray-500 md:whitespace-nowrap md:truncate">
-                      <span className="md:hidden text-gray-400 mr-2">생성자</span>
-                      {p.created_name || '알 수 없음'}
-                    </td>
-                    <td className="hidden md:table-cell py-4 px-2">
-                      <div className={`flex items-center ${p.projectMembersDTO?.length > 1 ? 'md:-space-x-3' : ''}`}>
-                        {p.projectMembersDTO?.slice(0, 3).map((member, index) => (
-                          <div key={index} className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-[#3530B8] border-2 border-white shrink-0">
-                            <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
-                              <img
-                                src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`}
-                                alt={member?.name}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          </div>
-                        ))}
-                        {p.projectMembersDTO?.length > 3 && (
-                          <div className="w-8 h-8 rounded-full bg-[#F0F4FF] border-2 border-white flex items-center justify-center text-[10px] font-bold text-[#3530B8] shrink-0 z-10 shadow-sm">
-                            +{p.projectMembersDTO.length - 3}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="hidden md:table-cell py-4 px-2 md:whitespace-nowrap">
-                      <button onClick={() => handleSelectProject(p)} className="text-[11px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-3 py-1.5 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all whitespace-nowrap">
-                        상세보기
-                      </button>
-                    </td>
-                    <td className="hidden md:table-cell py-4 px-2 md:whitespace-nowrap">
-                      {p.users_id === user?.id ? (
-                        <button
-                          onClick={() => p.status !== 'DONE' && handleComplete(p.project_seq)}
-                          className={`w-6 h-6 flex items-center justify-center rounded-lg transition-all ${p.status === 'DONE' ? 'bg-emerald-50 text-emerald-500 cursor-default' : 'bg-red-50 text-red-500 hover:bg-red-100'}`}
-                        >
-                          <FontAwesomeIcon icon={faCheck} className="text-[9px]" />
+                      </td>
+                      <td className="hidden md:table-cell py-4 px-2 md:whitespace-nowrap">
+                        <button onClick={() => handleSelectProject(p)} className="text-[11px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-3 py-1.5 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all whitespace-nowrap">
+                          상세보기
                         </button>
-                      ) : (
-                        <span className="text-gray-400 text-xs w-6 h-6 flex items-center justify-center">-</span>
-                      )}
+                      </td>
+                      <td className="hidden md:table-cell py-4 px-2 md:whitespace-nowrap">
+                        {p.users_id === user?.id ? (
+                          <button
+                            onClick={() => p.status !== 'DONE' && handleComplete(p.project_seq)}
+                            className={`w-6 h-6 flex items-center justify-center rounded-lg transition-all ${p.status === 'DONE' ? 'bg-emerald-50 text-emerald-500 cursor-default' : 'bg-red-50 text-red-500 hover:bg-red-100'}`}
+                          >
+                            <FontAwesomeIcon icon={faCheck} className="text-[9px]" />
+                          </button>
+                        ) : (
+                          <span className="text-gray-400 text-xs w-6 h-6 flex items-center justify-center">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan="7" className="py-20 text-center text-gray-400 text-sm"
+                    >
+                      프로젝트가 없습니다.
                     </td>
                   </tr>
-                ))}
+                )
+                }
               </tbody>
             </table>
           </div>
