@@ -171,23 +171,27 @@ const AdminDept = () => {
 
 
     if (formMode === 'EDIT') {
-      updateDept(formData).then(resp => {
-        getGroup().then(resp => {
-          setFullTree({
-            root: resp.data.root,
-            nodeMap: resp.data.nodeMap
-          });
-          setEmployees(resp.data.users);
-          if (resp.data.root) {
-            setExpandedNodes(new Set([resp.data.root.deptSeq]));
-          }
-          setLoading(false);
-        })
-          .catch(err => {
-            console.error("조직도 로딩 실패", err);
+      if (!window.confirm("정말 수정하시겠습니까?")) {
+        return;
+      } else {
+        updateDept(formData).then(resp => {
+          getGroup().then(resp => {
+            setFullTree({
+              root: resp.data.root,
+              nodeMap: resp.data.nodeMap
+            });
+            setEmployees(resp.data.users);
+            if (resp.data.root) {
+              setExpandedNodes(new Set([resp.data.root.deptSeq]));
+            }
             setLoading(false);
-          });
-      })
+          })
+            .catch(err => {
+              console.error("조직도 로딩 실패", err);
+              setLoading(false);
+            });
+        })
+      }
     } else {
       addDept(payload).then(resp => {
         getGroup().then(resp => {
@@ -284,7 +288,7 @@ const AdminDept = () => {
           </td>
           <td className="py-4 pl-4 pr-20 text-right">
             <div className="flex justify-end gap-2">
-              {(level !== 0 && node.deptName !== '대표이사실') && (
+              {(level !== 0 && node.auth_group === 'ROLE_USER' && node.deptSeq !== 4) && (
                 <>
                   <button onClick={() => openEdit(node)} className="action-trigger w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-[#3530B8] transition-all flex items-center justify-center cursor-pointer" title="수정"><FontAwesomeIcon icon={faEdit} className="text-xs" /></button>
                   <button onClick={() => handleDelete(node)} className="action-trigger w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center cursor-pointer" title="삭제"><FontAwesomeIcon icon={faTrashAlt} className="text-xs" /></button>
@@ -374,16 +378,16 @@ const AdminDept = () => {
             )}
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">{formMode === 'CREATE_HQ' ? '본부명' : '부서명'}</label>
-              <input 
-                type="text" 
-                placeholder="예: 개발본부, 인사팀" 
-                maxLength={30} 
-                className={`w-full h-10 px-3 bg-slate-50 border ${errors.dept_name ? 'border-red-500' : 'border-slate-200'} rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20 focus:border-[#3530B8] transition-all`} 
-                value={formData.dept_name} 
+              <input
+                type="text"
+                placeholder="예: 개발본부, 인사팀"
+                maxLength={30}
+                className={`w-full h-10 px-3 bg-slate-50 border ${errors.dept_name ? 'border-red-500' : 'border-slate-200'} rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20 focus:border-[#3530B8] transition-all`}
+                value={formData.dept_name}
                 onChange={(e) => {
                   setFormData({ ...formData, dept_name: e.target.value.replace(/[^ㄱ-ㅎㅏ-ㅣ가-힣]/g, "") });
                   if (errors.dept_name) setErrors(prev => ({ ...prev, dept_name: null }));
-                }} 
+                }}
               />
               {errors.dept_name && <p className="text-[9px] text-red-500 font-medium ml-1">{errors.dept_name}</p>}
               <div className="flex items-center justify-between gap-1.5 text-[9px] text-slate-400 font-medium ml-1">
@@ -393,16 +397,16 @@ const AdminDept = () => {
             </div>
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">부서 코드</label>
-              <input 
-                type="text" 
-                placeholder="예: DEPT" 
-                maxLength={20} 
-                className={`w-full h-10 px-3 bg-slate-50 border ${errors.dept_code ? 'border-red-500' : 'border-slate-200'} rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20 focus:border-[#3530B8] transition-all font-mono`} 
-                value={formData.dept_code} 
+              <input
+                type="text"
+                placeholder="예: DEPT"
+                maxLength={20}
+                className={`w-full h-10 px-3 bg-slate-50 border ${errors.dept_code ? 'border-red-500' : 'border-slate-200'} rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20 focus:border-[#3530B8] transition-all font-mono`}
+                value={formData.dept_code}
                 onChange={(e) => {
                   setFormData({ ...formData, dept_code: e.target.value.replace(/[^A-Z]/g, "") });
                   if (errors.dept_code) setErrors(prev => ({ ...prev, dept_code: null }));
-                }} 
+                }}
               />
               {errors.dept_code && <p className="text-[9px] text-red-500 font-medium ml-1">{errors.dept_code}</p>}
               <div className="flex items-center justify-between gap-1.5 text-[9px] text-slate-400 font-medium ml-1">
@@ -435,6 +439,14 @@ const AdminDept = () => {
                   onClick={() => setFormData({ ...formData, auth_group: 'ROLE_GA_ADMIN' })}
                 >
                   총무 관리
+                </div>
+                <div
+                  value="ROLE_FN_ADMIN"
+                  className={`px-3 py-2 rounded-xl border text-[11px] font-bold cursor-pointer transition-all flex items-center justify-center
+                    ${formData.auth_group === 'ROLE_FN_ADMIN' ? 'bg-[#3530B8] text-white border-[#3530B8]' : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-[#3530B8]'}`}
+                  onClick={() => setFormData({ ...formData, auth_group: 'ROLE_FN_ADMIN' })}
+                >
+                  재무 관리
                 </div>
                 <div
                   value="ROLE_SUPER_ADMIN"

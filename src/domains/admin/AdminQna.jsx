@@ -192,81 +192,95 @@ const AdminQna = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedQna.map(item => (
-                    <tr key={item.question_seq} className="border-b border-gray-100 hover:bg-[#f8fbff] transition-colors md:table-row align-middle">
-                      <td className="py-7 px-6 md:table-cell text-sm font-medium text-[#1a1c3d] whitespace-nowrap align-middle">
-                        <span className="inline-flex items-center px-3 py-1 bg-[#F0F4FF] text-[#3530B8] rounded-lg text-xs font-bold">
-                          {item.category.replace("팀", "")}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 md:table-cell text-sm text-[#1a1c3d] max-w-0 align-middle">
-                        <div className="truncate">{item.question}</div>
-                      </td>
-                      <td className="py-4 px-4 md:table-cell text-sm text-gray-500 whitespace-nowrap align-middle">{item.user_name}</td>
-                      <td className="py-4 px-4 md:table-cell text-sm text-gray-500 whitespace-nowrap align-middle">{item.created_at}</td>
-                      <td className="py-4 px-4 md:table-cell whitespace-nowrap align-middle">
-                        <span className={`inline-block px-4 py-1.5 rounded-full text-[11px] font-bold ${item.status === 'ANSWERED' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
-                          {item.status === 'ANSWERED' ? '답변완료' : '답변 대기'}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 md:table-cell whitespace-nowrap align-middle">
-                        <div className="flex gap-2">
-                          {item.status === 'PENDING' ? (
-                            <button onClick={() => handleAnswerClick(item)} className="text-[11px] font-bold text-white border border-[#3530B8] bg-[#3530B8] px-3 py-1.5 rounded-lg hover:bg-[#2a2594] transition-all">
-                              답변하기
-                            </button>
-                          ) : (
-                            <>
-                              <button onClick={() => handleDetailClick(item)} className="text-[11px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-3 py-1.5 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all">
-                                상세보기
+                  {paginatedQna.length > 0 ? (
+                    paginatedQna.map(item => (
+                      <tr key={item.question_seq} className="border-b border-gray-100 hover:bg-[#f8fbff] transition-colors md:table-row align-middle">
+                        <td className="py-7 px-6 md:table-cell text-sm font-medium text-[#1a1c3d] whitespace-nowrap align-middle">
+                          <span className="inline-flex items-center px-3 py-1 bg-[#F0F4FF] text-[#3530B8] rounded-lg text-xs font-bold">
+                            {item.category.replace("팀", "")}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 md:table-cell text-sm text-[#1a1c3d] max-w-0 align-middle">
+                          <div className="truncate">{item.question}</div>
+                        </td>
+                        <td className="py-4 px-4 md:table-cell text-sm text-gray-500 whitespace-nowrap align-middle">{item.user_name}</td>
+                        <td className="py-4 px-4 md:table-cell text-sm text-gray-500 whitespace-nowrap align-middle">{item.created_at}</td>
+                        <td className="py-4 px-4 md:table-cell whitespace-nowrap align-middle">
+                          <span className={`inline-block px-4 py-1.5 rounded-full text-[11px] font-bold ${item.status === 'ANSWERED' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
+                            {item.status === 'ANSWERED' ? '답변완료' : '답변 대기'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 md:table-cell whitespace-nowrap align-middle">
+                          <div className="flex gap-2">
+                            {item.status === 'PENDING' ? (
+                              <button onClick={() => handleAnswerClick(item)} className="text-[11px] font-bold text-white border border-[#3530B8] bg-[#3530B8] px-3 py-1.5 rounded-lg hover:bg-[#2a2594] transition-all">
+                                답변하기
                               </button>
-                            </>
-                          )}
-                        </div>
+                            ) : (
+                              <>
+                                <button onClick={() => handleDetailClick(item)} className="text-[11px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-3 py-1.5 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all">
+                                  상세보기
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="6" className="py-10 text-center text-gray-400 text-sm">
+                        질문이 없습니다.
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
 
             {/* 모바일 뷰: 카드 형식 */}
             <div className="md:hidden flex flex-col gap-4">
-              {paginatedQna.map(item => (
-                <div key={item.question_seq} className="bg-[#f8fbff] rounded-2xl p-5 border border-[#edf2f9] shadow-sm">
-                  <div className="flex justify-between items-start mb-3">
-                    <span className="px-3 py-1 bg-[#F0F4FF] text-[#3530B8] rounded-lg text-xs font-bold whitespace-nowrap">
-                      {item.category.replace("팀", "")}
-                    </span>
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold whitespace-nowrap ${item.status === 'ANSWERED' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
-                      {item.status === 'ANSWERED' ? '답변완료' : '답변 대기'}
-                    </span>
-                  </div>
-                  <div className="mb-4">
-                    <p className="text-sm text-[#1a1c3d] font-bold mb-1">Q. 질문 내용</p>
-                    <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">{item.question}</p>
-                  </div>
-                  <div className="flex justify-between items-center pt-3 border-t border-gray-100">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[10px] text-gray-400">{item.user_name}</span>
-                      <span className="text-[10px] text-gray-400">{item.created_at}</span>
+              {paginatedQna.length > 0 ? (
+                paginatedQna.map(item => (
+                  <div key={item.question_seq} className="bg-[#f8fbff] rounded-2xl p-5 border border-[#edf2f9] shadow-sm">
+                    <div className="flex justify-between items-start mb-3">
+                      <span className="px-3 py-1 bg-[#F0F4FF] text-[#3530B8] rounded-lg text-xs font-bold whitespace-nowrap">
+                        {item.category.replace("팀", "")}
+                      </span>
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold whitespace-nowrap ${item.status === 'ANSWERED' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
+                        {item.status === 'ANSWERED' ? '답변완료' : '답변 대기'}
+                      </span>
                     </div>
-                    <div className="flex gap-2">
-                      {item.status === 'PENDING' ? (
-                        <button onClick={() => handleAnswerClick(item)} className="text-[11px] font-bold text-white border border-[#3530B8] bg-[#3530B8] px-3 py-1.5 rounded-lg active:bg-[#2a2594] active:text-white whitespace-nowrap">
-                          답변하기
-                        </button>
-                      ) : (
-                        <>
-                          <button onClick={() => handleDetailClick(item)} className="text-[11px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-3 py-1.5 rounded-lg active:bg-[#3530B8] active:text-white whitespace-nowrap">
-                            상세보기
+                    <div className="mb-4">
+                      <p className="text-sm text-[#1a1c3d] font-bold mb-1">Q. 질문 내용</p>
+                      <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">{item.question}</p>
+                    </div>
+                    <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[10px] text-gray-400">{item.user_name}</span>
+                        <span className="text-[10px] text-gray-400">{item.created_at}</span>
+                      </div>
+                      <div className="flex gap-2">
+                        {item.status === 'PENDING' ? (
+                          <button onClick={() => handleAnswerClick(item)} className="text-[11px] font-bold text-white border border-[#3530B8] bg-[#3530B8] px-3 py-1.5 rounded-lg active:bg-[#2a2594] active:text-white whitespace-nowrap">
+                            답변하기
                           </button>
-                        </>
-                      )}
+                        ) : (
+                          <>
+                            <button onClick={() => handleDetailClick(item)} className="text-[11px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-3 py-1.5 rounded-lg active:bg-[#3530B8] active:text-white whitespace-nowrap">
+                              상세보기
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
+                ))
+              ) : (
+                <div className="py-20 text-center text-gray-400 text-sm bg-white rounded-2xl border border-[#edf2f9]">
+                  질문이 없습니다.
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
