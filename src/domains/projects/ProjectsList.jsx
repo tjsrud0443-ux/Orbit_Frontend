@@ -157,6 +157,9 @@ const ProjectsList = () => {
     if (!newProject.project_name) newErrors.project_name = '프로젝트명을 입력해주세요.';
     if (!newProject.start_date) newErrors.start_date = '시작일을 선택해주세요.';
     if (!newProject.end_date) newErrors.end_date = '종료일을 선택해주세요.';
+    if (newProject.start_date && newProject.end_date && newProject.end_date < newProject.start_date) {
+      newErrors.end_date = '종료일은 시작일보다 이전일 수 없습니다.';
+    }
     if (newProject.members.length === 0) newErrors.members = '참여자를 추가해주세요.';
 
     if (Object.keys(newErrors).length > 0) {
@@ -274,12 +277,17 @@ const ProjectsList = () => {
 
     updateProject(updatedEntry).then(() => {
       alert('프로젝트가 성공적으로 수정되었습니다.');
-      setProjects(prev => prev.map(p => (p.project_seq === selectedProject.project_seq ? { ...p, ...updatedEntry } : p)));
-      setSelectedProject(prev => ({ ...prev, ...updatedEntry }));
-      setIsEditing(false);
-      setEditEmpSearch('');
-      setShowEditEmpDropdown(false);
-      setEditErrors({});
+      getMyAllProject().then(resp => {
+        setProjects(resp.data);
+        setSelectedProject(prev => ({ ...prev, ...updatedEntry }));
+        setIsEditing(false);
+        setEditEmpSearch('');
+        setShowEditEmpDropdown(false);
+        setEditErrors({});
+        setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
+        setEmpSearch('');
+        setErrors({});
+      })
     });
   };
 
@@ -762,7 +770,7 @@ const ProjectsList = () => {
                           return;
                         }
                         setErrors(prev => ({ ...prev, start_date: null }));
-                        setNewProject(prev => ({ ...prev, start_date: date, end: prev.end_date && prev.end_date < date ? date : prev.end_date }));
+                        setNewProject(prev => ({ ...prev, start_date: date, end_date: prev.end_date && prev.end_date < date ? date : prev.end_date }));
                         setIsStartCalendarOpen(false);
                       }}
                       onClose={() => setIsStartCalendarOpen(false)}
@@ -782,7 +790,7 @@ const ProjectsList = () => {
                       minDate={newProject.start_date || new Date().toISOString().split('T')[0]}
                       onChange={(date) => {
                         if (newProject.start_date && date < newProject.start_date) {
-                          setErrors(prev => ({ ...prev, end: '종료일은 시작일보다 이전일 수 없습니다.' }));
+                          setErrors(prev => ({ ...prev, end_date: '종료일은 시작일보다 이전일 수 없습니다.' }));
                           return;
                         }
                         setErrors(prev => ({ ...prev, end_date: null }));
