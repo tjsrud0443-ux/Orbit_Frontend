@@ -18,8 +18,7 @@ import useAuthStore from '../../store/authStore';
 // // Position Rank for Sorting (Lower number = Higher rank)
 
 const POSITION_RANK = {
-  '대표이사': 1, '사장': 2, '부사장': 3, '전무': 4, '상무': 5, '이사': 6,
-  '부장': 7, '차장': 8, '과장': 9, '대리': 10, '주임': 11, '사원': 12,
+  '대표이사': 1, '본부장': 3, '부서장': 4, '차장': 5, '과장': 6, '대리': 7, '사원': 8
 };
 
 
@@ -390,7 +389,7 @@ const Departments = () => {
       )}
 
       {/* 2. Sidebar (Overlay on Mobile, Inline on Desktop) */}
-      <aside 
+      <aside
         ref={sidebarRef}
         className={`
   bg-white border-r border-gray-200 flex flex-col shrink-0 transition-all duration-300 ease-in-out overflow-hidden
@@ -617,7 +616,8 @@ const Departments = () => {
         </div>
       </main>
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }

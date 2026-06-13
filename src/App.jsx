@@ -42,95 +42,113 @@ import QnaHistory from './domains/mypage/QnaHistory';
 import RoomHistory from './domains/mypage/RoomHistory';
 import useLoadingStore from './store/useLoadingStore';
 import Loading from './components/common/Loading';
+import NotificationProvider from "./components/websocket/NotificationProvider";
+import { ToastContainer, Zoom } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   const loading = useLoadingStore(state => state.loading);
   const loadingType = useLoadingStore(state => state.loadingType);
   return (
     <>
-    {loading && (
-      <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40">
-        <Loading type={loadingType}/>
-      </div>
-    )}
-    <Router>
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+      {loading && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40">
+          <Loading type={loadingType} />
+        </div>
+      )}
+      <ToastContainer
+        position="bottom-right"
+        transition={Zoom}
+        autoClose={3000}
+        hideProgressBar
+        toastStyle={{
+          minWidth: "360px",
+          minHeight: "80px",
+          borderRadius: "16px",
+          padding: "16px",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.12)"
+        }}
+      />
+      <NotificationProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Navigate to="/login" replace />} />
 
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/findId" element={<FindId />} />
-        <Route path="/findPw" element={<FindPw />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/findId" element={<FindId />} />
+            <Route path="/findPw" element={<FindPw />} />
 
-        {/* 레이아웃(사이드바+헤더) 내부 페이지 */}
-        <Route element={<Layout />}>
-          <Route path="/mypage" element={<MyPage />} />
-          <Route path="/mypage/edit" element={<MyPageEdit />} />
-          <Route path="/qnaHistory" element={<QnaHistory />} />
-          <Route path="/roomHistory" element={<RoomHistory />} />
-          <Route path="/main" element={<Main />} />
-          <Route path="/departments" element={<Departments />} />
+            {/* 레이아웃(사이드바+헤더) 내부 페이지 */}
+            <Route element={<Layout />}>
+              <Route path="/mypage" element={<MyPage />} />
+              <Route path="/mypage/edit" element={<MyPageEdit />} />
+              <Route path="/qnaHistory" element={<QnaHistory />} />
+              <Route path="/roomHistory" element={<RoomHistory />} />
+              <Route path="/main" element={<Main />} />
+              <Route path="/departments" element={<Departments />} />
 
-          <Route path="/approval" element={<ApprovalHome />} />
-          <Route path="/approvalMypage" element={<ApprovalMyPage />} />
-          <Route path="/approvalInbox" element={<ApprovalInbox />} />
-          <Route path="/approvalCc" element={<ApprovalCc />} />
-          <Route path="/approvalTemp" element={<ApprovalTemp />} />
+              <Route path="/approval" element={<ApprovalHome />} />
+              <Route path="/approvalMypage" element={<ApprovalMyPage />} />
+              <Route path="/approvalInbox" element={<ApprovalInbox />} />
+              <Route path="/approvalCc" element={<ApprovalCc />} />
+              <Route path="/approvalTemp" element={<ApprovalTemp />} />
 
-          {/* 리팩토링된 통합 결재 상세/작성 페이지 */}
-          <Route path="/approval/write/:type" element={<ApprovalDetail />} />
-          <Route path="/approval/detail/:type/:docSeq" element={<ApprovalDetail />} />
+              {/* 리팩토링된 통합 결재 상세/작성 페이지 */}
+              <Route path="/approval/write/:type" element={<ApprovalDetail />} />
+              <Route path="/approval/detail/:type/:docSeq" element={<ApprovalDetail />} />
 
-          <Route path="/projects" element={<ProjectsList />} />
-          <Route path="/kanban" element={<Kanban />} />
-          <Route path="/documents" element={<DocumentsList />} />
-          <Route path="/calendar" element={<Calendar />} />
+              <Route path="/projects" element={<ProjectsList />} />
+              <Route path="/kanban/:projectSeq" element={<Kanban />} />
+              <Route path="/documents" element={<DocumentsList />} />
+              <Route path="/calendar" element={<Calendar />} />
 
-          <Route path="/meetingMinutes" element={<MinutesList />} />
+              <Route path="/meetingMinutes" element={<MinutesList />} />
 
-          <Route path="/meetingRooms" element={<MeetingRooms />} />
-          <Route path="/supply" element={<SupplyRequest />} />
+              <Route path="/meetingRooms" element={<MeetingRooms />} />
+              <Route path="/supply" element={<SupplyRequest />} />
 
-          <Route path="/board" element={<BoardList />} />
-          <Route path="/boardWrite" element={<BoardWrite />} />
-          <Route path="/boardWrite/:seq" element={<BoardWrite />} />
-          <Route path="/boardDetail/:seq" element={<BoardDetail />} />
+              <Route path="/board" element={<BoardList />} />
+              <Route path="/boardWrite" element={<BoardWrite />} />
+              <Route path="/boardWrite/:seq" element={<BoardWrite />} />
+              <Route path="/boardDetail/:seq" element={<BoardDetail />} />
 
-          <Route path="/aiChat" element={<AiChat />} />
+              <Route path="/aiChat" element={<AiChat />} />
 
-          <Route element={<ProtectedRoute
-            allow={[{ type: "group", value: "ROLE_SUPER_ADMIN" }]} />}>
-            <Route path="/adminMain" element={<AdminMain />} />
-          </Route>
+              <Route element={<ProtectedRoute
+                allow={[{ type: "group", value: "ROLE_SUPER_ADMIN" }]} />}>
+                <Route path="/adminMain" element={<AdminMain />} />
+              </Route>
 
-          <Route element={<ProtectedRoute
-            allow={[{ type: "group", value: "ROLE_HR_ADMIN" }]} />}>
-            <Route path="/adminUsers" element={<AdminUsers />} />
-            <Route path="/adminDepartments" element={<AdminDept />} />
-            <Route path="/adminSignup" element={<AdminSignup />} />
-            <Route path="/adminAttendance" element={<AdminAttendance />} />
-          </Route>
+              <Route element={<ProtectedRoute
+                allow={[{ type: "group", value: "ROLE_HR_ADMIN" }]} />}>
+                <Route path="/adminUsers" element={<AdminUsers />} />
+                <Route path="/adminDepartments" element={<AdminDept />} />
+                <Route path="/adminSignup" element={<AdminSignup />} />
+                <Route path="/adminAttendance" element={<AdminAttendance />} />
+              </Route>
 
-          <Route element={<ProtectedRoute
-            allow={[{ type: "group", value: "ROLE_GA_ADMIN" }]} />}>
-            <Route path="/adminSupply" element={<AdminSupply />} />
-            <Route path="/adminSupplyRequest" element={<AdminSupplyReq />} />
-            <Route path="/adminSupplyRental" element={<AdminSupplyRental />} />
-            <Route path="/adminMeetingRoom" element={<AdminMeetingRooms />} />
-          </Route>
+              <Route element={<ProtectedRoute
+                allow={[{ type: "group", value: "ROLE_GA_ADMIN" }]} />}>
+                <Route path="/adminSupply" element={<AdminSupply />} />
+                <Route path="/adminSupplyRequest" element={<AdminSupplyReq />} />
+                <Route path="/adminSupplyRental" element={<AdminSupplyRental />} />
+                <Route path="/adminMeetingRoom" element={<AdminMeetingRooms />} />
+              </Route>
 
-          <Route element={<ProtectedRoute
-            allow={[
-              { type: "rank", value: "부서장" },
-              { type: "rank", value: "본부장" }
-            ]} />}>
-            <Route path="/adminDocument" element={<AdminDocuments />} />
-            <Route path="/adminQna" element={<AdminQna />} />
-          </Route>
+              <Route element={<ProtectedRoute
+                allow={[
+                  { type: "rank", value: "부서장" },
+                  { type: "rank", value: "본부장" }
+                ]} />}>
+                <Route path="/adminDocument" element={<AdminDocuments />} />
+                <Route path="/adminQna" element={<AdminQna />} />
+              </Route>
 
-        </Route>
-      </Routes>
-    </Router>
+            </Route>
+          </Routes>
+        </Router>
+      </NotificationProvider>
     </>
   );
 }
