@@ -46,7 +46,7 @@ const getDefaultApprovers = (docType, user, allEmployees) => {
     },
   };
 
-  const role = isStaff ? 'staff' : isManager ? 'manager' : 'director';
+  const role = isStaff ? 'staff' : isManager ? 'manager' : isDirector ? 'director' : null;
 
   const candidates = (lines[docType]?.[role] ?? []).filter(Boolean);
   const unique = candidates.filter(
@@ -157,7 +157,6 @@ const ApprovalDetail = () => {
       // [작성 모드]
       setUserRole('DRAFTER');
       setMode('EDIT');
-      setApprovers(getDefaultApprovers(upperType, user, allEmployees));
       
       if (upperType === 'VACATION') {
         setFormData({ title: '', vac_type: '연차', start_date: '', end_date: '', days: 0, reason: '' });
@@ -173,6 +172,14 @@ const ApprovalDetail = () => {
       fetchDocumentData(type, docSeq);
     }
   }, [type, docSeq, user?.id, refresh]);
+
+  useEffect(() => {
+    showLoading();
+    if (!docSeq && allEmployees?.length > 0 && user && doc_type) {
+      setApprovers(getDefaultApprovers(doc_type, user, allEmployees));
+    }
+    hideLoading();
+  }, [allEmployees, user, doc_type, docSeq]);
 
   const fetchDocumentData = async (type, docSeq) => {
     showLoading();
