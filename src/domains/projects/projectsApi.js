@@ -10,3 +10,4 @@ export const completeProject = (project_seq) => maxios.put("/project/projectComp
 export const getKanbanTaskList = (projectSeq) => maxios.get("/project/getKanbanTaskList/" + projectSeq);
 export const getProjectMembers = (projectSeq) => maxios.get("/project/getProjectMembers/" + projectSeq);
 export const insertTask = (params) => maxios.post("/project/insertTask", params);
+export const getProject = (projectSeq) => maxios.get("/project/getProject/" + projectSeq);

@@ -3,17 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faUser, faChevronDown, faCircle, faCalendarAlt, faChevronLeft, faEllipsisV, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
-import { getKanbanTaskList, getProjectMembers, insertTask } from './projectsApi';
+import { getKanbanTaskList, getProject, getProjectMembers, insertTask } from './projectsApi';
 import useAuthStore from '../../store/authStore';
 import useUserStore from '../../store/userStore';
-
-// const PROJECT_MEMBERS = [
-//   { id: 0, name: '나 (관리자)', avatar: 'https://i.pravatar.cc/150?u=admin' },
-//   { id: 1, name: '김철수', avatar: 'https://i.pravatar.cc/150?u=1' },
-//   { id: 2, name: '이영희', avatar: 'https://i.pravatar.cc/150?u=2' },
-//   { id: 3, name: '박지성', avatar: 'https://i.pravatar.cc/150?u=3' },
-//   { id: 4, name: '최민수', avatar: 'https://i.pravatar.cc/150?u=4' },
-// ];
 
 const Kanban = () => {
   const { projectSeq } = useParams();
@@ -22,6 +14,7 @@ const Kanban = () => {
   const user = useUserStore(state => state.user);
 
   const [tasks, setTasks] = useState([]);
+  const [project, setProject] = useState({});
   const [members, setMembers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [detailModalTask, setDetailModalTask] = useState(null);
@@ -140,8 +133,6 @@ const Kanban = () => {
       due_date: newGlobalTask.due_date
     };
 
-    console.log("전송 파라미터", params);
-
     insertTask(params).then(resp => {
       getKanbanTaskList(projectSeq).then(resp => {
         setTasks(resp.data);
@@ -223,6 +214,12 @@ const Kanban = () => {
     });
   }, []);
 
+  useEffect(() => {
+    getProject(projectSeq).then(resp => {
+      setProject(resp.data);
+    })
+  },[])
+
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
       {/* 1. 데스크탑 뷰 (기존 코드 유지) */}
@@ -236,7 +233,7 @@ const Kanban = () => {
             >
               <FontAwesomeIcon icon={faChevronLeft} className="text-slate-300 group-hover:text-slate-400 transition-colors" />
             </button>
-            <h1 className="text-2xl font-black text-[#1a1c3d] tracking-tight">Orbit 그룹웨어 고도화</h1>
+            <h1 className="text-2xl font-black text-[#1a1c3d] tracking-tight">{project?.project_name}</h1>
           </div>
           <div className="flex items-center gap-6">
             <div className="flex -space-x-3">
@@ -491,7 +488,7 @@ const Kanban = () => {
           >
             <FontAwesomeIcon icon={faChevronLeft} className="text-slate-300 text-xs" />
           </button>
-          <h1 className="text-xl font-black text-[#1a1c3d]">Orbit 그룹웨어 고도화</h1>
+          <h1 className="text-xl font-black text-[#1a1c3d]">{project?.project_name}</h1>
         </div>
 
         {/* 참여자 & Task 생성 버튼 */}
