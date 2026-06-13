@@ -41,21 +41,21 @@ export const connectSocket = (usersId) => {
                         // 결재 요청 알림
                         case "APPROVAL":
                             toast(noti.content, {
-                                icon: () => "📅"
+                                icon: () => "🔔"
                             });
                             break;
                         
                         // 결재 승인 알림
                         case "APPROVED":
                             toast(noti.content, {
-                                icon: () => "📅"
+                                icon: () => "✅"
                             });
                             break;
 
                         // 결재 반려 알림
                         case "REJECTED":
                             toast(noti.content, {
-                                icon: () => "📅"
+                                icon: () => "❌"
                             });
                             break;
 
