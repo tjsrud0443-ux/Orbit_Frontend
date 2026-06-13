@@ -65,7 +65,14 @@ export const connectSocket = (usersId) => {
                                 icon: () => "📅"
                             });
                             break;
-
+                        
+                        // 칸반 담당자 지정 알림
+                        case "TASK":
+                            toast(noti.content, {
+                                icon: () => "👨‍💻"
+                            });
+                            break;
+                            
                         default:
                             toast(noti.content);
                     }
