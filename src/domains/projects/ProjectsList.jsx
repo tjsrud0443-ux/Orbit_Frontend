@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown, faCheck } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
 // updateProject 추가 (projectsApi.js 에 구현 필요)
-import { deleteProject, getAllEmp, getMyAllProject, insertProjectAndMembers, updateProject } from './projectsApi';
+import { completeProject, deleteProject, getAllEmp, getMyAllProject, insertProjectAndMembers, updateProject } from './projectsApi';
 import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
 
@@ -299,17 +299,20 @@ const ProjectsList = () => {
     }
   };
 
-  const handleComplete = (p) => {
-    // if (window.confirm('프로젝트를 완료 처리하시겠습니까?')) {
-    //   const updatedEntry = {
-    //     ...p,
-    //     status: 'DONE',
-    //   };
-    //   updateProject(updatedEntry).then(() => {
-    //     alert('프로젝트가 완료되었습니다.');
-    //     setProjects(prev => prev.map(item => item.project_seq === p.project_seq ? { ...item, status: 'DONE' } : item));
-    //   });
-    // }
+  const handleComplete = (project_seq) => {
+    if (window.confirm('프로젝트를 완료 처리하시겠습니까?\n완료 처리 시 복구는 불가합니다.')) {
+      completeProject(project_seq).then(() => {
+        alert('프로젝트가 완료 처리되었습니다.');
+        getMyAllProject().then(resp => {
+          setProjects(resp.data);
+          setIsModalOpen(false);
+          handleCloseDetail();
+          setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
+          setEmpSearch('');
+          setErrors({});
+        });
+      });
+    }
   };
 
   useEffect(() => {
@@ -610,7 +613,7 @@ const ProjectsList = () => {
                         <button onClick={() => handleSelectProject(p)} className="text-[10px] font-bold text-[#3530B8] border border-[#F0F4FF] bg-[#F0F4FF] px-2 py-1 rounded">상세보기</button>
                         {p.users_id === user?.id ? (
                           <button
-                            onClick={() => handleComplete(p)}
+                            onClick={() => handleComplete(p.project_seq)}
                             className="w-7 h-7 flex items-center justify-center bg-red-50 text-red-500 rounded-md hover:bg-red-100 transition-all"
                           >
                             <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
