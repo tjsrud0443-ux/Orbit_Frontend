@@ -2,8 +2,6 @@
 import Pagination from '../../components/common/Pagination';
 import { getSuppyReqList, updateSupplyReqStatus } from '../admin/adminApi';
 
-const PER_PAGE = 8;
-
 const STATUS_TABS = [
   { key: '전체', label: '전체' },
   { key: '대기', label: '대기' },
@@ -41,6 +39,7 @@ const AdminSupplyReq = () => {
       const { list, totalPages: newTotalPages, totalCount, pendingCount, approvedCount, rejectedCount } = res.data;
       const mapped = list.map(item => ({      
         id: item.req_seq,
+        users_id: item.users_id,
         requestDate: item.req_date,
         applicantName: item.user_name,
         dept: item.dept_name,
@@ -78,9 +77,29 @@ const AdminSupplyReq = () => {
   };
 
   const handleApprove = (id) => {
-    const target = requests.find(r => r.id === id); 
+    const target = requests.find(r => r.id === id);
+//재고가 0인 비품/ 재고가 최소수량 이하인 비품이 1개 이상 있냐
+    const emptyItems = target.items.filter(item => item.stock_qty === 0);
+    const lowItems = target.items.filter(item => item.stock_qty > 0 && item.stock_qty <= item.min_stock_qty);
+
+    let message = '승인하시겠습니까?';
+
+    if (emptyItems.length > 0 || lowItems.length > 0) {
+      const warnings = [];
+      if (emptyItems.length > 0) {
+        warnings.push(`• ${emptyItems.map(i => i.supply_name).join(', ')} : 재고 없음`);
+      }
+      if (lowItems.length > 0) {
+        warnings.push(`• ${lowItems.map(i => i.supply_name).join(', ')} : 재고 부족`);
+      }
+      message = `\n${warnings.join('\n')}\n\n그래도 승인하시겠습니까?`;
+    }
+    if (!window.confirm(message)) return;
+
     updateSupplyReqStatus({
         req_seq: target.id,
+        users_id: target.users_id,
+        req_date: target.requestDate,
         status: 'APPROVED',
         items: target.items
     }).then(() => {
@@ -92,6 +111,8 @@ const AdminSupplyReq = () => {
   };
 
   const handleReject = (id) => {
+    if (!window.confirm('정말 반려하시겠습니까?')) return;
+    
     const target = requests.find(r => r.id === id);
     updateSupplyReqStatus({
         req_seq: target.id,

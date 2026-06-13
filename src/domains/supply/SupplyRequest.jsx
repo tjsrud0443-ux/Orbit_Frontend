@@ -155,7 +155,6 @@ const AddItemModal = ({ onAdd, onClose }) => {
                       <p className="text-sm font-bold text-gray-700">{item.supply_name}</p>
                       <p className="text-[11px] text-gray-400">{item.supply_code}</p>
                     </div>
-                    <span className="text-xs text-gray-400 shrink-0">재고 {item.stock_qty}개</span>
                   </div>
                 ))}
               </div>
@@ -178,7 +177,7 @@ const AddItemModal = ({ onAdd, onClose }) => {
             {selected ? (
               <div>
                 <p className="text-sm font-bold text-gray-700">{selected.supply_name}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{selected.supply_code} · 재고 {selected.stock_qty}개</p>
+                <p className="text-xs text-gray-400 mt-0.5">{selected.supply_code} </p>
               </div>
             ) : (
               <p className="text-sm text-gray-300">검색 후 비품을 선택하면 정보가 표시됩니다.</p>
@@ -470,10 +469,10 @@ const SupplyRequest = () => {
           <div className="flex-1 flex flex-col min-w-full overflow-x-auto no-scrollbar">
             <div className="min-w-[700px] flex-1 flex flex-col">
               <div className="grid grid-cols-12 bg-gray-50 border-b border-gray-100 shrink-0">
-                <div className="col-span-4 px-4 py-2 text-[0.68rem] font-extrabold text-gray-400 uppercase tracking-wider">품목</div>
+                <div className="col-span-5 px-4 py-2 text-[0.68rem] font-extrabold text-gray-400 uppercase tracking-wider">품목</div>
                 <div className="col-span-3 px-4 py-2 text-[0.68rem] font-extrabold text-gray-400 uppercase tracking-wider text-center">수량</div>
-                <div className="col-span-2 px-4 py-2 text-[0.68rem] font-extrabold text-gray-400 uppercase tracking-wider text-center">재고</div>
-                <div className="col-span-2 px-4 py-2 text-[0.68rem] font-extrabold text-gray-400 uppercase tracking-wider text-center">사용구분</div>
+                {/* <div className="col-span-2 px-4 py-2 text-[0.68rem] font-extrabold text-gray-400 uppercase tracking-wider text-center">재고</div> */}
+                <div className="col-span-3 px-4 py-2 text-[0.68rem] font-extrabold text-gray-400 uppercase tracking-wider text-center">사용구분</div>
                 <div className="col-span-1 px-4 py-2 text-[0.68rem] font-extrabold text-gray-400 uppercase tracking-wider text-center">삭제</div>
               </div>
 
@@ -481,7 +480,7 @@ const SupplyRequest = () => {
                 {items.length > 0 ? (
                   items.map(item => (
                     <div key={item.id} className="grid grid-cols-12 border-b border-gray-50 last:border-0 items-center hover:bg-gray-50/60 transition-colors">
-                      <div className="col-span-4 px-4 py-2">
+                      <div className="col-span-5 px-4 py-2">
                         <p className="text-sm text-gray-700 font-medium whitespace-nowrap overflow-hidden text-ellipsis">{item.supply_name}</p>
                         <p className="text-[11px] text-gray-400 whitespace-nowrap">{item.supply_code}</p>
                       </div>
@@ -498,10 +497,10 @@ const SupplyRequest = () => {
                           >+</button>
                         </div>
                       </div>
-                      <div className="col-span-2 px-4 py-2 text-center text-xs text-gray-400 font-semibold whitespace-nowrap">
+                      {/* <div className="col-span-2 px-4 py-2 text-center text-xs text-gray-400 font-semibold whitespace-nowrap">
                         {item.stock !== '-' ? `${item.stock_qty}개` : '-'}
-                      </div>
-                      <div className="col-span-2 px-4 py-2 text-center">
+                      </div> */}
+                      <div className="col-span-3 px-4 py-2 text-center">
                         <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-600 whitespace-nowrap">
                           {item.usageType}
                         </span>
