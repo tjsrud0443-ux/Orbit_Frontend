@@ -41,16 +41,14 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, onReorder, draft
         {/* 기안자 영역 */}
         <div className="w-16 border border-white/30 flex flex-col">
           <div className="bg-white/10 text-[0.7rem] py-0.5 text-center font-bold border-b border-white/30">기안</div>
-          <div className={`${isEditMode ? 'h-11' : 'h-14'} flex flex-col items-center justify-center text-[0.7rem] font-medium text-white/90 p-1`}>
-            <span className="truncate w-full text-center">{drafter?.name || '기안'}</span>
+          <div className={`${isEditMode ? 'h-14' : 'h-14'} flex flex-col items-center justify-center text-[0.7rem] font-medium text-white/90 p-1`}>
+            <span className={`truncate w-full text-center ${isEditMode ? 'mb-3' : ''}`}>{drafter?.name || '기안'}</span>
             {!isEditMode && <span className="text-[0.7rem] mt-1 font-bold text-white">기안</span>}
           </div>
-          {!isEditMode ? (
+          {!isEditMode && (
             <div className="h-7 border-t border-white/30 flex items-center justify-center text-[9px] font-medium text-white/60 bg-white/5">
               {drafter?.created_at?.slice(0, 10) || '-'}
             </div>
-          ) : (
-            <div className="h-7 border-t border-white/30 flex items-center justify-center text-[9px] font-medium text-white/60 bg-white/5">-</div>
           )}
         </div>
 
@@ -59,11 +57,11 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, onReorder, draft
           const hasRejectionBefore = approvers.slice(0, idx).some(a => a.status === 'REJECTED');
           const statusText = hasRejectionBefore ? '' : getStatusText(approver, idx);
           const showDetails = !hasRejectionBefore;
-
+          
           return (
-            <div key={idx} className="w-16 border-y border-r border-white/30 flex flex-col border-l-0 relative">
+            <div key={idx} className="w-16 border-y border-r border-white/30 flex flex-col border-l-0 relative group">
               <div className="bg-white/10 text-[0.7rem] py-0.5 text-center font-bold border-b border-white/30 text-white/90">
-                {approver.rank_name}
+                {approver.rank_name || approver.rank || '결재'}
                 {isEditMode && (
                   <button 
                     onClick={() => onRemove(idx)}
@@ -75,27 +73,27 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, onReorder, draft
               </div>
               <div className={`${isEditMode ? 'h-11' : 'h-14'} flex flex-col items-center justify-center text-[0.7rem] font-medium text-white/90 p-1`}>
                 <span className="truncate w-full text-center">{showDetails ? (approver.name || '-') : '-'}</span>
-                {!isEditMode && statusText && showDetails && (
-                  <span className={`text-[0.7rem] mt-1 font-bold ${getStatusColor(approver.status)}`}>
-                    {statusText}
-                  </span>
-                )}
-              </div>
-              
-                <div className="h-7 border-t border-white/30 flex items-center justify-center text-[9px] font-medium text-white/60 bg-white/5">
-                {isEditMode ? (
-                  <div className="flex gap-1">
+                {isEditMode && (
+                  <span className={'absolute bottom-1 left-0 w-full flex justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200'}>
                     {idx > 0 && (
                       <button onClick={() => onReorder(idx, 'up')} className="hover:text-white transition-colors">◀</button>
                     )}
                     {idx < approvers.length - 1 && (
                       <button onClick={() => onReorder(idx, 'down')} className="hover:text-white transition-colors">▶</button>
                     )}
-                  </div>
-                ) : (
-                  <span>{(showDetails && approver.handle_at) ? approver.handle_at.slice(0, 10) : '-'}</span>
-                )} 
+                  </span>
+                )}
+                {!isEditMode && statusText && showDetails && (
+                  <span className={`text-[0.7rem] mt-1 font-bold ${getStatusColor(approver.status)}`}>
+                    {statusText}
+                  </span>
+                )}
+              </div>
+              {!isEditMode && (
+                <div className="h-7 border-t border-white/30 flex items-center justify-center text-[9px] font-medium text-white/60 bg-white/5">
+                  {(showDetails && approver.handle_at) ? approver.handle_at.slice(0, 10) : '-'}
                 </div>
+              )}
             </div>
           );
         })}
