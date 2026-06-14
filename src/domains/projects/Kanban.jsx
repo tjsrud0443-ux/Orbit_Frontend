@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { replace, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faUser, faChevronDown, faCircle, faCalendarAlt, faChevronLeft, faEllipsisV, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
@@ -12,6 +12,8 @@ const Kanban = () => {
   const navigate = useNavigate();
   const token = useAuthStore(state => state.token);
   const user = useUserStore(state => state.user);
+  const [searchParam] = useSearchParams(); // 알림용
+  const taskSeq = searchParam.get("taskSeq");
 
   const [tasks, setTasks] = useState([]);
   const [project, setProject] = useState({});
@@ -213,6 +215,21 @@ const Kanban = () => {
       });
     });
   };
+
+  useEffect(() => {
+    if (!taskSeq || tasks.length === 0) {
+      return;
+    }
+    const targetTask = tasks.find(
+      p => String(p.task_seq) === String(taskSeq)
+    );
+    if (targetTask) {
+      setDetailModalTask(targetTask);
+      navigate(`/kanban/${projectSeq}`), {
+        replace: true
+      }
+    };
+  }, [taskSeq, tasks]);
 
   useEffect(() => {
     if (user) {
@@ -1130,7 +1147,7 @@ const Kanban = () => {
                           const projectStart = project?.start_date?.substring(0, 10);
                           const projectEnd = project?.end_date?.substring(0, 10);
                           if (date < projectStart || date > projectEnd) {
-                            setErrors(prev => ({...prev,detailEndDate: '프로젝트 기간 내에서만 선택 가능합니다.'}));
+                            setErrors(prev => ({ ...prev, detailEndDate: '프로젝트 기간 내에서만 선택 가능합니다.' }));
                             return;
                           }
                           setErrors(prev => ({ ...prev, detailEndDate: null }));
