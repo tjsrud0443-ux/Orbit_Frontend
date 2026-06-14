@@ -63,7 +63,7 @@ const Login = () => {
           {/* Illustration Placeholder */}
           <div className="w-full h-32 md:h-64 bg-white/60 rounded-2xl relative overflow-hidden border-2 border-dashed border-[#DDE8FF] flex items-center justify-center">
             {/* Diagonal Lines (X) */}
-            <div className="absolute inset-0 flex items-center justify-center opacity-10">
+            <div className="absolute inset-0 flex items-center justify-center opacity-0">
               <div className="w-full h-px bg-[#3530B8] rotate-45 absolute"></div>
               <div className="w-full h-px bg-[#3530B8] -rotate-45 absolute"></div>
             </div>
