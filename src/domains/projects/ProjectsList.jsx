@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown, faCheck } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
@@ -27,6 +27,7 @@ const ProjectsList = () => {
   const editEmpRefMobile = useRef(null);
   const user = useUserStore(state => state.user);
   const token = useAuthStore(state => state.token);
+  const [searchParam] = useSearchParams(); // 알림용
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -324,6 +325,20 @@ const ProjectsList = () => {
       });
     }
   };
+
+  const projectSeq = searchParam.get("projectSeq");
+
+  useEffect(() => {
+    if (!projectSeq || projects.length === 0) {
+      return;
+    }
+    const targetProject = projects.find(
+      p => String(p.project_seq) === String(projectSeq)
+    );
+    if (targetProject) {
+      setSelectedProject(targetProject);
+    }
+  }, [projectSeq, projects]);
 
   useEffect(() => {
     getAllEmp().then(resp => {
