@@ -24,7 +24,7 @@ export const alertWarning = (title, text) =>
   Swal.fire({
     ...baseStyle,
     icon: 'warning',
-    title, text,
+    title, html: text,
     confirmButtonColor: '#b0b0b4',
     didOpen: setIconColor('#ffb941', 0.5),
   });
@@ -33,7 +33,7 @@ export const alertSuccess = (title, text) =>
   Swal.fire({
     ...baseStyle,
     icon: 'success',
-    title, text,
+    title, html: text,
     confirmButtonColor: '#b0b0b4',
     didOpen: setIconColor('#10B981'),   // 초록색
   });
@@ -42,7 +42,7 @@ export const alertError = (title, text) =>
   Swal.fire({
     ...baseStyle,
     icon: 'error',
-    title, text,
+    title, html: text,
     confirmButtonColor: '#b0b0b4',
     didOpen: setIconColor('#FF4D4F', 0.5),   // 빨간색
   });
@@ -51,7 +51,7 @@ export const alertConfirm = (title, text) =>
   Swal.fire({
     ...baseStyle,
     icon: 'question',
-    title, text,
+    title, html: text,
     confirmButtonColor: '#b0b0b4',
     cancelButtonColor: '#ffffff',
     showCancelButton: true,
