@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import { getMyQuestions, deleteMyQuestions } from '../mypage/mypageApi';
 import { maxios } from '../../api/axiosConfig';
-import { deleteMyAnswer, getMyDeptQuestion, insertUpdateAnswer } from './adminApi';
+import { adminAiQuestionsData, deleteMyAnswer, getMyDeptQuestion, insertUpdateAnswer } from './adminApi';
 import useUserStore from '../../store/userStore';
 import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 
@@ -13,6 +13,7 @@ const AdminQna = () => {
   const [searchBy, setSearchBy] = useState('질문 내용');
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const searchDropdownRef = useRef(null);
+  const [count, setCount] = useState({});
 
   const [isEditing, setIsEditing] = useState(false);
   const [answerText, setAnswerText] = useState('');
@@ -38,6 +39,13 @@ const AdminQna = () => {
   useEffect(() => {
     getMyDeptQuestion(user.dept_seq, user.auth_group).then(resp => {
       setQnaList(resp.data);
+    });
+  }, []);
+
+  useEffect(() => {
+    adminAiQuestionsData(user.dept_seq, user.auth_group).then(resp => {
+      console.log(resp.data);
+      setCount(resp.data);
     });
   }, []);
 
@@ -152,10 +160,17 @@ const AdminQna = () => {
         <div className={`bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-3 md:p-8 flex flex-col transition-all duration-300 md:overflow-hidden min-w-0 ${selectedQna ? 'md:w-[65%] w-full' : 'w-full'}`}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
             <div className="flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit items-center flex-shrink-0">
-              {['전체', '답변 대기', '답변완료'].map(tab => (
-                <button key={tab} onClick={() => { setFilter(tab); setCurrentPage(1); }}
-                  className={`flex-1 md:flex-none px-2 md:px-6 py-1.5 rounded-xl text-[11px] md:text-sm font-bold transition-all whitespace-nowrap ${filter === tab ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>
-                  {tab}
+              {[
+                { label: '전체', count: count.allCount ?? 0 },
+                { label: '답변 대기', count: count.pendingCount ?? 0 },
+                { label: '답변완료', count: count.answeredCount ?? 0 }
+              ].map(tab => (
+                <button key={tab.label} onClick={() => { setFilter(tab.label); setCurrentPage(1); }}
+                  className={`flex-1 md:flex-none px-2 md:px-6 py-1.5 rounded-xl text-[11px] md:text-sm font-bold transition-all whitespace-nowrap ${filter === tab.label ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>
+                  {tab.label}
+                  <span className="ml-1.5">
+                    ({tab.count})
+                  </span>
                 </button>
               ))}
             </div>
@@ -356,7 +371,7 @@ const AdminQna = () => {
 
             {isEditing ? (
               <div className="flex gap-2 mt-auto">
-                 <button onClick={handleCancelClick} className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-xl font-bold hover:bg-gray-200 transition-all">
+                <button onClick={handleCancelClick} className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-xl font-bold hover:bg-gray-200 transition-all">
                   취소
                 </button>
                 <button onClick={handleAnswerSubmit} className="flex-1 py-4 bg-[#3530B8] text-white rounded-xl font-bold hover:bg-[#2a2594] transition-all">
@@ -455,7 +470,8 @@ const AdminQna = () => {
         )}
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
