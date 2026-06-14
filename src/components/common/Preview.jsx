@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Loader2 } from 'lucide-react';
 import { renderAsync } from 'docx-preview';
+import { alertError } from '../../utils/alert';
 
 const DocumentPreviewModal = ({ sysname, mimeType, title, token, onClose }) => {
     const [isLoading, setIsLoading] = useState(false);
@@ -30,7 +31,7 @@ const DocumentPreviewModal = ({ sysname, mimeType, title, token, onClose }) => {
                 .then(res => res.arrayBuffer())
                 .then(buf => setFileBuffer(buf))
                 .catch(() => {
-                alert('문서 미리보기를 불러오는 중 오류가 발생했습니다.');
+                alertError('로딩 실패', '문서 미리보기를 불러오는 중 오류가 발생했습니다.');
                 onClose();
                 });
         }
