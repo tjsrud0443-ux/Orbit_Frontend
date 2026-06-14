@@ -5,6 +5,7 @@ import { getMyQuestions, deleteMyQuestions } from '../mypage/mypageApi';
 import { maxios } from '../../api/axiosConfig';
 import { deleteMyAnswer, getMyDeptQuestion, insertUpdateAnswer } from './adminApi';
 import useUserStore from '../../store/userStore';
+import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 
 const AdminQna = () => {
   const [filter, setFilter] = useState('전체');
@@ -58,16 +59,15 @@ const AdminQna = () => {
 
   const totalPages = Math.ceil(filteredQna.length / itemsPerPage);
 
-  const handleDelete = (question_seq) => {
-    if (window.confirm('답변을 삭제하시겠습니까?')) {
-      deleteMyAnswer(question_seq).then(resp => {
-        alert('삭제되었습니다.');
-        getMyDeptQuestion(user.dept_seq, user.auth_group).then(resp => {
-          setQnaList(resp.data);
-          const updated = resp.data.find(q => q.question_seq === selectedQna.question_seq);
-          setSelectedQna(updated);
-        });
-      });
+  const handleDelete = async (question_seq) => {
+    const result = await alertConfirm('정말 삭제하시겠습니까?', '삭제 후 복구는 불가합니다.');
+    if (result.isConfirmed) {
+      await deleteMyAnswer(question_seq);
+      await alertSuccess('삭제 완료', '답변 삭제가 완료되었습니다.');
+      const resp = await getMyDeptQuestion(user.dept_seq, user.auth_group);
+      setQnaList(resp.data);
+      const updated = resp.data.find(q => q.question_seq === selectedQna.question_seq);
+      setSelectedQna(updated);
     }
   };
 
@@ -111,11 +111,14 @@ const AdminQna = () => {
   // 🛠️ 중괄호 및 if-return 로직 완벽 수정
   const handleAnswerSubmit = () => {
     if (!answerText.trim()) {
-      alert('답변을 입력해 주세요.');
+      alertWarning('답변 미입력', '답변을 입력해주세요.');
       return;
     }
     insertUpdateAnswer(payload).then(resp => {
-      alert(selectedQna.status === 'PENDING' ? '답변이 등록되었습니다.' : '답변이 수정되었습니다.');
+      alertSuccess(
+        selectedQna.status === 'PENDING' ? '등록 완료' : '수정 완료',
+        selectedQna.status === 'PENDING' ? '답변 등록이 완료되었습니다.' : '답변이 수정되었습니다.'
+      );
       setIsEditing(false);
       getMyDeptQuestion(user.dept_seq, user.auth_group).then(resp => {
         setQnaList(resp.data);
@@ -125,7 +128,7 @@ const AdminQna = () => {
 
     }).catch(err => {
       console.error(err);
-      alert('처리에 실패했습니다.');
+      alertError('처리 실패', '답변 처리에 실패했습니다.');
     });
   }
 
