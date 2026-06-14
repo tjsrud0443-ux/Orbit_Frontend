@@ -25,6 +25,7 @@ const AiChat = () => {
   ]);
 
   const [input, setInput] = useState("");
+  const [inputError, setInputError] = useState("");
   const [currentChatSeq, setCurrentChatSeq] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [activeMenuId, setActiveMenuId] = useState(null);
@@ -112,7 +113,7 @@ const AiChat = () => {
 
   // 백엔드 릴레이션 매핑의 핵심 핸들러 리팩토링
   const handleSend = () => {
-    if (!input.trim()) return;
+    if (!input.trim() || input.length > 300) return;
 
     const userMessageId = Date.now();
     const newUserMessage = {
@@ -406,7 +407,15 @@ const AiChat = () => {
           <div className="flex items-center gap-3 px-6 bg-[#f4f7fc] p-2 rounded-xl">
             <input
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setInput(val);
+                if (val.length > 300) {
+                  setInputError("글자수가 초과되었습니다. 300자까지만 입력 가능합니다.");
+                } else {
+                  setInputError("");
+                }
+              }}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
               className="flex-1 bg-transparent py-2 text-sm outline-none"
               placeholder="문서나 회의록에 대해 궁금한 내용을 질문해 보세요..."
@@ -415,6 +424,7 @@ const AiChat = () => {
               <FontAwesomeIcon icon={faPaperPlane} />
             </button>
           </div>
+          {inputError && <p className="text-[11px] text-red-500 mt-2 ml-1">{inputError}</p>}
         </div>
       </div>
 
