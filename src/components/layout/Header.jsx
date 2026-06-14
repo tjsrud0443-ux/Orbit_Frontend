@@ -70,7 +70,7 @@ const Header = ({ onMenuClick }) => {
 
   const handleNotiClick = async (noti) => {
     setOpen(false); // 알림 클릭 시 드롭다운 닫기
-
+    console.log("클릭한 알림 : ", noti)
     if(noti.read_yn === "N") {
       await updateReadNoti(noti.noti_seq);
       readNoti(noti.noti_seq);

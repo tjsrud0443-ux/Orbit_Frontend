@@ -282,7 +282,13 @@ const ProjectsList = () => {
       alert('프로젝트가 성공적으로 수정되었습니다.');
       getMyAllProject().then(resp => {
         setProjects(resp.data);
-        setSelectedProject(prev => ({ ...prev, ...updatedEntry }));
+        const updatedProject = resp.data.find(
+          p => String(p.project_seq) === String(selectedProject.project_seq)
+        );
+
+        if (updatedProject) {
+          setSelectedProject(updatedProject);
+        }
         setIsEditing(false);
         setEditEmpSearch('');
         setShowEditEmpDropdown(false);
@@ -329,19 +335,30 @@ const ProjectsList = () => {
   const projectSeq = searchParam.get("projectSeq");
 
   useEffect(() => {
-    if (!projectSeq || projects.length === 0) {
+
+    if (!projectSeq) {
       return;
     }
-    const targetProject = projects.find(
-      p => String(p.project_seq) === String(projectSeq)
-    );
-    if (targetProject) {
-      setSelectedProject(targetProject);
-      navigate(`/projects`), {
-        replace: true
+
+    getMyAllProject().then(resp => {
+
+      setProjects(resp.data);
+
+      const targetProject = resp.data.find(
+        p => String(p.project_seq) === String(projectSeq)
+      );
+
+      if (targetProject) {
+        setSelectedProject(targetProject);
       }
-    }
-  }, [projectSeq, projects]);
+
+      navigate("/projects", {
+        replace: true
+      });
+
+    });
+
+  }, [projectSeq]);
 
   useEffect(() => {
     getAllEmp().then(resp => {
