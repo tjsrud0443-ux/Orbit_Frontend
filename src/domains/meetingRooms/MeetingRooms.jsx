@@ -10,6 +10,7 @@ import useUserStore from '../../store/userStore';
 import useEmployeeStore from '../../store/useEmployeeStore';
 import useLoadingStore from '../../store/useLoadingStore';
 import { createReservation, getAllRooms, getReservations } from './meetingRoomsApi';
+import Swal from 'sweetalert2';
 
 const MeetingRooms = () => {
   const { user } = useUserStore();
@@ -124,9 +125,15 @@ const MeetingRooms = () => {
     return time < now;
   };
 
-  const handleTimelineClick = (time) => {
+  const handleTimelineClick = async (time) => {
     if (isWeekend(currentDate)) {
-      alert('주말에는 회의실을 예약할 수 없습니다.');
+      // alert('주말에는 회의실을 예약할 수 없습니다.');
+      // await Swal.fire({
+      // icon: 'warning',
+      // title: '예약 불가',
+      // text: '주말에는 회의실을 예약할 수 없습니다.',
+      // confirmButtonColor: '#3530B8',
+      // });
       return;
     }
     if (isTimeOccupied(time)) return;
