@@ -10,7 +10,7 @@ import useUserStore from '../../store/userStore';
 import useEmployeeStore from '../../store/useEmployeeStore';
 import useLoadingStore from '../../store/useLoadingStore';
 import { createReservation, getAllRooms, getReservations } from './meetingRoomsApi';
-import Swal from 'sweetalert2';
+import { alertWarning, alertSuccess, alertError } from '../../utils/alert';
 
 const MeetingRooms = () => {
   const { user } = useUserStore();
@@ -127,22 +127,16 @@ const MeetingRooms = () => {
 
   const handleTimelineClick = async (time) => {
     if (isWeekend(currentDate)) {
-      // alert('주말에는 회의실을 예약할 수 없습니다.');
-      // await Swal.fire({
-      // icon: 'warning',
-      // title: '예약 불가',
-      // text: '주말에는 회의실을 예약할 수 없습니다.',
-      // confirmButtonColor: '#3530B8',
-      // });
+      await alertWarning('예약 불가', '주말에는 회의실을 예약할 수 없습니다.');
       return;
     }
     if (isTimeOccupied(time)) return;
     if (isPastTime(time, format(currentDate, 'yyyy-MM-dd'))) {
-      alert('이미 지난 시간에는 예약할 수 없습니다.');
+      await alertWarning('예약 불가', '이미 지난 시간에는 예약할 수 없습니다.');
       return;
     }
     if (isBefore(startOfDay(currentDate), startOfDay(new Date()))) {
-      alert('오늘 이전 날짜에는 예약할 수 없습니다.');
+      await alertWarning('예약 불가', '오늘 이전 날짜에는 예약할 수 없습니다.');
       return;
     }
 
@@ -168,7 +162,7 @@ const MeetingRooms = () => {
     setIsPanelOpen(true);
   };
 
-  const handleQuickSelect = (hours) => {
+  const handleQuickSelect = async (hours) => {
     const start = parse(form.startTime, 'HH:mm', new Date());
     const end = addMinutes(start, hours * 60);
     const endStr = format(end, 'HH:mm');
@@ -182,7 +176,7 @@ const MeetingRooms = () => {
     if (!hasOverlap && endStr <= '18:00') {
       setForm({ ...form, endTime: endStr });
     } else {
-      alert('해당 시간에는 이미 예약이 존재하거나 운영 시간을 벗어납니다.');
+      await alertWarning('예약 불가', '해당 시간에 이미 예약이 존재하거나 운영 시간을 벗어납니다.');
     }
   };
 
@@ -253,11 +247,11 @@ const MeetingRooms = () => {
       return;
     }
     if (!form.date) {
-      alert('예약일을 선택해주세요.');
+      await alertWarning('정보 미입력', '예약일을 선택해주세요.');
       return;
     }
     if (isWeekend(parse(form.date, 'yyyy-MM-dd', new Date()))) {
-      alert('주말에는 회의실을 예약할 수 없습니다.');
+      await alertWarning('예약 불가', '주말에는 회의실을 예약할 수 없습니다.');
       return;
     }
     if (isBefore(parse(form.date, 'yyyy-MM-dd', new Date()), startOfDay(new Date()))) {
@@ -265,13 +259,26 @@ const MeetingRooms = () => {
     }
     if (!form.startTime) {
       alert('시작 시간을 선택해주세요.');
+      await alertWarning('정보 미입력', '시작 시간을 선택해주세요.');
       return;
     }
     if (!form.endTime) {
       alert('종료 시간을 선택해주세요.');
+      await alertWarning('정보 미입력', '종료 시간을 선택해주세요.');
       return;
     }
     if (form.startTime >= form.endTime) {
+      return;
+    }
+
+    const hasConflict = panelEvents.some(event => {
+      const eStart = getTime(event.start_dt);
+      const eEnd = getTime(event.end_dt);
+      return form.startTime < eEnd && form.endTime > eStart;
+    });
+
+    if (hasConflict) {
+      await alertWarning('예약 불가', '해당 시간에 이미 예약이 존재합니다.');
       return;
     }
 
@@ -289,10 +296,10 @@ const MeetingRooms = () => {
       setEvents(resp.data);
       setIsPanelOpen(false);
       setShowValidation(false);
-      alert('예약이 완료되었습니다.');
+      await alertSuccess('예약 완료', '예약이 완료되었습니다.');
     } catch(error) {
       console.error('회의실 예약 실패: ', error);
-      alert('회의실 예약에 실패했습니다.');
+      await alertError('예약 실패', '예약에 실패했습니다.');
     }
   };
 
