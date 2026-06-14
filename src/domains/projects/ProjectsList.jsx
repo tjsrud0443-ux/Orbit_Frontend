@@ -88,7 +88,7 @@ const ProjectsList = () => {
     const matchsSearch = e.name.includes(empSearch);
     const isAlreadyAdded = newProject.members.some(m => m.id === e.id);
     const targetLank = e.rank_name !== "대표";
-    const targetMy = e.id !== user.id;
+    const targetMy = e.id !== user?.id;
     return matchsSearch && !isAlreadyAdded && targetLank && targetMy;
   });
 
@@ -282,7 +282,13 @@ const ProjectsList = () => {
       alert('프로젝트가 성공적으로 수정되었습니다.');
       getMyAllProject().then(resp => {
         setProjects(resp.data);
-        setSelectedProject(prev => ({ ...prev, ...updatedEntry }));
+        const updatedProject = resp.data.find(
+          p => String(p.project_seq) === String(selectedProject.project_seq)
+        );
+
+        if (updatedProject) {
+          setSelectedProject(updatedProject);
+        }
         setIsEditing(false);
         setEditEmpSearch('');
         setShowEditEmpDropdown(false);
@@ -329,16 +335,30 @@ const ProjectsList = () => {
   const projectSeq = searchParam.get("projectSeq");
 
   useEffect(() => {
-    if (!projectSeq || projects.length === 0) {
+
+    if (!projectSeq) {
       return;
     }
-    const targetProject = projects.find(
-      p => String(p.project_seq) === String(projectSeq)
-    );
-    if (targetProject) {
-      setSelectedProject(targetProject);
-    }
-  }, [projectSeq, projects]);
+
+    getMyAllProject().then(resp => {
+
+      setProjects(resp.data);
+
+      const targetProject = resp.data.find(
+        p => String(p.project_seq) === String(projectSeq)
+      );
+
+      if (targetProject) {
+        setSelectedProject(targetProject);
+      }
+
+      navigate("/projects", {
+        replace: true
+      });
+
+    });
+
+  }, [projectSeq]);
 
   useEffect(() => {
     getAllEmp().then(resp => {

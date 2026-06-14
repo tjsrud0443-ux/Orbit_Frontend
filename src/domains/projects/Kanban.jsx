@@ -217,18 +217,25 @@ const Kanban = () => {
   };
 
   useEffect(() => {
+
     if (!taskSeq || tasks.length === 0) {
       return;
     }
-    const targetTask = tasks.find(
-      p => String(p.task_seq) === String(taskSeq)
-    );
-    if (targetTask) {
-      setDetailModalTask(targetTask);
-      navigate(`/kanban/${projectSeq}`), {
-        replace: true
+
+    getKanbanTaskList(projectSeq).then(resp => {
+      setTasks(resp.data);
+
+      const targetTask = resp.data.find(
+        t => String(t.task_seq) === String(taskSeq)
+      );
+
+      if (targetTask) {
+        setDetailModalTask(targetTask);
+        navigate(`/kanban/${projectSeq}`, {
+          replace: true
+        })
       }
-    };
+    });
   }, [taskSeq, tasks]);
 
   useEffect(() => {
@@ -252,7 +259,7 @@ const Kanban = () => {
     getProjectMembers(projectSeq).then(resp => {
       setMembers(resp.data);
     });
-  }, []);
+  }, [projectSeq]);
 
   useEffect(() => {
     getProject(projectSeq).then(resp => {
@@ -266,7 +273,7 @@ const Kanban = () => {
         start_date: resp.data.start_date?.substring(0, 10)
       }));
     });
-  }, []);
+  }, [projectSeq]);
 
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
