@@ -51,12 +51,10 @@ const Header = ({ onMenuClick }) => {
         navi(`/approval/detail/${docType}/${noti.ref_seq}`);
         break;
 
-      // // 미팅 참석 알림
-      // case "MEETING":
-      //   toast(noti.content, {
-      //     icon: () => "📅"
-      //   });
-      //   break;
+      // 미팅 참석 알림
+      case "MEETING":
+        navi(`/calendar`);
+        break;
 
       default:
         break;
