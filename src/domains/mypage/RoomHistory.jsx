@@ -359,7 +359,7 @@ const RoomHistory = () => {
 
                   {/* Actions */}
                   <div className="flex-shrink-0 flex justify-center gap-2">
-                    {new Date(res.start_dt) > new Date() && (
+                    {new Date(res.start_dt) > new Date() ? (
                       <>
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleEditClick(res); }}
@@ -374,6 +374,8 @@ const RoomHistory = () => {
                           취소
                         </button>
                       </>
+                    ) : (
+                      "-"
                     )}
                   </div>
                 </div>
