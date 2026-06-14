@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { IMAGES } from '../../images/images';
 import { sendMailForPw, sendNewPw, verifyForFindPw } from './authApi';
 import useLoadingStore from '../../store/useLoadingStore';
-import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
+import { alertSuccess, alertError } from '../../utils/alert';
 
 const FindPw = () => {
   const navigate = useNavigate();
