@@ -78,6 +78,7 @@ const SupplyModal = ({ mode, supply, onClose, onSave }) => {
   const [form, setForm] = useState(
     supply || { name: '', category: '사무용품', code: '', totalQty: '', stockQty: '', minStockQty: '' }
   );
+  const [errors, setErrors] = useState({}); 
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const categoryRef = useRef(null); 
 
@@ -93,7 +94,18 @@ const SupplyModal = ({ mode, supply, onClose, onSave }) => {
   }, []);
 
   const handleChange = (field, val) => setForm(prev => ({ ...prev, [field]: val }));
-
+  //유효성
+  const handleSaveWithValidation = () => {
+    const e = {};
+    if (!form.name.trim()) e.name = true;
+    if (mode === 'add' && !form.code.trim()) e.code = true;
+    if (mode === 'add' && (form.stockQty === '' || form.stockQty === null)) e.stockQty = true;
+    if (mode === 'edit' && (form.totalQty === '' || form.totalQty === null)) e.totalQty = true;
+    if (form.minStockQty === '' || form.minStockQty === null) e.minStockQty = true;
+    setErrors(e);
+    if (Object.keys(e).length > 0) return;
+    onSave(form);
+  };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
       <div className="bg-white rounded-[2rem] shadow-xl w-full max-w-md mx-4 p-8">
@@ -123,7 +135,8 @@ const SupplyModal = ({ mode, supply, onClose, onSave }) => {
               onChange={e => handleChange('name', e.target.value)}
               placeholder="비품명을 입력하세요"
               maxLength={66} 
-              className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 transition-all"
+              className={`px-4 py-2.5 bg-white border rounded-xl text-sm text-gray-700 outline-none focus:ring-4 transition-all
+              ${errors.name ? 'border-red-400 ring-4 ring-red-100' : 'border-gray-200 focus:border-[#3530B8] focus:ring-[#3530B8]/5'}`}
             />
           </div>
 
@@ -171,11 +184,10 @@ const SupplyModal = ({ mode, supply, onClose, onSave }) => {
               placeholder="예: EQP-0001"
               readOnly={mode === 'edit'}
               maxLength={50}
-              className={`px-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none font-mono transition-all
-              ${mode === 'edit'
-                ? 'bg-gray-50 text-gray-400 cursor-not-allowed'  // 수정 모드 - 회색
-                : 'bg-white text-gray-700 focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5'  // 추가 모드 - 정상
-              }`}
+              className={`px-4 py-2.5 border rounded-xl text-sm outline-none font-mono transition-all
+              ${mode === 'edit' ? 'bg-gray-50 text-gray-400 cursor-not-allowed border-gray-200'
+              : errors.code ? 'bg-white text-gray-700 border-red-400 ring-4 ring-red-100'
+              : 'bg-white text-gray-700 focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5'}`}
             />
           </div>
 
@@ -188,10 +200,18 @@ const SupplyModal = ({ mode, supply, onClose, onSave }) => {
               <input
                 type="number"
                 value={mode === 'add' ? form.stockQty : form.totalQty}
-                onChange={e => handleChange(mode === 'add' ? 'stockQty' : 'totalQty', e.target.value)}
+                onChange={e => {
+                  const val = e.target.value;
+                  if (val < 0) {
+                    handleChange(mode === 'add' ? 'stockQty' : 'totalQty', 0);
+                    return;
+                  }
+                  handleChange(mode === 'add' ? 'stockQty' : 'totalQty', val);
+                }}
                 placeholder="0"
                 min="0"
-                className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 transition-all"
+                className={`px-4 py-2.5 bg-white border rounded-xl text-sm text-gray-700 outline-none focus:ring-4 transition-all
+                 ${(errors.stockQty || errors.totalQty) ? 'border-red-400 ring-4 ring-red-100' : 'border-gray-200 focus:border-[#3530B8] focus:ring-[#3530B8]/5'}`}
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -199,10 +219,18 @@ const SupplyModal = ({ mode, supply, onClose, onSave }) => {
               <input
                 type="number"
                 value={form.minStockQty}
-                onChange={e => handleChange('minStockQty', e.target.value)}
+               onChange={e => {
+                const val = e.target.value;
+                if (val < 0) {
+                  handleChange('minStockQty', 0);
+                  return;
+                }
+                handleChange('minStockQty', val);
+              }}
                 placeholder="0"
                 min="0"
-                className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 transition-all"
+                className={`px-4 py-2.5 bg-white border rounded-xl text-sm text-gray-700 outline-none focus:ring-4 transition-all
+                ${errors.minStockQty ? 'border-red-400 ring-4 ring-red-100' : 'border-gray-200 focus:border-[#3530B8] focus:ring-[#3530B8]/5'}`}
               />
             </div>
           </div>
@@ -216,7 +244,7 @@ const SupplyModal = ({ mode, supply, onClose, onSave }) => {
             취소
           </button>
           <button
-            onClick={() => onSave(form)}
+            onClick={handleSaveWithValidation}
             className="flex-[2] py-3 bg-[#3530B8] text-white text-sm font-bold rounded-xl shadow-lg shadow-[#3530B8]/20 hover:bg-[#2a2696] transition-all"
           >
             {mode === 'add' ? '비품 등록' : '정보 저장'}

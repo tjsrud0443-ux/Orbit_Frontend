@@ -40,6 +40,7 @@ import FindId from './domains/auth/FindId';
 import FindPw from './domains/auth/FindPw';
 import QnaHistory from './domains/mypage/QnaHistory';
 import RoomHistory from './domains/mypage/RoomHistory';
+import SupplyHistory from './domains/mypage/SupplyHistory';
 import useLoadingStore from './store/useLoadingStore';
 import Loading from './components/common/Loading';
 import NotificationProvider from "./components/websocket/NotificationProvider";
@@ -85,6 +86,7 @@ function App() {
               <Route path="/mypage/edit" element={<MyPageEdit />} />
               <Route path="/qnaHistory" element={<QnaHistory />} />
               <Route path="/roomHistory" element={<RoomHistory />} />
+              <Route path="/supplyHistory" element={<SupplyHistory />} />
               <Route path="/main" element={<Main />} />
               <Route path="/departments" element={<Departments />} />
 

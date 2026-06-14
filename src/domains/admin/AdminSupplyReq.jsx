@@ -106,8 +106,9 @@ const AdminSupplyReq = () => {
         setRequests(prev =>
           prev.map(r => r.id === id ? { ...r, status: '승인' } : r)
         );
-    })
-    .catch(err => console.error(err));
+    }).catch(err => {
+      alert('재고가 부족하여 승인이 불가합니다.');
+});
   };
 
   const handleReject = (id) => {
