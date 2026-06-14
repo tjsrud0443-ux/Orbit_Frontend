@@ -31,11 +31,11 @@ const Kanban = () => {
 
   // 신규 Task 생성을 위한 폼 상태
   const [newGlobalTask, setNewGlobalTask] = useState({
-    title: '', users_pic_id: '', name: '', sysname: '', priority: 'medium', status: 'TODO', start_date: new Date().toISOString().split('T')[0], due_date: '', content: ''
+    title: '', users_pic_id: '', name: '', sysname: '', priority: 'medium', status: 'TODO', start_date: '', due_date: '', content: ''
   });
 
   // 인라인 폼 상태
-  const [inlineForm, setInlineForm] = useState({ status: null, title: '', users_pic_id: user?.id, name: user?.name, sysname: user?.sysname, priority: 'medium', start_date: new Date().toISOString().split('T')[0], due_date: '' });
+  const [inlineForm, setInlineForm] = useState({ status: null, title: '', users_pic_id: user?.id, name: user?.name, sysname: user?.sysname, priority: 'medium', start_date: '', due_date: '' });
   const [errors, setErrors] = useState({});
   const [activeMenuId, setActiveMenuId] = useState(null);
 
@@ -54,7 +54,7 @@ const Kanban = () => {
     const handleClickOutside = (event) => {
       // 1. 인라인 폼 외부 클릭 시 초기화
       if (inlineFormRef.current && !inlineFormRef.current.contains(event.target)) {
-        setInlineForm({ status: null, title: '', users_pic_id: user?.id, name: user?.name, sysname: user?.sysname, priority: 'medium', start_date: new Date().toISOString().split('T')[0], due_date: '' });
+        setInlineForm({ status: null, title: '', users_pic_id: user?.id, name: user?.name, sysname: user?.sysname, priority: 'medium', start_date: project?.start_date?.substring(0, 10), due_date: '' });
         setErrors({});
       }
 
@@ -69,7 +69,7 @@ const Kanban = () => {
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [user, project]);
 
   // 드래그 앤 드롭 로직
   const onDragStart = (e, task) => {
@@ -146,7 +146,7 @@ const Kanban = () => {
         setTasks(resp.data);
       });
       setIsModalOpen(false);
-      setNewGlobalTask({ title: '', users_pic_id: '', name: '', sysname: '', priority: 'medium', status: 'TODO', start_date: new Date().toISOString().split('T')[0], due_date: '', content: '' });
+      setNewGlobalTask({ title: '', users_pic_id: '', name: '', sysname: '', priority: 'medium', status: 'TODO', start_date: project?.start_date?.substring(0, 10), due_date: '', content: '' });
     });
     setErrors({});
   };
@@ -184,7 +184,7 @@ const Kanban = () => {
         name: user?.name,
         sysname: user?.sysname,
         priority: 'medium',
-        start_date: new Date().toISOString().split('T')[0],
+        start_date: project?.start_date?.substring(0, 10),
         due_date: '',
         content: ''
       });
@@ -240,8 +240,16 @@ const Kanban = () => {
   useEffect(() => {
     getProject(projectSeq).then(resp => {
       setProject(resp.data);
-    })
-  }, [])
+      setNewGlobalTask(prev => ({
+        ...prev,
+        start_date: resp.data.start_date?.substring(0, 10)
+      }));
+      setInlineForm(prev => ({
+        ...prev,
+        start_date: resp.data.start_date?.substring(0, 10)
+      }));
+    });
+  }, []);
 
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
@@ -432,12 +440,13 @@ const Kanban = () => {
                             {openCalendar === `inlineStart-${status}` && (
                               <div className={`absolute top-full left-0 z-[120] mt-1 w-[240px] transform origin-top-left scale-90 ${tasks.filter(t => t.status === status).length === 0 ? '[&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-0 [&>div]:mb-0' : ''}`}>
                                 <Calendar
-                                  value={inlineForm.start_date}
-                                  minDate={new Date().toISOString().split('T')[0]}
+                                  value={inlineForm?.start_date}
+                                  minDate={project?.start_date?.substring(0, 10)}
+                                  maxDate={project?.end_date?.substring(0, 10)}
                                   onChange={(date) => {
-                                    const today = new Date().toISOString().split('T')[0];
-                                    if (date < today) {
-                                      setErrors(prev => ({ ...prev, [`inlineStartDate-${status}`]: '시작일은 오늘 이후의 날짜만 선택할 수 있습니다.' }));
+                                    const projectStartDate = project?.start_date?.substring(0, 10);
+                                    if (date < projectStartDate) {
+                                      setErrors(prev => ({ ...prev, [`inlineStartDate-${status}`]: '프로젝트 기간 내에서만 선택 가능합니다.' }));
                                       return;
                                     }
                                     setErrors(prev => ({ ...prev, [`inlineStartDate-${status}`]: null }));
@@ -461,11 +470,14 @@ const Kanban = () => {
                             {openCalendar === `inlineEnd-${status}` && (
                               <div className={`absolute top-full right-0 z-[120] mt-1 w-[240px] transform origin-top-right scale-90 ${tasks.filter(t => t.status === status).length === 0 ? '[&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-0 [&>div]:mb-0' : ''}`}>
                                 <Calendar
-                                  value={inlineForm.due_date}
-                                  minDate={inlineForm.start_date || new Date().toISOString().split('T')[0]}
+                                  value={inlineForm?.due_date}
+                                  minDate={inlineForm?.start_date || project?.start_date?.substring(0, 10)}
+                                  maxDate={project?.end_date?.substring(0, 10)}
                                   onChange={(date) => {
-                                    if (inlineForm.start_date && date < inlineForm.start_date) {
-                                      setErrors(prev => ({ ...prev, [`inlineEndDate-${status}`]: '종료일은 시작일보다 이전일 수 없습니다.' }));
+                                    const projectStart = project?.start_date?.substring(0, 10);
+                                    const projectEnd = project?.end_date?.substring(0, 10);
+                                    if (date < projectStart || date > projectEnd) {
+                                      setErrors(prev => ({ ...prev, [`inlineEndDate-${status}`]: '프로젝트 기간 내에서만 선택 가능합니다.' }));
                                       return;
                                     }
                                     setErrors(prev => ({ ...prev, [`inlineEndDate-${status}`]: null }));
@@ -482,7 +494,7 @@ const Kanban = () => {
 
                         <div className="flex gap-2">
                           <button onClick={() => handleInlineCreate(status)} className="flex-1 bg-[#3530B8] text-white py-2 rounded-xl text-xs font-bold">추가</button>
-                          <button onClick={() => { setInlineForm({ status: null, title: '', users_pic_id: user?.id, name: user?.name, sysname: user?.sysname, priority: 'medium', start_date: new Date().toISOString().split('T')[0], due_date: '' }); setErrors({}); }} className="flex-1 bg-slate-100 text-slate-400 py-2 rounded-xl text-xs font-bold">취소</button>
+                          <button onClick={() => { setInlineForm({ status: null, title: '', users_pic_id: user?.id, name: user?.name, sysname: user?.sysname, priority: 'medium', start_date: project?.start_date?.substring(0, 10), due_date: '' }); setErrors({}); }} className="flex-1 bg-slate-100 text-slate-400 py-2 rounded-xl text-xs font-bold">취소</button>
                         </div>
                       </div>
                     ) : (
@@ -680,12 +692,13 @@ const Kanban = () => {
                   {openCalendar === `inlineStart-${activeTab}` && (
                     <div className={`absolute top-full left-0 z-[120] mt-1 w-[240px] transform origin-top-left scale-90 ${tasks.filter(t => t.status === activeTab).length === 0 ? '[&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-0 [&>div]:mb-0' : ''}`}>
                       <Calendar
-                        value={inlineForm.start_date}
-                        minDate={new Date().toISOString().split('T')[0]}
+                        value={inlineForm?.start_date}
+                        minDate={project?.start_date?.substring(0, 10)}
+                        maxDate={project?.end_date?.substring(0, 10)}
                         onChange={(date) => {
-                          const today = new Date().toISOString().split('T')[0];
-                          if (date < today) {
-                            setErrors(prev => ({ ...prev, [`inlineStartDate-${activeTab}`]: '시작일은 오늘 이후의 날짜만 선택할 수 있습니다.' }));
+                          const projectStartDate = project?.start_date?.substring(0, 10);
+                          if (date < projectStartDate) {
+                            setErrors(prev => ({ ...prev, [`inlineStartDate-${activeTab}`]: '프로젝트 기간 내에서만 선택 가능합니다.' }));
                             return;
                           }
                           setErrors(prev => ({ ...prev, [`inlineStartDate-${activeTab}`]: null }));
@@ -710,10 +723,13 @@ const Kanban = () => {
                     <div className={`absolute top-full right-0 z-[120] mt-1 w-[240px] transform origin-top-right scale-90 ${tasks.filter(t => t.status === activeTab).length === 0 ? '[&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-0 [&>div]:mb-0' : ''}`}>
                       <Calendar
                         value={inlineForm.due_date}
-                        minDate={inlineForm.start_date || new Date().toISOString().split('T')[0]}
+                        minDate={inlineForm?.start_date || project?.start_date?.substring(0, 10)}
+                        maxDate={project?.end_date?.substring(0, 10)}
                         onChange={(date) => {
-                          if (inlineForm.start_date && date < inlineForm.start_date) {
-                            setErrors(prev => ({ ...prev, [`inlineEndDate-${activeTab}`]: '종료일은 시작일보다 이전일 수 없습니다.' }));
+                          const projectStart = project?.start_date?.substring(0, 10);
+                          const projectEnd = project?.end_date?.substring(0, 10);
+                          if (date < projectStart || date > projectEnd) {
+                            setErrors(prev => ({ ...prev, [`inlineEndDate-${activeTab}`]: '프로젝트 기간 내에서만 선택 가능합니다.' }));
                             return;
                           }
                           setErrors(prev => ({ ...prev, [`inlineEndDate-${activeTab}`]: null }));
@@ -730,7 +746,7 @@ const Kanban = () => {
 
               <div className="flex gap-2">
                 <button onClick={() => handleInlineCreate(activeTab)} className="flex-1 bg-[#3530B8] text-white py-2 rounded-xl text-xs font-bold">추가</button>
-                <button onClick={() => { setInlineForm({ status: null, title: '', users_pic_id: user?.id, name: user?.name, sysname: user?.sysname, priority: 'medium', start_date: new Date().toISOString().split('T')[0], due_date: '' }); setErrors({}); }} className="flex-1 bg-slate-100 text-slate-400 py-2 rounded-xl text-xs font-bold">취소</button>
+                <button onClick={() => { setInlineForm({ status: null, title: '', users_pic_id: user?.id, name: user?.name, sysname: user?.sysname, priority: 'medium', start_date: project?.start_date?.substring(0, 10), due_date: '' }); setErrors({}); }} className="flex-1 bg-slate-100 text-slate-400 py-2 rounded-xl text-xs font-bold">취소</button>
               </div>
             </div>
           ) : (
@@ -754,7 +770,7 @@ const Kanban = () => {
               <button
                 onClick={() => {
                   setIsModalOpen(false);
-                  setNewGlobalTask({ title: '', users_pic_id: '', name: '', sysname: '', priority: 'medium', status: 'TODO', start_date: new Date().toISOString().split('T')[0], due_date: '', content: '' });
+                  setNewGlobalTask({ title: '', users_pic_id: '', name: '', sysname: '', priority: 'medium', status: 'TODO', start_date: project?.start_date?.substring(0, 10), due_date: '', content: '' });
                   setErrors({});
                 }}
                 className="text-slate-400 hover:text-slate-600 transition-colors"
@@ -893,12 +909,13 @@ const Kanban = () => {
                   {openCalendar === 'start' && (
                     <div className="absolute top-full left-0 z-[110] mt-2 w-[280px] [&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-0 [&>div]:mb-0">
                       <Calendar
-                        value={newGlobalTask.start_date}
-                        minDate={new Date().toISOString().split('T')[0]}
+                        value={newGlobalTask?.start_date}
+                        minDate={project?.start_date?.substring(0, 10)}
+                        maxDate={project?.end_date?.substring(0, 10)}
                         onChange={(date) => {
-                          const today = new Date().toISOString().split('T')[0];
-                          if (date < today) {
-                            setErrors(prev => ({ ...prev, globalStartDate: '시작일은 오늘 이후의 날짜만 선택할 수 있습니다.' }));
+                          const projectStartDate = project?.start_date?.substring(0, 10);
+                          if (date < projectStartDate) {
+                            setErrors(prev => ({ ...prev, globalStartDate: '프로젝트 기간 내에서만 선택 가능합니다.' }));
                             return;
                           }
                           setErrors(prev => ({ ...prev, globalStartDate: null }));
@@ -924,10 +941,13 @@ const Kanban = () => {
                     <div className="absolute top-full right-0 z-[110] mt-2 w-[280px] [&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-0 [&>div]:mb-0">
                       <Calendar
                         value={newGlobalTask.due_date}
-                        minDate={newGlobalTask.start_date || new Date().toISOString().split('T')[0]}
+                        minDate={newGlobalTask?.start_date || project?.start_date?.substring(0, 10)}
+                        maxDate={project?.end_date?.substring(0, 10)}
                         onChange={(date) => {
-                          if (newGlobalTask.start_date && date < newGlobalTask.start_date) {
-                            setErrors(prev => ({ ...prev, globalEndDate: '종료일은 시작일보다 이전일 수 없습니다.' }));
+                          const projectStart = project?.start_date?.substring(0, 10);
+                          const projectEnd = project?.end_date?.substring(0, 10);
+                          if (date < projectStart || date > projectEnd) {
+                            setErrors(prev => ({ ...prev, globalEndDate: '프로젝트 기간 내에서만 선택 가능합니다.' }));
                             return;
                           }
                           setErrors(prev => ({ ...prev, globalEndDate: null }));
@@ -959,7 +979,7 @@ const Kanban = () => {
               <button
                 onClick={() => {
                   setIsModalOpen(false);
-                  setNewGlobalTask({ title: '', users_pic_id: '', name: '', sysname: '', priority: 'medium', status: 'TODO', start_date: new Date().toISOString().split('T')[0], due_date: '', content: '' });
+                  setNewGlobalTask({ title: '', users_pic_id: '', name: '', sysname: '', priority: 'medium', status: 'TODO', start_date: project?.start_date?.substring(0, 10), due_date: '', content: '' });
                   setErrors({});
                 }}
                 className="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-bold text-sm hover:bg-slate-200 transition-all"
@@ -1104,9 +1124,16 @@ const Kanban = () => {
                     <div className="absolute top-full right-0 z-[110] mt-2 w-[280px] [&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-0 [&>div]:mb-0">
                       <Calendar
                         value={detailModalTask.due_date}
-                        minDate={detailModalTask.start_date}
+                        minDate={detailModalTask?.start_date?.substring(0, 10)}
+                        maxDate={project?.end_date?.substring(0, 10)}
                         onChange={(date) => {
-                          if (detailModalTask.start_date && date < detailModalTask.start_date) { alert('종료일은 시작일보다 이전일 수 없습니다.'); return; }
+                          const projectStart = project?.start_date?.substring(0, 10);
+                          const projectEnd = project?.end_date?.substring(0, 10);
+                          if (date < projectStart || date > projectEnd) {
+                            setErrors(prev => ({...prev,detailEndDate: '프로젝트 기간 내에서만 선택 가능합니다.'}));
+                            return;
+                          }
+                          setErrors(prev => ({ ...prev, detailEndDate: null }));
                           setDetailModalTask(prev => ({ ...prev, due_date: date }));
                           setOpenCalendar(null);
                         }}
@@ -1114,6 +1141,7 @@ const Kanban = () => {
                       />
                     </div>
                   )}
+                  {errors.detailEndDate && <p className="text-[9px] text-red-500 font-bold mt-1">{errors.detailEndDate}</p>}
                 </div>
               </div>
 
