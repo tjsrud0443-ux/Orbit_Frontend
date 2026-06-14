@@ -1,6 +1,7 @@
 ﻿import React, { useState, useMemo, useEffect } from 'react';
 import Pagination from '../../components/common/Pagination';
 import { getSuppyReqList, updateSupplyReqStatus } from '../admin/adminApi';
+import { alertWarning, alertSuccess, alertConfirm } from '../../utils/alert';
 
 const STATUS_TABS = [
   { key: '전체', label: '전체' },
@@ -76,13 +77,13 @@ const AdminSupplyReq = () => {
     setSelectedId(null);
   };
 
-  const handleApprove = (id) => {
+  const handleApprove = async (id) => {
     const target = requests.find(r => r.id === id);
 //재고가 0인 비품/ 재고가 최소수량 이하인 비품이 1개 이상 있냐
     const emptyItems = target.items.filter(item => item.stock_qty === 0);
     const lowItems = target.items.filter(item => item.stock_qty > 0 && item.stock_qty <= item.min_stock_qty);
 
-    let message = '승인하시겠습니까?';
+    let text = '처리 후 변경은 불가합니다.';
 
     if (emptyItems.length > 0 || lowItems.length > 0) {
       const warnings = [];
@@ -92,39 +93,46 @@ const AdminSupplyReq = () => {
       if (lowItems.length > 0) {
         warnings.push(`• ${lowItems.map(i => i.supply_name).join(', ')} : 재고 부족`);
       }
-      message = `\n${warnings.join('\n')}\n\n그래도 승인하시겠습니까?`;
+      text = `${warnings.join('<br>')}<br>그래도 승인하시겠습니까?`;
     }
-    if (!window.confirm(message)) return;
+    const result = await alertConfirm('신청을 승인하시겠습니까?', text);
+    if (!result.isConfirmed) return;
 
-    updateSupplyReqStatus({
+    try {
+      await updateSupplyReqStatus({
         req_seq: target.id,
         users_id: target.users_id,
         req_date: target.requestDate,
         status: 'APPROVED',
         items: target.items
-    }).then(() => {
-        setRequests(prev =>
-          prev.map(r => r.id === id ? { ...r, status: '승인' } : r)
-        );
-    }).catch(err => {
-      alert('재고가 부족하여 승인이 불가합니다.');
-});
+      });
+      await alertSuccess('승인 완료', '승인 처리가 완료되었습니다.');
+      setRequests(prev =>
+        prev.map(r => r.id === id ? { ...r, status: '승인' } : r)
+      );
+    } catch (err) {
+      await alertWarning('승인 불가', '재고가 부족하여 승인이 불가합니다.');
+    }
   };
 
-  const handleReject = (id) => {
-    if (!window.confirm('정말 반려하시겠습니까?')) return;
-    
+  const handleReject = async (id) => {
+    const result = await alertConfirm('정말 반려하시겠습니까?', '처리 후 변경은 불가합니다.');
+    if (!result.isConfirmed) return;
+
     const target = requests.find(r => r.id === id);
-    updateSupplyReqStatus({
+    try {
+      await updateSupplyReqStatus({
         req_seq: target.id,
         status: 'REJECTED',
         items: target.items
-    }).then(() => {
-        setRequests(prev =>
-          prev.map(r => r.id === id ? { ...r, status: '반려' } : r)
-        );
-    })
-    .catch(err => console.error(err));
+      });
+      await alertSuccess('반려 완료', '반려 처리가 완료되었습니다.');
+      setRequests(prev =>
+        prev.map(r => r.id === id ? { ...r, status: '반려' } : r)
+      );
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleRowClick = (id) => {

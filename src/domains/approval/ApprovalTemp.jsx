@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import Pagination from '../../components/common/Pagination';
 import { deleteDoc, getTempDoc } from './approvalApi';
+import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 
 
 const ApprovalTemp = () => {
@@ -44,24 +45,22 @@ const ApprovalTemp = () => {
     navi(`/approval/detail/${doc.doc_type}/${doc.doc_seq}`);
   };
 
-  const handleDelete = (doc) => {
-    if(!window.confirm("정말 삭제하시겠습니까? 삭제 후에는 복구가 불가합니다. ")) {
-      return;
+  const handleDelete = async (doc) => {
+    const result = await alertConfirm('정말 삭제하시겠습니까?', '삭제 후 복구는 불가합니다.');
+    if(!result.isConfirmed) return;
+    try {
+      await deleteDoc(doc.doc_seq, doc.doc_type);
+      await alertSuccess('삭제 완료', '문서 삭제가 완료되었습니다.');
+      const resp = await getTempDoc();
+      setDocuments(resp.data);
+
+      const newCount = Math.ceil(resp.data.length / itemsPerPage);
+      if (page > newCount && newCount > 0) {
+        setPage(newCount);
+      }
+    } catch (err) {
+      await alertError('오류 발생', '삭제 중 오류가 발생했습니다.');
     }
-    deleteDoc(doc.doc_seq, doc.doc_type).then(resp => {
-      alert("삭제가 완료되었습니다.");
-      getTempDoc().then(resp => {
-        setDocuments(resp.data);
-        
-        const newCount = Math.ceil(resp.data.length / itemsPerPage);
-        if (page > newCount && newCount > 0) {
-          setPage(newCount);
-        }
-      })
-    })
-    .catch(err => {
-      alert("삭제 중 오류가 발생되었습니다.")
-    })
   };
 
   const docType = {

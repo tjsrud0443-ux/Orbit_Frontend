@@ -4,6 +4,7 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import { getUsersInfo } from '../../api/userApi';
 import useUserStore from '../../store/userStore';
+import { alertWarning } from '../../utils/alert';
 
 export default function Layout() {
   const navi = useNavigate();
@@ -15,7 +16,7 @@ export default function Layout() {
       setUserInfo(resp.data)
     })
     .catch(error => {
-      alert("로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
+      alertWarning('세션 만료', '로그인 세션이 만료되었습니다.<br> 다시 로그인해주세요.');
       sessionStorage.removeItem("token");
       navi("/");
     })

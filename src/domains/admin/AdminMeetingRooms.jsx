@@ -4,6 +4,7 @@ import { faEdit, faTrashAlt, faPlus, faTimes, faCloudUploadAlt } from '@fortawes
 import { useDropzone } from 'react-dropzone';
 import { addMeetingRoom, deleteMeetingRoom, editMeetingRoom, getAllRooms } from './adminApi';
 import useAuthStore from '../../store/authStore';
+import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 
 const AdminMeetingRooms = () => {
   const [isAddMode, setIsAddMode] = useState(false);
@@ -91,14 +92,15 @@ const AdminMeetingRooms = () => {
   };
 
   const handleDelete = async (seq) => {
-    if (window.confirm('정말 삭제하시겠습니까?')) {
+    const result = await alertConfirm('정말 삭제하시겠습니까?', '삭제 후 복구는 불가합니다.');
+    if (result.isConfirmed) {
       try {
         await deleteMeetingRoom(seq);
-        alert('삭제가 완료되었습니다.');
+        await alertSuccess('삭제 완료', '회의실 삭제가 완료되었습니다.');
         loadRooms();
       } catch (error) {
         console.error('회의실 삭제 실패', error);
-        alert('회의실 삭제에 실패했습니다.');
+        await alertError('삭제 실패', '회의실 삭제에 실패했습니다.');
       }
     }
   };
@@ -171,7 +173,10 @@ const AdminMeetingRooms = () => {
       } else {
         await addMeetingRoom(data);
       }
-      alert(selectedRoom ? "회의실 정보가 수정되었습니다." : "회의실이 등록되었습니다.");
+      await alertSuccess(
+        selectedRoom ? '수정 완료' : '등록 완료',
+        selectedRoom ? '회의실 정보가 수정되었습니다.' : '회의실 등록이 완료되었습니다.'
+      );
       loadRooms();
       setIsAddMode(false);
       setSelectedRoom(null);
@@ -179,6 +184,10 @@ const AdminMeetingRooms = () => {
     } catch (error) {
       console.error('회의실 처리 실패', error);
       alert(selectedRoom ? "회의실 수정에 실패했습니다." : "회의실 등록에 실패했습니다.");
+      await alertError(
+        selectedRoom ? '수정 실패' : '등록 실패',
+        selectedRoom ? '정보 수정에 실패했습니다.' : '회의실 등록에 실패했습니다.'
+      );
     }
     
   }

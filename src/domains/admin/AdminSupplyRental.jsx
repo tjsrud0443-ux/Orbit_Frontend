@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Pagination from '../../components/common/Pagination';
 import { getSupplyRentalList, updateRentalStatus } from './adminApi';
+import { alertSuccess, alertConfirm } from '../../utils/alert';
 
 const PER_PAGE = 8;
 
@@ -86,16 +87,22 @@ const AdminSupplyRental = () => {
     }).catch(err => console.error(err));
 }, [page, keyword, activeTab, refresh, perPage]);
 
-const handleReturn = () => {
-    if (!window.confirm('반납 처리하시겠습니까?')) return;
-    updateRentalStatus({
-        rental_seq: selectedItem.id,
-        supply_seq: selectedItem.supply_seq,
-        ea: selectedItem.ea,
-    }).then(() => {
-        setSelectedId(null);
-        setRefresh(prev => prev + 1);//강제 새로고침ㄴ
-    }).catch(err => console.error(err));
+const handleReturn = async () => {
+  const result = await alertConfirm('반납 처리하시겠습니까?', '처리 후 변경은 불가합니다.');
+  if (!result.isConfirmed) return;
+
+  try {
+    await updateRentalStatus({
+      rental_seq: selectedItem.id,
+      supply_seq: selectedItem.supply_seq,
+      ea: selectedItem.ea,
+    });
+    await alertSuccess('처리 완료', '반납 처리가 완료되었습니다.');
+    setSelectedId(null);
+    setRefresh(prev => prev + 1);//강제 새로고침ㄴ
+  } catch (err) {
+    console.error(err);
+  }
 };
   return (
     <div className={`w-full h-full bg-white font-sans flex flex-col overflow-hidden ${selectedId ? 'p-0 md:p-8' : 'p-4 md:p-8'}`}>
