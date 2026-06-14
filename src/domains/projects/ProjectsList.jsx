@@ -337,6 +337,9 @@ const ProjectsList = () => {
     );
     if (targetProject) {
       setSelectedProject(targetProject);
+      navigate(`/projects`), {
+        replace: true
+      }
     }
   }, [projectSeq, projects]);
 

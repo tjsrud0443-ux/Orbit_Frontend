@@ -4,16 +4,48 @@ import { faBell } from '@fortawesome/free-regular-svg-icons';
 import useAuthStore from '../../store/authStore';
 import useUserStore from '../../store/userStore';
 import useNotificationStore from '../../store/useNotificationStore';
-import { useEffect, useState } from 'react';
-import { getMyNotiList, getNotiDocType, getNotiProjectSeq } from '../../api/notificationApi';
+import { useEffect, useRef, useState } from 'react';
+import { getMyNotiList, getNotiDocType, getNotiProjectSeq, updateReadNoti } from '../../api/notificationApi';
 
 const Header = ({ onMenuClick }) => {
   const token = useAuthStore(state => state.token);
   const user = useUserStore(state => state.user);
   const notifications = useNotificationStore(state => state.notifications);
   const setNotifications = useNotificationStore(state => state.setNotifications);
+  const readNoti = useNotificationStore(state => state.readNoti);
+
   const navi = useNavigate();
   const [open, setOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  
+  const notiTypeLabel = {
+    PROJECT: "[프로젝트]",
+    TASK: "[업무]",
+    MEETING: "[회의]",
+    APPROVAL: "[결재 요청]",
+    APPROVED: "[결재 승인]",
+    REJECTED: "[결재 반려]"
+  };
+
+  // 타입별 라벨 색상
+  const notiTypeColor = {
+    PROJECT: "text-blue-600",
+    TASK: "text-amber-600",
+    MEETING: "text-purple-600",
+    APPROVAL: "text-slate-600",
+    APPROVED: "text-green-600",
+    REJECTED: "text-red-600",
+  };
+
+  // 타입별 점(dot) 색상
+  const notiDotColor = {
+    PROJECT: "bg-blue-500",
+    TASK: "bg-amber-500",
+    MEETING: "bg-purple-500",
+    APPROVAL: "bg-slate-400",
+    APPROVED: "bg-green-500",
+    REJECTED: "bg-red-500",
+  };
 
   useEffect(() => {
     getMyNotiList().then(resp => {
@@ -21,11 +53,29 @@ const Header = ({ onMenuClick }) => {
     });
   }, [setNotifications]);
 
+  // 바깥 영역 클릭 시 드롭다운 닫기
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleBellClick = () => {
     setOpen(prev => !prev);
   }
 
   const handleNotiClick = async (noti) => {
+    setOpen(false); // 알림 클릭 시 드롭다운 닫기
+
+    if(noti.read_yn === "N") {
+      await updateReadNoti(noti.noti_seq);
+      readNoti(noti.noti_seq);
+    }
+
     switch (noti.ref_type) {
 
       // 프로젝트 알림
@@ -47,7 +97,7 @@ const Header = ({ onMenuClick }) => {
       case "REJECTED":
         const DocTypeResp = await getNotiDocType(noti.ref_seq);
         const docType = DocTypeResp.data;
-        
+
         navi(`/approval/detail/${docType}/${noti.ref_seq}`);
         break;
 
@@ -61,6 +111,10 @@ const Header = ({ onMenuClick }) => {
 
     }
   }
+
+  const noReadCount = notifications.filter(
+        noti => noti.read_yn === "N").length;
+
   return (
     <header className="h-14 bg-white border-b border-slate-200 flex items-center
       justify-between lg:justify-end px-4 lg:px-6 shrink-0">
@@ -71,7 +125,7 @@ const Header = ({ onMenuClick }) => {
       >☰</button>
 
       <div className="flex items-center gap-4 lg:gap-5 text-slate-500">
-        <div className="relative">
+        <div className="relative" ref={dropdownRef}>
           <button
             onClick={handleBellClick}
             className="relative hover:text-slate-800 cursor-pointer"
@@ -81,35 +135,67 @@ const Header = ({ onMenuClick }) => {
               className="text-lg text-slate-500"
             />
 
-            <span
-              className="absolute -top-1 -right-1 bg-red-500 text-[8px] text-white font-bold px-1 rounded-full">
-              {notifications.length}
-            </span>
+            {noReadCount > 0 && (
+              <span
+                className="absolute -top-1 -right-1 min-w-[16px] h-4 flex items-center justify-center
+                  bg-red-500 text-[9px] text-white font-bold px-1 rounded-full">
+                {noReadCount > 99 ? '99+' : noReadCount}
+              </span>
+            )}
           </button>
 
           {open && (
-            <div className="absolute right-0 top-10 w-60 bg-white border rounded-lg shadow-1g z-50">
+            <div className="absolute right-0 top-11 w-80 bg-white border border-slate-200
+              rounded-xl shadow-lg z-50 overflow-hidden">
+
+              {/* 헤더 */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                <span className="text-sm font-bold text-slate-800">알림</span>
+                <span className="text-xs text-slate-400">안 읽음 {noReadCount}건</span>
+              </div>
+
+              {/* 목록 (최대 5개 노출 후 스크롤) */}
               {notifications.length === 0 ? (
-                <div className="p-4 text-sm text-gray-500">
-                  알림이 없습니다.
+                <div className="px-4 py-10 text-center text-sm text-slate-400">
+                  새로운 알림이 없습니다.
                 </div>
               ) : (
-                notifications.map(noti => (
-                  <div key={noti.noti_seq} className="p-3 border-b hover:bg-gray-50 cursor-pointer"
-                    onClick={() => handleNotiClick(noti)}>
-                    <div className="font-medium">
-                      {noti.noti_type}
-                    </div>
+                <div className="max-h-[380px] overflow-y-auto
+                      [scrollbar-width:thin] 
+                      [scrollbar-color:#e2e8f0_transparent]
+                      [&::-webkit-scrollbar]:w-1.5
+                      [&::-webkit-scrollbar-track]:bg-transparent
+                      [&::-webkit-scrollbar-thumb]:bg-slate-200
+                      [&::-webkit-scrollbar-thumb]:rounded-full
+                      hover:[&::-webkit-scrollbar-thumb]:bg-slate-100">
+                  {notifications.map(noti => (
+                    <button
+                      key={noti.noti_seq}
+                      onClick={() => handleNotiClick(noti)}
+                      className="w-full h-[76px] text-left flex items-center gap-3 px-4
+                        border-b border-slate-100 last:border-b-0 hover:bg-slate-50 transition-colors"
+                    >
+                      {/* 타입별 점 */}
+                      <span
+                        className={`shrink-0 w-2 h-2 rounded-full ${notiDotColor[noti.noti_type] || 'bg-slate-400'}`}
+                      />
 
-                    <div className="text-sm">
-                      {noti.content}
-                    </div>
-
-                    <div className="text-xs text-gray-400">
-                      {noti.created_at}
-                    </div>
-                  </div>
-                ))
+                      <div className="flex-1 min-w-0 flex flex-col justify-center">
+                        <span
+                          className={`text-[11px] font-semibold ${notiTypeColor[noti.noti_type] || 'text-slate-600'}`}
+                        >
+                          {notiTypeLabel[noti.noti_type] || noti.noti_type}
+                        </span>
+                        <p className="text-sm text-slate-700 truncate">
+                          {noti.content}
+                        </p>
+                        <span className="text-[11px] text-slate-400">
+                          {noti.created_at}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
           )}

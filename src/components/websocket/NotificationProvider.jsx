@@ -17,7 +17,7 @@ export default function NotificationProvider({ children }) {
             disconnectSocket();
         };
 
-    }, [user]);
+    }, [user?.id]);
 
     return children;
 }
