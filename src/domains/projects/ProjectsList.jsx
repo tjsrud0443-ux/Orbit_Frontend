@@ -88,7 +88,7 @@ const ProjectsList = () => {
     const matchsSearch = e.name.includes(empSearch);
     const isAlreadyAdded = newProject.members.some(m => m.id === e.id);
     const targetLank = e.rank_name !== "대표";
-    const targetMy = e.id !== user.id;
+    const targetMy = e.id !== user?.id;
     return matchsSearch && !isAlreadyAdded && targetLank && targetMy;
   });
 
