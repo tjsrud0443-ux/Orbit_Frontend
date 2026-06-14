@@ -8,3 +8,9 @@ export const deleteProject = (project_seq) => maxios.delete("/project/projectDel
 export const completeProject = (project_seq) => maxios.put("/project/projectComplete/" + project_seq);
 
 export const getKanbanTaskList = (projectSeq) => maxios.get("/project/getKanbanTaskList/" + projectSeq);
+export const getProjectMembers = (projectSeq) => maxios.get("/project/getProjectMembers/" + projectSeq);
+export const insertTask = (params) => maxios.post("/project/insertTask", params);
+export const getProject = (projectSeq) => maxios.get("/project/getProject/" + projectSeq);
+export const updateTask = (params) => maxios.put("/project/updateTask", params);
+export const deleteTask = (taskSeq) => maxios.delete("/project/deleteTask/"+taskSeq);
+export const updateTaskStatus = (taskStatus) => maxios.put("/project/updateTaskStatus", taskStatus)

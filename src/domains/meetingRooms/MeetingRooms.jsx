@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { format, addDays, subDays, startOfDay, parse, addMinutes, isBefore} from 'date-fns';
+import { format, addDays, subDays, startOfDay, parse, addMinutes, isBefore, isWeekend } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserFriends, faChevronLeft, faChevronRight, faCalendarCheck, faClock, faUser, faSearch, faTimes, faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
@@ -125,6 +125,10 @@ const MeetingRooms = () => {
   };
 
   const handleTimelineClick = (time) => {
+    if (isWeekend(currentDate)) {
+      alert('주말에는 회의실을 예약할 수 없습니다.');
+      return;
+    }
     if (isTimeOccupied(time)) return;
     if (isPastTime(time, format(currentDate, 'yyyy-MM-dd'))) {
       alert('이미 지난 시간에는 예약할 수 없습니다.');
@@ -245,6 +249,10 @@ const MeetingRooms = () => {
       alert('예약일을 선택해주세요.');
       return;
     }
+    if (isWeekend(parse(form.date, 'yyyy-MM-dd', new Date()))) {
+      alert('주말에는 회의실을 예약할 수 없습니다.');
+      return;
+    }
     if (isBefore(parse(form.date, 'yyyy-MM-dd', new Date()), startOfDay(new Date()))) {
       return;
     }
@@ -283,14 +291,12 @@ const MeetingRooms = () => {
 
   const isDateInvalid = form.date && isBefore(parse(form.date, 'yyyy-MM-dd', new Date()), startOfDay(new Date()));
   const isTitleInvalid = (showValidation && !form.title.trim()) || form.title.length > 20;
-  const isTitleLengthInvalid = form.title.length > 20;
   const isAttendeeLimitExceeded = form.attendees.length > (selectedRoom?.max_people || 0);
   const isTimeInvalid = form.startTime >= form.endTime;
 
   return (
     <div className={`h-full flex flex-col ${isPanelOpen ? 'p-0 md:p-8' : 'p-6 md:p-8'} bg-[#FFFFFF] overflow-hidden font-sans`}>
       
-      {/* Header Section */}
       <div className={`mb-6 flex-shrink-0 ${isPanelOpen ? 'hidden md:block' : 'block'}`}>
         <div className="flex items-center justify-between">
           <div>
@@ -305,12 +311,8 @@ const MeetingRooms = () => {
         </div>
       </div>
 
-      {/* Main Content Area */}
       <div className="flex-1 flex gap-6 min-h-0 overflow-hidden">
-        
-        {/* Left Section: Cards and Timeline */}
         <div className={`flex flex-col min-h-0 overflow-hidden transition-all duration-500 ${isPanelOpen ? 'hidden md:flex md:flex-[0.6]' : 'flex-1'}`}>
-          {/* Room Cards */}
           <div className="flex-shrink-0 mb-6 flex gap-4 overflow-x-auto pb-2 no-scrollbar">
             {rooms.map(room => (
               <div 
@@ -347,7 +349,6 @@ const MeetingRooms = () => {
             ))}
           </div>
 
-          {/* Timeline Area */}
           <div className="flex-1 bg-white rounded-[2rem] border border-[#F0F4FF] shadow-sm p-4 md:p-8 flex flex-col min-h-0 overflow-hidden">
             <div className="flex flex-row md:items-center justify-between mb-4 md:mb-8 flex-shrink-0 gap-4">
               <h2 className="text-sm md:text-base font-bold text-gray-900 hidden md:flex items-center gap-2">
@@ -355,7 +356,6 @@ const MeetingRooms = () => {
                 {selectedRoom?.room_name} 예약 현황
               </h2>
               
-              {/* Date Selection Bar (Moved inside Timeline Header) */}
               <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
                 <div className="flex items-center gap-1 bg-gray-50 p-0.5 md:p-1 rounded-xl border border-gray-100">
                   <button onClick={handlePrevDay} className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-lg hover:bg-white hover:shadow-sm text-gray-400 transition-all cursor-pointer">
@@ -377,7 +377,6 @@ const MeetingRooms = () => {
 
             <div className="flex-1 overflow-x-auto overflow-y-hidden custom-scrollbar pb-2 md:pb-6">
               <div className="min-w-[1000px] h-full flex flex-col relative pt-8 md:pt-10">
-                {/* Time Axis */}
                 <div className="absolute top-0 left-0 right-0 flex border-b border-gray-50 pb-2">
                   {timeSlots.map((time, idx) => (
                     <div key={idx} className="flex-1 text-[9px] md:text-[10px] font-bold text-gray-400 text-center">
@@ -386,13 +385,13 @@ const MeetingRooms = () => {
                   ))}
                 </div>
 
-                {/* Timeline Grid */}
                 <div className="flex-1 flex relative bg-gray-50/30 rounded-2xl overflow-hidden border border-gray-50">
                   {timeSlots.map((time, idx) => {
                     const isOccupied = isTimeOccupied(time);
                     const isPast = isPastTime(time, format(currentDate, 'yyyy-MM-dd'));
                     const isEndTime = time >= '18:00';
-                    const isDisabled = isOccupied || isEndTime;
+                    const isWeekendDay = isWeekend(currentDate);
+                    const isDisabled = isOccupied || isEndTime || isWeekendDay;
 
                     return (
                       <div 
@@ -409,7 +408,6 @@ const MeetingRooms = () => {
                     );
                   })}
 
-                  {/* Occupied Slots */}
                   {dayEvents.map(event => {
                     const startIndex = timeSlots.indexOf(getTime(event.start_dt));
                     const endIndex = timeSlots.indexOf(getTime(event.end_dt));
@@ -435,7 +433,6 @@ const MeetingRooms = () => {
           </div>
         </div>
 
-        {/* Right Section: Reservation Form (Panel) */}
         {isPanelOpen && (
           <div className={`flex flex-col bg-white rounded-none md:rounded-[2rem] border-0 md:border border-[#F0F4FF] shadow-sm overflow-hidden min-h-0 animate-in slide-in-from-right duration-500 flex-1 md:flex-[0.4]`}>
              <div className="p-6 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
@@ -446,7 +443,6 @@ const MeetingRooms = () => {
              </div>
              
              <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-6">
-                {/* Form Fields */}
                 <div className="space-y-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-gray-400 uppercase ml-1 tracking-wider">회의명</label>
@@ -481,7 +477,6 @@ const MeetingRooms = () => {
                   </div>
                 </div>
 
-                {/* Date & Time Selection */}
                 <div className="space-y-4 pt-2">
                   <h3 className="text-xs font-bold text-[#3530B8] uppercase ml-1 tracking-widest">날짜 및 시간 설정</h3>
                   
@@ -634,7 +629,6 @@ const MeetingRooms = () => {
                   </div>
                 </div>
 
-                {/* Attendee Search */}
                 <div className="space-y-4 pt-2">
                   <h3 className="text-xs font-bold text-gray-400 uppercase ml-1 tracking-wider">참석자 선택</h3>
                   <div className="relative">
@@ -704,7 +698,6 @@ const MeetingRooms = () => {
                 </div>
              </div>
 
-             {/* Panel Buttons */}
              <div className="p-8 border-t border-gray-50 flex gap-4 bg-white flex-shrink-0">
                 <button 
                   onClick={() => { setIsPanelOpen(false); setShowFormCalendar(false); setShowValidation(false); }}
