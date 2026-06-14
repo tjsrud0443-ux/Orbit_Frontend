@@ -14,6 +14,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { getGroup } from '../departments/departmentsApi';
 import { addDept, delDept, updateDept } from './adminApi';
+import { alertSuccess, alertConfirm, alertWarning } from '../../utils/alert';
 
 const AdminDept = () => {
   // --- 1. Data States ---
@@ -137,7 +138,7 @@ const AdminDept = () => {
     setErrors({});
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const newErrors = {};
     if (!formData.dept_name) {
       newErrors.dept_name = `${formMode === 'CREATE_HQ' ? '본부명' : '부서명'}을 입력해주세요.`;
@@ -171,81 +172,73 @@ const AdminDept = () => {
 
 
     if (formMode === 'EDIT') {
-      if (!window.confirm("정말 수정하시겠습니까?")) {
-        return;
-      } else {
-        updateDept(formData).then(resp => {
-          getGroup().then(resp => {
-            setFullTree({
-              root: resp.data.root,
-              nodeMap: resp.data.nodeMap
-            });
-            setEmployees(resp.data.users);
-            if (resp.data.root) {
-              setExpandedNodes(new Set([resp.data.root.deptSeq]));
-            }
-            setLoading(false);
-          })
-            .catch(err => {
-              console.error("조직도 로딩 실패", err);
-              setLoading(false);
-            });
-        })
+      const result = await alertConfirm('부서 수정', '정말 수정하시겠습니까?');
+      if (!result.isConfirmed) return;
+
+      await updateDept(formData);
+      const resp = await getGroup();
+      setFullTree({
+        root: resp.data.root,
+        nodeMap: resp.data.nodeMap
+      });
+      setEmployees(resp.data.users);
+      if (resp.data.root) {
+        setExpandedNodes(new Set([resp.data.root.deptSeq]));
       }
+      setLoading(false);
+
     } else {
-      addDept(payload).then(resp => {
-        getGroup().then(resp => {
-          setFullTree({
-            root: resp.data.root,
-            nodeMap: resp.data.nodeMap
-          });
-          setEmployees(resp.data.users);
-          if (resp.data.root) {
-            setExpandedNodes(new Set([resp.data.root.deptSeq]));
-          }
-          setLoading(false);
-        })
-          .catch(err => {
-            console.error("조직도 로딩 실패", err);
-            setLoading(false);
-          });
-      })
+      await addDept(payload);
+      const resp = await getGroup();
+      setFullTree({
+        root: resp.data.root,
+        nodeMap: resp.data.nodeMap
+      });
+      setEmployees(resp.data.users);
+      if (resp.data.root) {
+        setExpandedNodes(new Set([resp.data.root.deptSeq]));
+      }
+      setLoading(false);
     }
 
-    alert(`${formMode === 'EDIT' ? '수정' : '생성'}되었습니다.`);
+    await alertSuccess(
+      `${formMode === 'EDIT' ? '수정' : '생성'} 완료`,
+      `${formMode === 'EDIT' ? '수정이' : '생성이'} 완료되었습니다.`
+    );
     handleCloseForm();
   };
 
-  const handleDelete = (node) => {
+  const handleDelete = async (node) => {
     if (node.children && node.children.length > 0) {
-      alert("하위 부서가 존재하여 삭제할 수 없습니다. \n하위 부서를 먼저 삭제해 주세요.");
+      await alertWarning('삭제 불가', '하위 부서가 존재하여 삭제할 수 없습니다.<br>하위 부서를 먼저 삭제해주세요.');
       return;
     }
 
     const count = getDeptMemberCount(node);
     if (count > 0) {
-      alert("본부 또는 부서 내에 소속된 직원이 존재하여 삭제할 수 없습니다.");
+      await alertWarning('삭제 불가', '본부 또는 부서 내에 소속된 직원이 존재하여<br>삭제할 수 없습니다.');
       return;
     }
-    if (window.confirm(`[ ${node.deptName} ] 을(를) 삭제하시겠습니까? \n삭제 후에는 복구가 불가합니다.`)) {
-      delDept(node.deptSeq).then(resp => {
-        alert("삭제되었습니다.");
-        getGroup().then(resp => {
-          setFullTree({
-            root: resp.data.root,
-            nodeMap: resp.data.nodeMap
-          });
-          setEmployees(resp.data.users);
-          if (resp.data.root) {
-            setExpandedNodes(new Set([resp.data.root.deptSeq]));
-          }
-          setLoading(false);
-        })
-          .catch(err => {
-            console.error("조직도 로딩 실패", err);
-            setLoading(false);
-          });
-      })
+    
+    const result = await alertConfirm(
+      `[ ${node.deptName} ] 을(를)<br>정말 삭제하시겠습니까?`,
+      '삭제 후 복구는 불가합니다.'
+    );
+
+    if (result.isConfirmed) {
+      await delDept(node.deptSeq);
+      await alertSuccess('삭제 완료', '삭제가 완료되었습니다.');
+      
+      const resp = await getGroup();
+      setFullTree({
+        root: resp.data.root,
+        nodeMap: resp.data.nodeMap
+      });
+      setEmployees(resp.data.users);
+      if (resp.data.root) {
+        setExpandedNodes(new Set([resp.data.root.deptSeq]));
+      }
+      setLoading(false);
     }
   };
 
