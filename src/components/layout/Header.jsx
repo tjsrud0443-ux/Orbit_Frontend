@@ -5,7 +5,7 @@ import useAuthStore from '../../store/authStore';
 import useUserStore from '../../store/userStore';
 import useNotificationStore from '../../store/useNotificationStore';
 import { useEffect, useState } from 'react';
-import { getMyNotiList } from '../../api/notificationApi';
+import { getMyNotiList, getNotiDocType, getNotiProjectSeq } from '../../api/notificationApi';
 
 const Header = ({ onMenuClick }) => {
   const token = useAuthStore(state => state.token);
@@ -17,7 +17,6 @@ const Header = ({ onMenuClick }) => {
 
   useEffect(() => {
     getMyNotiList().then(resp => {
-      console.log(resp.data);
       setNotifications(resp.data);
     });
   }, [setNotifications]);
@@ -26,11 +25,7 @@ const Header = ({ onMenuClick }) => {
     setOpen(prev => !prev);
   }
 
-  const handleNotiClick = (noti) => {
-    console.log("알림 목록 클릭 이벤트 발생")
-    console.log(noti);
-    console.log(noti.ref_type);
-    console.log(noti.ref_seq);
+  const handleNotiClick = async (noti) => {
     switch (noti.ref_type) {
 
       // 프로젝트 알림
@@ -38,36 +33,28 @@ const Header = ({ onMenuClick }) => {
         navi(`/projects?projectSeq=${noti.ref_seq}`);
         break;
 
-      // 결재 요청 알림
-      case "APPROVAL":
-        navi(`/projects?projectSeq=${noti.ref_seq}`);
+      // 칸반 담당자 지정 알림
+      case "TASK":
+        const projectResp = await getNotiProjectSeq(noti.ref_seq);
+        const projectSeq = projectResp.data;
+
+        navi(`/kanban/${projectSeq}?taskSeq=${noti.ref_seq}`);
         break;
 
-      // // 결재 승인 알림
-      // case "APPROVED":
-      //   toast(noti.content, {
-      //     icon: () => "✅"
-      //   });
-      //   break;
-
-      // // 결재 반려 알림
-      // case "REJECTED":
-      //   toast(noti.content, {
-      //     icon: () => "❌"
-      //   });
-      //   break;
+      // 결재 요청 알림
+      case "APPROVAL":
+      case "APPROVED":
+      case "REJECTED":
+        const DocTypeResp = await getNotiDocType(noti.ref_seq);
+        const docType = DocTypeResp.data;
+        
+        navi(`/approval/detail/${docType}/${noti.ref_seq}`);
+        break;
 
       // // 미팅 참석 알림
       // case "MEETING":
       //   toast(noti.content, {
       //     icon: () => "📅"
-      //   });
-      //   break;
-
-      // // 칸반 담당자 지정 알림
-      // case "TASK":
-      //   toast(noti.content, {
-      //     icon: () => "👨‍💻"
       //   });
       //   break;
 
