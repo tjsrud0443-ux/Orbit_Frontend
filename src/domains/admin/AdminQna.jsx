@@ -198,9 +198,9 @@ const AdminQna = () => {
                     <th className="pb-4 font-medium px-6 text-left w-[10%] whitespace-nowrap">카테고리</th>
                     <th className="pb-4 font-medium px-4 text-left w-[30%] whitespace-nowrap">질문 내용</th>
                     <th className="pb-4 font-medium px-4 text-left w-[10%] whitespace-nowrap">질문자</th>
-                    <th className="pb-4 font-medium px-4 text-left w-[15%] whitespace-nowrap">등록일</th>
-                    <th className="pb-4 font-medium px-5 text-left w-[10%] whitespace-nowrap">상태</th>
-                    <th className="pb-4 font-medium px-5 text-left w-[10%] whitespace-nowrap">관리</th>
+                    <th className="pb-4 font-medium px-16 text-left w-[15%] whitespace-nowrap">등록일</th>
+                    <th className="pb-4 font-medium px-9.5 text-left w-[10%] whitespace-nowrap">상태</th>
+                    <th className="pb-4 font-medium px-8.5 text-left w-[10%] whitespace-nowrap">관리</th>
                   </tr>
                 </thead>
                 <tbody>
