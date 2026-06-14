@@ -16,6 +16,7 @@ const AdminQna = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [answerText, setAnswerText] = useState('');
+  const [answerError, setAnswerError] = useState('');
   const user = useUserStore(state => state.user);
 
   useEffect(() => {
@@ -75,21 +76,25 @@ const AdminQna = () => {
     setSelectedQna(item);
     setIsEditing(true);
     setAnswerText('');
+    setAnswerError('');
   };
 
   const handleDetailClick = (item) => {
     setSelectedQna(item);
     setIsEditing(false);
     setAnswerText(item.handle_answer || '');
+    setAnswerError('');
   };
 
   const handleEditClick = () => {
     setIsEditing(true);
     setAnswerText(selectedQna.handle_answer || '');
+    setAnswerError('');
   };
 
   const handleCancelClick = () => {
     setIsEditing(false);
+    setAnswerError('');
     if (selectedQna.status === 'PENDING') {
       setSelectedQna(null);
     }
@@ -112,6 +117,10 @@ const AdminQna = () => {
   const handleAnswerSubmit = () => {
     if (!answerText.trim()) {
       alertWarning('답변 미입력', '답변을 입력해주세요.');
+      return;
+    }
+    if (answerText.length > 300) {
+      setAnswerError("글자수가 초과되었습니다. 300자까지만 입력 가능합니다.");
       return;
     }
     insertUpdateAnswer(payload).then(resp => {
@@ -318,12 +327,23 @@ const AdminQna = () => {
             <h3 className="text-lg font-bold mb-2 text-[#3530B8]">A. 관리자 답변</h3>
             <div className={`p-6 rounded-2xl border ${selectedQna.status === 'ANSWERED' && !isEditing ? 'bg-white border-[#edf2f9]' : 'bg-gray-50 border-dashed border-gray-200'}`}>
               {isEditing ? (
-                <textarea
-                  className="w-full h-32 p-4 bg-white border border-[#edf2f9] rounded-xl text-sm outline-none resize-none"
-                  placeholder="답변을 입력해 주세요."
-                  value={answerText}
-                  onChange={(e) => setAnswerText(e.target.value)}
-                />
+                <>
+                  <textarea
+                    className="w-full h-32 p-4 bg-white border border-[#edf2f9] rounded-xl text-sm outline-none resize-none custom-scrollbar transition-all"
+                    placeholder="답변을 입력해 주세요."
+                    value={answerText}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setAnswerText(val);
+                      if (val.length > 300) {
+                        setAnswerError("글자수가 초과되었습니다. 300자까지만 입력 가능합니다.");
+                      } else {
+                        setAnswerError("");
+                      }
+                    }}
+                  />
+                  {answerError && <p className="text-[11px] text-red-500 mt-2 ml-1">{answerError}</p>}
+                </>
               ) : selectedQna.status === 'ANSWERED' ? (
                 <div>
                   <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedQna.handle_answer}</p>
@@ -380,12 +400,23 @@ const AdminQna = () => {
               <h4 className="text-[11px] font-bold text-[#3530B8] uppercase mb-2">관리자 답변</h4>
               <div className={`p-4 rounded-xl border ${selectedQna.status === 'ANSWERED' && !isEditing ? 'bg-white border-[#edf2f9]' : 'bg-gray-50 border-dashed border-gray-200'}`}>
                 {isEditing ? (
-                  <textarea
-                    className="w-full h-24 p-3 bg-white border border-[#edf2f9] rounded-xl text-xs outline-none resize-none"
-                    placeholder="답변을 입력해 주세요."
-                    value={answerText}
-                    onChange={(e) => setAnswerText(e.target.value)}
-                  />
+                  <>
+                    <textarea
+                      className="w-full h-24 p-3 bg-white border border-[#edf2f9] rounded-xl text-xs outline-none resize-none custom-scrollbar transition-all"
+                      placeholder="답변을 입력해 주세요."
+                      value={answerText}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setAnswerText(val);
+                        if (val.length > 300) {
+                          setAnswerError("글자수가 초과되었습니다. 300자까지만 입력 가능합니다.");
+                        } else {
+                          setAnswerError("");
+                        }
+                      }}
+                    />
+                    {answerError && <p className="text-[10px] text-red-500 mt-2 ml-1">{answerError}</p>}
+                  </>
                 ) : selectedQna.status === 'ANSWERED' ? (
                   <div>
                     <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedQna.handle_answer}</p>
@@ -425,10 +456,11 @@ const AdminQna = () => {
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
+        textarea.custom-scrollbar::-webkit-scrollbar { width: 3px; }
       `}} />
     </div>
   );
