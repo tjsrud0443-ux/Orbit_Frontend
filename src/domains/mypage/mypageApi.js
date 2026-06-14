@@ -2,6 +2,7 @@
 
 /*마이페이지 회원 관련 */
 export const getProfileInfo = () => maxios.get("/users/myPage");
+export const checkMyPageEmail = (email) => maxios.get("/users/myPage/checkEmail", { params: { email } });
 export const updateUserInfo = (userData) => maxios.put("/users/myPage/edit", userData);
 
 /*이번 달 요약 */
