@@ -65,7 +65,6 @@ const useCalendar = (setDayModal) => {
   }, []);
 
   const handleDateClick = (info) => {
-    console.log('클릭한 날짜:', info.dateStr);
     const clickedDate = new Date(info.dateStr);
     const today = new Date();
     
@@ -99,7 +98,6 @@ const useCalendar = (setDayModal) => {
   const handleEventClick = (info) => {
     // FullCalendar event object에서 날짜만 추출
     const clickedDate = info.event.startStr.split('T')[0];
-    console.log('이벤트 클릭됨 (날짜):', clickedDate);
 
     const filtered = calendarEventsRef.current.filter(e => {
       const eStartDay = e.start?.split(' ')[0];
