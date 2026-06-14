@@ -41,9 +41,9 @@ const MyPage = () => {
             : '반려',
     })),
     '회의실': roomReservations.slice(0, 4).map(res => ({
-      title: res.room_name ? `${res.room_name} - ${res.title}` : res.title,
+      title: res.title,
       date: res.start_dt?.split(' ')[0],
-      status: '승인'
+      status: res.room_name
     })),
     '관리자 문의': adminInquiries.slice(0, 4).map(qna => ({
       title: qna.question,
@@ -371,7 +371,10 @@ const weeklyAttendance = [
                     <p className="text-[0.65rem] text-slate-400 font-semibold">{item.date}</p>
                   </div>
                   {item.status && (
-                    <span className="text-[0.65rem] font-extrabold px-2.5 py-1 rounded-lg shrink-0" style={statusStyle(item.status)}>
+                    <span 
+                      className="text-[0.65rem] font-extrabold px-2.5 py-1 rounded-lg shrink-0" 
+                      style={activeTab === '회의실' ? { background: '#F0F4FF', color: '#3530B8', border: '1px solid #DDE8FF' } : statusStyle(item.status)}
+                    >
                       {item.status}
                     </span>
                   )}
