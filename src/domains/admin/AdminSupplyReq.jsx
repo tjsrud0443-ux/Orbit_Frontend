@@ -1,7 +1,7 @@
 ﻿import React, { useState, useMemo, useEffect } from 'react';
 import Pagination from '../../components/common/Pagination';
 import { getSuppyReqList, updateSupplyReqStatus } from '../admin/adminApi';
-import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
+import { alertWarning, alertSuccess, alertConfirm } from '../../utils/alert';
 
 const STATUS_TABS = [
   { key: '전체', label: '전체' },

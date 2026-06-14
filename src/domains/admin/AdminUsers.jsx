@@ -1,6 +1,7 @@
 ﻿import React, { useState,useEffect,useRef } from 'react';
 import Pagination from '../../components/common/Pagination';
 import { getAllUsers, updateUsersInfo, updateUsersState, getDeptList, getRankList} from './adminApi';
+import { alertError } from '../../utils/alert';
 
 const AdminUsers = () => {
   // UI 확인용 하드코딩 더미 데이터
@@ -147,7 +148,7 @@ const AdminUsers = () => {
       }));
       setIsDetailEditing(false);
     }).catch(err => {
-      alert("정보 수정 중 오류가 발생했습니다.");
+      alertError('오류 발생', '정보 수정 중 오류가 발생했습니다.');
     });
   };
 
