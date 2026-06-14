@@ -5,6 +5,7 @@ import { maxios } from "../../api/axiosConfig";
 import { useNavigate, useLocation } from 'react-router-dom';
 import useUserStore from '../../store/userStore';
 import { insertBoard, insertEditorImage, updateBoard } from './boardApi';
+import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 
 const CATEGORIES_HR   = ['공지', '경조', '생일', '승진', '부서 이동', '자유'];
 
@@ -77,7 +78,7 @@ const BoardWrite = () => {
         quill.setSelection((range ? range.index : 0) + 1); //커서 다음으로
       }).catch((error) => {
         console.error('이미지 업로드 실패:', error);
-        alert('이미지 업로드 중 오류가 발생했습니다.');
+        alertError('오류 발생', '이미지 업로드 중 오류가 발생했습니다.');
       });
     };
   };
@@ -210,19 +211,19 @@ return {
 
     if (isEdit) {
       updateBoard(editPost.post_seq, formData).then(() => {
-        alert('게시글이 수정되었습니다.');
+        alertSuccess('수정 완료', '게시글이 수정되었습니다.');
         navigate('/board');
       }).catch(err => {
         console.error(err);
-        alert('오류가 발생했습니다.');
+        alertError('오류 발생', '수정 중 오류가 발생했습니다.');
       });
     } else {
       insertBoard(formData).then(() => {
-        alert('게시글이 등록되었습니다.');
+        alertSuccess('등록 완료', '게시글이 등록되었습니다.');
         navigate('/board');
       }).catch(err => {
         console.error(err);
-        alert('오류가 발생했습니다.');
+        alertError('오류 발생', '등록 중 오류가 발생했습니다.');
       });
     }
   };
