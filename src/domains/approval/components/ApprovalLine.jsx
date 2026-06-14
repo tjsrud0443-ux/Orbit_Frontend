@@ -41,7 +41,7 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, onReorder, draft
         {/* 기안자 영역 */}
         <div className="w-16 border border-white/30 flex flex-col">
           <div className="bg-white/10 text-[0.7rem] py-0.5 text-center font-bold border-b border-white/30">기안</div>
-          <div className={`${isEditMode ? 'h-14' : 'h-14'} flex flex-col items-center justify-center text-[0.7rem] font-medium text-white/90 p-1`}>
+          <div className={`${isEditMode ? 'h-12' : 'h-14'} flex flex-col items-center justify-center text-[0.7rem] font-medium text-white/90 p-1`}>
             <span className={`truncate w-full text-center ${isEditMode ? 'mb-3' : ''}`}>{drafter?.name || '기안'}</span>
             {!isEditMode && <span className="text-[0.7rem] mt-1 font-bold text-white">기안</span>}
           </div>
@@ -72,9 +72,9 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, onReorder, draft
                 )}
               </div>
               <div className={`${isEditMode ? 'h-11' : 'h-14'} flex flex-col items-center justify-center text-[0.7rem] font-medium text-white/90 p-1`}>
-                <span className="truncate w-full text-center">{showDetails ? (approver.name || '-') : '-'}</span>
+                <span className={`truncate w-full text-center ${isEditMode ? 'mb-2' : ''}`}>{showDetails ? (approver.name || '-') : '-'}</span>
                 {isEditMode && (
-                  <span className={'absolute bottom-1 left-0 w-full flex justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200'}>
+                  <span className={'absolute bottom-1 left-0 w-full flex justify-center gap-1 opacity-0 group-hover:opacity-70 transition-opacity duration-200'}>
                     {idx > 0 && (
                       <button onClick={() => onReorder(idx, 'up')} className="hover:text-white transition-colors">◀</button>
                     )}
