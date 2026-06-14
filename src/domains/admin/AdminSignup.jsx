@@ -4,6 +4,7 @@ import { approveUserSignup, getAllRequest, getDeptList, getHrInfo, getRankList, 
 import useAuthStore from '../../store/authStore';
 import Calendar from '../../components/common/Calendar';
 import useLoadingStore from '../../store/useLoadingStore';
+import { alertSuccess } from '../../utils/alert';
 
 const AdminSignup = () => {
   const [activeTab, setActiveTab] = useState('전체');
@@ -123,8 +124,7 @@ const AdminSignup = () => {
     };
 
     approveUserSignup(approvalData).then(resp => {
-      alert('회원가입 승인이 완료되었습니다.');
-      
+      alertSuccess('승인 완료', '회원가입 승인이 완료되었습니다.');
       setSelectedUser(null);
       setHireDate('');
       setSelectedDept({ dept_seq: null, dept_name: '부서 또는 본부를 선택하세요' });

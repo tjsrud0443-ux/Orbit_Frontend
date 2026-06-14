@@ -157,8 +157,6 @@ const ApprovalHome = () => {
 
   return (
     <div className="md:h-full p-4 md:p-6 font-sans bg-white md:overflow-hidden relative">
-      
-      {/* Draft Selection Modal */}
       {isDraftModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
           <div 
@@ -200,24 +198,19 @@ const ApprovalHome = () => {
               </div>
             </div>
           </div>
-          {/* Overlay click to close */}
           <div className="absolute inset-0 -z-10" onClick={() => setIsDraftModalOpen(false)}></div>
         </div>
       )}
 
       <div className="md:h-full max-w-[100rem] mx-auto flex flex-col gap-6">
-        
-        {/* Header Section */}
         <div className="flex-shrink-0 px-2">
           <h1 className="text-2xl font-bold text-gray-900 mb-1">전자결재 홈</h1>
           <p className="text-sm text-gray-500 font-medium">
-            당월 전자결재 현황을 한눈에 확인하고 빠르게 업무를 처리하세요.
+            전자결재 현황을 한눈에 확인하고 빠르게 업무를 처리하세요.
           </p>
         </div>
 
-        {/* Dashboard Top Area */}
         <div className="flex flex-col xl:flex-row gap-4 items-stretch">
-          
           <div className="xl:w-3/4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {statusItems.map((item, idx) => (
               <div 
@@ -262,14 +255,12 @@ const ApprovalHome = () => {
                   기안 작성하기
                 </button>
              </div>
-             {/* Illustration Image */}
              <div className="absolute -right-4 -bottom-6 w-36 h-36 opacity-90 group-hover:scale-110 transition-transform duration-500 ease-out pointer-events-none">
                 <img src={IMAGES.APPROVAL_IMG} alt="Approval Illustration" className="w-full h-full object-contain filter drop-shadow-2xl" />
              </div>
           </div>
         </div>
 
-        {/* Recent Documents Area */}
         <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex-1 flex flex-col">
           <div className="p-6 px-10 border-b border-gray-50 flex items-center justify-between bg-gray-50/30 flex-shrink-0">
             <h2 className="text-lg font-bold text-gray-900">최근 문서 목록</h2>
@@ -280,11 +271,9 @@ const ApprovalHome = () => {
             </button>
           </div>
 
-          {/* Table Area - Scrollable on Mobile */}
           <div className="flex-1 flex flex-col overflow-hidden">
             <div className="overflow-x-auto overflow-y-hidden custom-scrollbar">
               <div className="min-w-[900px]">
-                {/* Table Header */}
                 <div className="grid grid-cols-12 px-10 py-4 border-b border-gray-50 text-[0.8125rem] font-bold text-gray-400 bg-gray-50/10 flex-shrink-0">
                   <div className="col-span-4">제목</div>
                   <div className="col-span-2 text-center">문서 종류</div>
@@ -293,7 +282,6 @@ const ApprovalHome = () => {
                   <div className="col-span-2 text-center">현재 결재자</div>
                 </div>
 
-                {/* List Content */}
                 <div className="flex-1">
                   {
                     homeData.recentDocs.map((doc, idx) => (
@@ -337,7 +325,6 @@ const ApprovalHome = () => {
                     ))
                   }
                   
-                  {/* Empty State (데이터가 없을 때만 표시) */}
                   {homeData.recentDocs.length === 0 && (
                     <div className="p-20 flex flex-col items-center justify-center text-gray-400">
                       <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-5">
