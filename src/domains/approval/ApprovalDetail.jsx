@@ -10,6 +10,7 @@ import PurchaseForm from './forms/PurchaseForm';
 import { submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail, approveDraft, rejectApproval, 
   updateVacation, updateGeneral, updatePayment, updatePurchase, deleteDoc } from './approvalApi';
 import useLoadingStore from '../../store/useLoadingStore';
+import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 
 const getDefaultApprovers = (docType, user, allEmployees) => {
   if(!user || !allEmployees?.length) return [];
@@ -153,7 +154,6 @@ const ApprovalDetail = () => {
     setRejectError(false);
 
     if (!docSeq) {
-      showLoading();
       // [작성 모드]
       setUserRole('DRAFTER');
       setMode('EDIT');
@@ -167,18 +167,15 @@ const ApprovalDetail = () => {
       } else if (upperType === 'PURCHASE') {
         setFormData({ title: '', purpose: '', vendor: '', purchase_date: '', items: [{ item_order: 1, item_name: '', ea: 1, unit_price: 0, note: '' }], attachments: [] });
       }
-      hideLoading();
     } else {
       fetchDocumentData(type, docSeq);
     }
   }, [type, docSeq, user?.id, refresh]);
 
   useEffect(() => {
-    showLoading();
     if (!docSeq && allEmployees?.length > 0 && user && doc_type) {
       setApprovers(getDefaultApprovers(doc_type, user, allEmployees));
     }
-    hideLoading();
   }, [allEmployees, user, doc_type, docSeq]);
 
   const handleReorderApprover = (index, direction) => {
@@ -263,7 +260,7 @@ const ApprovalDetail = () => {
           // 모바일 필수 입력 체크
           if (isMobile) {
             if (!formData.pay_date || !formData.pay_reason?.trim() || !formData.account_info?.trim()) {
-              alert("필수 항목을 입력해 주세요.");
+              alertWarning('정보 미입력', '필수 항목을 입력해주세요.');
               return false;
             }
           }
@@ -278,7 +275,7 @@ const ApprovalDetail = () => {
             );
 
             if (!itemsValid) {
-              alert("지출 항목 내 비고 외 모든 정보는 필수 입력 사항입니다.");
+              alertWarning('정보 미입력', '지출 항목 내 비고 외 모든 정보는<br>필수 입력 사항입니다.');
               return false;
             }
           }
@@ -292,7 +289,7 @@ const ApprovalDetail = () => {
           // 모바일 필수 입력 체크
           if (isMobile) {
             if (!formData.purchase_date || !formData.purpose?.trim() || !formData.vendor?.trim() || (!formData.attachments || formData.attachments.length === 0)) {
-              alert("필수 항목을 입력해 주세요.");
+              alertWarning('정보 미입력', '필수 항목을 입력해주세요.');
               return false;
             }
           }
@@ -305,7 +302,7 @@ const ApprovalDetail = () => {
             Number(item.unit_price) > 0
           );
           if (!itemsValid) {
-            alert("구매 품목 내 비고 외 모든 정보는 필수 입력 사항입니다.");
+            alertWarning('정보 미입력', '구매 품목 내 비고 외 모든 정보는<br>필수 입력 사항입니다.');
             return false;
           }
         }
@@ -320,13 +317,13 @@ const ApprovalDetail = () => {
       if (!isFormValid()) return;
 
       if (!approvers || approvers.length === 0) {
-        alert('최소 한 명 이상의 결재자를 추가해야 합니다.');
+        alertWarning('정보 미입력', '최소 한 명 이상의 결재자를 추가해야합니다.');
         return;
       }
     }
     // 데이터 가공 및 Payload 조립
+    showLoading();
     try {
-      showLoading();
       const { referrers, title, ...restOfData } = formData;
       const isVacation = doc_type === 'VACATION';
       const isHalfVacation = isVacation && formData.vac_type?.includes('반차');
@@ -397,7 +394,11 @@ const ApprovalDetail = () => {
       }
 
       if (response && (response.status === 200 || response.status === 201 || response.data)) {
-        alert(isTempSave ? '임시저장이 완료되었습니다.' : '기안이 성공적으로 상신되었습니다.');
+        hideLoading();
+        await alertSuccess(
+          isTempSave ? '저장 완료' : '상신 완료',
+          isTempSave ? '임시저장이 완료되었습니다.' : '기안 상신이 완료되었습니다.'
+        );
         if(isTempSave){
           navigate('/approvalTemp');
         }else {
@@ -406,9 +407,9 @@ const ApprovalDetail = () => {
       }
     } catch (error) {
       if(error.response && error.response.data){
-        alert(error.response.data);
+        await alertError('오류 발생', error.response.data);
       }else{
-        alert("기안 문서 처리 중 오류가 발생했습니다.");
+        await alertError('오류 발생', '기안 문서 처리 중 오류가 발생했습니다.');
       }
     } finally {
       hideLoading();
@@ -420,13 +421,14 @@ const ApprovalDetail = () => {
     const isTempSave = actionType === 'TEMP_SAVE';
     
     if (actionType === 'APPROVE') {
-      if (!window.confirm('기안을 승인하시겠습니까?')) return;
+      const result = await alertConfirm('기안을 승인하시겠습니까?', '처리 후 변경은 불가합니다.');
+      if (!result.isConfirmed) return;
       try {
-        const response = await approveDraft(docSeq, doc_type);
-        alert('승인이 완료되었습니다.');
+        await approveDraft(docSeq, doc_type);
+        await alertSuccess('승인 완료', '승인 처리가 완료되었습니다.');
         setRefresh(prev => prev + 1);
       } catch (error) {
-        alert('승인 처리 중 오류가 발생했습니다.');
+        await alertError('오류 발생', '승인 처리 중 오류가 발생했습니다.');
       }
       return;
     }
@@ -436,33 +438,34 @@ const ApprovalDetail = () => {
         setRejectError(true);
         return;
       }
-      if (!window.confirm('기안을 반려하시겠습니까?')) return;
+      const result = await alertConfirm('기안을 반려하시겠습니까?', '처리 후 변경은 불가합니다.');
+      if (!result.isConfirmed) return;
       try {
-        console.log(rejectReason);
-        const response = await rejectApproval(docSeq, rejectReason);
-        alert('반려가 완료되었습니다.');
+        await rejectApproval(docSeq, rejectReason);
+        await alertSuccess('반려 완료', '반려 처리가 완료되었습니다.');
         setRefresh(prev => prev + 1);
       } catch (error) {
-        alert('반려 처리 중 오류가 발생했습니다.');
+        await alertError('오류 발생', '반려 처리 중 오류가 발생했습니다.');
       }
       return;
     }
 
     if (actionType === 'SUBMIT_CANCEL') {
-      if (!window.confirm('상신을 취소하시겠습니까?')) return;
+      const result = await alertConfirm('상신을 취소하시겠습니까?', '처리 후 변경은 불가합니다.');
+      if (!result.isConfirmed) return;
       try {
-        const response = await deleteDoc(docSeq, doc_type);
-        alert('상신 취소가 완료되었습니다.');
+        await deleteDoc(docSeq, doc_type);
+        await alertSuccess('취소 완료', '취소 처리가 완료되었습니다.');
         navigate('/approvalMypage');
       } catch (error) {
-        alert('상신 취소 중 오류가 발생했습니다.');
+        await alertError('오류 발생', '취소 처리 중 오류가 발생했습니다.');
       }
       return;
     }
 
     // [결재 상신 / 임시 저장]
     if (actionType === 'SUBMIT' || actionType === 'TEMP_SAVE') {
-      handleSave(actionType);
+      await handleSave(actionType);
     }
   };
 
@@ -472,7 +475,7 @@ const ApprovalDetail = () => {
 
   const handleSelectApprover = (selectedUser) => {
     if (approvers.some(a => a.id === selectedUser.id)) {
-      alert('이미 추가된 결재자입니다.');
+      alertWarning('중복 입력', '이미 추가된 결재자입니다.');
       return;
     }
     setApprovers(prev => [...prev, { ...selectedUser, status: 'WAITING' }]);
