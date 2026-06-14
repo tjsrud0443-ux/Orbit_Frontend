@@ -272,8 +272,10 @@ const Calendar = () => {
   const loadedYears = useRef(new Set());
   // API에서 공휴일 가져와서 companyEvents에 추가
   const loadHolidaysForYear = useCallback(async (year) => {
-    showLoading();
     if (loadedYears.current.has(year)) return;//공휴일 이미있음. return
+
+    showLoading();
+
     loadedYears.current.add(year);//아직이면 공휴일 api 부름
     try {
       const holidays = await fetchHolidays(year);//해당 연도 공휴일 1년치
@@ -284,9 +286,12 @@ const Calendar = () => {
         };
         setCompanyEvents(addHolidays);  // 기존
         setPersonalEvents(addHolidays); // 추가
-        hideLoading();
       }
-    } catch (err) { console.error(`${year}년 공휴일 로드 실패:`, err); }
+    } catch (err) {
+      console.error(`${year}년 공휴일 로드 실패:`, err);
+    } finally {
+      hideLoading();
+    }
   }, []);
 
   const getApi = () => calendarRef.current?.getApi();
