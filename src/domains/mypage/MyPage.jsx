@@ -26,7 +26,7 @@ const MyPage = () => {
   const [adminInquiries, setAdminInquiries] = useState([]);
 
   const tabs = ['비품', '회의실', '관리자 문의'];
-  const { calendarEvents, selectedDate, selectedSchedules } = usePersonalCalendar();
+  const { calendarEvents, handleDateClick, handleEventClick } = usePersonalCalendar(setDayModal);
   
   const requestData = {
     '비품': supplyRequests.slice(0, 4).map(req => ({
@@ -69,20 +69,7 @@ const MyPage = () => {
       .catch(err => console.log("관리자 문의 내역 불러오기 실패", err));
   },[]);
 
-  // const handleDateClick = (info) => {
-  //   const filtered = calendarEvents.filter(e => e.date === info.dateStr || e.start === info.dateStr);
-  //   setDayModal({ open: true, date: info.dateStr, schedules: filtered });
-  // };
-const handleDateClick = (info) => {
-  const filtered = calendarEvents.filter(e => {
-    const endDate = e.originalEnd || e.end;
-    if (endDate) {
-      return info.dateStr >= e.start && info.dateStr <= endDate;
-    }
-    return e.start === info.dateStr;
-  });
-  setDayModal({ open: true, date: info.dateStr, schedules: filtered });
-};
+
   const statusStyle = (status) => {
     if (status === '승인') return { background: '#F0FDF4', color: '#10B981', border: '1px solid #DCFCE7' };
     if (status === '대기') return { background: '#FFF9F0', color: '#FF9800', border: '1px solid #FEF3C7' };
@@ -120,18 +107,18 @@ const handleDateClick = (info) => {
     workDays: 0,
     lateCnt: 0,
     usedLeave: 0,
-    overtime_hours:0
+    overtimeHours:0
   });
 
   useEffect(() => {
-  getCntWeek()
-    .then(resp => setWeekSummary(prev => ({
+  getCntWeek().then(resp =>{ 
+      setWeekSummary(prev => ({       
        ...prev, 
       lateCnt: resp.data.late_cnt ?? 0,
       workDays: resp.data.work_days ?? 0,
       overtimeHours: resp.data.overtime_hours ?? 0,
       usedLeave: resp.data.vac_cnt ?? 0
-      })))
+      }))})
     .catch(err => console.log(err));
 }, []);
 
@@ -312,9 +299,11 @@ const weeklyAttendance = [
                     height="100%"           
                     dayMaxEvents={1}
                     fixedWeekCount={false}//당 월 만큼 줄 조절
+                    moreLinkClick="day" 
                     moreLinkClick={() => 'none'}
                     events={calendarEvents}
                     dateClick={handleDateClick}
+                    eventClick={handleEventClick}
                   />
                 </div>
           </div>
@@ -410,7 +399,15 @@ const weeklyAttendance = [
             {dayModal.schedules.length > 0 ? dayModal.schedules.map((s, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem', background: '#F8FAFC', borderRadius: '0.75rem', marginBottom: '0.4rem' }}>
                 <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: s.color || '#3530B8', flexShrink: 0 }} />
-                <span style={{ fontSize: '0.78rem', fontWeight: '600', color: '#1E293B' }}>{s.title}</span>
+                <div>
+                  <span style={{ fontSize: '0.78rem', fontWeight: '600', color: '#1E293B' }}>{s.title}</span>
+                  {/* 시간 표시 추가 */}
+                  {s.start?.includes(' ') && (
+                    <p style={{ fontSize: '0.65rem', color: '#94A3B8', marginTop: '2px' }}>
+                      {s.start.split(' ')[1].slice(0, 5)} ~ {s.originalEnd?.split(' ')[1]?.slice(0, 5)}
+                    </p>
+                  )}
+                </div>
               </div>
             )) : (
               <p style={{ fontSize: '0.75rem', color: '#94A3B8', textAlign: 'center', padding: '1rem 0' }}>일정이 없습니다.</p>
