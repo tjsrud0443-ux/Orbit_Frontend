@@ -39,6 +39,7 @@ const AiChat = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedDept, setSelectedDept] = useState(null);
   const [inputQuestion, setInputQuestion] = useState("");
+  const [inquiryError, setInquiryError] = useState("");
   const [deptList, setDeptList] = useState([]);
   const token = useAuthStore(state => state.token);
   // --- 2. Effects ---
@@ -235,7 +236,11 @@ const AiChat = () => {
       return;
     }
     if (!inputQuestion.trim()) {
-      alertWarning('정보 미입력', '문의 내용을 작성해주세요.');
+      setInquiryError("문의 내용을 작성해주세요.");
+      return;
+    }
+    if (inputQuestion.length > 300) {
+      setInquiryError("글자수가 초과되었습니다. 300자까지만 입력 가능합니다.");
       return;
     }
 
@@ -457,7 +462,7 @@ const AiChat = () => {
           <div className="bg-white p-8 rounded-2xl w-[400px] shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-bold text-lg">담당 부서(관리자) 문의</h3>
-              <button onClick={() => { setIsModalOpen(false); setIsDropdownOpen(false); setSelectedDept(null); }}><FontAwesomeIcon icon={faTimes} /></button>
+              <button onClick={() => { setIsModalOpen(false); setIsDropdownOpen(false); setSelectedDept(null); setInquiryError(""); }}><FontAwesomeIcon icon={faTimes} /></button>
             </div>
 
             {/* Custom Dropdown */}
@@ -469,7 +474,7 @@ const AiChat = () => {
                 }}
                 className="w-full p-3 border border-[#edf2f9] rounded-lg text-sm cursor-pointer flex justify-between items-center bg-white"
               >
-                <span className={selectedDept ? "text-slate-700" : "text-slate-400"}>
+                <span className={selectedDept ? "text-slate-700" : "text-slate-500"}>
                   {selectedDept?.deptName || "부서 선택"}
                 </span>
                 <FontAwesomeIcon icon={isDropdownOpen ? faChevronUp : faChevronDown} className="text-slate-400 text-xs" />
@@ -484,7 +489,7 @@ const AiChat = () => {
                         setSelectedDept(dept);
                         setIsDropdownOpen(false);
                       }}
-                      className="px-3 py-1.5 text-xs text-slate-400 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
+                      className="px-3 py-1.5 text-xs text-slate-500 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
                     >
                       {dept.deptName}
                     </div>
@@ -493,9 +498,23 @@ const AiChat = () => {
               )}
             </div>
 
-            <textarea value={inputQuestion} onChange={(e) => setInputQuestion(e.target.value)} className="w-full p-3 border border-[#edf2f9] rounded-lg mb-4 text-sm h-32" placeholder="AI가 답변하지 못한 상세 문의 내용을 작성해주시면 담당자가 검토 후 그룹웨어로 답변을 드립니다."></textarea>
+            <textarea
+              value={inputQuestion}
+              onChange={(e) => {
+                const val = e.target.value;
+                setInputQuestion(val);
+                if (val.length > 300) {
+                  setInquiryError("글자수가 초과되었습니다. 300자까지만 입력 가능합니다.");
+                } else {
+                  setInquiryError("");
+                }
+              }}
+              className={`w-full p-3 border rounded-lg mb-2 text-sm h-32 outline-none custom-scrollbar transition-all ${inquiryError ? 'border-red-500' : 'border-[#edf2f9]'}`}
+              placeholder="AI가 답변하지 못한 상세 문의 내용을 작성해주시면 담당자가 검토 후 그룹웨어로 답변을 드립니다."
+            ></textarea>
+            {inquiryError && <p className="text-[11px] text-red-500 mb-4 ml-1">{inquiryError}</p>}
             <div className="flex gap-2">
-              <button onClick={() => { setIsModalOpen(false); setIsDropdownOpen(false); setSelectedDept(null); }} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-slate-100">취소</button>
+              <button onClick={() => { setIsModalOpen(false); setIsDropdownOpen(false); setSelectedDept(null); setInquiryError(""); }} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-slate-100">취소</button>
               <button onClick={handleInsertQuestion} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-[#3530B8] text-white">제출</button>
             </div>
           </div>
