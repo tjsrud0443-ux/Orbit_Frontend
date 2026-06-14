@@ -140,12 +140,32 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, onReorder, draft
                 </div>
               </div>
               {isEditMode && (
-                <button 
-                  onClick={() => onRemove(idx)}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 text-white/30 hover:text-white p-1"
-                >
-                  ✕
-                </button>
+                <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                  <div className="flex flex-col text-[8px] leading-tight text-white/30">
+                    {idx > 0 && (
+                      <button 
+                        onClick={() => onReorder(idx, 'up')} 
+                        className="hover:text-white transition-colors"
+                      >
+                        ▲
+                      </button>
+                    )}
+                    {idx < approvers.length - 1 && (
+                      <button 
+                        onClick={() => onReorder(idx, 'down')} 
+                        className="hover:text-white transition-colors"
+                      >
+                        ▼
+                      </button>
+                    )}
+                  </div>
+                  <button 
+                    onClick={() => onRemove(idx)}
+                    className="text-white/30 hover:text-white p-1"
+                  >
+                    ✕
+                  </button>
+                </div>
               )}
             </div>
           );
