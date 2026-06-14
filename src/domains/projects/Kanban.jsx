@@ -125,6 +125,7 @@ const Kanban = () => {
     const newErrors = {};
     if (!newGlobalTask.title) newErrors.globalTitle = '제목을 입력해 주세요.';
     else if (newGlobalTask.title.length > 30) newErrors.globalTitle = '글자수가 초과되었습니다. 30자까지만 입력 가능합니다.';
+    if (newGlobalTask.content && newGlobalTask.content.length > 800) newErrors.globalContent = '글자수가 초과되었습니다. 800자까지만 입력 가능합니다.';
     if (!newGlobalTask.users_pic_id) newErrors.globalAssignee = '담당자를 선택해 주세요';
     if (!newGlobalTask.due_date) newErrors.globalEndDate = '마감일을 선택해 주세요.';
 
@@ -201,6 +202,7 @@ const Kanban = () => {
     const newErrors = {};
     if (!detailModalTask.title) newErrors.detailTitle = '제목을 입력해주세요.';
     else if (detailModalTask.title.length > 30) newErrors.detailTitle = '글자수가 초과되었습니다. 30자까지만 입력 가능합니다.';
+    if (detailModalTask.content && detailModalTask.content.length > 800) newErrors.detailContent = '글자수가 초과되었습니다. 800자까지만 입력 가능합니다.';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -1018,11 +1020,20 @@ const Kanban = () => {
                   <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">상세 내용</p>
                   <textarea
                     rows={3}
-                    className="w-full bg-slate-50/50 border-none rounded-2xl p-4 text-base leading-relaxed text-slate-600 outline-none resize-none font-medium"
+                    className={`w-full bg-slate-50/50 rounded-2xl p-4 text-base leading-relaxed text-slate-600 outline-none resize-none font-medium custom-scrollbar transition-all ${errors.globalContent ? 'border-2 border-red-500' : 'border-none'}`}
                     placeholder="상세한 설명을 적어주세요..."
                     value={newGlobalTask.content}
-                    onChange={e => setNewGlobalTask({ ...newGlobalTask, content: e.target.value })}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setNewGlobalTask({ ...newGlobalTask, content: val });
+                      if (val.length > 800) {
+                        setErrors(prev => ({ ...prev, globalContent: '글자수가 초과되었습니다. 800자까지만 입력 가능합니다.' }));
+                      } else {
+                        if (errors.globalContent) setErrors(prev => ({ ...prev, globalContent: null }));
+                      }
+                    }}
                   />
+                  {errors.globalContent && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">{errors.globalContent}</p>}
                 </div>
               </div>
 
@@ -1212,10 +1223,19 @@ const Kanban = () => {
                   <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">상세 내용</p>
                   <textarea
                     rows={4}
-                    className="w-full bg-slate-50/50 border-none rounded-2xl p-5 text-base leading-relaxed text-slate-600 outline-none resize-none"
+                    className={`w-full bg-slate-50/50 rounded-2xl p-5 text-base leading-relaxed text-slate-600 outline-none resize-none custom-scrollbar transition-all ${errors.detailContent ? 'border-2 border-red-500' : 'border-none'}`}
                     value={detailModalTask.content}
-                    onChange={e => setDetailModalTask({ ...detailModalTask, content: e.target.value })}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setDetailModalTask({ ...detailModalTask, content: val });
+                      if (val.length > 800) {
+                        setErrors(prev => ({ ...prev, detailContent: '글자수가 초과되었습니다. 800자까지만 입력 가능합니다.' }));
+                      } else {
+                        if (errors.detailContent) setErrors(prev => ({ ...prev, detailContent: null }));
+                      }
+                    }}
                   />
+                  {errors.detailContent && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">{errors.detailContent}</p>}
                 </div>
 
                 {/* 버튼 */}
@@ -1230,10 +1250,11 @@ const Kanban = () => {
       )}
 
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 3px; height: 3px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #CBD5E0; }
+        textarea.custom-scrollbar::-webkit-scrollbar { width: 3px; }
       `}</style>
     </div>
   );
