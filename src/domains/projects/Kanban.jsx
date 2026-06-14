@@ -788,229 +788,231 @@ const Kanban = () => {
       {/* 3. 상단 'Task 생성' 팝업 모달 */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-[#1a1c3d]/60 backdrop-blur-sm flex items-center justify-center z-[100] animate-in fade-in duration-300 p-8">
-          <div className="bg-white w-full max-w-[500px] rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-2xl animate-in zoom-in slide-in-from-bottom-8 duration-300 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-black text-[#1a1c3d]">새 Task 생성</h2>
-              <button
-                onClick={() => {
-                  setIsModalOpen(false);
-                  setNewGlobalTask({ title: '', users_pic_id: '', name: '', sysname: '', priority: 'medium', status: 'TODO', start_date: project?.start_date?.substring(0, 10), due_date: '', content: '' });
-                  setErrors({});
-                }}
-                className="text-slate-400 hover:text-slate-600 transition-colors"
-              >
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              {/* 1. 제목 */}
-              <div>
-                <input
-                  className={`w-full text-2xl font-black text-[#1a1c3d] focus:ring-0 outline-none placeholder:font-semibold transition-all ${errors.globalTitle ? 'border-2 border-red-500 p-2 rounded-xl' : 'border-none p-0'}`}
-                  placeholder="제목을 입력하세요."
-                  value={newGlobalTask.title}
-                  onChange={e => {
-                    setNewGlobalTask({ ...newGlobalTask, title: e.target.value });
-                    if (errors.globalTitle) setErrors(prev => ({ ...prev, globalTitle: null }));
+          <div className="bg-white w-full max-w-[500px] rounded-[2rem] md:rounded-[2.5rem] shadow-2xl animate-in zoom-in slide-in-from-bottom-8 duration-300 max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-10">
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-2xl font-black text-[#1a1c3d]">새 Task 생성</h2>
+                <button
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setNewGlobalTask({ title: '', users_pic_id: '', name: '', sysname: '', priority: 'medium', status: 'TODO', start_date: project?.start_date?.substring(0, 10), due_date: '', content: '' });
+                    setErrors({});
                   }}
-                />
-                {errors.globalTitle && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">{errors.globalTitle}</p>}
+                  className="text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <FontAwesomeIcon icon={faTimes} />
+                </button>
               </div>
 
-              {/* 2. 담당자 */}
-              <div className="space-y-1.5 relative">
-                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">담당자</p>
-                <div
-                  onClick={() => setOpenDropdown(
-                    openDropdown === 'globalAssignee'
-                      ? null
-                      : 'globalAssignee'
+              <div className="space-y-6">
+                {/* 1. 제목 */}
+                <div>
+                  <input
+                    className={`w-full text-2xl font-black text-[#1a1c3d] focus:ring-0 outline-none placeholder:font-semibold transition-all ${errors.globalTitle ? 'border-2 border-red-500 p-2 rounded-xl' : 'border-none p-0'}`}
+                    placeholder="제목을 입력하세요."
+                    value={newGlobalTask.title}
+                    onChange={e => {
+                      setNewGlobalTask({ ...newGlobalTask, title: e.target.value });
+                      if (errors.globalTitle) setErrors(prev => ({ ...prev, globalTitle: null }));
+                    }}
+                  />
+                  {errors.globalTitle && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">{errors.globalTitle}</p>}
+                </div>
+
+                {/* 2. 담당자 */}
+                <div className="space-y-1.5 relative">
+                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">담당자</p>
+                  <div
+                    onClick={() => setOpenDropdown(
+                      openDropdown === 'globalAssignee'
+                        ? null
+                        : 'globalAssignee'
+                    )}
+                    className={`flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition-colors ${errors.globalAssignee ? 'border border-red-500' : ''}`}>
+                    <div className="w-7 h-7 rounded-full bg-indigo-50 flex items-center justify-center overflow-hidden border border-white">
+                      {newGlobalTask.sysname ? (
+                        <img src={`http://localhost/file/profile/view?sysname=${newGlobalTask.sysname}&token=${token}`} alt={newGlobalTask.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-[10px] text-[#3530B8] font-bold">{newGlobalTask.name?.charAt(0) || '+'}</span>
+                      )}
+                    </div>
+                    <span className="text-sm font-bold text-slate-600">{newGlobalTask.name || '담당자를 선택하세요.'}</span>
+                    <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-400 ml-auto" />
+                  </div>
+                  {errors.globalAssignee && (
+                    <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">
+                      {errors.globalAssignee}
+                    </p>
                   )}
-                  className={`flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition-colors ${errors.globalAssignee ? 'border border-red-500' : ''}`}>
-                  <div className="w-7 h-7 rounded-full bg-indigo-50 flex items-center justify-center overflow-hidden border border-white">
-                    {newGlobalTask.sysname ? (
-                      <img src={`http://localhost/file/profile/view?sysname=${newGlobalTask.sysname}&token=${token}`} alt={newGlobalTask.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-[10px] text-[#3530B8] font-bold">{newGlobalTask.name?.charAt(0) || '+'}</span>
+                  {openDropdown === 'globalAssignee' && (
+                    <div className="absolute top-full left-0 z-[110] mt-1 w-full max-h-48 overflow-y-auto bg-white border border-slate-100 rounded-xl shadow-xl animate-in fade-in zoom-in duration-200 custom-scrollbar">
+                      {members.map((member, idx) => (
+                        <div
+                          key={member.employee_seq || idx}
+                          onClick={() => {
+                            setNewGlobalTask({ ...newGlobalTask, users_pic_id: member.users_id, name: member.name, sysname: member.sysname });
+                            if (errors.globalAssignee) {
+                              setErrors(prev => ({
+                                ...prev, globalAssignee: null
+                              }));
+                            }
+                            setOpenDropdown(null);
+                          }}
+                          className="px-4 py-3 flex items-center gap-3 hover:bg-[#F0F4FF] cursor-pointer transition-colors"
+                        >
+                          <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-100">
+                            <img src={`http://localhost/file/profile/view?sysname=${member.sysname}&token=${token}`} alt={member.name} className="w-full h-full object-cover" />
+                          </div>
+                          <span className="text-sm font-bold text-slate-600">{member.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. 상태 / 우선순위 (한 줄) */}
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="space-y-1.5 relative">
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">상태</p>
+                    <div
+                      onClick={() => setOpenDropdown(openDropdown === 'globalStatus' ? null : 'globalStatus')}
+                      className="text-sm font-bold text-[#3530B8] bg-transparent border-none p-0 outline-none cursor-pointer flex items-center gap-1.5"
+                    >
+                      {newGlobalTask.status}
+                      <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-400" />
+                    </div>
+                    {openDropdown === 'globalStatus' && (
+                      <div className="absolute top-full left-0 z-[110] mt-1 w-32 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                        {['TODO', 'DOING', 'DONE'].map(s => (
+                          <div
+                            key={s}
+                            onClick={() => { setNewGlobalTask({ ...newGlobalTask, status: s }); setOpenDropdown(null); }}
+                            className="px-6 py-4 text-xs font-bold text-slate-700 hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors"
+                          >
+                            {s}
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
-                  <span className="text-sm font-bold text-slate-600">{newGlobalTask.name || '담당자를 선택하세요.'}</span>
-                  <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-400 ml-auto" />
-                </div>
-                {errors.globalAssignee && (
-                  <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">
-                    {errors.globalAssignee}
-                  </p>
-                )}
-                {openDropdown === 'globalAssignee' && (
-                  <div className="absolute top-full left-0 z-[110] mt-1 w-full max-h-48 overflow-y-auto bg-white border border-slate-100 rounded-xl shadow-xl animate-in fade-in zoom-in duration-200 custom-scrollbar">
-                    {members.map((member, idx) => (
-                      <div
-                        key={member.employee_seq || idx}
-                        onClick={() => {
-                          setNewGlobalTask({ ...newGlobalTask, users_pic_id: member.users_id, name: member.name, sysname: member.sysname });
-                          if (errors.globalAssignee) {
-                            setErrors(prev => ({
-                              ...prev, globalAssignee: null
-                            }));
-                          }
-                          setOpenDropdown(null);
-                        }}
-                        className="px-4 py-3 flex items-center gap-3 hover:bg-[#F0F4FF] cursor-pointer transition-colors"
-                      >
-                        <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-100">
-                          <img src={`http://localhost/file/profile/view?sysname=${member.sysname}&token=${token}`} alt={member.name} className="w-full h-full object-cover" />
-                        </div>
-                        <span className="text-sm font-bold text-slate-600">{member.name}</span>
+                  <div className="space-y-1.5 relative">
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">우선순위</p>
+                    <div
+                      onClick={() => setOpenDropdown(openDropdown === 'globalPriority' ? null : 'globalPriority')}
+                      className="text-sm font-bold text-[#3530B8] bg-transparent border-none p-0 outline-none cursor-pointer flex items-center gap-1.5"
+                    >
+                      {newGlobalTask.priority}
+                      <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-400" />
+                    </div>
+                    {openDropdown === 'globalPriority' && (
+                      <div className="absolute top-full left-0 z-[110] mt-1 w-32 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                        {['high', 'medium', 'low'].map(p => (
+                          <div
+                            key={p}
+                            onClick={() => { setNewGlobalTask({ ...newGlobalTask, priority: p }); setOpenDropdown(null); }}
+                            className="px-6 py-4 text-sm font-bold text-slate-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors"
+                          >
+                            {p}
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
-                )}
-              </div>
+                </div>
 
-              {/* 3. 상태 / 우선순위 (한 줄) */}
-              <div className="grid grid-cols-2 gap-8">
-                <div className="space-y-1.5 relative">
-                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">상태</p>
-                  <div
-                    onClick={() => setOpenDropdown(openDropdown === 'globalStatus' ? null : 'globalStatus')}
-                    className="text-sm font-bold text-[#3530B8] bg-transparent border-none p-0 outline-none cursor-pointer flex items-center gap-1.5"
-                  >
-                    {newGlobalTask.status}
-                    <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-400" />
-                  </div>
-                  {openDropdown === 'globalStatus' && (
-                    <div className="absolute top-full left-0 z-[110] mt-1 w-32 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
-                      {['TODO', 'DOING', 'DONE'].map(s => (
-                        <div
-                          key={s}
-                          onClick={() => { setNewGlobalTask({ ...newGlobalTask, status: s }); setOpenDropdown(null); }}
-                          className="px-6 py-4 text-xs font-bold text-slate-700 hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors"
-                        >
-                          {s}
-                        </div>
-                      ))}
+                {/* 4. 시작일 / 마감일 (한 줄) */}
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="space-y-2 relative">
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">시작일</p>
+                    <div
+                      onClick={() => setOpenCalendar(openCalendar === 'start' ? null : 'start')}
+                      className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${newGlobalTask.start_date ? 'text-black' : 'text-[#9CA3AF]'}`}
+                    >
+                      {newGlobalTask.start_date || "날짜 선택"}
+                      <FontAwesomeIcon icon={faCalendarAlt} className="text-slate-400 text-[10px]" />
                     </div>
-                  )}
-                </div>
-                <div className="space-y-1.5 relative">
-                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">우선순위</p>
-                  <div
-                    onClick={() => setOpenDropdown(openDropdown === 'globalPriority' ? null : 'globalPriority')}
-                    className="text-sm font-bold text-[#3530B8] bg-transparent border-none p-0 outline-none cursor-pointer flex items-center gap-1.5"
-                  >
-                    {newGlobalTask.priority}
-                    <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-400" />
+                    {openCalendar === 'start' && (
+                      <div className="absolute top-full left-0 z-[110] mt-2 w-[280px] [&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-0 [&>div]:mb-0">
+                        <Calendar
+                          value={newGlobalTask?.start_date}
+                          minDate={project?.start_date?.substring(0, 10)}
+                          maxDate={project?.end_date?.substring(0, 10)}
+                          onChange={(date) => {
+                            const projectStartDate = project?.start_date?.substring(0, 10);
+                            if (date < projectStartDate) {
+                              setErrors(prev => ({ ...prev, globalStartDate: '프로젝트 기간 내에서만 선택 가능합니다.' }));
+                              return;
+                            }
+                            setErrors(prev => ({ ...prev, globalStartDate: null }));
+                            setNewGlobalTask(prev => ({ ...prev, start_date: date, due_date: prev.due_date && prev.due_date < date ? date : prev.due_date }));
+                            setOpenCalendar(null);
+                          }}
+                          onClose={() => setOpenCalendar(null)}
+                        />
+                      </div>
+                    )}
+                    {errors.globalStartDate && <p className="text-[9px] text-red-500 font-bold mt-1">{errors.globalStartDate}</p>}
                   </div>
-                  {openDropdown === 'globalPriority' && (
-                    <div className="absolute top-full left-0 z-[110] mt-1 w-32 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
-                      {['high', 'medium', 'low'].map(p => (
-                        <div
-                          key={p}
-                          onClick={() => { setNewGlobalTask({ ...newGlobalTask, priority: p }); setOpenDropdown(null); }}
-                          className="px-6 py-4 text-sm font-bold text-slate-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors"
-                        >
-                          {p}
-                        </div>
-                      ))}
+                  <div className="space-y-2 relative">
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">마감일</p>
+                    <div
+                      onClick={() => setOpenCalendar(openCalendar === 'end' ? null : 'end')}
+                      className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${newGlobalTask.due_date ? 'text-black' : 'text-[#9CA3AF]'} ${errors.globalEndDate ? 'border border-red-500' : ''}`}
+                    >
+                      {newGlobalTask.due_date || "날짜 선택"}
+                      <FontAwesomeIcon icon={faCalendarAlt} className="text-slate-400 text-[10px]" />
                     </div>
-                  )}
+                    {openCalendar === 'end' && (
+                      <div className="absolute top-full right-0 z-[110] mt-2 w-[280px] [&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-0 [&>div]:mb-0">
+                        <Calendar
+                          value={newGlobalTask.due_date}
+                          minDate={newGlobalTask?.start_date || project?.start_date?.substring(0, 10)}
+                          maxDate={project?.end_date?.substring(0, 10)}
+                          onChange={(date) => {
+                            const projectStart = project?.start_date?.substring(0, 10);
+                            const projectEnd = project?.end_date?.substring(0, 10);
+                            if (date < projectStart || date > projectEnd) {
+                              setErrors(prev => ({ ...prev, globalEndDate: '프로젝트 기간 내에서만 선택 가능합니다.' }));
+                              return;
+                            }
+                            setErrors(prev => ({ ...prev, globalEndDate: null }));
+                            setNewGlobalTask(prev => ({ ...prev, due_date: date }));
+                            setOpenCalendar(null);
+                          }}
+                          onClose={() => setOpenCalendar(null)}
+                        />
+                      </div>
+                    )}
+                    {errors.globalEndDate && <p className="text-[9px] text-red-500 font-bold mt-1">{errors.globalEndDate}</p>}
+                  </div>
                 </div>
-              </div>
 
-              {/* 4. 시작일 / 마감일 (한 줄) */}
-              <div className="grid grid-cols-2 gap-8">
-                <div className="space-y-2 relative">
-                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">시작일</p>
-                  <div
-                    onClick={() => setOpenCalendar(openCalendar === 'start' ? null : 'start')}
-                    className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${newGlobalTask.start_date ? 'text-black' : 'text-[#9CA3AF]'}`}
-                  >
-                    {newGlobalTask.start_date || "날짜 선택"}
-                    <FontAwesomeIcon icon={faCalendarAlt} className="text-slate-400 text-[10px]" />
-                  </div>
-                  {openCalendar === 'start' && (
-                    <div className="absolute top-full left-0 z-[110] mt-2 w-[280px] [&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-0 [&>div]:mb-0">
-                      <Calendar
-                        value={newGlobalTask?.start_date}
-                        minDate={project?.start_date?.substring(0, 10)}
-                        maxDate={project?.end_date?.substring(0, 10)}
-                        onChange={(date) => {
-                          const projectStartDate = project?.start_date?.substring(0, 10);
-                          if (date < projectStartDate) {
-                            setErrors(prev => ({ ...prev, globalStartDate: '프로젝트 기간 내에서만 선택 가능합니다.' }));
-                            return;
-                          }
-                          setErrors(prev => ({ ...prev, globalStartDate: null }));
-                          setNewGlobalTask(prev => ({ ...prev, start_date: date, due_date: prev.due_date && prev.due_date < date ? date : prev.due_date }));
-                          setOpenCalendar(null);
-                        }}
-                        onClose={() => setOpenCalendar(null)}
-                      />
-                    </div>
-                  )}
-                  {errors.globalStartDate && <p className="text-[9px] text-red-500 font-bold mt-1">{errors.globalStartDate}</p>}
-                </div>
-                <div className="space-y-2 relative">
-                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">마감일</p>
-                  <div
-                    onClick={() => setOpenCalendar(openCalendar === 'end' ? null : 'end')}
-                    className={`bg-slate-50 rounded-lg p-2 text-sm font-bold flex justify-between items-center cursor-pointer ${newGlobalTask.due_date ? 'text-black' : 'text-[#9CA3AF]'} ${errors.globalEndDate ? 'border border-red-500' : ''}`}
-                  >
-                    {newGlobalTask.due_date || "날짜 선택"}
-                    <FontAwesomeIcon icon={faCalendarAlt} className="text-slate-400 text-[10px]" />
-                  </div>
-                  {openCalendar === 'end' && (
-                    <div className="absolute top-full right-0 z-[110] mt-2 w-[280px] [&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-0 [&>div]:mb-0">
-                      <Calendar
-                        value={newGlobalTask.due_date}
-                        minDate={newGlobalTask?.start_date || project?.start_date?.substring(0, 10)}
-                        maxDate={project?.end_date?.substring(0, 10)}
-                        onChange={(date) => {
-                          const projectStart = project?.start_date?.substring(0, 10);
-                          const projectEnd = project?.end_date?.substring(0, 10);
-                          if (date < projectStart || date > projectEnd) {
-                            setErrors(prev => ({ ...prev, globalEndDate: '프로젝트 기간 내에서만 선택 가능합니다.' }));
-                            return;
-                          }
-                          setErrors(prev => ({ ...prev, globalEndDate: null }));
-                          setNewGlobalTask(prev => ({ ...prev, due_date: date }));
-                          setOpenCalendar(null);
-                        }}
-                        onClose={() => setOpenCalendar(null)}
-                      />
-                    </div>
-                  )}
-                  {errors.globalEndDate && <p className="text-[9px] text-red-500 font-bold mt-1">{errors.globalEndDate}</p>}
+                {/* 5. 설명 */}
+                <div className="space-y-2">
+                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">상세 내용</p>
+                  <textarea
+                    rows={3}
+                    className="w-full bg-slate-50/50 border-none rounded-2xl p-4 text-base leading-relaxed text-slate-600 outline-none resize-none font-medium"
+                    placeholder="상세한 설명을 적어주세요..."
+                    value={newGlobalTask.content}
+                    onChange={e => setNewGlobalTask({ ...newGlobalTask, content: e.target.value })}
+                  />
                 </div>
               </div>
 
-              {/* 5. 설명 */}
-              <div className="space-y-2">
-                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">상세 내용</p>
-                <textarea
-                  rows={3}
-                  className="w-full bg-slate-50/50 border-none rounded-2xl p-4 text-base leading-relaxed text-slate-600 outline-none resize-none font-medium"
-                  placeholder="상세한 설명을 적어주세요..."
-                  value={newGlobalTask.content}
-                  onChange={e => setNewGlobalTask({ ...newGlobalTask, content: e.target.value })}
-                />
+              <div className="flex gap-4 mt-10">
+                <button
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setNewGlobalTask({ title: '', users_pic_id: '', name: '', sysname: '', priority: 'medium', status: 'TODO', start_date: project?.start_date?.substring(0, 10), due_date: '', content: '' });
+                    setErrors({});
+                  }}
+                  className="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-bold text-sm hover:bg-slate-200 transition-all"
+                >
+                  취소
+                </button>
+                <button onClick={handleGlobalCreate} className="flex-1 bg-[#3530B8] text-white py-4 rounded-2xl font-bold text-sm hover:bg-[#2a2594] transition-all shadow-lg shadow-indigo-100">추가</button>
               </div>
-            </div>
-
-            <div className="flex gap-4 mt-10">
-              <button
-                onClick={() => {
-                  setIsModalOpen(false);
-                  setNewGlobalTask({ title: '', users_pic_id: '', name: '', sysname: '', priority: 'medium', status: 'TODO', start_date: project?.start_date?.substring(0, 10), due_date: '', content: '' });
-                  setErrors({});
-                }}
-                className="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-bold text-sm hover:bg-slate-200 transition-all"
-              >
-                취소
-              </button>
-              <button onClick={handleGlobalCreate} className="flex-1 bg-[#3530B8] text-white py-4 rounded-2xl font-bold text-sm hover:bg-[#2a2594] transition-all shadow-lg shadow-indigo-100">추가</button>
             </div>
           </div>
         </div>
@@ -1019,172 +1021,174 @@ const Kanban = () => {
       {/* 4. Task 상세/수정 팝업 모달 */}
       {detailModalTask && (
         <div className="fixed inset-0 bg-[#1a1c3d]/60 backdrop-blur-sm flex items-center justify-center z-[100] animate-in fade-in duration-300 p-8">
-          <div className="bg-white w-full max-w-[500px] rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in slide-in-from-bottom-8 duration-300">
-            {/* 우선순위 배지 (최상단) */}
-            <div className="flex justify-between items-center mb-6">
-              <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${getPriorityStyle(detailModalTask.priority)}`}>
-                {detailModalTask.priority}
-              </span>
-              <button onClick={() => setDetailModalTask(null)} className="text-slate-400 hover:text-slate-600 transition-colors"><FontAwesomeIcon icon={faTimes} /></button>
-            </div>
-
-            <div className="space-y-6">
-              {/* 제목 */}
-              <div>
-                <input
-                  ref={detailTitleRef}
-                  className="w-full text-2xl font-black text-[#1a1c3d] border-none p-0 focus:ring-0 outline-none"
-                  value={detailModalTask.title}
-                  onChange={e => setDetailModalTask({ ...detailModalTask, title: e.target.value })}
-                />
+          <div className="bg-white w-full max-w-[500px] rounded-[2.5rem] shadow-2xl animate-in zoom-in slide-in-from-bottom-8 duration-300 max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-10">
+              {/* 우선순위 배지 (최상단) */}
+              <div className="flex justify-between items-center mb-6">
+                <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${getPriorityStyle(detailModalTask.priority)}`}>
+                  {detailModalTask.priority}
+                </span>
+                <button onClick={() => setDetailModalTask(null)} className="text-slate-400 hover:text-slate-600 transition-colors"><FontAwesomeIcon icon={faTimes} /></button>
               </div>
 
-              {/* 담당자 */}
-              <div className="space-y-1.5 relative">
-                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">담당자</p>
-                <div
-                  onClick={() => setOpenDropdown(openDropdown === 'detailAssignee' ? null : 'detailAssignee')}
-                  className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition-colors"
-                >
-                  <div className="w-7 h-7 rounded-full bg-indigo-50 flex items-center justify-center overflow-hidden border border-white">
-                    {detailModalTask.sysname ? (
-                      <img src={`http://localhost/file/profile/view?sysname=${detailModalTask.sysname}&token=${token}`} alt={detailModalTask.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-[10px] text-[#3530B8] font-bold">{detailModalTask.name?.charAt(0) || 'U'}</span>
+              <div className="space-y-6">
+                {/* 제목 */}
+                <div>
+                  <input
+                    ref={detailTitleRef}
+                    className="w-full text-2xl font-black text-[#1a1c3d] border-none p-0 focus:ring-0 outline-none"
+                    value={detailModalTask.title}
+                    onChange={e => setDetailModalTask({ ...detailModalTask, title: e.target.value })}
+                  />
+                </div>
+
+                {/* 담당자 */}
+                <div className="space-y-1.5 relative">
+                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">담당자</p>
+                  <div
+                    onClick={() => setOpenDropdown(openDropdown === 'detailAssignee' ? null : 'detailAssignee')}
+                    className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition-colors"
+                  >
+                    <div className="w-7 h-7 rounded-full bg-indigo-50 flex items-center justify-center overflow-hidden border border-white">
+                      {detailModalTask.sysname ? (
+                        <img src={`http://localhost/file/profile/view?sysname=${detailModalTask.sysname}&token=${token}`} alt={detailModalTask.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-[10px] text-[#3530B8] font-bold">{detailModalTask.name?.charAt(0) || 'U'}</span>
+                      )}
+                    </div>
+                    <span className="text-sm font-bold text-slate-600">{detailModalTask.name}</span>
+                    <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-400 ml-auto" />
+                  </div>
+                  {openDropdown === 'detailAssignee' && (
+                    <div className="absolute top-full left-0 z-[110] mt-1 w-full max-h-48 overflow-y-auto bg-white border border-slate-100 rounded-xl shadow-xl animate-in fade-in zoom-in duration-200 custom-scrollbar">
+                      {members.map((member, idx) => (
+                        <div
+                          key={member.employee_seq || idx}
+                          onClick={() => {
+                            setDetailModalTask({ ...detailModalTask, users_pic_id: member.users_id, name: member.name, sysname: member.sysname });
+                            setOpenDropdown(null);
+                          }}
+                          className="px-4 py-3 flex items-center gap-3 hover:bg-[#F0F4FF] cursor-pointer transition-colors"
+                        >
+                          <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-100">
+                            <img src={`http://localhost/file/profile/view?sysname=${member.sysname}&token=${token}`} alt={member.name} className="w-full h-full object-cover" />
+                          </div>
+                          <span className="text-sm font-bold text-slate-600">{member.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 현재 상태, 우선순위 (한 줄) */}
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="space-y-1.5 relative">
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">현재 상태</p>
+                    <div
+                      onClick={() => setOpenDropdown(openDropdown === 'detailStatus' ? null : 'detailStatus')}
+                      className="text-sm font-bold text-[#3530B8] bg-transparent border-none p-0 outline-none cursor-pointer flex items-center gap-1.5"
+                    >
+                      {detailModalTask.status}
+                      <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-400" />
+                    </div>
+                    {openDropdown === 'detailStatus' && (
+                      <div className="absolute top-full left-0 z-[110] mt-1 w-32 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                        {['TODO', 'DOING', 'DONE'].map(s => (
+                          <div
+                            key={s}
+                            onClick={() => { setDetailModalTask({ ...detailModalTask, status: s }); setOpenDropdown(null); }}
+                            className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors"
+                          >
+                            {s}
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
-                  <span className="text-sm font-bold text-slate-600">{detailModalTask.name}</span>
-                  <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-400 ml-auto" />
-                </div>
-                {openDropdown === 'detailAssignee' && (
-                  <div className="absolute top-full left-0 z-[110] mt-1 w-full max-h-48 overflow-y-auto bg-white border border-slate-100 rounded-xl shadow-xl animate-in fade-in zoom-in duration-200 custom-scrollbar">
-                    {members.map((member, idx) => (
-                      <div
-                        key={member.employee_seq || idx}
-                        onClick={() => {
-                          setDetailModalTask({ ...detailModalTask, users_pic_id: member.users_id, name: member.name, sysname: member.sysname });
-                          setOpenDropdown(null);
-                        }}
-                        className="px-4 py-3 flex items-center gap-3 hover:bg-[#F0F4FF] cursor-pointer transition-colors"
-                      >
-                        <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-100">
-                          <img src={`http://localhost/file/profile/view?sysname=${member.sysname}&token=${token}`} alt={member.name} className="w-full h-full object-cover" />
-                        </div>
-                        <span className="text-sm font-bold text-slate-600">{member.name}</span>
+                  <div className="space-y-1.5 relative">
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">우선순위</p>
+                    <div
+                      onClick={() => setOpenDropdown(openDropdown === 'detailPriority' ? null : 'detailPriority')}
+                      className="text-sm font-bold text-[#3530B8] bg-transparent border-none p-0 outline-none cursor-pointer flex items-center gap-1.5"
+                    >
+                      {detailModalTask.priority}
+                      <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-400" />
+                    </div>
+                    {openDropdown === 'detailPriority' && (
+                      <div className="absolute top-full left-0 z-[110] mt-1 w-32 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                        {['high', 'medium', 'low'].map(p => (
+                          <div
+                            key={p}
+                            onClick={() => { setDetailModalTask({ ...detailModalTask, priority: p }); setOpenDropdown(null); }}
+                            className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors"
+                          >
+                            {p}
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
-                )}
-              </div>
-
-              {/* 현재 상태, 우선순위 (한 줄) */}
-              <div className="grid grid-cols-2 gap-8">
-                <div className="space-y-1.5 relative">
-                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">현재 상태</p>
-                  <div
-                    onClick={() => setOpenDropdown(openDropdown === 'detailStatus' ? null : 'detailStatus')}
-                    className="text-sm font-bold text-[#3530B8] bg-transparent border-none p-0 outline-none cursor-pointer flex items-center gap-1.5"
-                  >
-                    {detailModalTask.status}
-                    <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-400" />
-                  </div>
-                  {openDropdown === 'detailStatus' && (
-                    <div className="absolute top-full left-0 z-[110] mt-1 w-32 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
-                      {['TODO', 'DOING', 'DONE'].map(s => (
-                        <div
-                          key={s}
-                          onClick={() => { setDetailModalTask({ ...detailModalTask, status: s }); setOpenDropdown(null); }}
-                          className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors"
-                        >
-                          {s}
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
-                <div className="space-y-1.5 relative">
-                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">우선순위</p>
-                  <div
-                    onClick={() => setOpenDropdown(openDropdown === 'detailPriority' ? null : 'detailPriority')}
-                    className="text-sm font-bold text-[#3530B8] bg-transparent border-none p-0 outline-none cursor-pointer flex items-center gap-1.5"
-                  >
-                    {detailModalTask.priority}
-                    <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-400" />
-                  </div>
-                  {openDropdown === 'detailPriority' && (
-                    <div className="absolute top-full left-0 z-[110] mt-1 w-32 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
-                      {['high', 'medium', 'low'].map(p => (
-                        <div
-                          key={p}
-                          onClick={() => { setDetailModalTask({ ...detailModalTask, priority: p }); setOpenDropdown(null); }}
-                          className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer transition-colors"
-                        >
-                          {p}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
 
-              {/* 시작일, 마감일 (한 줄) */}
-              <div className="grid grid-cols-2 gap-8">
+                {/* 시작일, 마감일 (한 줄) */}
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="space-y-2">
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">시작일</p>
+                    <div className="text-sm font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg flex items-center h-[32px]">
+                      {detailModalTask.start_date?.substring(0, 10)}
+                    </div>
+                  </div>
+                  <div className="space-y-2 relative">
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">마감일</p>
+                    <div
+                      onClick={() => setOpenCalendar(openCalendar === 'detailEnd' ? null : 'detailEnd')}
+                      className="text-sm font-bold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg cursor-pointer flex justify-between items-center min-w-[150px] h-[32px]"
+                    >
+                      {detailModalTask.due_date.substring(0, 10)}
+                      <FontAwesomeIcon icon={faCalendarAlt} className="text-slate-400 text-[10px]" />
+                    </div>
+                    {openCalendar === 'detailEnd' && (
+                      <div className="absolute top-full right-0 z-[110] mt-2 w-[280px] [&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-0 [&>div]:mb-0">
+                        <Calendar
+                          value={detailModalTask.due_date}
+                          minDate={detailModalTask?.start_date?.substring(0, 10)}
+                          maxDate={project?.end_date?.substring(0, 10)}
+                          onChange={(date) => {
+                            const projectStart = project?.start_date?.substring(0, 10);
+                            const projectEnd = project?.end_date?.substring(0, 10);
+                            if (date < projectStart || date > projectEnd) {
+                              setErrors(prev => ({ ...prev, detailEndDate: '프로젝트 기간 내에서만 선택 가능합니다.' }));
+                              return;
+                            }
+                            setErrors(prev => ({ ...prev, detailEndDate: null }));
+                            setDetailModalTask(prev => ({ ...prev, due_date: date }));
+                            setOpenCalendar(null);
+                          }}
+                          onClose={() => setOpenCalendar(null)}
+                        />
+                      </div>
+                    )}
+                    {errors.detailEndDate && <p className="text-[9px] text-red-500 font-bold mt-1">{errors.detailEndDate}</p>}
+                  </div>
+                </div>
+
+                {/* 상세 내용 */}
                 <div className="space-y-2">
-                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">시작일</p>
-                  <div className="text-sm font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg flex items-center h-[32px]">
-                    {detailModalTask.start_date?.substring(0, 10)}
-                  </div>
+                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">상세 내용</p>
+                  <textarea
+                    rows={4}
+                    className="w-full bg-slate-50/50 border-none rounded-2xl p-5 text-base leading-relaxed text-slate-600 outline-none resize-none"
+                    value={detailModalTask.content}
+                    onChange={e => setDetailModalTask({ ...detailModalTask, content: e.target.value })}
+                  />
                 </div>
-                <div className="space-y-2 relative">
-                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">마감일</p>
-                  <div
-                    onClick={() => setOpenCalendar(openCalendar === 'detailEnd' ? null : 'detailEnd')}
-                    className="text-sm font-bold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg cursor-pointer flex justify-between items-center min-w-[150px] h-[32px]"
-                  >
-                    {detailModalTask.due_date.substring(0, 10)}
-                    <FontAwesomeIcon icon={faCalendarAlt} className="text-slate-400 text-[10px]" />
-                  </div>
-                  {openCalendar === 'detailEnd' && (
-                    <div className="absolute top-full right-0 z-[110] mt-2 w-[280px] [&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-0 [&>div]:mb-0">
-                      <Calendar
-                        value={detailModalTask.due_date}
-                        minDate={detailModalTask?.start_date?.substring(0, 10)}
-                        maxDate={project?.end_date?.substring(0, 10)}
-                        onChange={(date) => {
-                          const projectStart = project?.start_date?.substring(0, 10);
-                          const projectEnd = project?.end_date?.substring(0, 10);
-                          if (date < projectStart || date > projectEnd) {
-                            setErrors(prev => ({ ...prev, detailEndDate: '프로젝트 기간 내에서만 선택 가능합니다.' }));
-                            return;
-                          }
-                          setErrors(prev => ({ ...prev, detailEndDate: null }));
-                          setDetailModalTask(prev => ({ ...prev, due_date: date }));
-                          setOpenCalendar(null);
-                        }}
-                        onClose={() => setOpenCalendar(null)}
-                      />
-                    </div>
-                  )}
-                  {errors.detailEndDate && <p className="text-[9px] text-red-500 font-bold mt-1">{errors.detailEndDate}</p>}
+
+                {/* 버튼 */}
+                <div className="flex gap-4 mt-10">
+                  <button onClick={() => setDetailModalTask(null)} className="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-bold text-sm">취소</button>
+                  <button onClick={handleUpdateTask} className="flex-1 bg-[#3530B8] text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-indigo-100">저장</button>
                 </div>
               </div>
-
-              {/* 상세 내용 */}
-              <div className="space-y-2">
-                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">상세 내용</p>
-                <textarea
-                  rows={4}
-                  className="w-full bg-slate-50/50 border-none rounded-2xl p-5 text-base leading-relaxed text-slate-600 outline-none resize-none"
-                  value={detailModalTask.content}
-                  onChange={e => setDetailModalTask({ ...detailModalTask, content: e.target.value })}
-                />
-              </div>
-            </div>
-
-            {/* 버튼 */}
-            <div className="flex gap-4 mt-10">
-              <button onClick={() => setDetailModalTask(null)} className="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-bold text-sm">취소</button>
-              <button onClick={handleUpdateTask} className="flex-1 bg-[#3530B8] text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-indigo-100">저장</button>
             </div>
           </div>
         </div>
