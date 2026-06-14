@@ -124,6 +124,7 @@ const Kanban = () => {
 
     const newErrors = {};
     if (!newGlobalTask.title) newErrors.globalTitle = '제목을 입력해 주세요.';
+    else if (newGlobalTask.title.length > 30) newErrors.globalTitle = '글자수가 초과되었습니다. 30자까지만 입력 가능합니다.';
     if (!newGlobalTask.users_pic_id) newErrors.globalAssignee = '담당자를 선택해 주세요';
     if (!newGlobalTask.due_date) newErrors.globalEndDate = '마감일을 선택해 주세요.';
 
@@ -157,6 +158,7 @@ const Kanban = () => {
   const handleInlineCreate = (status) => {
     const newErrors = {};
     if (!inlineForm.title) newErrors[`inlineTitle-${status}`] = '제목을 입력해주세요.';
+    else if (inlineForm.title.length > 30) newErrors[`inlineTitle-${status}`] = '글자수가 초과되었습니다. 30자까지만 입력 가능합니다.';
     if (!inlineForm.due_date) newErrors[`inlineEndDate-${status}`] = '마감일을 선택해주세요.';
 
     if (Object.keys(newErrors).length > 0) {
@@ -196,6 +198,15 @@ const Kanban = () => {
 
   // 핸들러: 상세 수정 저장
   const handleUpdateTask = () => {
+    const newErrors = {};
+    if (!detailModalTask.title) newErrors.detailTitle = '제목을 입력해주세요.';
+    else if (detailModalTask.title.length > 30) newErrors.detailTitle = '글자수가 초과되었습니다. 30자까지만 입력 가능합니다.';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     const params = {
       task_seq: detailModalTask.task_seq,
       project_seq: projectSeq,
@@ -418,8 +429,13 @@ const Kanban = () => {
                           className={`w-full text-base font-bold outline-none placeholder:text-slate-300 transition-all ${errors[`inlineTitle-${status}`] ? 'border-2 border-red-500 p-2 rounded-xl mb-2' : 'border-none p-0'}`}
                           value={inlineForm.title}
                           onChange={(e) => {
-                            setInlineForm({ ...inlineForm, title: e.target.value });
-                            if (errors[`inlineTitle-${status}`]) setErrors(prev => ({ ...prev, [`inlineTitle-${status}`]: null }));
+                            const val = e.target.value;
+                            setInlineForm({ ...inlineForm, title: val });
+                            if (val.length > 30) {
+                              setErrors(prev => ({ ...prev, [`inlineTitle-${status}`]: '글자수가 초과되었습니다. 30자까지만 입력 가능합니다.' }));
+                            } else {
+                              if (errors[`inlineTitle-${status}`]) setErrors(prev => ({ ...prev, [`inlineTitle-${status}`]: null }));
+                            }
                           }}
                         />
                         {errors[`inlineTitle-${status}`] && <p className="text-[10px] text-red-500 font-bold mt-[-8px] ml-1">{errors[`inlineTitle-${status}`]}</p>}
@@ -670,8 +686,13 @@ const Kanban = () => {
                 className={`w-full text-base font-bold outline-none placeholder:text-slate-300 transition-all ${errors[`inlineTitle-${activeTab}`] ? 'border-2 border-red-500 p-2 rounded-xl mb-2' : 'border-none p-0'}`}
                 value={inlineForm.title}
                 onChange={(e) => {
-                  setInlineForm({ ...inlineForm, title: e.target.value });
-                  if (errors[`inlineTitle-${activeTab}`]) setErrors(prev => ({ ...prev, [`inlineTitle-${activeTab}`]: null }));
+                  const val = e.target.value;
+                  setInlineForm({ ...inlineForm, title: val });
+                  if (val.length > 30) {
+                    setErrors(prev => ({ ...prev, [`inlineTitle-${activeTab}`]: '글자수가 초과되었습니다. 30자까지만 입력 가능합니다.' }));
+                  } else {
+                    if (errors[`inlineTitle-${activeTab}`]) setErrors(prev => ({ ...prev, [`inlineTitle-${activeTab}`]: null }));
+                  }
                 }}
               />
               {errors[`inlineTitle-${activeTab}`] && <p className="text-[10px] text-red-500 font-bold mt-[-8px] ml-1">{errors[`inlineTitle-${activeTab}`]}</p>}
@@ -812,8 +833,13 @@ const Kanban = () => {
                     placeholder="제목을 입력하세요."
                     value={newGlobalTask.title}
                     onChange={e => {
-                      setNewGlobalTask({ ...newGlobalTask, title: e.target.value });
-                      if (errors.globalTitle) setErrors(prev => ({ ...prev, globalTitle: null }));
+                      const val = e.target.value;
+                      setNewGlobalTask({ ...newGlobalTask, title: val });
+                      if (val.length > 30) {
+                        setErrors(prev => ({ ...prev, globalTitle: '글자수가 초과되었습니다. 30자까지만 입력 가능합니다.' }));
+                      } else {
+                        if (errors.globalTitle) setErrors(prev => ({ ...prev, globalTitle: null }));
+                      }
                     }}
                   />
                   {errors.globalTitle && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">{errors.globalTitle}</p>}
@@ -1036,10 +1062,19 @@ const Kanban = () => {
                 <div>
                   <input
                     ref={detailTitleRef}
-                    className="w-full text-2xl font-black text-[#1a1c3d] border-none p-0 focus:ring-0 outline-none"
+                    className={`w-full text-2xl font-black text-[#1a1c3d] focus:ring-0 outline-none transition-all ${errors.detailTitle ? 'border-2 border-red-500 p-2 rounded-xl' : 'border-none p-0'}`}
                     value={detailModalTask.title}
-                    onChange={e => setDetailModalTask({ ...detailModalTask, title: e.target.value })}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setDetailModalTask({ ...detailModalTask, title: val });
+                      if (val.length > 30) {
+                        setErrors(prev => ({ ...prev, detailTitle: '글자수가 초과되었습니다. 30자까지만 입력 가능합니다.' }));
+                      } else {
+                        if (errors.detailTitle) setErrors(prev => ({ ...prev, detailTitle: null }));
+                      }
+                    }}
                   />
+                  {errors.detailTitle && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">{errors.detailTitle}</p>}
                 </div>
 
                 {/* 담당자 */}
