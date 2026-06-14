@@ -1,24 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getProfileInfo, updateUserInfo } from '../mypage/mypageApi'; 
+import { checkMyPageEmail, getProfileInfo, updateUserInfo } from '../mypage/mypageApi'; 
+import { emailDuplCheck } from '../auth/authApi';
 import { useNavigate } from 'react-router-dom';
 import useUserStore from '../../store/userStore';
 
 const MyPageEdit = () => {
-  const navigate = useNavigate();//페이지 이동용
-  /*전역 store에서 로그인한 유저 정보(user)를 가져오고,
-   수정 후 store 업데이트할 때 setUser 사용 */
+  const navigate = useNavigate();
   const { user, setUser } = useUserStore();
   const postcodeRef = useRef(null); 
-  const [profileData, setProfileData] = useState(null);//기존 데이터 저장용
-  const [isEditing, setIsEditing] = useState(false); // 수정모드인지 아닌지
-  const [isPostcodeOpen, setIsPostcodeOpen] = useState(false); //검색버튼 활 비활
-  const [formData, setFormData] = useState({//수정된 데이터 처리용
+  const [profileData, setProfileData] = useState(null);
+  const [isEditing, setIsEditing] = useState(false); 
+  const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
+  const [formData, setFormData] = useState({
     email: '',
     phone: '',
     zonecode: '',
     address1: '',
     address2: '',
   });
+  const [isEmailChecked, setIsEmailChecked] = useState(true);
   const [errors, setErrors] = useState({});
   const phoneRegex = /^010-\d{4}-\d{4}$/;
   const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
@@ -34,6 +34,7 @@ useEffect(() => {
         address1: resp.data.address1 || '',
         address2: resp.data.address2 || '',
       });
+      setIsEmailChecked(true);
     }).catch(err => console.log("내정보 불러오기 실패", err));
 }, []);
 
@@ -59,6 +60,39 @@ useEffect(() => {
       [name]: value
     }));
     setErrors(prev => ({ ...prev, [name]: '' })); 
+
+    if (name === 'email') {
+      if (value === profileData?.email) {
+        setIsEmailChecked(true);
+      } else {
+        setIsEmailChecked(false);
+      }
+      setErrors(prev => ({ ...prev, emailCheck: '' }));
+    }
+  };
+
+  const handleEmailDuplCheck = () => {
+    if (!formData.email) {
+      setErrors(prev => ({ ...prev, email: '이메일을 입력해주세요.' }));
+      return;
+    }
+    if (!emailRegex.test(formData.email)) {
+      setErrors(prev => ({ ...prev, email: '올바른 이메일 형식이 아닙니다.' }));
+      return;
+    }
+
+    checkMyPageEmail(formData.email).then(resp => {
+      if (resp.data === false) {
+        setIsEmailChecked(true);
+        setErrors(prev => ({ ...prev, emailCheck: '' }));
+      } else {
+        setIsEmailChecked(false);
+        setErrors(prev => ({ ...prev, emailCheck: '이미 사용 중인 이메일입니다.' }));
+      }
+    }).catch(err => {
+      console.error('Email duplication check failed:', err);
+      alert('이메일 중복 확인 중 오류가 발생했습니다.');
+    });
   };
 
   const handleSearch = () => {
@@ -73,11 +107,13 @@ useEffect(() => {
     if (formData.email && !emailRegex.test(formData.email)) {
       newErrors.email = 'example@email.com(또는 co.kr) 등 알맞은 형식으로 입력해주세요.';
     }
+    if (!isEmailChecked) {
+      newErrors.emailCheck = '이메일 중복 확인이 필요합니다.';
+    }
     if (formData.phone && !phoneRegex.test(formData.phone)) {
       newErrors.phone = '010-0000-0000 형식으로 입력해주세요.';
     }
 
-      // ✅ 이게 없으면 에러가 있어도 그냥 저장됨
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -106,6 +142,8 @@ useEffect(() => {
       address2: profileData?.address2 || '',
     });
     setIsEditing(false);
+    setIsEmailChecked(true);
+    setErrors({});
   };
 
   const infoRowStyle = {
@@ -232,9 +270,29 @@ useEffect(() => {
             <div style={{...infoRowStyle, minHeight: '2.8rem'}} className="info-row">
               <label style={labelStyle} className="info-label">이메일</label>
               {isEditing ? (
-                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <input type="email" name="email" value={formData.email} onChange={handleChange} style={{...inputStyle, height: '2.2rem', border: errors.email ? '1px solid #EF4444' : '1px solid #3530B8'}} />
-                  {errors.email && <span style={{ fontSize: '0.7rem', color: '#EF4444', marginTop: '2px' }}>{errors.email}</span>}
+                 <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '0.25rem', padding: '0.5rem 0' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input 
+                      type="email" 
+                      name="email" 
+                      value={formData.email} 
+                      onChange={handleChange} 
+                      placeholder="example@email.com"
+                      style={{...inputStyle, height: '2.2rem', flex: 1, border: (errors.email || errors.emailCheck) ? '1px solid #EF4444' : '1px solid #3530B8'}} 
+                    />
+                    <button 
+                      type="button" 
+                      onClick={handleEmailDuplCheck}
+                      style={{ padding: '0 0.8rem', background: '#3530B8', color: 'white', border: 'none', borderRadius: '0.4rem', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                    >
+                      중복확인
+                    </button>
+                  </div>
+                  {errors.email && <p style={{ color: '#EF4444', fontSize: '0.65rem', margin: '0 0 0 0.25rem', fontWeight: '500' }}>{errors.email}</p>}
+                  {errors.emailCheck && <p style={{ color: '#EF4444', fontSize: '0.65rem', margin: '0 0 0 0.25rem', fontWeight: '500' }}>{errors.emailCheck}</p>}
+                  {isEmailChecked && !errors.emailCheck && formData.email !== profileData?.email && (
+                    <p style={{ color: '#10B981', fontSize: '0.65rem', margin: '0 0 0 0.25rem', fontWeight: '500' }}>사용 가능한 이메일입니다.</p>
+                  )}
                 </div>
               ) : (
                 <span style={valueStyle} className="info-value">{profileData?.email || '-'}</span>

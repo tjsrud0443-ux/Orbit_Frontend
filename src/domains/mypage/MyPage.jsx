@@ -1,6 +1,6 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAnuualSummary, getCntMonth, getCntWeek, getProfileInfo } from '../mypage/mypageApi';
+import { getAnuualSummary, getCntMonth, getCntWeek, getProfileInfo, getMySupplyRequest, getAllMyMeetRsvn, getMyQuestions } from '../mypage/mypageApi';
 import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
 
@@ -21,24 +21,52 @@ const MyPage = () => {
   const [activeTab, setActiveTab] = useState('비품');
   const [dayModal, setDayModal] = useState({ open: false, date: '', schedules: [] });
   const [profileData,setProfileData]=useState();
+  const [supplyRequests, setSupplyRequests] = useState([]);
+  const [roomReservations, setRoomReservations] = useState([]);
+  const [adminInquiries, setAdminInquiries] = useState([]);
+
   const tabs = ['비품', '회의실', '관리자 문의'];
   const { calendarEvents, selectedDate, selectedSchedules } = usePersonalCalendar();
+  
   const requestData = {
-    '비품': [
-      { title: '비품 신청', date: '2024-05-15', status: '승인' },
-      { title: '비품 신청', date: '2024-05-15', status: '승인' },
-    ],
-    '회의실': [
-      { title: '회의실 예약', date: '2024-05-20', status: '대기' },
-    ],
-    '관리자 문의': [
-      { title: '문의 접수', date: '2024-05-18', status: '처리중' },
-    ],
+    '비품': supplyRequests.slice(0, 4).map(req => ({
+      title: req.items?.[0]?.supply_name
+               ? req.items[0].supply_name.length > 14
+                 ? req.items[0].supply_name.slice(0, 14) + '…'
+                 : req.items[0].supply_name
+               : '품목 없음',
+      date: req.req_date,
+      status: req.status === 'APPROVED' ? '승인'
+            : req.status === 'PENDING'  ? '대기'
+            : '반려',
+    })),
+    '회의실': roomReservations.slice(0, 4).map(res => ({
+      title: res.title,
+      date: res.start_dt?.split(' ')[0],
+      status: res.room_name
+    })),
+    '관리자 문의': adminInquiries.slice(0, 4).map(qna => ({
+      title: qna.question,
+      date: qna.created_at,
+      status: qna.status === 'ANSWERED' ? '승인' : '대기'
+    })),
   };
 
   useEffect(()=>{
     getProfileInfo().then(resp=> setProfileData(resp.data))
     .catch(err=>console.log("내정보 불러오기 실패",err));
+
+    getMySupplyRequest()
+      .then(resp => setSupplyRequests(resp.data))
+      .catch(err => console.log("비품 신청 내역 불러오기 실패", err));
+
+    getAllMyMeetRsvn()
+      .then(resp => setRoomReservations(resp.data))
+      .catch(err => console.log("회의실 예약 내역 불러오기 실패", err));
+
+    getMyQuestions()
+      .then(resp => setAdminInquiries(resp.data))
+      .catch(err => console.log("관리자 문의 내역 불러오기 실패", err));
   },[]);
 
   // const handleDateClick = (info) => {
@@ -342,9 +370,14 @@ const weeklyAttendance = [
                     <p className="text-sm font-bold text-slate-700 mb-0.5 truncate">{item.title}</p>
                     <p className="text-[0.65rem] text-slate-400 font-semibold">{item.date}</p>
                   </div>
-                  <span className="text-[0.65rem] font-extrabold px-2.5 py-1 rounded-lg shrink-0" style={statusStyle(item.status)}>
-                    {item.status}
-                  </span>
+                  {item.status && (
+                    <span 
+                      className="text-[0.65rem] font-extrabold px-2.5 py-1 rounded-lg shrink-0" 
+                      style={activeTab === '회의실' ? { background: '#F0F4FF', color: '#3530B8', border: '1px solid #DDE8FF' } : statusStyle(item.status)}
+                    >
+                      {item.status}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
