@@ -5,7 +5,7 @@ import { maxios } from "../../api/axiosConfig";
 import { useNavigate, useLocation } from 'react-router-dom';
 import useUserStore from '../../store/userStore';
 import { insertBoard, insertEditorImage, updateBoard } from './boardApi';
-import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
+import { alertSuccess, alertError } from '../../utils/alert';
 
 const CATEGORIES_HR   = ['공지', '경조', '생일', '승진', '부서 이동', '자유'];
 
