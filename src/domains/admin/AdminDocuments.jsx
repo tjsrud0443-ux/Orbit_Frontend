@@ -8,7 +8,7 @@ import { createDocument, deleteDocument, editDocument, getAllDocs } from './admi
 import useAuthStore from '../../store/authStore';
 import Preview from '../../components/common/Preview';
 import useLoadingStore from '../../store/useLoadingStore';
-
+import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 
 const AdminDocuments = () => {
   const { user } = useUserStore();
@@ -99,14 +99,15 @@ const AdminDocuments = () => {
   };
 
   const handleDelete = async (document_seq) => {
-    if (window.confirm('정말 삭제하시겠습니까?\n삭제 시 복구가 불가합니다.')) {
+    const result = await alertConfirm('정말 삭제하시겠습니까?', '삭제 후 복구는 불가합니다.');
+    if (result.isConfirmed) {
       try {
         await deleteDocument(document_seq);
-        alert('문서가 삭제되었습니다.');
+        await alertSuccess('삭제 완료', '문서 삭제가 완료되었습니다.');
         loadDocuments();
       } catch (error) {
         console.error('문서 삭제 실패:', error);
-        alert('문서 삭제 중 오류가 발생했습니다.');
+        await alertError('오류 발생', '문서가 삭제 중 오류가 발생했습니다.');
       }
     }
   };
@@ -166,7 +167,7 @@ const AdminDocuments = () => {
         } finally {
           hideLoading();
         }
-        alert('문서가 수정되었습니다.');
+        await alertSuccess('수정 완료', '문서가 수정되었습니다.');
       } else {
         if (user && user.id) {
           formData.append('users_id', user.id);
@@ -181,11 +182,11 @@ const AdminDocuments = () => {
         } finally {
           hideLoading();
         }
-        alert('문서가 등록되었습니다.');
+        await alertSuccess('등록 완료', '문서 등록이 완료되었습니다.');
       }
     } catch (error) {
       console.error('문서 등록 실패:', error);
-      alert('문서 등록 중 오류가 발생했습니다.');
+      await alertError('오류 발생', '문서 등록 중 오류가 발생했습니다.');
     }
   };
 

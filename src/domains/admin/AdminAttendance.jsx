@@ -3,6 +3,7 @@ import Pagination from '../../components/common/Pagination';
 import useLoadingStore from '../../store/useLoadingStore';
 import { approveCheckout, approveOvertime, getAllCheckoutRQ, getAllOvertimeRQ, rejectCheckout, rejectOvertime } from './adminApi';
 import useUserStore from '../../store/userStore';
+import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 
 const AdminAttendance = () => {
   const [activePageTab, setActivePageTab] = useState('근무시간 정정');
@@ -73,46 +74,58 @@ const AdminAttendance = () => {
   }
 
   const handleCheckoutApp = async (seq) => {
-    if (!window.confirm('신청을 승인하시겠습니까?')) return;
-    try {
-      await approveCheckout(seq);
-      loadRequest();
-    } catch (err) {
-      console.error('신청 승인 실패 : ', err);
-      alert('신청을 승인하는데 실패했습니다.');
+    const result = await alertConfirm('신청을 승인하시겠습니까?', '처리 후 변경은 불가합니다.');
+    if (result.isConfirmed) {
+      try {
+        await approveCheckout(seq);
+        await alertSuccess('승인 완료', '승인 처리가 완료되었습니다.');
+        loadRequest();
+      } catch (err) {
+        console.error('신청 승인 실패 : ', err);
+        await alertError('승인 실패', '승인 처리에 실패했습니다.');
+      }
     }
   }
 
   const handleCheckoutRej = async (seq) => {
-    if (!window.confirm('신청을 반려하시겠습니까?')) return;
-    try {
-      await rejectCheckout(seq);
-      loadRequest();
-    } catch(err) {
-      console.error('신청 반려 실패 : ', err);
-      alert('신청을 반려하는데 실패했습니다.');
+    const result = await alertConfirm('정말 반려하시겠습니까?', '처리 후 변경은 불가합니다.');
+    if (result.isConfirmed) {
+      try {
+        await rejectCheckout(seq);
+        await alertSuccess('반려 완료', '반려 처리가 완료되었습니다.');
+        loadRequest();
+      } catch(err) {
+        console.error('신청 반려 실패 : ', err);
+        await alertError('반려 실패', '반려 처리에 실패했습니다.');
+      }
     }
   }
 
   const handleOvertimeApp = async (seq) => {
-    if (!window.confirm('신청을 승인하시겠습니까?')) return;
-    try {
-      await approveOvertime(seq);
-      loadRequest();
-    } catch (err) {
-      console.error('신청 승인 실패 : ', err);
-      alert('신청을 승인하는데 실패했습니다.');
+    const result = await alertConfirm('신청을 승인하시겠습니까?', '처리 후 변경은 불가합니다.');
+    if (result.isConfirmed) {
+      try {
+        await approveOvertime(seq);
+        await alertSuccess('승인 완료', '승인 처리가 완료되었습니다.');
+        loadRequest();
+      } catch (err) {
+        console.error('신청 승인 실패 : ', err);
+        await alertError('승인 실패', '승인 처리에 실패했습니다.');
+      }
     }
   }
 
   const handleOvertimeRej = async (seq) => {
-    if (!window.confirm('신청을 반려하시겠습니까?')) return;
-    try {
-      await rejectOvertime(seq);
-      loadRequest();
-    } catch (err) {
-      console.error('신청 반려 실패 : ', err);
-      alert('신청을 반려하는데 실패했습니다.');
+    const result = await alertConfirm('정말 반려하시겠습니까?', '처리 후 변경은 불가합니다.');
+    if (result.isConfirmed) {
+      try {
+        await rejectOvertime(seq);
+        await alertSuccess('반려 완료', '반려 처리가 완료되었습니다.');
+        loadRequest();
+      } catch (err) {
+        console.error('신청 반려 실패 : ', err);
+        await alertError('반려 실패', '반려 처리에 실패했습니다.');
+      }
     }
   }
 

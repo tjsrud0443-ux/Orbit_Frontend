@@ -134,11 +134,11 @@ const RoomHistory = () => {
   };
 
   const handleCancelReservation = async (rsvn_seq) => {
-    const result = await alertConfirm('예약 취소', '회의실 예약을 취소하시겠습니까?');
+    const result = await alertConfirm('예약을 취소하시겠습니까?', '취소 후 복구는 불가합니다.');
     if (result.isConfirmed) {
       try {
         await cancelMeetRsvn(rsvn_seq);
-        await alertSuccess('취소 완료', '회의실 예약이 취소되었습니다.');
+        await alertSuccess('취소 완료', '예약 취소가 완료되었습니다.');
         loadRsvn();
         setEditingReservation(null);
         setTitleError(false);
@@ -196,7 +196,7 @@ const RoomHistory = () => {
     updateMeetRsvn(updateData).then(() => {
       loadRsvn();
       setEditingReservation(null);
-      alertSuccess('수정 완료', '예약 수정이 완료되었습니다.');
+      alertSuccess('수정 완료', '예약이 수정되었습니다.');
     });
   };
 
