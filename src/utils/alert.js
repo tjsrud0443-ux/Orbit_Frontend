@@ -44,7 +44,7 @@ export const alertError = (title, text) =>
     icon: 'error',
     title, text,
     confirmButtonColor: '#b0b0b4',
-    didOpen: setIconColor('#FF4D4F'),   // 빨간색
+    didOpen: setIconColor('#FF4D4F', 0.5),   // 빨간색
   });
 
 export const alertConfirm = (title, text) =>
@@ -57,7 +57,7 @@ export const alertConfirm = (title, text) =>
     showCancelButton: true,
     confirmButtonText: '확인',
     cancelButtonText: '취소',
-    didOpen: setIconColor('#DDE8FF'),   // 브랜드 컬러
+    didOpen: setIconColor('#8aafff', 0.5),   // 브랜드 컬러
     customClass: {
       ...baseStyle.customClass,
       cancelButton: 'swal-custom-cancel',  // ← 추가

@@ -8,6 +8,7 @@ import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
 import { cancelMeetRsvn, getAllMyMeetRsvn, getAllRooms, getMeetRsvnDetail, getOccupiedTimes, updateMeetRsvn } from './mypageApi';
 import useLoadingStore from '../../store/useLoadingStore';
+import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 
 const RoomHistory = () => {
   const { allEmployees, fetchEmployees } = useEmployeeStore();
@@ -133,10 +134,11 @@ const RoomHistory = () => {
   };
 
   const handleCancelReservation = async (rsvn_seq) => {
-    if (window.confirm('예약을 취소하시겠습니까?')) {
+    const result = await alertConfirm('예약 취소', '회의실 예약을 취소하시겠습니까?');
+    if (result.isConfirmed) {
       try {
         await cancelMeetRsvn(rsvn_seq);
-        alert('예약이 취소되었습니다.');
+        await alertSuccess('취소 완료', '회의실 예약이 취소되었습니다.');
         loadRsvn();
         setEditingReservation(null);
         setTitleError(false);
@@ -194,7 +196,7 @@ const RoomHistory = () => {
     updateMeetRsvn(updateData).then(() => {
       loadRsvn();
       setEditingReservation(null);
-      alert('수정이 완료되었습니다.');
+      alertSuccess('수정 완료', '예약 수정이 완료되었습니다.');
     });
   };
 
@@ -265,7 +267,7 @@ const RoomHistory = () => {
 
   const handleAddAttendee = (emp) => {
     if (editForm.attendees.some(a => a.users_seq === emp.users_seq)) {
-      alert('이미 추가된 참석자입니다.');
+      alertWarning('중복 입력', '이미 추가된 참석자입니다.');
       return;
     }
     setEditForm({ ...editForm, attendees: [...editForm.attendees, emp] });
@@ -479,7 +481,7 @@ const RoomHistory = () => {
                       value={editForm.date} 
                       onChange={(date) => {
                         if (isBefore(parse(date, 'yyyy-MM-dd', new Date()), startOfDay(new Date()))) {
-                          alert('오늘 이전 날짜는 선택할 수 없습니다.');
+                          alertWarning('예약 불가', '오늘 이전 날짜는 선택할 수 없습니다.');
                           return;
                         }
                         setEditForm({ ...editForm, date });

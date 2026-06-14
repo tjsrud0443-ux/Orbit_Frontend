@@ -63,10 +63,15 @@
   font-size: 0.8rem !important;
   padding: 0.4rem 1.2rem !important;
 }
-
 .swal-custom-cancel {
-  color: #b0b0b4 !important;  /* 원하는 글씨 색상으로 변경 */
-  border: 1px solid #b0b0b4 !important;  /* 흰 배경일 때 테두리도 주면 좋음 */
+  color: #818181 !important;
+  border: 1px solid #b0b0b4 !important;
+  margin: 0.2rem 0 !important;
+  font-size: 0.8rem !important;
+  padding: 0.4rem 1.2rem !important;
+}
+.swal-custom-popup .swal2-actions {
+  gap: 0.5rem !important;  /* 원하는 간격으로 조절 */
 }
 
 /* 모바일 크기 */
