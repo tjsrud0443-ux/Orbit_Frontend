@@ -8,7 +8,7 @@ import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
 import { cancelMeetRsvn, getAllMyMeetRsvn, getAllRooms, getMeetRsvnDetail, getOccupiedTimes, updateMeetRsvn } from './mypageApi';
 import useLoadingStore from '../../store/useLoadingStore';
-import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
+import { alertWarning, alertSuccess, alertConfirm } from '../../utils/alert';
 
 const RoomHistory = () => {
   const { allEmployees, fetchEmployees } = useEmployeeStore();
