@@ -5,43 +5,14 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 
 import { fetchHolidays } from '../../api/holidayApi';
-import { getSchedules, createSchedule, deleteSchedule, updateSchedule } from './schedulesApi';
+import { getSchedules, createSchedule, deleteSchedule, updateSchedule, getApprovedVacations } from './schedulesApi';
 import useLoadingStore from '../../store/useLoadingStore';
-
-const generateCompanyEvents = (years) => {
-  const events = [];
-  years.forEach(year => {
-    events.push({
-      id: `c-town-${year}-02`, title: '타운홀 미팅 (12:00~14:00)',
-      start: `${year}-02-15T12:00:00`, end: `${year}-02-15T14:00:00`, category: 'team', color: '#0EA5E9'
-    });
-    events.push({
-      id: `c-town-${year}-07`, title: '타운홀 미팅 (12:00~14:00)',
-      start: `${year}-07-15T12:00:00`, end: `${year}-07-15T14:00:00`, category: 'team', color: '#0EA5E9'
-    });
-    events.push({
-      id: `c-work-${year}-04`, title: '전사 워크숍 (1박 2일)',
-      start: `${year}-04-16`, end: `${year}-04-18`, category: 'company', color: '#F59E0B'
-    });
-    events.push({
-      id: `c-work-${year}-09`, title: '전사 워크숍 (1박 2일)',
-      start: `${year}-09-17`, end: `${year}-09-19`, category: 'company', color: '#F59E0B'
-    });
-    events.push({ id: `c-survey-${year}-05`, title: '임직원 만족도 조사', start: `${year}-05-10`, category: 'company', color: '#F59E0B' });
-    events.push({ id: `c-health-${year}-05`, title: '건강 챌린지 시작', start: `${year}-05-01`, category: 'company', color: '#F59E0B' });
-    events.push({ id: `c-survey-${year}-11`, title: '임직원 만족도 조사', start: `${year}-11-10`, category: 'company', color: '#F59E0B' });
-    events.push({ id: `c-health-${year}-11`, title: '건강 챌린지 시작', start: `${year}-11-01`, category: 'company', color: '#F59E0B' });
-    events.push({ id: `c-found-${year}`, title: '창립기념일 (휴무)', start: `${year}-07-06`, category: 'holiday', color: '#EC4899' });
-    events.push({ id: `c-award-${year}`, title: '연간 시상식', start: `${year}-12-24T15:00:00`, category: 'company', color: '#EC4899' });
-  });
-  return events;
-};
+import useUserStore from '../../store/userStore';
 
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
 // 현재 연도 기준 -5년 ~ +5년, 총 11년치
 
-const COMPANY_EVENTS = generateCompanyEvents(years);
 const MiniCalendar = () => {
   const [date, setDate] = useState(new Date());
   const year = date.getFullYear();
@@ -123,26 +94,30 @@ const MonthlyEvents = ({ events, currentTitle, title = "이달의 주요 일정"
 
 /*체크박스 */
 const PERSONAL_FILTERS = [
-  { key: 'personal', label: '내 일정', color: '#3530B8' },
-  { key: 'leave', label: '연차 / 휴가', color: '#10B981' },
-  { key: 'project', label: '프로젝트', color: '#6366F1' },
-  { key: 'meeting', label: '회의', color: '#ff75bf' },
-  { key: 'holiday', label: '공휴일', color: '#EF4444' }
+  { key: 'PERSONAL', label: '내 일정', color: '#3530B8' },
+  { key: 'ANNUAL', label: '연차 / 휴가', color: '#67adef' },
+  { key: 'PROJECT', label: '프로젝트', color: '#8c8eef' },
+  { key: 'MEETING', label: '회의', color: '#ff9fd2' },
+  { key: 'holiday', label: '공휴일', color: '#EF4444' },
 ];
 
 const COMPANY_FILTERS = [
-  { key: 'company', label: '회사 전체 일정', color: '#F59E0B' },
-  { key: 'team', label: '부서/팀 일정', color: '#0EA5E9' },
+  { key: 'COMPANY', label: '회사 전체 일정', color: '#F59E0B' },
+  { key: 'TEAM', label: '부서/팀 일정', color: '#0EA5E9' },
   { key: 'holiday', label: '공휴일', color: '#EF4444' },
-  { key: 'anniversary', label: '기념일', color: '#EC4899' }
+  { key: 'ANNIVERSARY', label: '기념일', color: '#EC4899' }
 ];
 
-const COMPANY_CATEGORIES = ['company', 'team', 'holiday', 'anniversary'];
+const COMPANY_CATEGORIES = ['COMPANY', 'TEAM', 'holiday', 'ANNIVERSARY'];
 
 const Calendar = () => {
+  const user = useUserStore(state => state.user);
+  const isHrAdmin = user?.auth_group === 'ROLE_HR_ADMIN';
+
   const calendarRef = useRef(null);
   // 화면이 모바일인지 여부 (캘린더 height 분기용)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [dateError, setDateError] = useState('');
   //(커스텀 달력 상태)
   const [openCalendar, setOpenCalendar] = useState(null); // 'start' | 'end' | null
   const [viewDate, setViewDate] = useState(new Date());
@@ -183,7 +158,7 @@ const Calendar = () => {
   // 개인 일정 목록
   const [personalEvents, setPersonalEvents] = useState([]);
   // 회사 일정 목록 (공휴일도 여기 합쳐짐)
-  const [companyEvents, setCompanyEvents] = useState(COMPANY_EVENTS);
+  const [companyEvents, setCompanyEvents] = useState([]);
   // 일정 추가/수정 모달 열림 여부 + 날짜
   const [modal, setModal] = useState({ open: false, date: '' });
   // 모달 안 입력값들(제목, 카테고리, 날짜 등)
@@ -213,41 +188,76 @@ const Calendar = () => {
 
 
   useEffect(() => {
+    console.log('useEffect 실행');
     //일정 출력
-    getSchedules()
-      .then(resp => {
-        const allEvents = resp.data.map(item => {
-          const filter = [...PERSONAL_FILTERS, ...COMPANY_FILTERS].find(f => f.key === item.schedule_type);
-          const startDate = item.start_dt?.split('T')[0];
-          const endDate = item.end_dt?.split('T')[0];
+    Promise.all([getSchedules(),getApprovedVacations()]).then(([schedResp, vacResp]) => {
+       console.log('연차 데이터:', vacResp.data);
+      const allEvents = schedResp.data.map(item => {
+        const filter = [...PERSONAL_FILTERS, ...COMPANY_FILTERS].find(f => f.key === item.schedule_type);
+        const isMeeting = item.schedule_type === 'MEETING';
 
-          const isSameDay = startDate === endDate;
+        const startDate = item.start_dt?.split(/[T ]/)[0];
+        const endDate = item.end_dt?.split(/[T ]/)[0];
+        const startTime = item.start_dt?.split(/[T ]/)[1]?.slice(0, 8); // 'HH:mm:ss'
+        const endTime = item.end_dt?.split(/[T ]/)[1]?.slice(0, 8);
+        const isSameDay = startDate === endDate;
 
-          // FullCalendar의 end date는 exclusive하므로, 
-          // 기간 일정일 때만 종료일에 1일을 더해줌
-          let displayEnd = undefined;
-          if (endDate && !isSameDay) {
-            const d = new Date(endDate);
-            d.setDate(d.getDate() + 1);
-            displayEnd = d.toISOString().split('T')[0];
-          }
+        // FullCalendar의 end date는 exclusive하므로, 
+        // 기간 일정일 때만 종료일에 1일을 더해줌
+        let displayEnd = undefined;
+        if (endDate && !isSameDay) {
+          const d = new Date(endDate);
+          d.setDate(d.getDate() + 1);
+          displayEnd = d.toISOString().split('T')[0];
+        }
 
-          return {
-            id: item.schedule_seq.toString(),
-            title: item.title,
-            start: startDate,
-            end: displayEnd,
-            allDay: !isSameDay, // 하루면 false(점), 이틀 이상이면 true(바)
-            extendedProps: {
-              category: item.schedule_type,
-              description: item.sked_reason,
-              is_public: item.is_public,
-              actualEnd: endDate // 화면 표시용 실제 종료일
-            },
+        return {
+          id: item.schedule_seq.toString(),
+          title: item.title,
+          start: isMeeting && startTime ? `${startDate}T${startTime}` : startDate,
+          end: isMeeting && endTime ? `${endDate}T${endTime}` : displayEnd,
+          allDay: isMeeting ? false : !isSameDay, // 하루면 false(점), 이틀 이상이면 true(바)
+          extendedProps: {
             category: item.schedule_type,
-            color: filter?.color ?? '#3530B8',
-          };
-        });
+            description: item.sked_reason,
+            is_public: item.is_public,
+            actualEnd: endDate, // 화면 표시용 실제 종료일
+            actualEndTime: endTime,
+          },
+          category: item.schedule_type,
+          color: filter?.color ?? '#3530B8',
+        };
+      });
+
+      // 연차 매핑
+      const vacEvents = vacResp.data.map(item => {        
+        const filter = PERSONAL_FILTERS.find(f => f.key === 'ANNUAL');
+        const startDate = item.start_dt?.split(/[T ]/)[0];
+        const endDate = item.end_dt?.split(/[T ]/)[0];
+        const isSameDay = startDate === endDate;
+        let displayEnd = undefined;
+        if (endDate && !isSameDay) {
+          const d = new Date(endDate);
+          d.setDate(d.getDate() + 1);
+          displayEnd = d.toISOString().split('T')[0];
+        }       
+        return {
+          id: `vac_${item.schedule_seq}`,  // SCHEDULES seq와 충돌 방지
+          title: item.title,
+          start: startDate,
+          end: displayEnd,
+          allDay: true,
+          extendedProps: {
+            category: 'ANNUAL',
+            description: item.sked_reason,
+            is_public: 0,
+            actualEnd: endDate,
+          },
+          category: 'ANNUAL',
+          color: filter?.color ?? '#10B981',
+        };
+      });
+console.log('vacEvents:', vacEvents);
         //.some()은 배열에서 조건에 맞는 게 하나라도 있으면 true를 반환
         // allEvents에서 개인 카테고리인 것만 골라내기
         const pEvents = allEvents.filter(e => PERSONAL_FILTERS.some(f => f.key === e.category));
@@ -256,9 +266,12 @@ const Calendar = () => {
 
         setPersonalEvents(prev => {
           // 기존 Mock 데이터(ID가 숫자가 아닌 것)와 공휴일은 유지하고, 서버 데이터만 교체
-          const persistentEvents = prev.filter(e => isNaN(Number(e.id)) || e.category === 'holiday');
-          return [...persistentEvents, ...pEvents];
+          const persistentEvents = prev.filter(e => 
+            //vac은 수정삭제 안됨
+            (isNaN(Number(e.id)) && !e.id.startsWith('vac_')) || e.category === 'holiday');
+          return [...persistentEvents, ...pEvents, ...vacEvents];
         });
+
         setCompanyEvents(prev => {
           // 기존 Mock 데이터(ID가 숫자가 아닌 것)와 공휴일은 유지하고, 서버 데이터만 교체
           const persistentEvents = prev.filter(e => isNaN(Number(e.id)) || e.category === 'holiday');
@@ -268,6 +281,14 @@ const Calendar = () => {
       .catch(err => console.error('일정 로드 실패:', err));
   }, []);
 
+
+  useEffect(() => {
+    const handleClickOutside = () => setOpenCalendar(null);
+    if (openCalendar) {
+      document.addEventListener('click', handleClickOutside);
+    }
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openCalendar]);
   //useRef : 컴포넌트가 재렌더링되어도 값을 유지
   const loadedYears = useRef(new Set());
   // API에서 공휴일 가져와서 companyEvents에 추가
@@ -340,8 +361,8 @@ const Calendar = () => {
       schedule_seq: event.id,
       title: event.title,
       schedule_type: event.extendedProps.category || 'personal',
-      start_dt: event.startStr.split('T')[0],
-      end_dt: event.extendedProps.actualEnd || event.startStr.split('T')[0],
+      start_dt: event.startStr?.split('T')[0],
+      end_dt:(event.extendedProps.actualEnd || event.startStr)?.split(/[T ]/)[0],
       sked_reason: event.extendedProps.description || '',
       is_public: event.extendedProps.is_public || 0
     });
@@ -353,15 +374,15 @@ const Calendar = () => {
     const isValid = form.title.trim() && form.start_dt && form.end_dt && (form.start_dt <= form.end_dt);
     if (!isValid) return;
 
-    const isPersonalCategory = PERSONAL_FILTERS.some(f => f.key === form.schedule_type);
+    const isPersonalCategory = activeTab === 'personal';
     const filter = [...PERSONAL_FILTERS, ...COMPANY_FILTERS].find(f => f.key === form.schedule_type);
 
     // 백엔드 전송용 데이터 (DTO 형식)
     const payload = {
       title: form.title,
       schedule_type: form.schedule_type,
-      start_dt: form.start_dt ? `${form.start_dt}T00:00:00` : null,
-      end_dt: form.end_dt ? `${form.end_dt}T00:00:00` : null,
+      start_dt: form.start_dt ? `${form.start_dt} 00:00:00` : null,
+      end_dt: form.end_dt ? `${form.end_dt} 00:00:00` : null,
       sked_reason: form.sked_reason || '',
       is_public: isPersonalCategory ? 0 : 1,
     };
@@ -405,10 +426,12 @@ const Calendar = () => {
         .catch(err => console.error('일정 수정 실패:', err));
     } else {
       createSchedule(payload)
-        .then(() => {
-          if (isPersonalCategory) setPersonalEvents(updater);
-          else setCompanyEvents(updater);
-          setModal({ open: false, date: '' });
+        .then((resp) => {
+          const realSeq = resp.data.schedule_seq.toString(); // 서버에서 받은 진짜 seq
+        const realEventData = { ...eventData, id: realSeq }; 
+          if (isPersonalCategory) setPersonalEvents(prev => [...prev, realEventData]);
+      else setCompanyEvents(prev => [...prev, realEventData]);
+      setModal({ open: false, date: '' });
         })
         .catch(err => console.error('일정 추가 실패:', err));
     }
@@ -418,6 +441,7 @@ const Calendar = () => {
   const isFormValid = form.title.trim() && form.start_dt && form.end_dt && (form.start_dt <= form.end_dt);
   // 이벤트 삭제
   const handleDeleteEvent = (id) => {
+    console.log('삭제 id:', id, typeof id);
     // 공용 데이터(숫자 아닌 seq)는 API 호출 안 함
     if (isNaN(Number(id))) {
       setPersonalEvents(prev => prev.filter(e => e.id !== id));
@@ -480,6 +504,20 @@ const Calendar = () => {
                 onClick={() => {
                   if (!d) return;
                   const formattedDate = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
+                  if (type === 'end' && form.start_dt && formattedDate < form.start_dt) {
+                    setDateError('종료일은 시작일보다 앞일 수 없습니다.');
+                    return;
+                  }
+
+                  if (type === 'start' && form.end_dt && formattedDate > form.end_dt) {
+                    setForm(prev => ({ ...prev, start_dt: formattedDate, end_dt: '' }));
+                    setDateError('');
+                    setOpenCalendar(null);
+                    return;
+                  }
+
+                  setDateError('');
                   setForm(prev => ({ ...prev, [type === 'start' ? 'start_dt' : 'end_dt']: formattedDate }));
                   setOpenCalendar(null);
                 }}
@@ -557,7 +595,7 @@ const Calendar = () => {
             }
           `}
       </style>
-      <div className="flex-1 p-4 flex flex-col gap-4 overflow-y-auto lg:overflow-hidden min-h-0 h-full">
+      <div className="flex-1 p-4 flex flex-col gap-4 overflow-y-auto lg:overflow-hidden min-h-0 h-full bg-white">
         <div className="px-1">
           <h1 className="text-xl font-bold text-slate-900 leading-tight">캘린더</h1>
           <p className="text-xs text-slate-500 mt-0.5">일정을 한눈에 확인하세요.</p>
@@ -588,17 +626,17 @@ const Calendar = () => {
                 </div>
                 <h2 className="text-sm font-bold text-slate-800 ml-1">{currentTitle}</h2>
               </div>
-              {activeTab === 'personal' && (
+              {(activeTab === 'personal' || (activeTab === 'company' && isHrAdmin)) && (
                 <button onClick={() => {
                   const t = new Date().toISOString().split('T')[0];
                   setForm({
                     schedule_seq: '',
                     title: '',
-                    schedule_type: 'personal',
+                    schedule_type: activeTab === 'company' ? 'COMPANY' : 'PERSONAL',
                     start_dt: t,
                     end_dt: '',
                     sked_reason: '',
-                    is_public: 0
+                    is_public: activeTab === 'company' ? 1 : 0
                   });
                   setIsEditing(false);
                   setModal({ open: true, date: t });
@@ -691,21 +729,36 @@ const Calendar = () => {
       {modal.open && (
         <ModalOverlay onClose={() => setModal({ open: false, date: '' })}>
           <h3 className="text-sm font-bold text-slate-800 mb-4">{isEditing ? '일정 수정' : '새 일정 추가'}</h3>
-          <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="일정 제목" className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs mb-3 focus:outline-none focus:ring-1 focus:ring-[#3530B8]" />
-          <select value={form.schedule_type} onChange={e => setForm(f => ({ ...f, schedule_type: e.target.value }))} className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs mb-3">
-            <optgroup label="개인">
-              {PERSONAL_FILTERS.filter(f => f.key !== 'holiday').map(f => (
-                <option key={f.key} value={f.key}>{f.label}</option>
-              ))}
-            </optgroup>
-          </select>
+          {/* 제목 */}
+          <div className="mb-3">
+            <input
+              value={form.title}
+              onChange={e => {
+                if (e.target.value.length <= 66) setForm(f => ({ ...f, title: e.target.value }));
+              }}
+              placeholder="일정 제목"
+              className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#3530B8]"
+            />
+            <p className={`text-right text-[0.625rem] mt-0.5 ${form.title.length >= 60 ? 'text-red-400' : 'text-slate-400'}`}>
+              {form.title.length}/66
+            </p>
+          </div>
+          {activeTab === 'company' && isHrAdmin ? (
+            <select value={form.schedule_type} onChange={e => setForm(f => ({ ...f, schedule_type: e.target.value }))} className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs mb-3">
+              <optgroup label="공용">
+                {COMPANY_FILTERS.filter(f => f.key !== 'holiday').map(f => (
+                  <option key={f.key} value={f.key}>{f.label}</option>
+                ))}
+              </optgroup>
+            </select>
+          ) : null}
           {/* 날짜 선택 영역 (커스텀 달력 팝업 적용) */}
           <div className="flex gap-2 mb-3">
 
             {/* [시작일 커스텀 달력] */}
             <div className="flex-1 relative">
               <div
-                onClick={() => setOpenCalendar(openCalendar === 'start' ? null : 'start')}
+                onClick={(e) => { e.stopPropagation(); setOpenCalendar(openCalendar === 'start' ? null : 'start'); }}
                 className={`w-full border rounded-lg px-3 py-1.5 text-xs bg-white text-slate-700 flex justify-between items-center cursor-pointer transition-all ${openCalendar === 'start' ? 'border-[#3530B8]' : 'border-slate-300'}`}
               >
                 <span className={!form.start_dt ? 'text-slate-400' : 'text-slate-700'}>
@@ -721,7 +774,7 @@ const Calendar = () => {
             {/* [종료일 커스텀 달력] */}
             <div className="flex-1 relative">
               <div
-                onClick={() => setOpenCalendar(openCalendar === 'end' ? null : 'end')}
+                onClick={(e) => { e.stopPropagation(); setOpenCalendar(openCalendar === 'end' ? null : 'end'); }}
                 className={`w-full border rounded-lg px-3 py-1.5 text-xs bg-white text-slate-700 flex justify-between items-center cursor-pointer transition-all ${openCalendar === 'end' ? 'border-[#3530B8]' : 'border-slate-300'}`}
               >
                 <span className={!form.end_dt ? 'text-slate-400' : 'text-slate-700'}>
@@ -734,7 +787,23 @@ const Calendar = () => {
               {openCalendar === 'end' && renderInlineCalendar('end')}
             </div>
           </div>
-          <textarea value={form.sked_reason} onChange={e => setForm(f => ({ ...f, sked_reason: e.target.value }))} placeholder="일정 설명을 입력하세요" className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs h-20 resize-none mb-4 focus:outline-none focus:ring-1 focus:ring-[#3530B8]" />
+          {dateError && (
+            <p className="text-red-500 text-[0.625rem] font-semibold -mt-2 mb-3">{dateError}</p>
+          )}
+          {/* 설명 */}
+          <div className="mb-4">
+            <textarea
+              value={form.sked_reason}
+              onChange={e => {
+                if (e.target.value.length <= 1000) setForm(f => ({ ...f, sked_reason: e.target.value }));
+              }}
+              placeholder="일정 설명을 입력하세요"
+              className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs h-20 resize-none focus:outline-none focus:ring-1 focus:ring-[#3530B8]"
+            />
+            <p className={`text-right text-[0.625rem] mt-0.5 ${form.sked_reason.length >= 900 ? 'text-red-400' : 'text-slate-400'}`}>
+              {form.sked_reason.length}/1000
+            </p>
+          </div>
           <div className="flex gap-2 justify-end">
             {isEditing ? (
               <>
@@ -784,11 +853,11 @@ const Calendar = () => {
           </div>
           <div className="flex justify-end gap-2">
             <button onClick={() => setDetailModal({ open: false, event: null })} className="px-4 py-1.5 text-xs border rounded-lg text-slate-500 font-semibold hover:bg-slate-50">닫기</button>
-            {!COMPANY_CATEGORIES.includes(detailModal.event.extendedProps?.category) && (
+            {(!COMPANY_CATEGORIES.includes(detailModal.event.extendedProps?.category) || isHrAdmin) && (
               <button onClick={handleEditStart} className="px-4 py-1.5 text-xs bg-[#3530B8] text-white rounded-lg font-semibold">수정</button>
             )}
           </div>
-          {COMPANY_CATEGORIES.includes(detailModal.event.extendedProps?.category) && (
+          {COMPANY_CATEGORIES.includes(detailModal.event.extendedProps?.category) && !isHrAdmin && (
             <p className="mt-2 text-[0.625rem] text-slate-400 text-right">* 공용 일정은 수정할 수 없습니다.</p>
           )}
         </ModalOverlay>

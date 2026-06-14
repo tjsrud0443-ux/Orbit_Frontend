@@ -5,7 +5,7 @@ import { fetchHolidays } from '../../api/holidayApi';
 
 const CATEGORY_COLORS = {
   personal: '#3530B8',
-  leave:    '#10B981',
+  annual:   '#10B981',   // 연차 승인 자동 등록
   project:  '#6366F1',
   meeting:  '#ff75bf',
   holiday:  '#EF4444',
@@ -46,7 +46,8 @@ const useCalendar = (setDayModal) => {
             originalEnd: fullEnd,
             allDay: true,
             display: isMultiDay ? 'block' : 'list-item',
-            color: CATEGORY_COLORS[item.schedule_type] ?? '#3530B8',
+            schedule_type: item.schedule_type,
+            color: CATEGORY_COLORS[item.schedule_type?.toLowerCase()] ?? '#3530B8',
           };
         });
 

@@ -401,10 +401,11 @@ const weeklyAttendance = [
                 <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: s.color || '#3530B8', flexShrink: 0 }} />
                 <div>
                   <span style={{ fontSize: '0.78rem', fontWeight: '600', color: '#1E293B' }}>{s.title}</span>
-                  {/* 시간 표시 추가 */}
-                  {s.start?.includes(' ') && (
+                  {/* 시간 정보가 포함되어 있다면(HH:mm:ss 등) 모두 표시 */}
+                  {s.start?.includes(':') && (
                     <p style={{ fontSize: '0.65rem', color: '#94A3B8', marginTop: '2px' }}>
-                      {s.start.split(' ')[1].slice(0, 5)} ~ {s.originalEnd?.split(' ')[1]?.slice(0, 5)}
+                      {(s.start.includes(' ') ? s.start.split(' ')[1] : s.start.split('T')[1])?.slice(0, 5)} ~ 
+                      {(s.originalEnd?.includes(' ') ? s.originalEnd.split(' ')[1] : s.originalEnd?.split('T')[1])?.slice(0, 5)}
                     </p>
                   )}
                 </div>
