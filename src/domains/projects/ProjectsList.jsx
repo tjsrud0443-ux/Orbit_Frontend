@@ -158,7 +158,8 @@ const ProjectsList = () => {
     const newErrors = {};
     if (!newProject.project_name) newErrors.project_name = '프로젝트명을 입력해주세요.';
     else if (newProject.project_name.length > 30) newErrors.project_name = '글자수가 초과되었습니다. 30자까지만 입력 가능합니다.';
-    if (newProject.contents && newProject.contents.length > 800) newErrors.contents = '글자수가 초과되었습니다. 800자까지만 입력 가능합니다.';
+    if (!newProject.contents) newErrors.contents = '내용을 입력해주세요.';
+    else if (newProject.contents.length > 800) newErrors.contents = '글자수가 초과되었습니다. 800자까지만 입력 가능합니다.';
     if (!newProject.start_date) newErrors.start_date = '시작일을 선택해주세요.';
     if (!newProject.end_date) newErrors.end_date = '종료일을 선택해주세요.';
     if (newProject.start_date && newProject.end_date && newProject.end_date < newProject.start_date) {
@@ -253,7 +254,8 @@ const ProjectsList = () => {
     const newErrors = {};
     if (!editData.project_name) newErrors.project_name = '프로젝트명을 입력해주세요.';
     else if (editData.project_name.length > 30) newErrors.project_name = '글자수가 초과되었습니다. 30자까지만 입력 가능합니다.';
-    if (editData.contents && editData.contents.length > 800) newErrors.contents = '글자수가 초과되었습니다. 800자까지만 입력 가능합니다.';
+    if (!editData.contents) newErrors.contents = '내용을 입력해주세요.';
+    else if (editData.contents.length > 800) newErrors.contents = '글자수가 초과되었습니다. 800자까지만 입력 가능합니다.';
     if (!editData.start_date) newErrors.start_date = '시작일을 선택해주세요.';
     if (!editData.end_date) newErrors.end_date = '종료일을 선택해주세요.';
     if (editData.members.length === 0) newErrors.members = '참여자를 추가해주세요.';
@@ -852,7 +854,7 @@ const ProjectsList = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#1a1c3d] mb-2">프로젝트 내용</label>
+                    <label className="block text-xs font-bold text-[#1a1c3d] mb-2">프로젝트 내용 *</label>
                     <textarea
                       rows={3}
                       className={`w-full text-xs p-4 bg-[#f4f7fc] rounded-xl outline-none custom-scrollbar ${errors.contents ? 'border border-red-500' : ''}`}
@@ -860,7 +862,9 @@ const ProjectsList = () => {
                       onChange={e => {
                         const val = e.target.value;
                         setNewProject({ ...newProject, contents: val });
-                        if (val.length > 800) {
+                        if (!val) {
+                          setErrors(prev => ({ ...prev, contents: '내용을 입력해주세요.' }));
+                        } else if (val.length > 800) {
                           setErrors(prev => ({ ...prev, contents: '글자수가 초과되었습니다. 800자까지만 입력 가능합니다.' }));
                         } else {
                           if (errors.contents) setErrors(prev => ({ ...prev, contents: null }));
