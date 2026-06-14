@@ -157,6 +157,8 @@ const ProjectsList = () => {
   const handleCreate = () => {
     const newErrors = {};
     if (!newProject.project_name) newErrors.project_name = '프로젝트명을 입력해주세요.';
+    else if (newProject.project_name.length > 30) newErrors.project_name = '글자수가 초과되었습니다. 30자까지만 입력 가능합니다.';
+    if (newProject.contents && newProject.contents.length > 800) newErrors.contents = '글자수가 초과되었습니다. 800자까지만 입력 가능합니다.';
     if (!newProject.start_date) newErrors.start_date = '시작일을 선택해주세요.';
     if (!newProject.end_date) newErrors.end_date = '종료일을 선택해주세요.';
     if (newProject.start_date && newProject.end_date && newProject.end_date < newProject.start_date) {
@@ -250,6 +252,8 @@ const ProjectsList = () => {
   const handleUpdate = () => {
     const newErrors = {};
     if (!editData.project_name) newErrors.project_name = '프로젝트명을 입력해주세요.';
+    else if (editData.project_name.length > 30) newErrors.project_name = '글자수가 초과되었습니다. 30자까지만 입력 가능합니다.';
+    if (editData.contents && editData.contents.length > 800) newErrors.contents = '글자수가 초과되었습니다. 800자까지만 입력 가능합니다.';
     if (!editData.start_date) newErrors.start_date = '시작일을 선택해주세요.';
     if (!editData.end_date) newErrors.end_date = '종료일을 선택해주세요.';
     if (editData.members.length === 0) newErrors.members = '참여자를 추가해주세요.';
@@ -393,8 +397,13 @@ const ProjectsList = () => {
           <input
             value={editData.project_name}
             onChange={e => {
-              setEditData(prev => ({ ...prev, project_name: e.target.value }));
-              if (editErrors.project_name) setEditErrors(prev => ({ ...prev, project_name: null }));
+              const val = e.target.value;
+              setEditData(prev => ({ ...prev, project_name: val }));
+              if (val.length > 30) {
+                setEditErrors(prev => ({ ...prev, project_name: '글자수가 초과되었습니다. 30자까지만 입력 가능합니다.' }));
+              } else {
+                if (editErrors.project_name) setEditErrors(prev => ({ ...prev, project_name: null }));
+              }
             }}
             className={`w-full p-3 bg-[#f4f7fc] rounded-xl outline-none text-xs ${editErrors.project_name ? 'border border-red-500' : ''}`}
           />
@@ -405,9 +414,18 @@ const ProjectsList = () => {
           <textarea
             rows={3}
             value={editData.contents}
-            onChange={e => setEditData(prev => ({ ...prev, contents: e.target.value }))}
-            className="w-full text-xs p-3 bg-[#f4f7fc] rounded-xl outline-none"
+            onChange={e => {
+              const val = e.target.value;
+              setEditData(prev => ({ ...prev, contents: val }));
+              if (val.length > 800) {
+                setEditErrors(prev => ({ ...prev, contents: '글자수가 초과되었습니다. 800자까지만 입력 가능합니다.' }));
+              } else {
+                if (editErrors.contents) setEditErrors(prev => ({ ...prev, contents: null }));
+              }
+            }}
+            className={`w-full text-xs p-3 bg-[#f4f7fc] rounded-xl outline-none custom-scrollbar ${editErrors.contents ? 'border border-red-500' : ''}`}
           />
+          {editErrors.contents && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1">{editErrors.contents}</p>}
 
           {/* 3. 시작일 / 종료일 */}
           <div className="flex gap-3 mt-4">
@@ -821,8 +839,13 @@ const ProjectsList = () => {
                       className={`w-full p-4 bg-[#f4f7fc] rounded-xl outline-none text-xs ${errors.project_name ? 'border border-red-500' : ''}`}
                       value={newProject.project_name}
                       onChange={e => {
-                        setNewProject({ ...newProject, project_name: e.target.value });
-                        if (errors.project_name) setErrors(prev => ({ ...prev, project_name: null }));
+                        const val = e.target.value;
+                        setNewProject({ ...newProject, project_name: val });
+                        if (val.length > 30) {
+                          setErrors(prev => ({ ...prev, project_name: '글자수가 초과되었습니다. 30자까지만 입력 가능합니다.' }));
+                        } else {
+                          if (errors.project_name) setErrors(prev => ({ ...prev, project_name: null }));
+                        }
                       }}
                     />
                     {errors.project_name && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1">{errors.project_name}</p>}
@@ -832,10 +855,19 @@ const ProjectsList = () => {
                     <label className="block text-xs font-bold text-[#1a1c3d] mb-2">프로젝트 내용</label>
                     <textarea
                       rows={3}
-                      className="w-full text-xs p-4 bg-[#f4f7fc] rounded-xl outline-none"
+                      className={`w-full text-xs p-4 bg-[#f4f7fc] rounded-xl outline-none custom-scrollbar ${errors.contents ? 'border border-red-500' : ''}`}
                       value={newProject.contents}
-                      onChange={e => setNewProject({ ...newProject, contents: e.target.value })}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setNewProject({ ...newProject, contents: val });
+                        if (val.length > 800) {
+                          setErrors(prev => ({ ...prev, contents: '글자수가 초과되었습니다. 800자까지만 입력 가능합니다.' }));
+                        } else {
+                          if (errors.contents) setErrors(prev => ({ ...prev, contents: null }));
+                        }
+                      }}
                     />
+                    {errors.contents && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1">{errors.contents}</p>}
                   </div>
 
                   <div className={`flex gap-4 ${isStartCalendarOpen || isEndCalendarOpen ? 'relative z-50' : ''}`}>
@@ -964,10 +996,11 @@ const ProjectsList = () => {
 
       <style dangerouslySetInnerHTML={{
         __html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
+        textarea.custom-scrollbar::-webkit-scrollbar { width: 3px; }
       `}} />
     </div >
   );
