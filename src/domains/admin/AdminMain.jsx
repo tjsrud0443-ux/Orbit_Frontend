@@ -350,7 +350,7 @@ const AdminMain = () => {
             }
           >
             <div className="divide-y divide-gray-100">
-              {aiQuestions.map((item, index) => (
+              {aiQuestions.slice(0, 5).map((item, index) => (
                 <div key={index} className="flex items-center justify-between py-4 px-2">
                   <span className="text-[#1a1c3d] text-sm font-bold truncate pr-4">
                     {item.question}
