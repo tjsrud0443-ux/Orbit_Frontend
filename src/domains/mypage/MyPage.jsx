@@ -48,7 +48,7 @@ const MyPage = () => {
     '관리자 문의': adminInquiries.slice(0, 4).map(qna => ({
       title: qna.question,
       date: qna.created_at,
-      status: qna.status === 'ANSWERED' ? '승인' : '대기'
+      status: qna.status === 'ANSWERED' ? '답변 완료' : '답변 대기'
     })),
   };
 
@@ -71,8 +71,8 @@ const MyPage = () => {
 
 
   const statusStyle = (status) => {
-    if (status === '승인') return { background: '#F0FDF4', color: '#10B981', border: '1px solid #DCFCE7' };
-    if (status === '대기') return { background: '#FFF9F0', color: '#FF9800', border: '1px solid #FEF3C7' };
+    if (status === '승인' || status === '답변 완료') return { background: '#F0FDF4', color: '#10B981', border: '1px solid #DCFCE7' };
+    if (status === '대기' || status === '답변 대기') return { background: '#FFF9F0', color: '#FF9800', border: '1px solid #FEF3C7' };
     if (status === '처리중') return { background: '#F0F4FF', color: '#3530B8', border: '1px solid #DDE8FF' };
     return { background: '#FFF0F0', color: '#FF4D4F', border: '1px solid #FEE2E2' };
   };

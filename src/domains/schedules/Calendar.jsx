@@ -139,10 +139,14 @@ const Calendar = () => {
     const handler = () => {
       setIsMobile(window.innerWidth < 1024);//1024 미만이면 모바일 처리
       // 추가: 리사이즈 시 캘린더 크기 재계산
+       // 즉시 한 번
+      const api = getApi();
+      if (api) api.updateSize();
+      // 렌더링 후 한 번 더
       setTimeout(() => {
         const api = getApi();
         if (api) api.updateSize();
-      }, 100)
+      }, 300)
     };
     window.addEventListener('resize', handler);// 창을 늘리거나 줄일 때마다 자동으로 호출
     return () => window.removeEventListener('resize', handler);// 페이지 이동시 이벤트 제거해서 메모리 누수 방지
@@ -184,10 +188,11 @@ const Calendar = () => {
       }
     }, 300); // transition duration과 일치
     return () => clearTimeout(timer);
-  }, [showDaily]);
+  }, [showDaily, isMobile]);
 
 
   useEffect(() => {
+    showLoading();
     //일정 출력
     Promise.all([getSchedules(),getApprovedVacations()]).then(([schedResp, vacResp]) => {
       const allEvents = schedResp.data.map(item => {
@@ -244,7 +249,7 @@ const Calendar = () => {
           title: item.title,
           start: startDate,
           end: displayEnd,
-          allDay: true,
+          allDay: !isSameDay,
           extendedProps: {
             category: 'ANNUAL',
             description: item.sked_reason,
@@ -275,7 +280,8 @@ const Calendar = () => {
           return [...persistentEvents, ...cEvents];
         });
       })
-      .catch(err => console.error('일정 로드 실패:', err));
+      .catch(err => console.error('일정 로드 실패:', err))
+      .finally(() => hideLoading());
   }, []);
 
 
@@ -291,9 +297,6 @@ const Calendar = () => {
   // API에서 공휴일 가져와서 companyEvents에 추가
   const loadHolidaysForYear = useCallback(async (year) => {
     if (loadedYears.current.has(year)) return;//공휴일 이미있음. return
-
-    showLoading();
-
     loadedYears.current.add(year);//아직이면 공휴일 api 부름
     try {
       const holidays = await fetchHolidays(year);//해당 연도 공휴일 1년치
@@ -307,9 +310,7 @@ const Calendar = () => {
       }
     } catch (err) {
       console.error(`${year}년 공휴일 로드 실패:`, err);
-    } finally {
-      hideLoading();
-    }
+    } 
   }, []);
 
   const getApi = () => calendarRef.current?.getApi();
@@ -348,6 +349,7 @@ const Calendar = () => {
   };
   // 이벤트 클릭 → 상세 모달 열기
   const handleEventClick = (info) => {
+    setShowDaily(false);
     setDetailModal({ open: true, event: info.event });
   };
   // 상세 모달에서 수정 버튼 → 수정 모달로 전환
@@ -537,59 +539,67 @@ const Calendar = () => {
     <>
       <style>
         {`
-            .custom-scrollbar::-webkit-scrollbar {
-              width: 0.25rem;
-            }
-            .custom-scrollbar::-webkit-scrollbar-track {
-              background: transparent;
-            }
-            .custom-scrollbar::-webkit-scrollbar-thumb {
-              background: #E5E7EB;
-              border-radius: 0.625rem;
-            }
-            .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-              background: #D1D5DB;
-            }
-              /* 1. 팝업창 전체 테두리 및 그림자 (모달 느낌으로 변경) */
-            .fc-popover {
-              border: 0.0625rem solid #E2E8F0 !important; /* slate-200 */
-              border-radius: 1rem !important;       /* 부드러운 라운딩 */
-              box-shadow: 0 1.25rem 1.5625rem -0.3125rem rgb(0 0 0 / 0.1), 0 0.5rem 0.625rem -0.375rem rgb(0 0 0 / 0.1) !important; /* 서브 모달급 입체감 */
-              background: #ffffff !important;
-              overflow: hidden;
-              animation: popoverFade 0.2s ease-out; /* 부드러운 등장 애니메이션 */
-            }
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 0.25rem;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #E5E7EB;
+            border-radius: 0.625rem;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #D1D5DB;
+          }
+            /* 1. 팝업창 전체 테두리 및 그림자 (모달 느낌으로 변경) */
+          .fc-popover {
+            border: 0.0625rem solid #E2E8F0 !important; /* slate-200 */
+            border-radius: 1rem !important;       /* 부드러운 라운딩 */
+            box-shadow: 0 1.25rem 1.5625rem -0.3125rem rgb(0 0 0 / 0.1), 0 0.5rem 0.625rem -0.375rem rgb(0 0 0 / 0.1) !important; /* 서브 모달급 입체감 */
+            background: #ffffff !important;
+            overflow: hidden;
+            animation: popoverFade 0.2s ease-out; /* 부드러운 등장 애니메이션 */
+          }
 
-            /* 2. 팝업창 헤더 (날짜 표시 구역) */
-            .fc-popover-header {
-              background: #F8FAFC !important;       /* slate-50 */
-              padding: 0.75rem 1rem !important;
-              border-b: 0.0625rem solid #F1F5F9 !important;
-              display: flex;
-              flex-direction: row-reverse;          /* 제목과 닫기 버튼 위치 밸런스 */
-              justify-content: space-between;
-              items-center: center;
-            }
+          /* 2. 팝업창 헤더 (날짜 표시 구역) */
+          .fc-popover-header {
+            background: #F8FAFC !important;       /* slate-50 */
+            padding: 0.75rem 1rem !important;
+            border-b: 0.0625rem solid #F1F5F9 !important;
+            display: flex;
+            flex-direction: row-reverse;          /* 제목과 닫기 버튼 위치 밸런스 */
+            justify-content: space-between;
+            items-center: center;
+          }
 
-            /* 헤더 날짜 텍스트 */
-            .fc-popover-title {
-              font-size: 0.8125rem !important;
-              font-weight: 700 !important;
-              color: #1E293B !important;            /* slate-800 */
-            }
-              /* "+1 more" 텍스트 링크 버튼 자체 디자인 */
-            .fc-daygrid-more-link {
-              font-size: 0.625rem !important;
-              font-weight: 700 !important;
-              color: #3530B8 !important;            /* 우리 시그니처 블루 색상 */
-              background-color: #F0F4FF !important; /* 연한 블루 배경 */
-              padding: 0.125rem 0.375rem !important;
-              border-radius: 0.375rem !important;
-              transition: all 0.2s;
-              margin-top: 0.125rem;
-              display: inline-block;
-            }
-          `}
+          /* 헤더 날짜 텍스트 */
+          .fc-popover-title {
+            font-size: 0.8125rem !important;
+            font-weight: 700 !important;
+            color: #1E293B !important;            /* slate-800 */
+          }
+            /* "+1 more" 텍스트 링크 버튼 자체 디자인 */
+          .fc-daygrid-more-link {
+            font-size: 0.625rem !important;
+            font-weight: 700 !important;
+            color: #3530B8 !important;            /* 우리 시그니처 블루 색상 */
+            background-color: #F0F4FF !important; /* 연한 블루 배경 */
+            padding: 0.125rem 0.375rem !important;
+            border-radius: 0.375rem !important;
+            transition: all 0.2s;
+            margin-top: 0.125rem;
+            display: inline-block;
+          }
+            /* 캘린더 각 주(행) 높이 고정 */
+    .fc .fc-daygrid-body tr {
+      height: 5.5rem !important;
+    }
+    .fc .fc-daygrid-day-frame {
+      min-height: 6rem !important;
+      // overflow: hidden;
+    }
+        `}
       </style>
       <div className="flex-1 p-4 flex flex-col gap-4 overflow-y-auto lg:overflow-hidden min-h-0 h-full bg-white">
         <div className="px-1">
@@ -642,8 +652,35 @@ const Calendar = () => {
 
             <div className="calendar-container flex-1" style={{
               minHeight: isMobile ? 'auto' : 0,
-              height: isMobile ? 'auto' : '100%'
+              height: isMobile ? 'auto' : '100%',
             }}>
+                <style>{`
+                @media (max-width: 1023px) {
+                  .fc-daygrid-body,
+                  .fc-scrollgrid-sync-table {
+                    height: auto !important;
+                  }
+                  .fc .fc-daygrid-body tr {
+                    height: 4rem !important;
+                  }
+                  .fc .fc-daygrid-day-frame {
+                    min-height: 4rem !important;
+                  } /* 점 이벤트 컨테이너 크기 최소화 */
+                  .fc-daygrid-event.fc-daygrid-dot-event {
+                    padding: 0 !important;
+                  }
+                  .fc-daygrid-dot-event .fc-event-title {
+                    display: none !important;
+                  }
+                  .fc-daygrid-more-link {
+                    font-size: 0.55rem !important;
+                     overflow: hidden !important;
+    max-width: 2rem !important;
+    white-space: nowrap !important;
+    text-overflow: clip !important;
+                  }
+                }
+              `}</style>
               <FullCalendar
                 ref={calendarRef}
                 plugins={[dayGridPlugin, interactionPlugin]}
@@ -651,7 +688,9 @@ const Calendar = () => {
                 locale="ko"
                 headerToolbar={false}
                 stickyHeaderDates={false}  // 헤더 고정 해제 - 스크롤하면 같이 올라감                 
-                dayMaxEvents={true} //보여줄 일정 고정
+                dayMaxEvents={isMobile ? 1 : 3}
+                moreLinkContent={(args) => isMobile ? `+${args.num}` : `+${args.num} more`}
+                aspectRatio={isMobile ? 0.8 : undefined}
                 height={isMobile ? 'auto' : '100%'}
                 editable={activeTab === 'personal'}
                 selectable={activeTab === 'personal'}
@@ -674,7 +713,7 @@ const Calendar = () => {
             <div className="w-full lg:w-64 flex flex-col gap-4 lg:gap-2 shrink-0">
               {activeTab === 'personal' ? (
                 <>
-                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-hidden">
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-hidden max-h-80 lg:max-h-none overflow-y-auto lg:overflow-hidden">
                     <MonthlyEvents
                       events={personalEvents.filter(e => e.category !== 'holiday')}
                       currentTitle={currentTitle}
@@ -687,7 +726,7 @@ const Calendar = () => {
                 </>
               ) : (
                 <>
-                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-hidden">
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-hidden max-h-80 lg:max-h-none overflow-y-auto lg:overflow-hidden">
                     <MonthlyEvents events={companyEvents} currentTitle={currentTitle} title="이달의 전사 일정 및 공휴일" />
                   </div>
                   <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-y-auto">
@@ -713,12 +752,26 @@ const Calendar = () => {
       {/* 모바일용 하루 일정 모달 */}
       {isMobile && showDaily && (
         <ModalOverlay onClose={() => setShowDaily(false)}>
+          <div style={{ maxHeight: 'calc(80vh - 3rem)', display: 'flex', flexDirection: 'column' }}>
+        {/* 헤더 고정 */}
+        <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-3 shrink-0">
+          <h3 className="text-sm font-bold text-slate-800">{selectedDayLabel} 일정</h3>
+          <button onClick={() => setShowDaily(false)} className="p-1 hover:bg-slate-100 rounded-full transition-colors">
+            <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        {/* 스크롤 영역 */}
+          <div style={{ overflowY: 'auto', flex: 1 }}>
           <DailyEvents
             events={selectedDayEvents}
             title={selectedDayLabel}
             onClose={() => setShowDaily(false)}
             onEventClick={handleEventClick}
           />
+          </div>
+          </div>
         </ModalOverlay>
       )}
 
@@ -837,6 +890,14 @@ const Calendar = () => {
             style={{ backgroundColor: detailModal.event.backgroundColor || detailModal.event.extendedProps?.color || '#3530B8' }}>{detailModal.event.title}</div>
           <div className="space-y-2 mb-5 text-xs text-slate-600">
             <p><span className="font-semibold">시작:</span> {detailModal.event.startStr.split('T')[0]}</p>
+
+            {/* 회의일 때 시간 표시 */}
+            {detailModal.event.extendedProps?.category === 'MEETING' && detailModal.event.startStr.includes('T') && (
+              <p><span className="font-semibold">시간:</span> {detailModal.event.startStr.split('T')[1]?.slice(0, 5)}
+                {detailModal.event.extendedProps?.actualEndTime && ` ~ ${detailModal.event.extendedProps.actualEndTime.slice(0, 5)}`}
+              </p>
+            )}
+
             {detailModal.event.extendedProps?.actualEnd && detailModal.event.startStr.split('T')[0] !== detailModal.event.extendedProps.actualEnd && (
               <p><span className="font-semibold">종료:</span> {detailModal.event.extendedProps.actualEnd}</p>
             )}
@@ -849,10 +910,14 @@ const Calendar = () => {
           </div>
           <div className="flex justify-end gap-2">
             <button onClick={() => setDetailModal({ open: false, event: null })} className="px-4 py-1.5 text-xs border rounded-lg text-slate-500 font-semibold hover:bg-slate-50">닫기</button>
-            {(!COMPANY_CATEGORIES.includes(detailModal.event.extendedProps?.category) || isHrAdmin) && (
+            {detailModal.event.extendedProps?.category !== 'ANNUAL' &&
+            (!COMPANY_CATEGORIES.includes(detailModal.event.extendedProps?.category) || isHrAdmin) && (
               <button onClick={handleEditStart} className="px-4 py-1.5 text-xs bg-[#3530B8] text-white rounded-lg font-semibold">수정</button>
             )}
           </div>
+          {detailModal.event.extendedProps?.category === 'ANNUAL' && (
+            <p className="mt-2 text-[0.625rem] text-slate-400 text-right">* 연차/휴가는 결재 문서를 통해 관리됩니다.</p>
+          )}
           {COMPANY_CATEGORIES.includes(detailModal.event.extendedProps?.category) && !isHrAdmin && (
             <p className="mt-2 text-[0.625rem] text-slate-400 text-right">* 공용 일정은 수정할 수 없습니다.</p>
           )}
@@ -865,7 +930,7 @@ const Calendar = () => {
 const DailyEvents = ({ events, title, onClose, onEventClick }) => {
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-3 shrink-0">
+      <div className="hidden lg:flex items-center justify-between border-b border-slate-100 pb-2 mb-3 shrink-0">
         <h3 className="text-sm font-bold text-slate-800">{title} 일정</h3>
         <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-full transition-colors">
           <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -919,7 +984,9 @@ const FilterSection = ({ title, filters, checked, onChange }) => (
 const ModalOverlay = ({ children, onClose }) => (
   <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
     onClick={e => e.target === e.currentTarget && onClose()}>
-    <div className="bg-white rounded-2xl p-6 w-full max-w-sm mx-4">{children}</div>
+    <div className="bg-white rounded-2xl p-6 w-full max-w-sm mx-4 max-h-[80vh] overflow-y-auto">
+      {children}
+    </div>
   </div>
 );
 
