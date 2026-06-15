@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-const TimePicker = ({ value, onChange, hasError, placeholder = "시간 선택" }) => {
+const TimePicker = ({ value, onChange, hasError, placeholder = "시간 선택", disableMinutes = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
   const inputRef = useRef(null);
@@ -60,8 +60,8 @@ const TimePicker = ({ value, onChange, hasError, placeholder = "시간 선택" }
   const handleSelect = (type, val) => {
     const currentHour = selectedHour || '00';
     const currentMinute = selectedMinute || '00';
-    if (type === 'hour') onChange(`${val}:${currentMinute}`);
-    else onChange(`${currentHour}:${val}`);
+    if (type === 'hour') onChange(`${val}:${disableMinutes ? '00' : currentMinute}`);
+    else if (!disableMinutes) onChange(`${currentHour}:${val}`);
   };
 
   return (
@@ -124,10 +124,12 @@ const TimePicker = ({ value, onChange, hasError, placeholder = "시간 선택" }
                   key={m}
                   data-value={m}
                   onClick={() => handleSelect('minute', m)}
-                  className={`text-center py-2 text-sm font-bold cursor-pointer transition-colors
-                    ${selectedMinute === m
-                      ? 'bg-[#DDE8FF] text-indigo-700'
-                      : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
+                  className={`text-center py-2 text-sm font-bold transition-colors
+                    ${disableMinutes && m !== '00' 
+                      ? 'text-gray-200 cursor-not-allowed' 
+                      : selectedMinute === m
+                        ? 'bg-[#DDE8FF] text-indigo-700'
+                        : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
                     }`}
                 >
                   {m}
