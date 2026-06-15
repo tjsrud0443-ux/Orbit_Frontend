@@ -4,6 +4,7 @@ import { styled } from '@mui/material/styles';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { deleteAdminSupplies, getAdminSupplies, insertAdminSupplies, updateAdminSupplies} from '../admin/adminApi';
+import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 
 const CATEGORIES = ['전체', '사무용품', '전자기기', '가구', '네트워크 장비'];
 
@@ -335,23 +336,26 @@ const AdminSupply = () => {
   };
 
   // 단건 삭제
-  const handleDelete = (id) => {
-    if (!window.confirm('해당 비품을 삭제하시겠습니까?')) return;
-      deleteAdminSupplies([id]).then(() => {       // ← [id] 배열로 감싸서 전송
-        alert('삭제되었습니다.');
-        setSupplies(prev => prev.filter(i => i.id !== id));
-        setCheckedIds(prev => prev.filter(i => i !== id));
-      });
+  const handleDelete = async (id) => {
+    const result = await alertConfirm('정말 삭제하시겠습니까?', '삭제 후 복구는 불가합니다.');
+    if (!result.isConfirmed) return;
+    
+    await deleteAdminSupplies([id]); // ← [id] 배열로 감싸서 전송
+    await alertSuccess('삭제 완료', '비품 삭제가 완료되었습니다.');
+    setSupplies(prev => prev.filter(i => i.id !== id));
+    setCheckedIds(prev => prev.filter(i => i !== id));
   };
   //다중 삭제
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (checkedIds.length === 0) return;
-    if (!window.confirm(`${checkedIds.length}개 항목을 삭제하시겠습니까?`)) return;
-    deleteAdminSupplies(checkedIds).then(() => {  // ← API 호출 추가
-      alert(`${checkedIds.length}개 항목이 삭제되었습니다.`); 
-      setSupplies(prev => prev.filter(i => !checkedIds.includes(i.id)));
-      setCheckedIds([]);
-    });
+    
+    const result = await alertConfirm(`${checkedIds.length}개 항목을 삭제하시겠습니까?`, '삭제 후 복구는 불가합니다.');
+    if (!result.isConfirmed) return;
+
+    await deleteAdminSupplies(checkedIds); // ← API 호출 추가
+    await alertSuccess('삭제 완료', '비품 삭제가 완료되었습니다.');
+    setSupplies(prev => prev.filter(i => !checkedIds.includes(i.id)));
+    setCheckedIds([]);
   };
 
   // ── 저장 (추가/수정)
@@ -360,7 +364,7 @@ const handleSave = async (form) => {
     // 이미 불러온 목록에서 중복 체크
     const isDuplicate = supplies.some(item => item.code === form.code);
     if (isDuplicate) {
-      alert('이미 존재하는 비품코드입니다.');
+      await alertWarning('중복 입력', '이미 존재하는 비품코드입니다.');
       return; 
     }
     try {
@@ -372,7 +376,7 @@ const handleSave = async (form) => {
         stock_qty: form.stockQty,
         min_stock_qty: form.minStockQty,
       });
-      alert('비품이 등록되었습니다.');
+      await alertSuccess('등록 완료', '비품 등록이 완료되었습니다.');
       setModal(null); 
       const resp = await getAdminSupplies();
       setSupplies(resp.data.map(item => ({
@@ -385,7 +389,7 @@ const handleSave = async (form) => {
         minStockQty: item.min_stock_qty,
       })));
     } catch (error) {
-      alert(error.response?.data || '등록 중 오류가 발생했습니다.');
+      await alertError('오류 발생', error.response?.data || '비품 등록 중 오류가 발생했습니다.');
     }
   } else {
     try {
@@ -396,7 +400,7 @@ const handleSave = async (form) => {
         total_qty: form.totalQty,
         min_stock_qty: form.minStockQty,
       });
-      alert('비품이 수정되었습니다.');
+      await alertSuccess('수정 완료', '비품 정보가 수정되었습니다.');
       setModal(null);
       const resp = await getAdminSupplies();
       setSupplies(resp.data.map(item => ({
@@ -410,7 +414,7 @@ const handleSave = async (form) => {
       })));
     } catch (error) {
       console.log(error);  // ← 추가
-      alert(error.response?.data || '수정 중 오류가 발생했습니다.');
+      await alertError('오류 발생', error.response?.data || '비품 수정 중 오류가 발생했습니다.');
     }
   }
 };

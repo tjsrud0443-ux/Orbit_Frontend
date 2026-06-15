@@ -16,6 +16,7 @@ import { IMAGES } from '../../images/images';
 import { deleteChat, getDetailChat, inputMsg, insertQuestion, sideChatTitleList } from './aiChatApi';
 import { getGroup } from '../departments/departmentsApi';
 import useAuthStore from '../../store/authStore';
+import { alertWarning, alertSuccess } from '../../utils/alert';
 
 const AiChat = () => {
   // --- 1. States ---
@@ -229,11 +230,11 @@ const AiChat = () => {
   // 🔥 [수정] 문의 제출 성공 시 메시지 상태 변경
   const handleInsertQuestion = () => {
     if (!selectedDept) {
-      alert("부서를 선택해 주세요.");
+      alertWarning('정보 미입력', '부서를 선택해주세요.');
       return;
     }
     if (!inputQuestion.trim()) {
-      alert("문의 내용을 작성해 주세요.");
+      alertWarning('정보 미입력', '문의 내용을 작성해주세요.');
       return;
     }
 
@@ -245,7 +246,7 @@ const AiChat = () => {
     };
 
     insertQuestion(dept).then(resp => {
-      alert('담당 부서로 문의가 안전하게 접수되었습니다.');
+      alertSuccess('접수 완료', '문의 접수가 완료되었습니다.');
 
       // 현재 UI 화면의 메시지 중, '문의하기'가 활성화되어 있던 메시지 상태를 '문의 완료'로 변경
       setMessages(prev => prev.map(msg => {

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import useEmployeeStore from '../../../store/useEmployeeStore';
 import useUserStore from '../../../store/userStore';
+import { alertWarning } from "../../../utils/alert";
 
 const ReferrerSelector = ({ value = [], onChange, isEditMode }) => {
   const { allEmployees } = useEmployeeStore();
@@ -49,7 +50,7 @@ const ReferrerSelector = ({ value = [], onChange, isEditMode }) => {
 
   const handleAddReferrer = (emp) => {
     if (value.some(r => r.users_seq === emp.users_seq)) {
-      alert('이미 추가된 참조자입니다.');
+      alertWarning('중복 입력', '이미 추가된 참조자입니다.');
       return;
     }
     onChange([...value, emp]);
