@@ -5,6 +5,7 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
 import { getAllEmp, getMyAllProject, insertProjectAndMembers } from '../projects/projectsApi';
 import useUserStore from '../../store/userStore';
+import { alertSuccess } from '../../utils/alert';
 
 const ProjectModal = ({ onClose, onSuccess }) => {
   const user = useUserStore(state => state.user);
@@ -103,7 +104,7 @@ const ProjectModal = ({ onClose, onSuccess }) => {
     };
 
     insertProjectAndMembers(newEntry).then(resp => {
-      alert('개인 캘린더에 일정이 성공적으로 추가되었습니다.');
+      alertSuccess('등록 완료', '프로젝트 등록이 완료되었습니다.<br>캘린더에서 일정을 확인하세요.');
       onClose();
     });
   };
