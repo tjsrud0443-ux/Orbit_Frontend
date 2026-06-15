@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import useUserStore from '../../store/userStore';
 import Calendar from '../../components/common/Calendar';
 import { getSupplies,supplyRequest } from './supplyApi';
+import { alertSuccess, alertError } from '../../utils/alert';
 
 // 비품 전체 카테고리
 const CATEGORIES = ['전체', '사무용품', '전자기기', '가구', '네트워크 장비'];
@@ -331,10 +332,10 @@ const SupplyRequest = () => {
             use_type: item.usageType
         }))
     }).then(() => {
-        alert('비품 신청이 완료되었습니다.');
+        alertSuccess('신청 완료', '비품 신청이 완료되었습니다.');
         handleCancel();
     }).catch(() => {
-        alert('신청 중 오류가 발생했습니다.');
+        alertError('오류 발생', '비품 신청 중 오류가 발생했습니다.');
     });
   };
 
