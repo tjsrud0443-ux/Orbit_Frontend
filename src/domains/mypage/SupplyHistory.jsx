@@ -2,6 +2,7 @@
 import Pagination from '../../components/common/Pagination';
 import { getMySupplyRequest, deleteMySupplyRequest } from './mypageApi';
 import useLoadingStore from '../../store/useLoadingStore';
+import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 
 const PAGE_SIZE = 8;
 
@@ -65,16 +66,19 @@ const SupplyHistory = () => {
   };
 
   const handleDeleteRequest = async (req_seq) => {
-    if (window.confirm('정말 이 신청을 취소하시겠습니까?')) {
+    const result = await alertConfirm('정말 취소하시겠습니까?', '취소 후 복구는 불가합니다.');
+    if (result.isConfirmed) {
       showLoading();
       try {
         await deleteMySupplyRequest(req_seq);
-        alert('신청이 취소되었습니다.');
+        hideLoading();
+        await alertSuccess('취소 완료', '신청 취소가 완료되었습니다.');
         setSelectedRequest(null);
         loadRequests();
       } catch (err) {
         console.error('비품 신청 삭제 실패:', err);
-        alert('삭제에 실패했습니다.');
+        hideLoading();
+        await alertError('삭제 실패', '삭제에 실패했습니다.');
       } finally {
         hideLoading();
       }

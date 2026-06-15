@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { IMAGES } from '../../images/images';
 import { sendMailForId, verifyForFindId } from './authApi';
 import useLoadingStore from '../../store/useLoadingStore';
+import { alertSuccess, alertError } from '../../utils/alert';
 
 const FindId = () => {
   const navigate = useNavigate();
@@ -37,12 +38,14 @@ const FindId = () => {
       showLoading();
       const response = await sendMailForId(formData);
       if (response.data.success) {
-        alert(response.data.message);
+        hideLoading();
+        await alertSuccess('전송 완료', response.data.message);
         setIsEmailSent(true);
       }
     }catch (error){
-      const msg = error.response?.data?.message || "인증번호 발송에 실패했습니다.";
-      alert(msg);
+      hideLoading();
+      const msg = error.response?.data?.message || "인증번호 전송에 실패했습니다.";
+      await alertError('전송 실패', msg);
     }finally {
       hideLoading();
     }
@@ -57,13 +60,13 @@ const FindId = () => {
     try{
       const response = await verifyForFindId(formData);
       if(response.data.success){
-        alert("인증에 성공했습니다.")
+        await alertSuccess('인증 완료', '인증이 완료되었습니다.');
         setIsVerified(true);
         setFoundId(response.data.userId);
       }
     }catch (error){
       const msg = error.response?.data?.message || "인증에 실패했습니다.";
-      alert(msg);
+      await alertError('인증 실패', msg);
     }
   };
 

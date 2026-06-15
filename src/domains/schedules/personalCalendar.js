@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getApprovedVacations, getSchedules } from './schedulesApi';
 import { fetchHolidays } from '../../api/holidayApi';
 import useLoadingStore from '../../store/useLoadingStore';
+import { alertConfirm } from '../../utils/alert';
 
 const CATEGORY_COLORS = {
   PERSONAL: '#3530B8',
@@ -80,7 +81,7 @@ const useCalendar = (setDayModal) => {
         .finally(() => hideLoading());;
   }, []);
 
-  const handleDateClick = (info) => {
+  const handleDateClick = async (info) => {
     const clickedDate = new Date(info.dateStr);
     const today = new Date();
     
@@ -88,9 +89,9 @@ const useCalendar = (setDayModal) => {
       clickedDate.getFullYear() !== today.getFullYear() ||
       clickedDate.getMonth() !== today.getMonth()
     ) {
-      const ok = window.confirm('이번 달 이외의 일정은 캘린더 페이지에서 확인할 수 있습니다.\n캘린더 페이지로 이동하시겠습니까?');
-      if (ok) navigate('/calendar');
-      return;
+      const result = await alertConfirm('페이지 이동', '이번 달 외의 일정은 캘린더 페이지에서 확인 가능합니다.');
+      if (!result.isConfirmed) return;
+      if (result.isConfirmed) navigate('/calendar');
     }
 
     const filtered = calendarEventsRef.current.filter(e => {

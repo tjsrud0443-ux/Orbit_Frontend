@@ -172,7 +172,7 @@ const AdminDept = () => {
 
 
     if (formMode === 'EDIT') {
-      const result = await alertConfirm('부서 수정', '정말 수정하시겠습니까?');
+      const result = await alertConfirm('수정 확인', '정말 수정하시겠습니까?');
       if (!result.isConfirmed) return;
 
       await updateDept(formData);

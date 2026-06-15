@@ -6,6 +6,7 @@ import DOMPurify from 'dompurify';
 //이걸 import 해야 에디터에서 작성한 글, 이미지, 굵기 등 서식이 그대로
 import 'react-quill-new/dist/quill.snow.css';
 import { getPostDetail, deletePost, downFiles, insertComment, deleteComment, updateComment } from './boardApi';
+import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 
 const BoardDetail = () => {
   const { seq } = useParams();
@@ -46,7 +47,7 @@ const BoardDetail = () => {
     })
     .catch(err => {
       console.error('게시글 상세 조회 실패:', err);
-      alert('게시글을 불러오는 중 오류가 발생했습니다.');
+      alertError('오류 발생', '게시글 로드 중 오류가 발생했습니다.');
       navigate('/board');
     })
     .finally(() => {
@@ -64,18 +65,20 @@ const BoardDetail = () => {
       });
   }).catch(err => {
     console.error(err);
-    alert('댓글 등록 중 오류가 발생했습니다.');
+    alertError('오류 발생', '댓글 등록 중 오류가 발생했습니다.');
   });
   };
 
-  const handleCommentDelete = (commentSeq) => {
-    if (!window.confirm('댓글을 삭제하시겠습니까?')) return;
-    deleteComment(commentSeq).then(() => {
+  const handleCommentDelete = async (commentSeq) => {
+    const result = await alertConfirm('정말 삭제하시겠습니까?', '삭제 후 복구는 불가합니다.');
+    if (!result.isConfirmed) return;
+    try {
+      await deleteComment(commentSeq);
       setComments(prev => prev.filter(c => c.comment_seq !== commentSeq));
-    }).catch(err => {
+    } catch (err) {
       console.error(err);
-      alert('댓글 삭제 중 오류가 발생했습니다.');
-    });
+      alertError('오류 발생', '댓글 삭제 중 오류가 발생했습니다.');
+    }
   };
 
   const handleCommentUpdate = (commentSeq) => {
@@ -89,20 +92,21 @@ const BoardDetail = () => {
       });
     }).catch(err => {
       console.error(err);
-      alert('댓글 수정 중 오류가 발생했습니다.');
+      alertError('오류 발생', '댓글 수정 중 오류가 발생했습니다.');
     });
   };
 
-  const handleDelete = () => {
-    if (!window.confirm('정말 삭제하시겠습니까?')) return;
-    deletePost(seq).then(() => {
-      alert('게시글이 삭제되었습니다.');
+  const handleDelete = async () => {
+    const result = await alertConfirm('정말 삭제하시겠습니까?', '삭제 후 복구는 불가합니다.');
+    if (!result.isConfirmed) return;
+    try {
+      await deletePost(seq);
+      alertSuccess('삭제 완료', '게시글 삭제가 완료되었습니다.');
       navigate('/board');
-    })
-    .catch(err => {
+    } catch (err) {
       console.error('게시글 삭제 실패:', err);
-      alert('삭제 중 오류가 발생했습니다.');
-    });
+      alertError('오류 발생', '게시글 삭제 중 오류가 발생했습니다.');
+    }
   };
 
   const handleEdit = () => {
@@ -121,7 +125,7 @@ const BoardDetail = () => {
       })
       .catch(err => {
         console.error('파일 다운로드 실패:', err);
-        alert('파일 다운로드 중 오류가 발생했습니다.');
+        alertError('오류 발생', '다운로드 중 오류가 발생했습니다.');
       });
   };
 

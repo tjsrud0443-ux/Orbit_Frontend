@@ -3,6 +3,7 @@ import { checkMyPageEmail, getProfileInfo, updateUserInfo } from '../mypage/mypa
 import { emailDuplCheck } from '../auth/authApi';
 import { useNavigate } from 'react-router-dom';
 import useUserStore from '../../store/userStore';
+import { alertSuccess, alertError } from '../../utils/alert';
 
 const MyPageEdit = () => {
   const navigate = useNavigate();
@@ -91,7 +92,7 @@ useEffect(() => {
       }
     }).catch(err => {
       console.error('Email duplication check failed:', err);
-      alert('이메일 중복 확인 중 오류가 발생했습니다.');
+      alertError('오류 발생', '중복 확인 중 오류가 발생했습니다.');
     });
   };
 
@@ -123,13 +124,13 @@ useEffect(() => {
       updateUserInfo(formData).then(()=>{
         setProfileData({ ...profileData, ...formData });
         setUser({ ...user, ...formData });
-        alert('회원 정보가 수정되었습니다.');
+        alertSuccess('수정 완료', '회원 정보가 수정되었습니다.');
         setIsEditing(false);
       })
 
     } catch (error) {
       console.error('Update failed:', error);
-      alert('정보 수정에 실패했습니다.');
+      alertError('수정 실패', '정보 수정에 실패했습니다.');
     }
   };
 

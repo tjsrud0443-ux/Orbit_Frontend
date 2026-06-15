@@ -9,6 +9,7 @@ import { maxios } from '../../api/axiosConfig';
 import { delMinutes, getMinutesDetail, getMinutesList, insertMinutes, upMinutes } from './meetingMinutesApi';
 import useLoadingStore from '../../store/useLoadingStore';
 import TimePicker from '../../components/common/TimePicker';
+import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 
 // 참여자 프로필 스택 컴포넌트
 const ParticipantStack = ({ attendees = [] }) => {
@@ -199,10 +200,10 @@ const MinutesList = () => {
   };
 
   const handleCompleteEdit = () => {
-    if (!editMinutes.title?.trim()) { alert('회의 제목을 입력해주세요.'); return; }
-    if (!editMinutes.meeting_dt) { alert('회의 일자를 선택해주세요.'); return; }
-    if (!editMinutes.start_time) { alert('시작 시간을 입력해주세요.'); return; }
-    if (!editMinutes.end_time) { alert('종료 시간을 입력해주세요.'); return; }
+    if (!editMinutes.title?.trim()) { alertWarning('정보 미입력', '회의 제목을 입력해주세요.'); return; }
+    if (!editMinutes.meeting_dt) { alertWarning('정보 미입력', '회의 일자를 선택해주세요.'); return; }
+    if (!editMinutes.start_time) { alertWarning('정보 미입력', '시작 시간을 입력해주세요.'); return; }
+    if (!editMinutes.end_time) { alertWarning('정보 미입력', '종료 시간을 입력해주세요.'); return; }
 
     const [sH, sM] = editMinutes.start_time.split(':').map(Number);
     const [eH, eM] = editMinutes.end_time.split(':').map(Number);
@@ -229,7 +230,7 @@ const MinutesList = () => {
     showLoading();
     upMinutes(minuteData).then(() => {
       hideLoading();
-      alert('수정되었습니다.');
+      alertSuccess('수정 완료', '회의록이 수정되었습니다.');
       setIsEditing(false);
       setEditMinutes(null);
       fetchMinutesList();
@@ -237,7 +238,7 @@ const MinutesList = () => {
     }).catch((error) => {
       hideLoading();
       console.error('수정 실패:', error);
-      alert('수정에 실패했습니다.');
+      alertError('오류 발생', '수정 중 오류가 발생했습니다.');
     });
   };
 
@@ -359,11 +360,11 @@ const MinutesList = () => {
       setActiveId(null);
       hideLoading();
       fetchMinutesList();
-      alert('회의록이 저장되었습니다.');
+      alertSuccess('저장 완료', '회의록 저장이 완료되었습니다.');
     }).catch((error) => {
       hideLoading();
       console.error('회의록 저장 실패:', error);
-      alert('저장에 실패했습니다.');
+      alertError('오류 발생', '저장 중 오류가 발생했습니다.');
     });
   };
 
@@ -404,7 +405,7 @@ const MinutesList = () => {
       const empId = String(emp.users_seq || emp.users_id || emp.id || '');
       return aId === empId && empId !== '';
     });
-    if (isDuplicate) { alert('이미 추가된 참석자입니다.'); return; }
+    if (isDuplicate) { alertWarning('중복 입력', '이미 추가된 참석자입니다.'); return; }
     setNewMinutes({ ...newMinutes, attendees: [...newMinutes.attendees, emp] });
     setErrors(prev => ({ ...prev, attendees: false }));
     setSearchQuery('');
@@ -461,7 +462,7 @@ const MinutesList = () => {
                 if (!isDuplicate) {
                   setEditMinutes({...editMinutes, attendees: [...editMinutes.attendees, emp]});
                   setErrors(prev => ({...prev, attendees: false}));
-                } else { alert('이미 추가된 참석자입니다.'); }
+                } else { alertWarning('중복 입력', '이미 추가된 참석자입니다.'); }
                 setSearchQuery('');
                 setShowResults(false);
               }}
@@ -521,9 +522,10 @@ const MinutesList = () => {
     setHostInAttendeesWarning(false);
   };
 
-  const handleSelectMinutes = (id, skipEditCheck = false) => {
+  const handleSelectMinutes = async (id, skipEditCheck = false) => {
     if (!skipEditCheck && isEditing) {
-      if (!window.confirm('수정 중인 내용이 있습니다. 취소하고 이동하시겠습니까?')) return;
+      const result = await alertConfirm('수정 취소', '수정 중인 내용이 있습니다.<br>취소하고 이동하시겠습니까?');
+      if (!result.isConfirmed) return;
       handleCancelEdit();
     }
     setIsCreating(false);
@@ -937,19 +939,20 @@ const MinutesList = () => {
                         <>
                           <button onClick={handleToggleEdit} className="flex-1 py-3 bg-white border border-indigo-200 text-indigo-600 font-bold rounded-2xl hover:bg-indigo-50 transition-all">수정</button>
                           <button
-                            onClick={() => {
-                              if (window.confirm("정말 이 회의록을 삭제하시겠습니까?")) {
-                                showLoading();
-                                delMinutes(activeDetail.minute_seq).then(() => {
-                                  hideLoading();
-                                  alert('삭제되었습니다.');
-                                  handleClosePanel();
-                                  fetchMinutesList();
-                                }).catch((error) => {
-                                  hideLoading();
-                                  console.error('삭제 실패:', error);
-                                  alert('삭제에 실패했습니다.');
-                                });
+                            onClick={async () => {
+                              const result = await alertConfirm('정말 삭제하시겠습니까?', '삭제 후 복구는 불가합니다.');
+                              if (!result.isConfirmed) return;
+                              showLoading();
+                              try {
+                                await delMinutes(activeDetail.minute_seq);
+                                hideLoading();
+                                await alertSuccess('삭제 완료', '회의록 삭제가 완료되었습니다.');
+                                handleClosePanel();
+                                fetchMinutesList();
+                              } catch (error) {
+                                hideLoading();
+                                console.error('삭제 실패:', error);
+                                await alertError('오류 발생', '삭제 처리 중 오류가 발생했습니다.');
                               }
                             }}
                             className="flex-1 py-3 bg-white border border-red-200 text-red-500 font-bold rounded-2xl hover:bg-red-50 transition-all">삭제</button>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { emailDuplCheck, idDuplCheck, signupRequest } from './authApi';
 import { IMAGES } from '../../images/images';
 import useLoadingStore from '../../store/useLoadingStore';
+import { alertSuccess } from '../../utils/alert';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -260,8 +261,8 @@ const Signup = () => {
     }
 
     showLoading();
-    signupRequest(data).then(resp => {
-      alert("회원가입 신청이 완료되었습니다.");
+    signupRequest(data).then(() => {
+      alertSuccess('신청 완료', '회원가입 신청이 완료되었습니다.');
       navigate("/");
     })
     hideLoading();
