@@ -7,7 +7,7 @@ import Calendar from '../../components/common/Calendar';
 import { completeProject, deleteProject, getAllEmp, getMyAllProject, getProjectCount, insertProjectAndMembers, updateProject } from './projectsApi';
 import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
-import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
+import { alertSuccess, alertConfirm } from '../../utils/alert';
 
 const ProjectsList = () => {
   const navigate = useNavigate();
