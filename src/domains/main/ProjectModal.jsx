@@ -76,6 +76,11 @@ const ProjectModal = ({ onClose, onSuccess }) => {
   const handleCreate = () => {
     const newErrors = {};
     if (!newProject.project_name) newErrors.project_name = '프로젝트명을 입력해주세요.';
+    else if (newProject.project_name.length > 30) newErrors.project_name = '글자수가 초과되었습니다. 30자까지만 입력 가능합니다.';
+    
+    if (!newProject.contents) newErrors.contents = '내용을 입력해주세요.';
+    else if (newProject.contents.length > 800) newErrors.contents = '글자수가 초과되었습니다. 800자까지만 입력 가능합니다.';
+
     if (!newProject.start_date) newErrors.start_date = '시작일을 선택해주세요.';
     if (!newProject.end_date) newErrors.end_date = '종료일을 선택해주세요.';
     if (newProject.start_date && newProject.end_date && newProject.end_date < newProject.start_date) {
@@ -118,15 +123,37 @@ const ProjectModal = ({ onClose, onSuccess }) => {
           className={`w-full p-4 bg-[#f4f7fc] rounded-xl outline-none text-xs ${errors.project_name ? 'border border-red-500' : ''}`}
           value={newProject.project_name}
           onChange={e => {
-            setNewProject({ ...newProject, project_name: e.target.value });
-            if (errors.project_name) setErrors(prev => ({ ...prev, project_name: null }));
+            const val = e.target.value;
+            setNewProject({ ...newProject, project_name: val });
+            if (val.length > 30) {
+              setErrors(prev => ({ ...prev, project_name: '글자수가 초과되었습니다. 30자까지만 입력 가능합니다.' }));
+            } else {
+              if (errors.project_name) setErrors(prev => ({ ...prev, project_name: null }));
+            }
           }}
         />
         {errors.project_name && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1 mb-3">{errors.project_name}</p>}
         {!errors.project_name && <div className="mb-4"></div>}
 
-        <label className="block text-xs font-bold text-[#1a1c3d] mb-2">프로젝트 내용</label>
-        <textarea rows={3} value={newProject.contents} className="w-full text-xs p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none" onChange={e => setNewProject({ ...newProject, contents: e.target.value })} />
+        <label className="block text-xs font-bold text-[#1a1c3d] mb-2">프로젝트 내용 *</label>
+        <textarea
+          rows={3}
+          value={newProject.contents}
+          className={`w-full text-xs p-4 bg-[#f4f7fc] rounded-xl outline-none custom-scrollbar ${errors.contents ? 'border border-red-500' : ''}`}
+          onChange={e => {
+            const val = e.target.value;
+            setNewProject({ ...newProject, contents: val });
+            if (!val) {
+              setErrors(prev => ({ ...prev, contents: '내용을 입력해주세요.' }));
+            } else if (val.length > 800) {
+              setErrors(prev => ({ ...prev, contents: '글자수가 초과되었습니다. 800자까지만 입력 가능합니다.' }));
+            } else {
+              if (errors.contents) setErrors(prev => ({ ...prev, contents: null }));
+            }
+          }}
+        />
+        {errors.contents && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1 mb-3">{errors.contents}</p>}
+        {!errors.contents && <div className="mb-4"></div>}
 
         <div className={`flex gap-4 mb-4 ${isStartCalendarOpen || isEndCalendarOpen ? 'relative z-50' : ''}`}>
           <div className="flex-1 relative" ref={startCalendarRef}>
