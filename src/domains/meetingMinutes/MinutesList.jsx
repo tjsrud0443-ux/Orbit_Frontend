@@ -522,9 +522,10 @@ const MinutesList = () => {
     setHostInAttendeesWarning(false);
   };
 
-  const handleSelectMinutes = (id, skipEditCheck = false) => {
+  const handleSelectMinutes = async (id, skipEditCheck = false) => {
     if (!skipEditCheck && isEditing) {
-      if (!window.confirm('수정 중인 내용이 있습니다. 취소하고 이동하시겠습니까?')) return;
+      const result = await alertConfirm('수정 취소', '수정 중인 내용이 있습니다.<br>취소하고 이동하시겠습니까?');
+      if (!result.isConfirmed) return;
       handleCancelEdit();
     }
     setIsCreating(false);
@@ -938,19 +939,20 @@ const MinutesList = () => {
                         <>
                           <button onClick={handleToggleEdit} className="flex-1 py-3 bg-white border border-indigo-200 text-indigo-600 font-bold rounded-2xl hover:bg-indigo-50 transition-all">수정</button>
                           <button
-                            onClick={() => {
-                              if (window.confirm("정말 이 회의록을 삭제하시겠습니까?")) {
-                                showLoading();
-                                delMinutes(activeDetail.minute_seq).then(() => {
-                                  hideLoading();
-                                  alertSuccess('삭제 완료', '회의록 삭제가 완료되었습니다.');
-                                  handleClosePanel();
-                                  fetchMinutesList();
-                                }).catch((error) => {
-                                  hideLoading();
-                                  console.error('삭제 실패:', error);
-                                  alertError('오류 발생', '삭제 처리 중 오류가 발생했습니다.');
-                                });
+                            onClick={async () => {
+                              const result = await alertConfirm('정말 삭제하시겠습니까?', '삭제 후 복구는 불가합니다.');
+                              if (!result.isConfirmed) return;
+                              showLoading();
+                              try {
+                                await delMinutes(activeDetail.minute_seq);
+                                hideLoading();
+                                await alertSuccess('삭제 완료', '회의록 삭제가 완료되었습니다.');
+                                handleClosePanel();
+                                fetchMinutesList();
+                              } catch (error) {
+                                hideLoading();
+                                console.error('삭제 실패:', error);
+                                await alertError('오류 발생', '삭제 처리 중 오류가 발생했습니다.');
                               }
                             }}
                             className="flex-1 py-3 bg-white border border-red-200 text-red-500 font-bold rounded-2xl hover:bg-red-50 transition-all">삭제</button>
