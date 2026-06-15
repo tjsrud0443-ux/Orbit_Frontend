@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown, faCheck } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
 // updateProject 추가 (projectsApi.js 에 구현 필요)
-import { completeProject, deleteProject, getAllEmp, getMyAllProject, insertProjectAndMembers, updateProject } from './projectsApi';
+import { completeProject, deleteProject, getAllEmp, getMyAllProject, getProjectCount, insertProjectAndMembers, updateProject } from './projectsApi';
 import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
 
@@ -37,7 +37,7 @@ const ProjectsList = () => {
   const [employees, setEmployees] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const [projectCount, setProjectCount] = useState([]);
   const [empSearch, setEmpSearch] = useState('');
   const [showEmpDropdown, setShowEmpDropdown] = useState(false);
   const [isStartCalendarOpen, setIsStartCalendarOpen] = useState(false);
@@ -382,6 +382,16 @@ const ProjectsList = () => {
     })
   }, []);
 
+  useEffect(() => {
+    const getCount = async () => {
+      if(!user?.role) return;
+
+      const resp = await getProjectCount(user?.role);
+      setProjectCount(resp.data);
+    }
+    getCount();
+  }, [user?.role]);
+
   // ===== 상세 패널(수정/보기) 공통 렌더 =====
   const renderDetailBody = (mobile = false) => {
     const canEdit = selectedProject.users_id === user?.id && selectedProject.status !== 'DONE';
@@ -609,14 +619,21 @@ const ProjectsList = () => {
         <div className={`bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-3 md:p-8 flex flex-col transition-all duration-300 lg:overflow-hidden min-w-0 ${selectedProject ? 'lg:w-[65%] w-full' : 'w-full'}`}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
             <div className="flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit overflow-x-auto md:overflow-x-visible items-center">
-              {['전체', '진행중', '완료'].map(tab => (
-                <button key={tab} onClick={() => {
-                  if (tab === '전체') setFilter('전체');
-                  else if (tab === '진행중') setFilter('IN_PROGRESS');
+              {[
+                { label: '전체', count: projectCount.allCount ?? 0 },
+                { label: '진행중', count: projectCount.inProgressCount ?? 0 },
+                { label: '완료', count: projectCount.doneCount ?? 0 }
+              ].map(tab => (
+                <button key={tab.label} onClick={() => {
+                  if (tab.label === '전체') setFilter('전체');
+                  else if (tab.label === '진행중') setFilter('IN_PROGRESS');
                   else setFilter('DONE'); setCurrentPage(1);
                 }}
-                  className={`flex-1 md:flex-none px-4 md:px-6 py-1.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${filter === tab || (tab === '진행중' && filter === 'IN_PROGRESS') || (tab === '완료' && filter === 'DONE') ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>
-                  {tab}
+                  className={`flex-1 md:flex-none px-4 md:px-6 py-1.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${filter === tab.label || (tab.label === '진행중' && filter === 'IN_PROGRESS') || (tab.label === '완료' && filter === 'DONE') ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>
+                  {tab.label}
+                   <span className="ml-1.5">
+                    ({tab.count})
+                  </span>
                 </button>
               ))}
             </div>
