@@ -1,18 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { maxios } from '../../api/axiosConfig';
 import Calendar from '../../components/common/Calendar';
+import TimePicker from '../../components/common/TimePicker';
+import { getMyCheckinList, insertOvertimeReq } from './mainApi';
 
 const OvertimeRequestModal = ({ onClose }) => {
   const [date, setDate] = useState('');
-  const [startTime, setStartTime] = useState('');
+  const [startTime] = useState('18:00');
   const [endTime, setEndTime] = useState('');
   const [reason, setReason] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
+  const [attendanceMap, setAttendanceMap] = useState({});
+  const [yearMonth, setYearMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
+
+  // 출근 기록 조회
+  useEffect(() => {
+    getMyCheckinList(yearMonth).then((resp) => {
+      const map = {};
+      resp.data.forEach((item) => {
+        map[item.WORK_DATE] = item.ATTENDANCE_SEQ;
+      });
+      setAttendanceMap(map);
+    }).catch((err) => {
+        console.error('출근 기록 조회 실패:', err);
+      });
+  }, [yearMonth]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('연장근무 신청:', { date, startTime, endTime, reason });
-    alert('연장근무 신청이 완료되었습니다.');
-    onClose();
+    if (!date || !endTime) {
+      alert('날짜와 종료 시간을 모두 선택해주세요.');
+      return;
+    }
+
+    const attendanceSeq = attendanceMap[date];
+    if (!attendanceSeq) {
+      alert('출근 기록이 있는 날짜만 신청 가능합니다.');
+      return;
+    }
+
+    insertOvertimeReq({
+      attendance_seq: attendanceSeq,
+      work_date: date,
+      start_dt: `${date} ${startTime}:00`,
+      end_dt: `${date} ${endTime}:00`,
+      reason,
+    }).then(() => {
+        alert('연장근무 신청이 완료되었습니다.');
+        onClose();
+      })
+      .catch((err) => {
+        console.error(err);
+        alert('신청 중 오류가 발생했습니다.');
+      });
   };
 
   return (
@@ -25,7 +68,7 @@ const OvertimeRequestModal = ({ onClose }) => {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-gray-900">연장근무 신청</h2>
             <button 
-              onClick={onClose}
+              onClick={onClose} 
               className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -51,8 +94,15 @@ const OvertimeRequestModal = ({ onClose }) => {
               {showCalendar && (
                 <Calendar 
                   value={date} 
-                  onChange={(d) => setDate(d)} 
-                  onClose={() => setShowCalendar(false)} 
+                  onChange={(d) => {
+                    if (attendanceMap[d]) {
+                      setDate(d);
+                    } else {
+                      alert('출근 기록이 있는 날짜만 선택 가능합니다.');
+                    }
+                  }} 
+                  onClose={() => setShowCalendar(false)}
+                  onMonthChange={(ym) => setYearMonth(ym)}
                 />
               )}
             </div>
@@ -61,21 +111,19 @@ const OvertimeRequestModal = ({ onClose }) => {
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-1.5 ml-1">시작 시간</label>
                 <input 
-                  type="time" 
-                  required
+                  type="text" 
                   value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                  disabled
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm text-gray-500 font-medium"
                 />
               </div>
-              <div>
+              <div className="relative">
                 <label className="block text-xs font-bold text-gray-500 mb-1.5 ml-1">종료 시간</label>
-                <input 
-                  type="time" 
-                  required
+                <TimePicker
                   value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                  onChange={(time) => setEndTime(time)}
+                  placeholder="시간 선택"
+                  disableMinutes={true} 
                 />
               </div>
             </div>
@@ -84,11 +132,16 @@ const OvertimeRequestModal = ({ onClose }) => {
               <label className="block text-xs font-bold text-gray-500 mb-1.5 ml-1">신청 사유</label>
               <textarea 
                 required
-                placeholder="연장근무 사유를 입력해주세요."
+                placeholder="연장근무 사유를 입력해주세요. (최대 330자)"
                 value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-2xl text-sm h-32 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-              ></textarea>
+                onChange={(e) => {
+                  if (e.target.value.length <= 330) setReason(e.target.value);
+                }}
+                className="w-full px-4 py-3 border border-gray-200 rounded-2xl text-sm h-32 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all custom-scrollbar py-3"
+              />
+              <p className={`text-right text-[10px] mt-1 ${reason.length >= 300 ? 'text-red-400' : 'text-gray-400'}`}>
+                {reason.length} / 330자
+              </p>
             </div>
 
             <button 

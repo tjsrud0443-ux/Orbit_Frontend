@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const Calendar = ({ value, onChange, onClose, isStatic = false, events = [] }) => {
+const Calendar = ({ value, onChange, onClose, isStatic = false, events = [], onMonthChange }) => {
   const [viewDate, setViewDate] = useState(value ? new Date(value) : new Date());
 
   const days = ['일', '월', '화', '수', '목', '금', '토'];
@@ -16,12 +16,22 @@ const Calendar = ({ value, onChange, onClose, isStatic = false, events = [] }) =
 
   const handlePrevMonth = (e) => {
     e.stopPropagation();
-    setViewDate(new Date(calendarYear, calendarMonth - 1, 1));
+    const newDate = new Date(calendarYear, calendarMonth - 1, 1);
+    setViewDate(newDate);
+    if (onMonthChange) {
+      const ym = `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}`;
+      onMonthChange(ym);
+    }
   };
 
   const handleNextMonth = (e) => {
     e.stopPropagation();
-    setViewDate(new Date(calendarYear, calendarMonth + 1, 1));
+    const newDate = new Date(calendarYear, calendarMonth + 1, 1);
+    setViewDate(newDate);
+    if (onMonthChange) {
+      const ym = `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}`;
+      onMonthChange(ym);
+    }
   };
 
   const handleDateSelect = (e, day) => {
