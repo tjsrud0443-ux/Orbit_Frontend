@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { IMAGES } from '../../images/images';
 import { sendMailForPw, sendNewPw, verifyForFindPw } from './authApi';
 import useLoadingStore from '../../store/useLoadingStore';
+import { alertSuccess, alertError } from '../../utils/alert';
 
 const FindPw = () => {
   const navigate = useNavigate();
@@ -52,12 +53,14 @@ const FindPw = () => {
       showLoading();
       const response = await sendMailForPw(formData);
       if (response.data.success) {
-        alert(response.data.message);
+        hideLoading();
+        await alertSuccess('전송 완료', response.data.message);
         setIsEmailSent(true);
       }
     }catch (error){
       const msg = error.response?.data?.message || "인증번호 발송에 실패했습니다.";
-      alert(msg);
+      hideLoading();
+      await alertError('전송 실패', msg);
     }finally {
       hideLoading();
     }
@@ -72,13 +75,13 @@ const FindPw = () => {
     try{
       const response = await verifyForFindPw(formData);
       if(response.data.success){
-        alert("인증에 성공했습니다.");
+        await alertSuccess('인증 완료', '인증이 완료되었습니다.');
         setIsVerified(true);
         setFormData(prev => ({...prev, token: response.data.resetToken}));
       }
     }catch (error){
       const msg = error.response?.data?.message || "인증에 실패했습니다.";
-      alert(msg);
+      await alertError('인증 실패', msg);
     }
   };
 
@@ -102,12 +105,12 @@ const FindPw = () => {
     try{
       const response = await sendNewPw(formData);
       if(response.data.success){
-        alert(response.data.message);
+        await alertSuccess('변경 완료', response.data.message);
         navigate("/");
       }
     }catch (error){
       const msg = error.response?.data?.message || "비밀번호 변경을 실패했습니다.";
-      alert(msg);
+      await alertError('변경 실패', msg);
     }
   }
 

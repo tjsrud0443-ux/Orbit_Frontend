@@ -3,6 +3,7 @@ import { maxios } from '../../api/axiosConfig';
 import Calendar from '../../components/common/Calendar';
 import TimePicker from '../../components/common/TimePicker';
 import { getMyCheckinList, insertOvertimeReq } from './mainApi';
+import { alertWarning, alertSuccess, alertError } from '../../utils/alert';
 
 const OvertimeRequestModal = ({ onClose }) => {
   const [date, setDate] = useState('');
@@ -32,13 +33,13 @@ const OvertimeRequestModal = ({ onClose }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!date || !endTime) {
-      alert('날짜와 종료 시간을 모두 선택해주세요.');
+      alertWarning('정보 미입력', '날짜와 시간을 모두 선택해주세요.');
       return;
     }
 
     const attendanceSeq = attendanceMap[date];
     if (!attendanceSeq) {
-      alert('출근 기록이 있는 날짜만 신청 가능합니다.');
+      alertWarning('신청 불가', '출근 기록이 없는 날짜에는 신청이 불가합니다.');
       return;
     }
 
@@ -49,12 +50,12 @@ const OvertimeRequestModal = ({ onClose }) => {
       end_dt: `${date} ${endTime}:00`,
       reason,
     }).then(() => {
-        alert('연장근무 신청이 완료되었습니다.');
+        alertSuccess('신청 완료', '연장근무 신청이 완료되었습니다.');
         onClose();
       })
       .catch((err) => {
         console.error(err);
-        alert('신청 중 오류가 발생했습니다.');
+        alertError('오류 발생', '신청 중 오류가 발생했습니다.');
       });
   };
 
@@ -98,7 +99,7 @@ const OvertimeRequestModal = ({ onClose }) => {
                     if (attendanceMap[d]) {
                       setDate(d);
                     } else {
-                      alert('출근 기록이 있는 날짜만 선택 가능합니다.');
+                      alertWarning('선택 불가', '출근 기록이 없는 날짜는 선택이 불가합니다.');
                     }
                   }} 
                   onClose={() => setShowCalendar(false)}

@@ -7,6 +7,7 @@ import Calendar from '../../components/common/Calendar';
 import { completeProject, deleteProject, getAllEmp, getMyAllProject, getProjectCount, insertProjectAndMembers, updateProject } from './projectsApi';
 import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
+import { alertSuccess, alertConfirm } from '../../utils/alert';
 
 const ProjectsList = () => {
   const navigate = useNavigate();
@@ -188,7 +189,7 @@ const ProjectsList = () => {
         setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
         setEmpSearch('');
         setErrors({});
-        alert('개인 캘린더에 일정이 성공적으로 추가되었습니다.');
+        alertSuccess('등록 완료', '프로젝트 등록이 완료되었습니다.<br>캘린더에서 일정을 확인하세요.');
       });
     });
   };
@@ -285,7 +286,7 @@ const ProjectsList = () => {
     };
 
     updateProject(updatedEntry).then(() => {
-      alert('프로젝트가 성공적으로 수정되었습니다.');
+      alertSuccess('수정 완료', '프로젝트 정보가 수정되었습니다.');
       getMyAllProject().then(resp => {
         setProjects(resp.data);
         const updatedProject = resp.data.find(
@@ -306,36 +307,34 @@ const ProjectsList = () => {
     });
   };
 
-  const handleDelete = (project_seq) => {
-    if (window.confirm('정말 삭제하시겠습니까? 삭제 시 복구는 불가합니다.')) {
-      deleteProject(project_seq).then(resp => {
-        alert("삭제되었습니다.")
-        getMyAllProject().then(resp => {
-          setProjects(resp.data);
-          setIsModalOpen(false);
-          handleCloseDetail();
-          setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
-          setEmpSearch('');
-          setErrors({});
-        })
-      });
-    }
+  const handleDelete = async (project_seq) => {
+    const result = await alertConfirm('정말 삭제하시겠습니까?', '삭제 시 복구는 불가합니다.');
+    if (!result.isConfirmed) return;
+
+    await deleteProject(project_seq);
+    await alertSuccess('삭제 완료', '프로젝트 삭제가 완료되었습니다.');
+    const resp = await getMyAllProject();
+    setProjects(resp.data);
+    setIsModalOpen(false);
+    handleCloseDetail();
+    setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
+    setEmpSearch('');
+    setErrors({});
   };
 
-  const handleComplete = (project_seq) => {
-    if (window.confirm('프로젝트를 완료 처리하시겠습니까?\n완료 처리 시 복구는 불가합니다.')) {
-      completeProject(project_seq).then(() => {
-        alert('프로젝트가 완료 처리되었습니다.');
-        getMyAllProject().then(resp => {
-          setProjects(resp.data);
-          setIsModalOpen(false);
-          handleCloseDetail();
-          setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
-          setEmpSearch('');
-          setErrors({});
-        });
-      });
-    }
+  const handleComplete = async (project_seq) => {
+    const result = await alertConfirm('종료 처리하시겠습니까?', '종료 처리 시 변경은 불가합니다.');
+    if (!result.isConfirmed) return;
+
+    await completeProject(project_seq);
+    await alertSuccess('처리 완료', '프로젝트 종료 처리가 완료되었습니다.');
+    const resp = await getMyAllProject();
+    setProjects(resp.data);
+    setIsModalOpen(false);
+    handleCloseDetail();
+    setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
+    setEmpSearch('');
+    setErrors({});
   };
 
   const projectSeq = searchParam.get("projectSeq");

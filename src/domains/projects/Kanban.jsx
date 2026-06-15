@@ -6,6 +6,7 @@ import Calendar from '../../components/common/Calendar';
 import { deleteTask, getKanbanTaskList, getProject, getProjectMembers, insertTask, updateTask, updateTaskStatus } from './projectsApi';
 import useAuthStore from '../../store/authStore';
 import useUserStore from '../../store/userStore';
+import { alertConfirm } from '../../utils/alert';
 
 const Kanban = () => {
   const { projectSeq } = useParams();
@@ -89,14 +90,12 @@ const Kanban = () => {
   };
 
   // 핸들러: 삭제
-  const handleDeleteTask = (taskSeq) => {
-    if (window.confirm('정말 삭제하시겠습니까?')) {
-      deleteTask(taskSeq).then(resp => {
-        getKanbanTaskList(projectSeq).then(resp => {
-          setTasks(resp.data);
-        });
-      });
-    }
+  const handleDeleteTask = async (taskSeq) => {
+    const result = await alertConfirm('정말 삭제하시겠습니까?', '삭제 후 복구는 불가합니다.');
+    if (!result.isConfirmed) return;
+    await deleteTask(taskSeq);
+    const resp = await getKanbanTaskList(projectSeq);
+    setTasks(resp.data);
   };
 
   // 날짜 포맷 (MM/DD)

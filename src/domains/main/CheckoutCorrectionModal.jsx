@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getMyCheckoutList, insertCheckoutReq } from './mainApi';
 import TimePicker from '../../components/common/TimePicker';
+import { alertWarning, alertSuccess, alertError } from '../../utils/alert';
 
 const CheckoutCorrectionModal = ({ onClose }) => {
   const [attendanceList, setAttendanceList] = useState([]);
@@ -51,7 +52,7 @@ const CheckoutCorrectionModal = ({ onClose }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!selectedAttendance || !requestedTime) {
-      alert('정정할 날짜와 시간을 모두 선택해주세요.');
+      alertWarning('정보 미입력', '정정할 날짜와 시간을 모두 선택해주세요.');
       return;
     }
     const formatted = `${selectedAttendance.work_date} ${requestedTime}:00`;
@@ -63,12 +64,12 @@ const CheckoutCorrectionModal = ({ onClose }) => {
     };
     console.log(selectedAttendance.work_date);
     insertCheckoutReq(data).then(() => {
-        alert('퇴근 정정 신청이 완료되었습니다.');
+        alertSuccess('신청 완료', '정정 신청이 완료되었습니다.');
         onClose();
       })
       .catch((err) => {
         console.error('퇴근 정정 신청 실패:', err);
-        alert('신청 중 오류가 발생했습니다.');
+        alertError('오류 발생', '신청 중 오류가 발생했습니다.');
       });
   };
 

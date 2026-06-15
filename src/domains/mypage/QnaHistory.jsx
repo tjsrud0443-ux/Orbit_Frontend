@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import { deleteMyQuestions, getMyQnaCount, getMyQuestions } from './mypageApi';
+import { alertSuccess, alertConfirm } from '../../utils/alert';
 
 const QnaHistory = () => {
   const [filter, setFilter] = useState('전체');
@@ -58,15 +59,13 @@ const QnaHistory = () => {
 
   const totalPages = Math.ceil(filteredQna.length / itemsPerPage);
 
-  const handleDelete = (question_seq) => {
-    if (window.confirm('정말 삭제하시겠습니까?')) {
-      deleteMyQuestions(question_seq).then(resp => {
-        alert('삭제되었습니다.');
-        getMyQuestions().then(resp => {
-          setQnaList(resp.data);
-        })
-      })
-    }
+  const handleDelete = async (question_seq) => {
+    const result = await alertConfirm('정말 삭제하시겠습니까?', '삭제 후 복구는 불가합니다.');
+    if (!result.isConfirmed) return;
+    await deleteMyQuestions(question_seq);
+    await alertSuccess('삭제 완료', '문의 내역 삭제가 완료되었습니다.');
+    const resp = await getMyQuestions();
+    setQnaList(resp.data);
   };
 
   return (

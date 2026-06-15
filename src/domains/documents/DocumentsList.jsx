@@ -4,6 +4,7 @@ import { addFavorite, getAllDocs, getFavorites, removeFavorite } from './documen
 import useAuthStore from '../../store/authStore';
 import Preview from '../../components/common/Preview';
 import useLoadingStore from '../../store/useLoadingStore';
+import { alertError } from '../../utils/alert';
 
 const DocumentsList = () => {
   const [activeTab, setActiveTab] = useState('전체 문서');
@@ -80,7 +81,7 @@ const DocumentsList = () => {
       }
     } catch (err){
       console.error("즐겨찾기 실패:", err);
-      alert("즐겨찾기 중 오류가 발생했습니다.");
+      await alertError('오류 발생', '즐겨찾기 중 오류가 발생했습니다.');
     }
   }
 
