@@ -1,60 +1,80 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchHolidays } from '../../api/holidayApi';
+import { getSchedules } from '../schedules/schedulesApi';
+import useLoadingStore from '../../store/useLoadingStore';
 
-const generateCompanyEvents = (years) => {
-  const events = [];
-  years.forEach(year => {
-    events.push({ id: `c-town-${year}-02`, title: '타운홀 미팅 (12:00~14:00)', start: `${year}-02-15`, category: 'team', color: '#0EA5E9' });
-    events.push({ id: `c-town-${year}-07`, title: '타운홀 미팅 (12:00~14:00)', start: `${year}-07-15`, category: 'team', color: '#0EA5E9' });
-    events.push({ id: `c-work-${year}-04`, title: '전사 워크숍 (1박 2일)', start: `${year}-04-16`, end: `${year}-04-18`, category: 'company', color: '#F59E0B' });
-    events.push({ id: `c-work-${year}-09`, title: '전사 워크숍 (1박 2일)', start: `${year}-09-17`, end: `${year}-09-19`, category: 'company', color: '#F59E0B' });
-    events.push({ id: `c-survey-${year}-05`, title: '임직원 만족도 조사', start: `${year}-05-10`, category: 'company', color: '#F59E0B' });
-    events.push({ id: `c-health-${year}-05`, title: '건강 챌린지 시작', start: `${year}-05-01`, category: 'company', color: '#F59E0B' });
-    events.push({ id: `c-survey-${year}-11`, title: '임직원 만족도 조사', start: `${year}-11-10`, category: 'company', color: '#F59E0B' });
-    events.push({ id: `c-health-${year}-11`, title: '건강 챌린지 시작', start: `${year}-11-01`, category: 'company', color: '#F59E0B' });
-    events.push({ id: `c-found-${year}`, title: '창립기념일 (휴무)', start: `${year}-07-06`, category: 'holiday', color: '#EC4899' });
-    events.push({ id: `c-award-${year}`, title: '연간 시상식', start: `${year}-12-24`, category: 'company', color: '#EC4899' });
-  });
-  return events;
+const COMPANY_CATEGORIES = ['COMPANY', 'TEAM', 'ANNIVERSARY'];
+
+const COMPANY_COLORS = {
+  COMPANY: '#F59E0B',
+  TEAM: '#0EA5E9',
+  ANNIVERSARY: '#EC4899',
+  holiday: '#EF4444',
 };
-
-const currentYear = new Date().getFullYear();
-const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
-const COMPANY_EVENTS = generateCompanyEvents(years);
 
 const usePublicCalendar = () => {
   const navigate = useNavigate();
-  const [calendarEvents, setCalendarEvents] = useState(COMPANY_EVENTS);
+  const calendarEventsRef = useRef([]);
+  const [calendarEvents, setCalendarEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedSchedules, setSelectedSchedules] = useState([]);
-  const loadedYears = useRef(new Set());
-
-  const loadHolidaysForYear = useCallback(async (year) => {
-    if (loadedYears.current.has(year)) return;
-    loadedYears.current.add(year);
-    try {
-      const holidays = await fetchHolidays(year);
-      if (holidays?.length > 0) {
-        setCalendarEvents(prev => {
-          const existingIds = new Set(prev.map(e => e.id));
-          return [...prev, ...holidays.filter(h => !existingIds.has(h.id))];
-        });
-      }
-    } catch (err) {
-      console.error(`${year}년 공휴일 로드 실패:`, err);
-    }
-  }, []);
 
   useEffect(() => {
     const year = new Date().getFullYear();
-    loadHolidaysForYear(year);
-    loadHolidaysForYear(year + 1);
-  }, [loadHolidaysForYear]);
+
+    Promise.all([
+      getSchedules(),
+      fetchHolidays(year),
+      fetchHolidays(year + 1),
+    ])
+      .then(([schedResp, holidaysThisYear, holidaysNextYear]) => {
+        const companyEvents = schedResp.data
+          .filter(item => COMPANY_CATEGORIES.includes(item.schedule_type))
+          .map(item => {
+            const startDate = item.start_dt?.split(/[T ]/)[0];
+            const endDate = item.end_dt?.split(/[T ]/)[0];
+            const isSameDay = startDate === endDate;
+
+            let displayEnd = undefined;
+            if (endDate && !isSameDay) {
+              const d = new Date(endDate);
+              d.setDate(d.getDate() + 1);
+              displayEnd = d.toISOString().split('T')[0];
+            }
+
+            return {
+              id: item.schedule_seq.toString(),
+              title: item.title,
+              start: startDate,
+              end: displayEnd,
+              originalEnd: endDate,
+              allDay: true,
+              display: 'list-item',
+              category: item.schedule_type,
+              color: COMPANY_COLORS[item.schedule_type] ?? '#F59E0B',
+            };
+          });
+
+        const holidayEvents = [...holidaysThisYear, ...holidaysNextYear].map(h => ({
+          ...h,
+          allDay: true,
+          display: 'list-item',
+          category: 'holiday',
+          color: COMPANY_COLORS.holiday,
+        }));
+
+        const allEvents = [...companyEvents, ...holidayEvents];
+        calendarEventsRef.current = allEvents;
+        setCalendarEvents(allEvents);
+      })
+      .catch(err => console.error('공용 캘린더 로드 실패:', err));
+  }, []);
 
   const handleDateClick = (info) => {
     const clickedDate = new Date(info.dateStr);
     const today = new Date();
+
     if (
       clickedDate.getFullYear() !== today.getFullYear() ||
       clickedDate.getMonth() !== today.getMonth()
@@ -63,7 +83,17 @@ const usePublicCalendar = () => {
       if (ok) navigate('/calendar');
       return;
     }
-    const filtered = calendarEvents.filter(e => e.date === info.dateStr || e.start === info.dateStr);
+
+    const filtered = calendarEventsRef.current.filter(e => {
+      const eStartDay = e.start?.split(' ')[0];
+      const eEndDay = e.originalEnd ?? eStartDay;
+
+      if (eEndDay !== eStartDay) {
+        return info.dateStr >= eStartDay && info.dateStr <= eEndDay;
+      }
+      return eStartDay === info.dateStr;
+    });
+
     setSelectedDate(info.dateStr);
     setSelectedSchedules(filtered);
   };
@@ -73,7 +103,6 @@ const usePublicCalendar = () => {
     selectedDate,
     selectedSchedules,
     handleDateClick,
-    loadHolidaysForYear,
   };
 };
 

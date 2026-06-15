@@ -9,12 +9,12 @@ import { IMAGES } from '../../images/images';
 import usePublicCalendar from '../schedules/publicCalendar';
 import { checkIn_api, checkOut_api, getAttendanceStatus } from './mainApi';
 import useUserStore from '../../store/userStore';
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import interactionPlugin from '@fullcalendar/interaction';
+import Calendar from '../../components/common/Calendar';
 
 import DraftModal from './DraftModal';
 import ProjectModal from './ProjectModal';
+import CheckoutCorrectionModal from './CheckoutCorrectionModal';
+import OvertimeRequestModal from './OvertimeRequestModal';
 
 const Main = () => {
   const navigate = useNavigate();
@@ -24,10 +24,12 @@ const Main = () => {
   //빠른실행탭 모달 연결을 위한 상태변수
   const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [isCorrectionModalOpen, setIsCorrectionModalOpen] = useState(false);
+  const [isOvertimeModalOpen, setIsOvertimeModalOpen] = useState(false);
 
   const [checkIn, setCheckIn] = useState(null);   // 출근 시간
   const [checkOut, setCheckOut] = useState(null); // 퇴근 시간
-
+  const [attendanceSeq, setAttendanceSeq] = useState(null);
 
   // 자정 리셋 useEffect 추가
   useEffect(() => {
@@ -53,6 +55,7 @@ const Main = () => {
             // 서버에서 받은 시간이 있다면 상태 업데이트
             if (resp.data.check_in) setCheckIn(new Date(resp.data.check_in));
             if (resp.data.check_out) setCheckOut(new Date(resp.data.check_out));
+            if (resp.data.attendance_seq) setAttendanceSeq(resp.data.attendance_seq); 
           }
         })
         .catch(err => {
@@ -121,20 +124,24 @@ const quickActions = [
     onClick: () => setIsDraftModalOpen(true)
   },
   { title: "회의실 예약", icon: faDoorOpen,
-    bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#EFF6FF", color: "#2c7af7"
+    bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#EFF6FF", color: "#2c7af7",
+    onClick: () => navigate('/meetingRooms')
   },
   { title: "새 문서 등록", icon: faFileCirclePlus,
-    bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#ECFDF5", color: "#09af78"
+    bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#ECFDF5", color: "#09af78",
+
   },
   { title: "프로젝트 생성", icon: faDiagramProject,
     bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#FFF1F2", color: "#f62f32",
     onClick: () => setIsProjectModalOpen(true)
   },
   { title: "회의록 작성", icon: faClipboard,
-    bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#F5F3FF", color: "#702de3"
+    bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#F5F3FF", color: "#702de3",
+    onClick: () => navigate('/meetingMinutes')
   },
   { title: "비품 신청", icon: faBox,
-    bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#FFF0F9", color: "#e2328a"
+    bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#FFF0F9", color: "#e2328a",
+    onClick: () => navigate('/supply')
   },
 ];
   return (
@@ -142,6 +149,14 @@ const quickActions = [
       {/* 빠른실행 모달로 바로가기 */}
       {isDraftModalOpen && <DraftModal onClose={() => setIsDraftModalOpen(false)} />}
       {isProjectModalOpen && <ProjectModal onClose={() => setIsProjectModalOpen(false)} />}
+      {isCorrectionModalOpen && (
+        <CheckoutCorrectionModal 
+          onClose={() => setIsCorrectionModalOpen(false)} 
+          checkOutTime={checkOut ? formatStampTime(checkOut) : null}
+          attendanceSeq={attendanceSeq}
+        />
+      )}
+      {isOvertimeModalOpen && <OvertimeRequestModal onClose={() => setIsOvertimeModalOpen(false)} />}
       {/* PC에서만 부모 스크롤 차단 */}
       <style>{`
         @media (min-width: 64rem) {
@@ -166,7 +181,13 @@ const quickActions = [
             {/* Box 1: 근태 관리 */}
             <div className="md:col-span-3 bg-white p-4 rounded-3xl border border-gray-200 shadow-sm 
             flex flex-col min-h-[16.25rem] lg:h-[16.25rem]">
-              <h3 className="text-s font-extrabold text-indigo-950 self-start">출퇴근</h3>
+              <div className="flex justify-between items-center mb-1">
+                <h3 className="text-s font-extrabold text-indigo-950 self-start">출퇴근</h3>
+                <div className="flex gap-2">
+                  <button onClick={() => setIsCorrectionModalOpen(true)} className="text-[0.625rem] text-gray-400 font-bold hover:text-indigo-950">퇴근정정</button>
+                  <button onClick={() => setIsOvertimeModalOpen(true)} className="text-[0.625rem] text-gray-400 font-bold hover:text-indigo-950">연장근무</button>
+                </div>
+              </div>
                 <div className="flex-1 flex flex-col items-center justify-center">
                   <span className="text-xs font-semibold text-gray-500 mb-1">현재 시간</span>
                   <p className="text-4xl font-extrabold text-indigo-950 leading-tight">{formatTime(currentTime)}</p>
@@ -214,18 +235,18 @@ const quickActions = [
             {/* Box 2: 빠른 실행 (3x2) */}
             <div className="md:col-span-5 bg-white p-4 rounded-3xl border border-gray-200 shadow-sm flex flex-col min-h-[16.25rem] lg:h-[16.25rem]">
               <h3 className="text-s font-extrabold text-indigo-950 mb-2">빠른 실행</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 flex-1">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 xl:grid-cols-3 gap-2 flex-1">
                 {quickActions.map((action, idx) => (
                   <button key={idx}
                    onClick={action.onClick || undefined}
                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F0F4FF'}
   onMouseLeave={e => e.currentTarget.style.backgroundColor = action.bgColor}
                     style={{ backgroundColor: action.bgColor, borderColor: action.borderColor }}
-                    className="flex flex-row items-center justify-start gap-2.5 px-3 py-2 border rounded-2xl transition-all">
-                    <div style={{ backgroundColor: action.iconBgColor }} className="p-2.5 ml-1 rounded-xl">
-                      <FontAwesomeIcon icon={action.icon} style={{ color: action.color }} className="text-2xl" />
+                    className="flex flex-row items-center justify-start gap-2.5 px-3 py-2 border rounded-2xl transition-all overflow-hidden">
+                    <div style={{ backgroundColor: action.iconBgColor }} className="p-2 ml-0.5 rounded-xl shrink-0">
+                      <FontAwesomeIcon icon={action.icon} style={{ color: action.color }} className="text-xl sm:text-2xl" />
                     </div>
-                    <span className="text-[0.85rem] font-semibold" style={{ color: action.textColor}}>{action.title}</span>
+                    <span className="text-[0.75rem] sm:text-[0.85rem] font-semibold truncate" style={{ color: action.textColor}}>{action.title}</span>
                   </button>
                 ))}
               </div>
@@ -237,111 +258,12 @@ const quickActions = [
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
               {/* 달력 */}
               <div className="flex flex-col h-full overflow-hidden">
-                 <style>{`
-                    /* 테두리 및 전체 */
-                    .main-calendar .fc-theme-standard td,
-                    .main-calendar .fc-theme-standard th {
-                      border-color: #F1F5F9 !important;
-                    }
-                    .main-calendar .fc-theme-standard .fc-scrollgrid {
-                      border-color: #F1F5F9 !important;
-                    }
-
-                    /* 요일 헤더 */
-                    .main-calendar .fc-col-header-cell-cushion {
-                      font-size: 0.65rem !important;
-                      font-weight: 700 !important;
-                      color: #94A3B8 !important;
-                      padding: 2px 0 !important;
-                    }
-
-                    /* 날짜 숫자 */
-                    .main-calendar .fc-daygrid-day-number {
-                      font-size: 0.6rem !important;
-                      color: #475569 !important;
-                      padding: 2px 4px !important;
-                    }
-                    /* 오늘 날짜 배경 */
-                    .main-calendar .fc-day-today {
-                      background-color: #FFFBEB !important;
-                    }
-                    .main-calendar .fc-day-today .fc-daygrid-day-number {
-                      background-color:  transparent !important;
-                      color: #475569 !important;
-                      border-radius: 50% !important;
-                      width: 1.3rem !important;      
-                      height: 1.3rem !important;    
-                      display: flex !important;
-                      align-items: center !important;
-                      justify-content: center !important;
-                      line-height: 1 !important;     
-                      padding: 0 !important;         /* ← padding 제거 */
-                    }
-
-                    /* 툴바 */
-                    .main-calendar .fc-toolbar-title {
-                      font-size: 0.8rem !important;
-                      font-weight: 700 !important;
-                      color: #1E293B !important;
-                    }
-                    .main-calendar .fc-button {
-                      background: white !important;
-                      border: 1px solid #E2E8F0 !important;
-                      color: #64748B !important;
-                      font-size: 0.6rem !important;
-                      padding: 0.15rem 0.35rem !important;
-                      box-shadow: none !important;
-                    }
-                    .main-calendar .fc-button:hover {
-                      background: #EEF2FF !important;
-                      color: #3530B8 !important;
-                    }
-                    .main-calendar .fc-today-button {
-                      display: none !important;
-                    }
-                    .main-calendar .fc-scroller::-webkit-scrollbar {
-                      width: 3px;
-                    }
-                    .main-calendar .fc-scroller::-webkit-scrollbar-track {
-                      background: transparent;
-                    }
-                    .main-calendar .fc-scroller::-webkit-scrollbar-thumb {
-                      background-color: #E2E8F0;
-                      border-radius: 999px;
-                    }
-                      /* 이벤트 텍스트 숨기고 점만 표시 */
-                    .main-calendar .fc-daygrid-event .fc-event-title {
-                      display: none !important;
-                    }
-                    /* 이벤트 점 hover/cursor 제거 */
-                    .main-calendar .fc-daygrid-event {
-                      pointer-events: none !important;
-                      cursor: default !important;
-                    }
-                      /* +N more 호버 효과 제거 */
-                    .main-calendar .fc-daygrid-more-link {
-                      pointer-events: none !important;
-                      cursor: default !important;
-                    }
-                  `}</style>
                   <div className="flex-1 overflow-hidden main-calendar">
-                    <FullCalendar
-                      plugins={[dayGridPlugin, interactionPlugin]}
-                      initialView="dayGridMonth"
-                      locale="ko"
-                      headerToolbar={{
-                        left: '',  
-                        center: 'title',
-                        right: ''  
-                      }}
-                      height="100%"
-                      eventDisplay="list-item"   // ← 점으로 표시
-                      dayMaxEvents={1}  // true시 셀 높이에 맞춰 자동으로 "+N개" 표시
-                      moreLinkClick={() => 'none'} //클릭 막기
-                      fixedWeekCount={false}//당 월 만큼 줄 조절
+                    <Calendar 
+                      isStatic={true}
+                      value={selectedDate}
                       events={calendarEvents}
-                      //한 칸 클릭
-                      dateClick={handleDateClick}
+                      onChange={handleDateClick}
                     />
                   </div>
               </div>
@@ -412,13 +334,13 @@ const quickActions = [
             <div className="mt-auto relative z-10">         
               <button
                 onClick={() => navigate('/aiChat')}
-                className="relative z-20 w-1/2 lg:w-full py-3.5 bg-white text-indigo-950 font-bold text-sm rounded-xl shadow-md active:scale-[0.98] transition-all"
+                className="relative z-20 w-1/2 md:w-2/3 lg:w-3/5 py-3.5 bg-white text-indigo-950 font-bold text-sm rounded-xl shadow-md active:scale-[0.98] transition-all"
               >
                 AI 채팅 시작하기
               </button>
               <img 
                 src={IMAGES.MAIN_AI1} 
-                className="absolute -bottom-4 lg:bottom-14 -right-2 w-28 h-28 lg:w-55 lg:h-55 object-contain opacity-80 lg:opacity-100" 
+                className="absolute -bottom-4 md:-bottom-2 lg:-bottom-2 -right-2 w-24 h-24 md:w-32 md:h-32 lg:w-44 lg:h-44 object-contain opacity-80 lg:opacity-100 transition-all duration-300" 
                 alt="" 
               />
             </div>

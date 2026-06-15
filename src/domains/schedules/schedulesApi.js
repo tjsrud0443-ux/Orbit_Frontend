@@ -4,3 +4,4 @@ export const createSchedule = (scheduleData) => maxios.post('/Schedules', schedu
 export const updateSchedule = (scheduleSeq, scheduleData) => maxios.put(`/Schedules/${scheduleSeq}`, scheduleData);
 export const deleteSchedule = (schedule_Seq) => maxios.delete(`/Schedules/${schedule_Seq}`);
 export const getSchedules = () => maxios.get('/Schedules');
+export const getApprovedVacations = () => maxios.get('/Schedules/vacations');
