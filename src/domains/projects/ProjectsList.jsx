@@ -7,6 +7,7 @@ import Calendar from '../../components/common/Calendar';
 import { completeProject, deleteProject, getAllEmp, getMyAllProject, getProjectCount, insertProjectAndMembers, updateProject } from './projectsApi';
 import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
+import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 
 const ProjectsList = () => {
   const navigate = useNavigate();
@@ -188,7 +189,7 @@ const ProjectsList = () => {
         setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
         setEmpSearch('');
         setErrors({});
-        alert('개인 캘린더에 일정이 성공적으로 추가되었습니다.');
+        alertSuccess('등록 완료', '프로젝트 등록이 완료되었습니다.<br>캘린더에서 일정을 확인하세요.');
       });
     });
   };
@@ -285,7 +286,7 @@ const ProjectsList = () => {
     };
 
     updateProject(updatedEntry).then(() => {
-      alert('프로젝트가 성공적으로 수정되었습니다.');
+      alertSuccess('수정 완료', '프로젝트 정보가 수정되었습니다.');
       getMyAllProject().then(resp => {
         setProjects(resp.data);
         const updatedProject = resp.data.find(

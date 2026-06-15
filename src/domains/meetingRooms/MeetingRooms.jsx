@@ -296,7 +296,7 @@ const MeetingRooms = () => {
       setEvents(resp.data);
       setIsPanelOpen(false);
       setShowValidation(false);
-      await alertSuccess('예약 완료', '회의실 예약이 완료되었습니다.');
+      await alertSuccess('예약 완료', '회의실 예약이 완료되었습니다.<br>캘린더에서 일정을 확인하세요.');
     } catch(error) {
       console.error('회의실 예약 실패: ', error);
       await alertError('예약 실패', '회의실 예약에 실패했습니다.');
