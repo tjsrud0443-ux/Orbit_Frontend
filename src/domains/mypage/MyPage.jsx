@@ -17,7 +17,7 @@ const MyPage = () => {
   const user = useUserStore(state => state.user);
 
   const navigate = useNavigate();
-  
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [activeTab, setActiveTab] = useState('비품');
   const [dayModal, setDayModal] = useState({ open: false, date: '', schedules: [] });
   const [profileData,setProfileData]=useState();
@@ -26,7 +26,7 @@ const MyPage = () => {
   const [adminInquiries, setAdminInquiries] = useState([]);
 
   const tabs = ['비품', '회의실', '관리자 문의'];
-  const { calendarEvents, selectedDate, selectedSchedules } = usePersonalCalendar();
+  const { calendarEvents, loading, handleDateClick, handleEventClick } = usePersonalCalendar(setDayModal);
   
   const requestData = {
     '비품': supplyRequests.slice(0, 4).map(req => ({
@@ -48,9 +48,15 @@ const MyPage = () => {
     '관리자 문의': adminInquiries.slice(0, 4).map(qna => ({
       title: qna.question,
       date: qna.created_at,
-      status: qna.status === 'ANSWERED' ? '승인' : '대기'
+      status: qna.status === 'ANSWERED' ? '답변 완료' : '답변 대기'
     })),
   };
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(()=>{
     getProfileInfo().then(resp=> setProfileData(resp.data))
@@ -69,23 +75,10 @@ const MyPage = () => {
       .catch(err => console.log("관리자 문의 내역 불러오기 실패", err));
   },[]);
 
-  // const handleDateClick = (info) => {
-  //   const filtered = calendarEvents.filter(e => e.date === info.dateStr || e.start === info.dateStr);
-  //   setDayModal({ open: true, date: info.dateStr, schedules: filtered });
-  // };
-const handleDateClick = (info) => {
-  const filtered = calendarEvents.filter(e => {
-    const endDate = e.originalEnd || e.end;
-    if (endDate) {
-      return info.dateStr >= e.start && info.dateStr <= endDate;
-    }
-    return e.start === info.dateStr;
-  });
-  setDayModal({ open: true, date: info.dateStr, schedules: filtered });
-};
+
   const statusStyle = (status) => {
-    if (status === '승인') return { background: '#F0FDF4', color: '#10B981', border: '1px solid #DCFCE7' };
-    if (status === '대기') return { background: '#FFF9F0', color: '#FF9800', border: '1px solid #FEF3C7' };
+    if (status === '승인' || status === '답변 완료') return { background: '#F0FDF4', color: '#10B981', border: '1px solid #DCFCE7' };
+    if (status === '대기' || status === '답변 대기') return { background: '#FFF9F0', color: '#FF9800', border: '1px solid #FEF3C7' };
     if (status === '처리중') return { background: '#F0F4FF', color: '#3530B8', border: '1px solid #DDE8FF' };
     return { background: '#FFF0F0', color: '#FF4D4F', border: '1px solid #FEE2E2' };
   };
@@ -120,18 +113,18 @@ const handleDateClick = (info) => {
     workDays: 0,
     lateCnt: 0,
     usedLeave: 0,
-    overtime_hours:0
+    overtimeHours:0
   });
 
   useEffect(() => {
-  getCntWeek()
-    .then(resp => setWeekSummary(prev => ({
+  getCntWeek().then(resp =>{ 
+      setWeekSummary(prev => ({       
        ...prev, 
       lateCnt: resp.data.late_cnt ?? 0,
       workDays: resp.data.work_days ?? 0,
       overtimeHours: resp.data.overtime_hours ?? 0,
       usedLeave: resp.data.vac_cnt ?? 0
-      })))
+      }))})
     .catch(err => console.log(err));
 }, []);
 
@@ -147,7 +140,8 @@ const weeklyAttendance = [
     getAnuualSummary().then(resp=>{
       setLeaveData(resp.data)
     }).catch(err=>console.log("연차 불러오기 실패",err));
-  })
+  },[]);
+  
   const donutData = {
     labels: ['잔여', '사용'],
     datasets: [{
@@ -282,7 +276,7 @@ const weeklyAttendance = [
                   .main-calendar .fc-day-today .fc-daygrid-day-number { 
                     background-color:  transparent !important; color: #475569 !important; 
                     border-radius: 50% !important; 
-                    width: 1.6rem !important; height: 1.6rem !important; 
+                    width: 1.6ullCalrem !important; height: 1.6rem !important; 
                     display: flex !important; 
                     align-items: center !important; justify-content: center !important; 
                     line-height: 1 !important; padding: 0 !important; 
@@ -301,20 +295,24 @@ const weeklyAttendance = [
                     height: 1.6rem !important;
                     display: flex !important;
                     align-items: center !important;
+                    white-space: nowrap !important;
                   }
                 `}</style>
-                <div className="h-[27rem] overflow-hidden main-calendar">
+                <div className="h-[27rem] overflow-hidden main-calendar">          
                   <FullCalendar
                     plugins={[dayGridPlugin, interactionPlugin]}
                     initialView="dayGridMonth"
                     locale="ko"
                     headerToolbar={{ left: '', center: 'title', right: '' }}
-                    height="100%"           
+                    height="100%"      
+                    moreLinkContent={(args) => isMobile ? `+${args.num}` : `+${args.num} more`}     
                     dayMaxEvents={1}
                     fixedWeekCount={false}//당 월 만큼 줄 조절
+                    moreLinkClick="day" 
                     moreLinkClick={() => 'none'}
                     events={calendarEvents}
                     dateClick={handleDateClick}
+                    eventClick={handleEventClick}
                   />
                 </div>
           </div>
@@ -410,7 +408,16 @@ const weeklyAttendance = [
             {dayModal.schedules.length > 0 ? dayModal.schedules.map((s, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem', background: '#F8FAFC', borderRadius: '0.75rem', marginBottom: '0.4rem' }}>
                 <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: s.color || '#3530B8', flexShrink: 0 }} />
-                <span style={{ fontSize: '0.78rem', fontWeight: '600', color: '#1E293B' }}>{s.title}</span>
+                <div>
+                  <span style={{ fontSize: '0.78rem', fontWeight: '600', color: '#1E293B' }}>{s.title}</span>
+                  {/* 시간 정보가 포함되어 있다면(HH:mm:ss 등) 모두 표시 */}
+                  {s.schedule_type === 'MEETING' && s.start?.includes(':') && (
+                    <p style={{ fontSize: '0.65rem', color: '#94A3B8', marginTop: '2px' }}>
+                      {(s.start.includes(' ') ? s.start.split(' ')[1] : s.start.split('T')[1])?.slice(0, 5)} ~ 
+                      {(s.originalEnd?.includes(' ') ? s.originalEnd.split(' ')[1] : s.originalEnd?.split('T')[1])?.slice(0, 5)}
+                    </p>
+                  )}
+                </div>
               </div>
             )) : (
               <p style={{ fontSize: '0.75rem', color: '#94A3B8', textAlign: 'center', padding: '1rem 0' }}>일정이 없습니다.</p>
