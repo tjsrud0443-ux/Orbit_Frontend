@@ -17,7 +17,7 @@ const MyPage = () => {
   const user = useUserStore(state => state.user);
 
   const navigate = useNavigate();
-  
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [activeTab, setActiveTab] = useState('비품');
   const [dayModal, setDayModal] = useState({ open: false, date: '', schedules: [] });
   const [profileData,setProfileData]=useState();
@@ -51,6 +51,12 @@ const MyPage = () => {
       status: qna.status === 'ANSWERED' ? '답변 완료' : '답변 대기'
     })),
   };
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(()=>{
     getProfileInfo().then(resp=> setProfileData(resp.data))
@@ -288,6 +294,7 @@ const weeklyAttendance = [
                     height: 1.6rem !important;
                     display: flex !important;
                     align-items: center !important;
+                    white-space: nowrap !important;
                   }
                 `}</style>
                 <div className="h-[27rem] overflow-hidden main-calendar">
@@ -296,7 +303,8 @@ const weeklyAttendance = [
                     initialView="dayGridMonth"
                     locale="ko"
                     headerToolbar={{ left: '', center: 'title', right: '' }}
-                    height="100%"           
+                    height="100%"      
+                    moreLinkContent={(args) => isMobile ? `+${args.num}` : `+${args.num} more`}     
                     dayMaxEvents={1}
                     fixedWeekCount={false}//당 월 만큼 줄 조절
                     moreLinkClick="day" 
@@ -402,7 +410,7 @@ const weeklyAttendance = [
                 <div>
                   <span style={{ fontSize: '0.78rem', fontWeight: '600', color: '#1E293B' }}>{s.title}</span>
                   {/* 시간 정보가 포함되어 있다면(HH:mm:ss 등) 모두 표시 */}
-                  {s.start?.includes(':') && (
+                  {s.schedule_type === 'MEETING' && s.start?.includes(':') && (
                     <p style={{ fontSize: '0.65rem', color: '#94A3B8', marginTop: '2px' }}>
                       {(s.start.includes(' ') ? s.start.split(' ')[1] : s.start.split('T')[1])?.slice(0, 5)} ~ 
                       {(s.originalEnd?.includes(' ') ? s.originalEnd.split(' ')[1] : s.originalEnd?.split('T')[1])?.slice(0, 5)}

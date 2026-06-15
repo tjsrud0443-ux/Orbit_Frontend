@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getSchedules } from './schedulesApi';
+import { getApprovedVacations, getSchedules } from './schedulesApi';
 import { fetchHolidays } from '../../api/holidayApi';
 
 const CATEGORY_COLORS = {
-  personal: '#3530B8',
-  annual:   '#10B981',   // 연차 승인 자동 등록
-  project:  '#6366F1',
-  meeting:  '#ff75bf',
+  PERSONAL: '#3530B8',
+  ANNUAL:   '#67adef',
+  PROJECT:  '#8c8eef',
+  MEETING:  '#ff9fd2',
   holiday:  '#EF4444',
 };
 
@@ -21,8 +21,8 @@ const useCalendar = (setDayModal) => {
   useEffect(() => {
     const year = new Date().getFullYear();
 
-    Promise.all([getSchedules(), fetchHolidays(year)])
-      .then(([scheduleResp, holidays]) => {
+    Promise.all([getSchedules(), getApprovedVacations(), fetchHolidays(year)])
+      .then(([scheduleResp,vacResp, holidays]) => {
         const scheduleEvents = scheduleResp.data.map(item => {
           // 'T'를 공백으로 치환하여 통일 (DB 데이터가 ISO나 YYYY-MM-DD HH:mm:ss 혼용일 경우 대비)
           const fullStart = item.start_dt?.replace('T', ' ');
@@ -47,9 +47,20 @@ const useCalendar = (setDayModal) => {
             allDay: true,
             display: isMultiDay ? 'block' : 'list-item',
             schedule_type: item.schedule_type,
-            color: CATEGORY_COLORS[item.schedule_type?.toLowerCase()] ?? '#3530B8',
+            color: CATEGORY_COLORS[item.schedule_type] ?? '#3530B8',
           };
         });
+
+        const vacEvents = vacResp.data.map(item => ({
+          id: `vac_${item.schedule_seq}`,
+          title: item.title,
+          start: item.start_dt?.replace('T', ' '),
+          originalEnd: item.end_dt?.replace('T', ' '),
+          allDay: true,
+          display: 'list-item',
+          schedule_type: 'ANNUAL',
+          color: CATEGORY_COLORS['ANNUAL'],
+        }));
 
         const holidayEvents = holidays.map(h => ({
           ...h,
@@ -59,7 +70,7 @@ const useCalendar = (setDayModal) => {
           color: '#EF4444',
         }));
         
-        const allEvents = [...scheduleEvents, ...holidayEvents];
+        const allEvents = [...scheduleEvents, ...vacEvents, ...holidayEvents];
         calendarEventsRef.current = allEvents;
         setCalendarEvents(allEvents);
       }).catch(err => console.error('로드 실패:', err));

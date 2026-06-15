@@ -674,10 +674,10 @@ const Calendar = () => {
                   }
                   .fc-daygrid-more-link {
                     font-size: 0.55rem !important;
-                     overflow: hidden !important;
-    max-width: 2rem !important;
-    white-space: nowrap !important;
-    text-overflow: clip !important;
+                    overflow: hidden !important;
+                    max-width: 2rem !important;
+                    white-space: nowrap !important;
+                    text-overflow: clip !important;
                   }
                 }
               `}</style>
@@ -720,7 +720,7 @@ const Calendar = () => {
                       title="이달의 내 일정"
                     />
                   </div>
-                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-y-auto">
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-y-auto mb-4 lg:mb-0">
                     <FilterSection title="개인 캘린더" filters={PERSONAL_FILTERS} checked={personalChecked} onChange={(k, v) => setPersonalChecked(p => ({ ...p, [k]: v }))} />
                   </div>
                 </>
@@ -729,7 +729,7 @@ const Calendar = () => {
                   <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-hidden max-h-80 lg:max-h-none overflow-y-auto lg:overflow-hidden">
                     <MonthlyEvents events={companyEvents} currentTitle={currentTitle} title="이달의 전사 일정 및 공휴일" />
                   </div>
-                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-y-auto">
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-y-auto mb-4 lg:mb-0">
                     <FilterSection title="회사 공용 캘린더" filters={COMPANY_FILTERS} checked={companyChecked} onChange={(k, v) => setCompanyChecked(p => ({ ...p, [k]: v }))} />
                   </div>
                 </>
