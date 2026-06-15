@@ -8,6 +8,7 @@ import { fetchHolidays } from '../../api/holidayApi';
 import { getSchedules, createSchedule, deleteSchedule, updateSchedule, getApprovedVacations } from './schedulesApi';
 import useLoadingStore from '../../store/useLoadingStore';
 import useUserStore from '../../store/userStore';
+import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
@@ -421,30 +422,42 @@ const Calendar = () => {
           if (isPersonalCategory) setPersonalEvents(updater);
           else setCompanyEvents(updater);
           setModal({ open: false, date: '' });
+          alertSuccess('일정 수정 완료', '일정이 성공적으로 수정되었습니다.');
         })
-        .catch(err => console.error('일정 수정 실패:', err));
+        .catch(err => {
+          console.error('일정 수정 실패:', err);
+          alertError('일정 수정 실패', '일정 수정 중 오류가 발생했습니다.');
+        });
     } else {
       createSchedule(payload)
         .then((resp) => {
           const realSeq = resp.data.schedule_seq.toString(); // 서버에서 받은 진짜 seq
-        const realEventData = { ...eventData, id: realSeq }; 
+          const realEventData = { ...eventData, id: realSeq }; 
           if (isPersonalCategory) setPersonalEvents(prev => [...prev, realEventData]);
-      else setCompanyEvents(prev => [...prev, realEventData]);
-      setModal({ open: false, date: '' });
+          else setCompanyEvents(prev => [...prev, realEventData]);
+          setModal({ open: false, date: '' });
+          alertSuccess('일정 추가 완료', '새 일정이 성공적으로 추가되었습니다.');
         })
-        .catch(err => console.error('일정 추가 실패:', err));
+        .catch(err => {
+          console.error('일정 추가 실패:', err);
+          alertError('일정 추가 실패', '일정 추가 중 오류가 발생했습니다.');
+        });
     }
   };
 
   // 폼 유효성 검사 (모든 필드 입력 및 날짜 순서 확인)
   const isFormValid = form.title.trim() && form.start_dt && form.end_dt && (form.start_dt <= form.end_dt);
   // 이벤트 삭제
-  const handleDeleteEvent = (id) => {
+  const handleDeleteEvent = async (id) => {
+    const result = await alertConfirm('일정 삭제', '정말로 이 일정을 삭제하시겠습니까?');
+    if (!result.isConfirmed) return;
+
     // 공용 데이터(숫자 아닌 seq)는 API 호출 안 함
     if (isNaN(Number(id))) {
       setPersonalEvents(prev => prev.filter(e => e.id !== id));
       setCompanyEvents(prev => prev.filter(e => e.id !== id));
       setModal({ open: false, date: '' });
+      alertSuccess('일정 삭제 완료', '일정이 성공적으로 삭제되었습니다.');
       return;
     }
     deleteSchedule(id)
@@ -452,8 +465,12 @@ const Calendar = () => {
         setPersonalEvents(prev => prev.filter(e => e.id !== id));
         setCompanyEvents(prev => prev.filter(e => e.id !== id));
         setModal({ open: false, date: '' });
+        alertSuccess('일정 삭제 완료', '일정이 성공적으로 삭제되었습니다.');
       })
-      .catch(err => console.error('일정 삭제 실패:', err));
+      .catch(err => {
+        console.error('일정 삭제 실패:', err);
+        alertError('일정 삭제 실패', '일정 삭제 중 오류가 발생했습니다.');
+      });
   };
 
   // --- [Calendar 컴포넌트 내부 맨 밑바닥에 배치할 함수] ---
@@ -465,17 +482,17 @@ const Calendar = () => {
     return (
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`absolute z-30 w-[15rem] bottom-full mb-1 ${positionClass} bg-white border border-gray-100 rounded-2xl shadow-2xl p-4 animate-in fade-in slide-in-from-bottom-2 duration-200`}
+        className={`absolute z-[100] w-[11.5rem] top-full mt-1 ${positionClass} bg-white border border-gray-100 rounded-xl shadow-2xl p-2.5 animate-in fade-in slide-in-from-top-2 duration-200`}
       >
         {/* 달력 헤더 */}
-        <div className="flex items-center justify-between mb-3 px-1">
+        <div className="flex items-center justify-between mb-2 px-0.5">
           <button
             onClick={(e) => { e.stopPropagation(); setViewDate(new Date(calendarYear, calendarMonth - 1, 1)); }}
             className="p-1 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-[#3530B8] transition-colors"
           >
             &lt;
           </button>
-          <div className="text-xs font-bold text-gray-900">{calendarYear}년 {calendarMonth + 1}월</div>
+          <div className="text-[0.6875rem] font-bold text-gray-900">{calendarYear}년 {calendarMonth + 1}월</div>
           <button
             onClick={(e) => { e.stopPropagation(); setViewDate(new Date(calendarYear, calendarMonth + 1, 1)); }}
             className="p-1 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-[#3530B8] transition-colors"
@@ -485,14 +502,14 @@ const Calendar = () => {
         </div>
 
         {/* 요일 표시 */}
-        <div className="grid grid-cols-7 gap-1 mb-1.5">
+        <div className="grid grid-cols-7 gap-0.5 mb-1">
           {['일', '월', '화', '수', '목', '금', '토'].map(d => (
-            <div key={d} className="text-[0.625rem] font-bold text-gray-400 text-center py-0.5">{d}</div>
+            <div key={d} className="text-[0.5625rem] font-bold text-gray-400 text-center py-0.5">{d}</div>
           ))}
         </div>
 
         {/* 날짜 그리드 */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-0.5">
           {calendarDays.map((d, i) => {
             const isSelected = d && currentTargetDate === `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
@@ -519,7 +536,7 @@ const Calendar = () => {
                   setForm(prev => ({ ...prev, [type === 'start' ? 'start_dt' : 'end_dt']: formattedDate }));
                   setOpenCalendar(null);
                 }}
-                className={`text-[0.625rem] font-medium text-center py-1.5 rounded-lg transition-all
+                className={`text-[0.625rem] font-medium text-center py-1 rounded-lg transition-all
                   ${!d ? 'invisible' : 'cursor-pointer'}
                   ${d && !isSelected ? 'hover:bg-[#F0F4FF] hover:text-[#3530B8] text-slate-600' : ''}
                   ${isSelected ? 'bg-[#3530B8] text-white font-bold' : ''}
@@ -692,6 +709,7 @@ const Calendar = () => {
                 moreLinkContent={(args) => isMobile ? `+${args.num}` : `+${args.num} more`}
                 aspectRatio={isMobile ? 0.8 : undefined}
                 height={isMobile ? 'auto' : '100%'}
+                expandRows={true}
                 editable={activeTab === 'personal'}
                 selectable={activeTab === 'personal'}
                 events={filteredEvents}
@@ -776,7 +794,10 @@ const Calendar = () => {
       )}
 
       {modal.open && (
-        <ModalOverlay onClose={() => setModal({ open: false, date: '' })}>
+        <ModalOverlay 
+          onClose={() => setModal({ open: false, date: '' })}
+          overflow="overflow-visible"
+        >
           <h3 className="text-sm font-bold text-slate-800 mb-4">{isEditing ? '일정 수정' : '새 일정 추가'}</h3>
           {/* 제목 */}
           <div className="mb-3">
@@ -802,7 +823,7 @@ const Calendar = () => {
             </select>
           ) : null}
           {/* 날짜 선택 영역 (커스텀 달력 팝업 적용) */}
-          <div className="flex gap-2 mb-3">
+          <div className="flex gap-2 mb-3 overflow-visible relative z-10">
 
             {/* [시작일 커스텀 달력] */}
             <div className="flex-1 relative">
@@ -981,10 +1002,10 @@ const FilterSection = ({ title, filters, checked, onChange }) => (
   </div>
 );
 
-const ModalOverlay = ({ children, onClose }) => (
+const ModalOverlay = ({ children, onClose, overflow = "overflow-y-auto" }) => (
   <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
     onClick={e => e.target === e.currentTarget && onClose()}>
-    <div className="bg-white rounded-2xl p-6 w-full max-w-sm mx-4 max-h-[80vh] overflow-y-auto">
+    <div className={`bg-white rounded-2xl p-6 w-full max-w-sm mx-4 max-h-[80vh] ${overflow}`}>
       {children}
     </div>
   </div>
