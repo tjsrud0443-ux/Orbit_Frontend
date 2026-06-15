@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import { getMyQuestions, deleteMyQuestions } from '../mypage/mypageApi';
 import { maxios } from '../../api/axiosConfig';
-import { deleteMyAnswer, getMyDeptQuestion, insertUpdateAnswer } from './adminApi';
+import { adminAiQuestionsData, deleteMyAnswer, getMyDeptQuestion, insertUpdateAnswer } from './adminApi';
 import useUserStore from '../../store/userStore';
 import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 
@@ -13,9 +13,11 @@ const AdminQna = () => {
   const [searchBy, setSearchBy] = useState('질문 내용');
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const searchDropdownRef = useRef(null);
+  const [count, setCount] = useState({});
 
   const [isEditing, setIsEditing] = useState(false);
   const [answerText, setAnswerText] = useState('');
+  const [answerError, setAnswerError] = useState('');
   const user = useUserStore(state => state.user);
 
   useEffect(() => {
@@ -37,6 +39,13 @@ const AdminQna = () => {
   useEffect(() => {
     getMyDeptQuestion(user.dept_seq, user.auth_group).then(resp => {
       setQnaList(resp.data);
+    });
+  }, []);
+
+  useEffect(() => {
+    adminAiQuestionsData(user.dept_seq, user.auth_group).then(resp => {
+      console.log(resp.data);
+      setCount(resp.data);
     });
   }, []);
 
@@ -75,21 +84,25 @@ const AdminQna = () => {
     setSelectedQna(item);
     setIsEditing(true);
     setAnswerText('');
+    setAnswerError('');
   };
 
   const handleDetailClick = (item) => {
     setSelectedQna(item);
     setIsEditing(false);
     setAnswerText(item.handle_answer || '');
+    setAnswerError('');
   };
 
   const handleEditClick = () => {
     setIsEditing(true);
     setAnswerText(selectedQna.handle_answer || '');
+    setAnswerError('');
   };
 
   const handleCancelClick = () => {
     setIsEditing(false);
+    setAnswerError('');
     if (selectedQna.status === 'PENDING') {
       setSelectedQna(null);
     }
@@ -112,6 +125,10 @@ const AdminQna = () => {
   const handleAnswerSubmit = () => {
     if (!answerText.trim()) {
       alertWarning('답변 미입력', '답변을 입력해주세요.');
+      return;
+    }
+    if (answerText.length > 300) {
+      setAnswerError("글자수가 초과되었습니다. 300자까지만 입력 가능합니다.");
       return;
     }
     insertUpdateAnswer(payload).then(resp => {
@@ -143,10 +160,17 @@ const AdminQna = () => {
         <div className={`bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-3 md:p-8 flex flex-col transition-all duration-300 md:overflow-hidden min-w-0 ${selectedQna ? 'md:w-[65%] w-full' : 'w-full'}`}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
             <div className="flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit items-center flex-shrink-0">
-              {['전체', '답변 대기', '답변완료'].map(tab => (
-                <button key={tab} onClick={() => { setFilter(tab); setCurrentPage(1); }}
-                  className={`flex-1 md:flex-none px-2 md:px-6 py-1.5 rounded-xl text-[11px] md:text-sm font-bold transition-all whitespace-nowrap ${filter === tab ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>
-                  {tab}
+              {[
+                { label: '전체', count: count.allCount ?? 0 },
+                { label: '답변 대기', count: count.pendingCount ?? 0 },
+                { label: '답변완료', count: count.answeredCount ?? 0 }
+              ].map(tab => (
+                <button key={tab.label} onClick={() => { setFilter(tab.label); setCurrentPage(1); }}
+                  className={`flex-1 md:flex-none px-2 md:px-6 py-1.5 rounded-xl text-[11px] md:text-sm font-bold transition-all whitespace-nowrap ${filter === tab.label ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>
+                  {tab.label}
+                  <span className="ml-1.5">
+                    ({tab.count})
+                  </span>
                 </button>
               ))}
             </div>
@@ -189,9 +213,9 @@ const AdminQna = () => {
                     <th className="pb-4 font-medium px-6 text-left w-[10%] whitespace-nowrap">카테고리</th>
                     <th className="pb-4 font-medium px-4 text-left w-[30%] whitespace-nowrap">질문 내용</th>
                     <th className="pb-4 font-medium px-4 text-left w-[10%] whitespace-nowrap">질문자</th>
-                    <th className="pb-4 font-medium px-4 text-left w-[15%] whitespace-nowrap">등록일</th>
-                    <th className="pb-4 font-medium px-5 text-left w-[10%] whitespace-nowrap">상태</th>
-                    <th className="pb-4 font-medium px-5 text-left w-[10%] whitespace-nowrap">관리</th>
+                    <th className="pb-4 font-medium px-16 text-left w-[15%] whitespace-nowrap">등록일</th>
+                    <th className="pb-4 font-medium px-9.5 text-left w-[10%] whitespace-nowrap">상태</th>
+                    <th className="pb-4 font-medium px-8.5 text-left w-[10%] whitespace-nowrap">관리</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -318,12 +342,23 @@ const AdminQna = () => {
             <h3 className="text-lg font-bold mb-2 text-[#3530B8]">A. 관리자 답변</h3>
             <div className={`p-6 rounded-2xl border ${selectedQna.status === 'ANSWERED' && !isEditing ? 'bg-white border-[#edf2f9]' : 'bg-gray-50 border-dashed border-gray-200'}`}>
               {isEditing ? (
-                <textarea
-                  className="w-full h-32 p-4 bg-white border border-[#edf2f9] rounded-xl text-sm outline-none resize-none"
-                  placeholder="답변을 입력해 주세요."
-                  value={answerText}
-                  onChange={(e) => setAnswerText(e.target.value)}
-                />
+                <>
+                  <textarea
+                    className="w-full h-32 p-4 bg-white border border-[#edf2f9] rounded-xl text-sm outline-none resize-none custom-scrollbar transition-all"
+                    placeholder="답변을 입력해 주세요."
+                    value={answerText}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setAnswerText(val);
+                      if (val.length > 300) {
+                        setAnswerError("글자수가 초과되었습니다. 300자까지만 입력 가능합니다.");
+                      } else {
+                        setAnswerError("");
+                      }
+                    }}
+                  />
+                  {answerError && <p className="text-[11px] text-red-500 mt-2 ml-1">{answerError}</p>}
+                </>
               ) : selectedQna.status === 'ANSWERED' ? (
                 <div>
                   <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedQna.handle_answer}</p>
@@ -336,7 +371,7 @@ const AdminQna = () => {
 
             {isEditing ? (
               <div className="flex gap-2 mt-auto">
-                 <button onClick={handleCancelClick} className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-xl font-bold hover:bg-gray-200 transition-all">
+                <button onClick={handleCancelClick} className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-xl font-bold hover:bg-gray-200 transition-all">
                   취소
                 </button>
                 <button onClick={handleAnswerSubmit} className="flex-1 py-4 bg-[#3530B8] text-white rounded-xl font-bold hover:bg-[#2a2594] transition-all">
@@ -380,12 +415,23 @@ const AdminQna = () => {
               <h4 className="text-[11px] font-bold text-[#3530B8] uppercase mb-2">관리자 답변</h4>
               <div className={`p-4 rounded-xl border ${selectedQna.status === 'ANSWERED' && !isEditing ? 'bg-white border-[#edf2f9]' : 'bg-gray-50 border-dashed border-gray-200'}`}>
                 {isEditing ? (
-                  <textarea
-                    className="w-full h-24 p-3 bg-white border border-[#edf2f9] rounded-xl text-xs outline-none resize-none"
-                    placeholder="답변을 입력해 주세요."
-                    value={answerText}
-                    onChange={(e) => setAnswerText(e.target.value)}
-                  />
+                  <>
+                    <textarea
+                      className="w-full h-24 p-3 bg-white border border-[#edf2f9] rounded-xl text-xs outline-none resize-none custom-scrollbar transition-all"
+                      placeholder="답변을 입력해 주세요."
+                      value={answerText}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setAnswerText(val);
+                        if (val.length > 300) {
+                          setAnswerError("글자수가 초과되었습니다. 300자까지만 입력 가능합니다.");
+                        } else {
+                          setAnswerError("");
+                        }
+                      }}
+                    />
+                    {answerError && <p className="text-[10px] text-red-500 mt-2 ml-1">{answerError}</p>}
+                  </>
                 ) : selectedQna.status === 'ANSWERED' ? (
                   <div>
                     <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedQna.handle_answer}</p>
@@ -424,11 +470,13 @@ const AdminQna = () => {
         )}
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
+        textarea.custom-scrollbar::-webkit-scrollbar { width: 3px; }
       `}} />
     </div>
   );

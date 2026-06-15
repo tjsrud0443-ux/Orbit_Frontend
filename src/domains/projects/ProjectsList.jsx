@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown, faCheck } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
 // updateProject 추가 (projectsApi.js 에 구현 필요)
-import { completeProject, deleteProject, getAllEmp, getMyAllProject, insertProjectAndMembers, updateProject } from './projectsApi';
+import { completeProject, deleteProject, getAllEmp, getMyAllProject, getProjectCount, insertProjectAndMembers, updateProject } from './projectsApi';
 import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
 
@@ -37,7 +37,7 @@ const ProjectsList = () => {
   const [employees, setEmployees] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const [projectCount, setProjectCount] = useState([]);
   const [empSearch, setEmpSearch] = useState('');
   const [showEmpDropdown, setShowEmpDropdown] = useState(false);
   const [isStartCalendarOpen, setIsStartCalendarOpen] = useState(false);
@@ -157,6 +157,9 @@ const ProjectsList = () => {
   const handleCreate = () => {
     const newErrors = {};
     if (!newProject.project_name) newErrors.project_name = '프로젝트명을 입력해주세요.';
+    else if (newProject.project_name.length > 30) newErrors.project_name = '글자수가 초과되었습니다. 30자까지만 입력 가능합니다.';
+    if (!newProject.contents) newErrors.contents = '내용을 입력해주세요.';
+    else if (newProject.contents.length > 800) newErrors.contents = '글자수가 초과되었습니다. 800자까지만 입력 가능합니다.';
     if (!newProject.start_date) newErrors.start_date = '시작일을 선택해주세요.';
     if (!newProject.end_date) newErrors.end_date = '종료일을 선택해주세요.';
     if (newProject.start_date && newProject.end_date && newProject.end_date < newProject.start_date) {
@@ -250,6 +253,9 @@ const ProjectsList = () => {
   const handleUpdate = () => {
     const newErrors = {};
     if (!editData.project_name) newErrors.project_name = '프로젝트명을 입력해주세요.';
+    else if (editData.project_name.length > 30) newErrors.project_name = '글자수가 초과되었습니다. 30자까지만 입력 가능합니다.';
+    if (!editData.contents) newErrors.contents = '내용을 입력해주세요.';
+    else if (editData.contents.length > 800) newErrors.contents = '글자수가 초과되었습니다. 800자까지만 입력 가능합니다.';
     if (!editData.start_date) newErrors.start_date = '시작일을 선택해주세요.';
     if (!editData.end_date) newErrors.end_date = '종료일을 선택해주세요.';
     if (editData.members.length === 0) newErrors.members = '참여자를 추가해주세요.';
@@ -376,6 +382,16 @@ const ProjectsList = () => {
     })
   }, []);
 
+  useEffect(() => {
+    const getCount = async () => {
+      if(!user?.role) return;
+
+      const resp = await getProjectCount(user?.role);
+      setProjectCount(resp.data);
+    }
+    getCount();
+  }, [user?.role]);
+
   // ===== 상세 패널(수정/보기) 공통 렌더 =====
   const renderDetailBody = (mobile = false) => {
     const canEdit = selectedProject.users_id === user?.id && selectedProject.status !== 'DONE';
@@ -393,8 +409,13 @@ const ProjectsList = () => {
           <input
             value={editData.project_name}
             onChange={e => {
-              setEditData(prev => ({ ...prev, project_name: e.target.value }));
-              if (editErrors.project_name) setEditErrors(prev => ({ ...prev, project_name: null }));
+              const val = e.target.value;
+              setEditData(prev => ({ ...prev, project_name: val }));
+              if (val.length > 30) {
+                setEditErrors(prev => ({ ...prev, project_name: '글자수가 초과되었습니다. 30자까지만 입력 가능합니다.' }));
+              } else {
+                if (editErrors.project_name) setEditErrors(prev => ({ ...prev, project_name: null }));
+              }
             }}
             className={`w-full p-3 bg-[#f4f7fc] rounded-xl outline-none text-xs ${editErrors.project_name ? 'border border-red-500' : ''}`}
           />
@@ -405,9 +426,18 @@ const ProjectsList = () => {
           <textarea
             rows={3}
             value={editData.contents}
-            onChange={e => setEditData(prev => ({ ...prev, contents: e.target.value }))}
-            className="w-full text-xs p-3 bg-[#f4f7fc] rounded-xl outline-none"
+            onChange={e => {
+              const val = e.target.value;
+              setEditData(prev => ({ ...prev, contents: val }));
+              if (val.length > 800) {
+                setEditErrors(prev => ({ ...prev, contents: '글자수가 초과되었습니다. 800자까지만 입력 가능합니다.' }));
+              } else {
+                if (editErrors.contents) setEditErrors(prev => ({ ...prev, contents: null }));
+              }
+            }}
+            className={`w-full text-xs p-3 bg-[#f4f7fc] rounded-xl outline-none custom-scrollbar ${editErrors.contents ? 'border border-red-500' : ''}`}
           />
+          {editErrors.contents && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1">{editErrors.contents}</p>}
 
           {/* 3. 시작일 / 종료일 */}
           <div className="flex gap-3 mt-4">
@@ -589,14 +619,21 @@ const ProjectsList = () => {
         <div className={`bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-3 md:p-8 flex flex-col transition-all duration-300 lg:overflow-hidden min-w-0 ${selectedProject ? 'lg:w-[65%] w-full' : 'w-full'}`}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
             <div className="flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit overflow-x-auto md:overflow-x-visible items-center">
-              {['전체', '진행중', '완료'].map(tab => (
-                <button key={tab} onClick={() => {
-                  if (tab === '전체') setFilter('전체');
-                  else if (tab === '진행중') setFilter('IN_PROGRESS');
+              {[
+                { label: '전체', count: projectCount.allCount ?? 0 },
+                { label: '진행중', count: projectCount.inProgressCount ?? 0 },
+                { label: '완료', count: projectCount.doneCount ?? 0 }
+              ].map(tab => (
+                <button key={tab.label} onClick={() => {
+                  if (tab.label === '전체') setFilter('전체');
+                  else if (tab.label === '진행중') setFilter('IN_PROGRESS');
                   else setFilter('DONE'); setCurrentPage(1);
                 }}
-                  className={`flex-1 md:flex-none px-4 md:px-6 py-1.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${filter === tab || (tab === '진행중' && filter === 'IN_PROGRESS') || (tab === '완료' && filter === 'DONE') ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>
-                  {tab}
+                  className={`flex-1 md:flex-none px-4 md:px-6 py-1.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${filter === tab.label || (tab.label === '진행중' && filter === 'IN_PROGRESS') || (tab.label === '완료' && filter === 'DONE') ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>
+                  {tab.label}
+                   <span className="ml-1.5">
+                    ({tab.count})
+                  </span>
                 </button>
               ))}
             </div>
@@ -797,129 +834,181 @@ const ProjectsList = () => {
       {
         isModalOpen && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 md:p-8">
-            <div className="bg-white p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] w-full max-w-[550px] shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
-              <h2 className="text-2xl font-bold mb-8">새 프로젝트 생성</h2>
-              <label className="block text-xs font-bold text-[#1a1c3d] mb-2 ">프로젝트명 *</label>
-              <input
-                className={`w-full p-4 bg-[#f4f7fc] rounded-xl outline-none text-xs ${errors.project_name ? 'border border-red-500' : ''}`}
-                onChange={e => {
-                  setNewProject({ ...newProject, project_name: e.target.value });
-                  if (errors.project_name) setErrors(prev => ({ ...prev, project_name: null }));
-                }}
-              />
-              {errors.project_name && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1 mb-3">{errors.project_name}</p>}
-              {!errors.project_name && <div className="mb-4"></div>}
-
-              <label className="block text-xs font-bold text-[#1a1c3d] mb-2">프로젝트 내용</label>
-              <textarea rows={3} className="w-full text-xs p-4 bg-[#f4f7fc] rounded-xl mb-4 outline-none" onChange={e => setNewProject({ ...newProject, contents: e.target.value })} />
-
-              <div className={`flex gap-4 mb-4 ${isStartCalendarOpen || isEndCalendarOpen ? 'relative z-50' : ''}`}>
-                <div className="flex-1 relative" ref={startCalendarRef}>
-                  <label className="block text-xs font-bold text-[#1a1c3d] mb-2">시작일 *</label>
-                  <div onClick={() => { setIsStartCalendarOpen(!isStartCalendarOpen); setIsEndCalendarOpen(false); }} className={`w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-xs ${newProject.start_date ? 'text-black' : 'text-[#9CA3AF]'} ${errors.start_date ? 'border border-red-500' : ''}`}>
-                    {newProject.start_date || "날짜 선택"}
-                  </div>
-                  {errors.start_date && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1">{errors.start_date}</p>}
-                  {isStartCalendarOpen && (
-                    <Calendar
-                      value={newProject.start_date}
-                      minDate={new Date().toISOString().split('T')[0]}
-                      onChange={(date) => {
-                        if (date < new Date().toISOString().split('T')[0]) {
-                          setErrors(prev => ({ ...prev, start_date: '시작일은 오늘 이후의 날짜만 선택할 수 있습니다.' }));
-                          return;
-                        }
-                        setErrors(prev => ({ ...prev, start_date: null }));
-                        setNewProject(prev => ({ ...prev, start_date: date, end_date: prev.end_date && prev.end_date < date ? date : prev.end_date }));
-                        setIsStartCalendarOpen(false);
-                      }}
-                      onClose={() => setIsStartCalendarOpen(false)}
-                    />
-                  )}
+            <div className="bg-white w-full max-w-[550px] rounded-[2rem] md:rounded-[2.5rem] shadow-2xl max-h-[80vh] overflow-hidden flex flex-col">
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-10">
+                <div className="flex justify-between items-center mb-8">
+                  <h2 className="text-2xl font-bold text-[#1a1c3d]">새 프로젝트 생성</h2>
+                  <button
+                    onClick={() => {
+                      setIsModalOpen(false);
+                      setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
+                      setEmpSearch('');
+                      setErrors({});
+                    }}
+                    className="text-slate-400 hover:text-slate-600 transition-colors md:hidden"
+                  >
+                    <FontAwesomeIcon icon={faTimes} />
+                  </button>
                 </div>
 
-                <div className="flex-1 relative" ref={endCalendarRef}>
-                  <label className="block text-xs font-bold text-[#1a1c3d] mb-2">종료일 *</label>
-                  <div onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }} className={`w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-xs ${newProject.end_date ? 'text-black' : 'text-[#9CA3AF]'} ${errors.end_date ? 'border border-red-500' : ''}`}>
-                    {newProject.end_date || "날짜 선택"}
-                  </div>
-                  {errors.end_date && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1">{errors.end_date}</p>}
-                  {isEndCalendarOpen && (
-                    <Calendar
-                      value={newProject.end_date}
-                      minDate={newProject.start_date || new Date().toISOString().split('T')[0]}
-                      onChange={(date) => {
-                        if (newProject.start_date && date < newProject.start_date) {
-                          setErrors(prev => ({ ...prev, end_date: '종료일은 시작일보다 이전일 수 없습니다.' }));
-                          return;
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-[#1a1c3d] mb-2 ">프로젝트명 *</label>
+                    <input
+                      className={`w-full p-4 bg-[#f4f7fc] rounded-xl outline-none text-xs ${errors.project_name ? 'border border-red-500' : ''}`}
+                      value={newProject.project_name}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setNewProject({ ...newProject, project_name: val });
+                        if (val.length > 30) {
+                          setErrors(prev => ({ ...prev, project_name: '글자수가 초과되었습니다. 30자까지만 입력 가능합니다.' }));
+                        } else {
+                          if (errors.project_name) setErrors(prev => ({ ...prev, project_name: null }));
                         }
-                        setErrors(prev => ({ ...prev, end_date: null }));
-                        setNewProject(prev => ({ ...prev, end_date: date }));
-                        setIsEndCalendarOpen(false);
                       }}
-                      onClose={() => setIsEndCalendarOpen(false)}
                     />
-                  )}
-                </div>
-              </div>
+                    {errors.project_name && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1">{errors.project_name}</p>}
+                  </div>
 
+                  <div>
+                    <label className="block text-xs font-bold text-[#1a1c3d] mb-2">프로젝트 내용 *</label>
+                    <textarea
+                      rows={3}
+                      className={`w-full text-xs p-4 bg-[#f4f7fc] rounded-xl outline-none custom-scrollbar ${errors.contents ? 'border border-red-500' : ''}`}
+                      value={newProject.contents}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setNewProject({ ...newProject, contents: val });
+                        if (!val) {
+                          setErrors(prev => ({ ...prev, contents: '내용을 입력해주세요.' }));
+                        } else if (val.length > 800) {
+                          setErrors(prev => ({ ...prev, contents: '글자수가 초과되었습니다. 800자까지만 입력 가능합니다.' }));
+                        } else {
+                          if (errors.contents) setErrors(prev => ({ ...prev, contents: null }));
+                        }
+                      }}
+                    />
+                    {errors.contents && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1">{errors.contents}</p>}
+                  </div>
 
-              <label className="block text-xs font-bold text-[#1a1c3d] mb-2">참여자 추가 *</label>
-              <div className="relative transition-all duration-200"
-                style={{ marginBottom: `${getDynamicMargin()}px` }} ref={empDropdownRef}>
-                <input
-                  value={empSearch}
-                  onChange={e => {
-                    setEmpSearch(e.target.value);
-                    setShowEmpDropdown(true);
-                    if (errors.members) setErrors(prev => ({ ...prev, members: null }));
-                  }}
-                  className={`w-full p-4 bg-white border ${errors.members ? 'border-red-500' : 'border-gray-200'} rounded-xl outline-none text-xs transition-all focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5`}
-                  placeholder="이름으로 검색하여 참여자를 추가하세요."
-                />
-                {isDropdownActive && (
-                  <div className="absolute z-[60] w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-32 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-200 custom-scrollbar">
+                  <div className={`flex gap-4 ${isStartCalendarOpen || isEndCalendarOpen ? 'relative z-50' : ''}`}>
+                    <div className="flex-1 relative" ref={startCalendarRef}>
+                      <label className="block text-xs font-bold text-[#1a1c3d] mb-2">시작일 *</label>
+                      <div onClick={() => { setIsStartCalendarOpen(!isStartCalendarOpen); setIsEndCalendarOpen(false); }} className={`w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-xs ${newProject.start_date ? 'text-black' : 'text-[#9CA3AF]'} ${errors.start_date ? 'border border-red-500' : ''}`}>
+                        {newProject.start_date || "날짜 선택"}
+                      </div>
+                      {errors.start_date && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1">{errors.start_date}</p>}
+                      {isStartCalendarOpen && (
+                        <div className="absolute top-full left-0 z-[60] mt-2 w-[280px]">
+                          <Calendar
+                            value={newProject.start_date}
+                            minDate={new Date().toISOString().split('T')[0]}
+                            onChange={(date) => {
+                              if (date < new Date().toISOString().split('T')[0]) {
+                                setErrors(prev => ({ ...prev, start_date: '시작일은 오늘 이후의 날짜만 선택할 수 있습니다.' }));
+                                return;
+                              }
+                              setErrors(prev => ({ ...prev, start_date: null }));
+                              setNewProject(prev => ({ ...prev, start_date: date, end_date: prev.end_date && prev.end_date < date ? date : prev.due_date }));
+                              setIsStartCalendarOpen(false);
+                            }}
+                            onClose={() => setIsStartCalendarOpen(false)}
+                          />
+                        </div>
+                      )}
+                    </div>
 
-                    {filteredEmployees.length > 0 ? (
-                      filteredEmployees.map(e => (
-                        <div
-                          key={e.id}
-                          onClick={() => addMember(e)}
-                          className="flex justify-between items-center px-5 py-3 hover:bg-[#F0F4FF] cursor-pointer border-b border-gray-50 last:border-0 transition-colors group"
-                        >
-                          <div className="flex flex-col gap-0.5">
-                            <span className="text-xs font-bold text-[#1a1c3d] group-hover:text-[#3530B8] transition-colors">
-                              {e.name}
-                            </span>
-                            <span className="text-[10px] text-gray-400 font-medium">
-                              {e.dept_name || '소속 없음'}
-                            </span>
-                          </div>
-                          {e.rank_name && (
-                            <span className="px-2 py-0.5 text-[10px] font-bold text-[#3530B8] bg-[#F0F4FF] rounded-md border border-[#3530B8]/10 transition-all">
-                              {e.rank_name}
-                            </span>
+                    <div className="flex-1 relative" ref={endCalendarRef}>
+                      <label className="block text-xs font-bold text-[#1a1c3d] mb-2">종료일 *</label>
+                      <div onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }} className={`w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-xs ${newProject.end_date ? 'text-black' : 'text-[#9CA3AF]'} ${errors.end_date ? 'border border-red-500' : ''}`}>
+                        {newProject.end_date || "날짜 선택"}
+                      </div>
+                      {errors.end_date && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1">{errors.end_date}</p>}
+                      {isEndCalendarOpen && (
+                        <div className="absolute top-full right-0 z-[60] mt-2 w-[280px]">
+                          <Calendar
+                            value={newProject.end_date}
+                            minDate={newProject.start_date || new Date().toISOString().split('T')[0]}
+                            onChange={(date) => {
+                              if (newProject.start_date && date < newProject.start_date) {
+                                setErrors(prev => ({ ...prev, end_date: '종료일은 시작일보다 이전일 수 없습니다.' }));
+                                return;
+                              }
+                              setErrors(prev => ({ ...prev, end_date: null }));
+                              setNewProject(prev => ({ ...prev, end_date: date }));
+                              setIsEndCalendarOpen(false);
+                            }}
+                            onClose={() => setIsEndCalendarOpen(false)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#1a1c3d] mb-2">참여자 추가 *</label>
+                    <div className="relative" ref={empDropdownRef}>
+                      <input
+                        value={empSearch}
+                        onChange={e => {
+                          setEmpSearch(e.target.value);
+                          setShowEmpDropdown(true);
+                          if (errors.members) setErrors(prev => ({ ...prev, members: null }));
+                        }}
+                        className={`w-full p-4 bg-white border ${errors.members ? 'border-red-500' : 'border-gray-200'} rounded-xl outline-none text-xs focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5`}
+                        placeholder="이름으로 검색하여 참여자를 추가하세요."
+                      />
+                      {isDropdownActive && (
+                        <div className="absolute z-[60] w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-32 overflow-y-auto custom-scrollbar">
+                          {filteredEmployees.length > 0 ? (
+                            filteredEmployees.map(e => (
+                              <div
+                                key={e.id}
+                                onClick={() => addMember(e)}
+                                className="flex justify-between items-center px-5 py-3 hover:bg-[#F0F4FF] cursor-pointer border-b border-gray-50 last:border-0 transition-colors group"
+                              >
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="text-xs font-bold text-[#1a1c3d] group-hover:text-[#3530B8] transition-colors">{e.name}</span>
+                                  <span className="text-[10px] text-gray-400 font-medium">{e.dept_name || '소속 없음'}</span>
+                                </div>
+                                {e.rank_name && (
+                                  <span className="px-2 py-0.5 text-[10px] font-bold text-[#3530B8] bg-[#F0F4FF] rounded-md border border-[#3530B8]/10">{e.rank_name}</span>
+                                )}
+                              </div>
+                            ))
+                          ) : (
+                            <div className="px-4 py-6 text-xs text-center text-gray-400 font-medium bg-gray-50/50">검색 결과가 없습니다.</div>
                           )}
                         </div>
-                      ))
-                    ) : (
-                      <div className="px-4 py-6 text-xs text-center text-gray-400 font-medium bg-gray-50/50">
-                        검색 결과가 없습니다.
-                      </div>
-                    )}
-
+                      )}
+                    </div>
+                    {errors.members && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1">{errors.members}</p>}
                   </div>
-                )}
-              </div>
-              {errors.members && <p className="text-[9px] text-red-500 font-medium ml-1 mb-2">{errors.members}</p>}
-              <div className="flex flex-wrap gap-2 mb-8">
-                {newProject.members?.map(m => (
-                  <div key={m.id} className="px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2 border border-[#3a36db]/20">{m.name} ({m.dept_name}) <FontAwesomeIcon icon={faTimes} className="cursor-pointer" onClick={() => removeMember(m.id)} /></div>
-                ))}
-              </div>
-              <div className="flex justify-end gap-3">
-                <button onClick={() => { setIsModalOpen(false); setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] }); setEmpSearch(''); setErrors({}); }} className="px-8 py-3 bg-gray-100 rounded-xl font-bold text-sm">취소</button>
-                <button onClick={handleCreate} className="px-8 py-3 bg-[#3a36db] text-white rounded-xl font-bold text-sm">등록</button>
+
+                  <div className="flex flex-wrap gap-2">
+                    {newProject.members?.map(m => (
+                      <div key={m.id} className="px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2 border border-[#3a36db]/20">
+                        {m.name} ({m.dept_name})
+                        <FontAwesomeIcon icon={faTimes} className="cursor-pointer" onClick={() => removeMember(m.id)} />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-4 mt-10">
+                    <button
+                      onClick={() => {
+                        setIsModalOpen(false);
+                        setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
+                        setEmpSearch('');
+                        setErrors({});
+                      }}
+                      className="flex-1 bg-gray-100 text-gray-600 py-4 rounded-2xl font-bold text-sm hover:bg-gray-200 transition-all"
+                    >
+                      취소
+                    </button>
+                    <button onClick={handleCreate} className="flex-1 bg-[#3530B8] text-white py-4 rounded-2xl font-bold text-sm hover:bg-[#2a2594] transition-all shadow-lg shadow-indigo-100">등록</button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -928,10 +1017,11 @@ const ProjectsList = () => {
 
       <style dangerouslySetInnerHTML={{
         __html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
+        textarea.custom-scrollbar::-webkit-scrollbar { width: 3px; }
       `}} />
     </div >
   );
