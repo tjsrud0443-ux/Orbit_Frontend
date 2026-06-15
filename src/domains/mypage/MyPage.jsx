@@ -26,7 +26,7 @@ const MyPage = () => {
   const [adminInquiries, setAdminInquiries] = useState([]);
 
   const tabs = ['비품', '회의실', '관리자 문의'];
-  const { calendarEvents, handleDateClick, handleEventClick } = usePersonalCalendar(setDayModal);
+  const { calendarEvents, loading, handleDateClick, handleEventClick } = usePersonalCalendar(setDayModal);
   
   const requestData = {
     '비품': supplyRequests.slice(0, 4).map(req => ({
@@ -140,7 +140,8 @@ const weeklyAttendance = [
     getAnuualSummary().then(resp=>{
       setLeaveData(resp.data)
     }).catch(err=>console.log("연차 불러오기 실패",err));
-  })
+  },[]);
+  
   const donutData = {
     labels: ['잔여', '사용'],
     datasets: [{
@@ -275,7 +276,7 @@ const weeklyAttendance = [
                   .main-calendar .fc-day-today .fc-daygrid-day-number { 
                     background-color:  transparent !important; color: #475569 !important; 
                     border-radius: 50% !important; 
-                    width: 1.6rem !important; height: 1.6rem !important; 
+                    width: 1.6ullCalrem !important; height: 1.6rem !important; 
                     display: flex !important; 
                     align-items: center !important; justify-content: center !important; 
                     line-height: 1 !important; padding: 0 !important; 
@@ -297,7 +298,7 @@ const weeklyAttendance = [
                     white-space: nowrap !important;
                   }
                 `}</style>
-                <div className="h-[27rem] overflow-hidden main-calendar">
+                <div className="h-[27rem] overflow-hidden main-calendar">          
                   <FullCalendar
                     plugins={[dayGridPlugin, interactionPlugin]}
                     initialView="dayGridMonth"

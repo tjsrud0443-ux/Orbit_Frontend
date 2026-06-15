@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getApprovedVacations, getSchedules } from './schedulesApi';
 import { fetchHolidays } from '../../api/holidayApi';
+import useLoadingStore from '../../store/useLoadingStore';
 
 const CATEGORY_COLORS = {
   PERSONAL: '#3530B8',
@@ -17,10 +18,12 @@ const useCalendar = (setDayModal) => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedSchedules, setSelectedSchedules] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
 
   useEffect(() => {
     const year = new Date().getFullYear();
-
+    showLoading();
     Promise.all([getSchedules(), getApprovedVacations(), fetchHolidays(year)])
       .then(([scheduleResp,vacResp, holidays]) => {
         const scheduleEvents = scheduleResp.data.map(item => {
@@ -73,7 +76,8 @@ const useCalendar = (setDayModal) => {
         const allEvents = [...scheduleEvents, ...vacEvents, ...holidayEvents];
         calendarEventsRef.current = allEvents;
         setCalendarEvents(allEvents);
-      }).catch(err => console.error('로드 실패:', err));
+      }).catch(err => console.error('로드 실패:', err))
+        .finally(() => hideLoading());;
   }, []);
 
   const handleDateClick = (info) => {
