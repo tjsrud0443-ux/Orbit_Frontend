@@ -16,6 +16,8 @@ import ProjectModal from './ProjectModal';
 import CheckoutCorrectionModal from './CheckoutCorrectionModal';
 import OvertimeRequestModal from './OvertimeRequestModal';
 
+import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
+
 const Main = () => {
   const navigate = useNavigate();
   const user = useUserStore(state => state.user);
@@ -72,30 +74,30 @@ const Main = () => {
       .then(() => {
         const now = new Date();
         setCheckIn(now);
-        alert('출근 처리가 완료되었습니다.');
+        alertSuccess('출근 완료', '출근 처리가 완료되었습니다.');
       })
       .catch(err => {
         console.error('출근 처리 실패:', err);
-        alert('출근 처리에 실패했습니다.');
+        alertError('처리 실패', '출근 처리에 실패했습니다.');
       });
   };
 
   // 퇴근 핸들러
-  const handleCheckOut = () => {
+  const handleCheckOut = async () => {
     if (!checkIn || checkOut) return; // 출근 전이거나 이미 퇴근한 경우 무시
 
-    if (!window.confirm('퇴근 처리하시겠습니까?')) return;
+    const result = await alertConfirm('퇴근 확인', '퇴근 처리하시겠습니까?');
+    if (!result.isConfirmed) return;
 
-    checkOut_api()
-      .then(() => {
-        const now = new Date();
-        setCheckOut(now);
-        alert('퇴근 처리가 완료되었습니다.');
-      })
-      .catch(err => {
-        console.error('퇴근 처리 실패:', err);
-        alert('퇴근 처리에 실패했습니다.');
-      });
+    try {
+      await checkOut_api();
+      const now = new Date();
+      setCheckOut(now);
+      await alertSuccess('퇴근 완료', '오늘 하루도 고생하셨습니다.');
+    } catch (err) {
+      console.error('퇴근 처리 실패:', err);
+      await alertError('처리 실패', '퇴근 처리에 실패했습니다.');
+    }
   };
 
 const formatStampTime = (date) =>

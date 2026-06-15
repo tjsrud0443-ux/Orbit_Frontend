@@ -3,7 +3,7 @@ import { maxios } from '../../api/axiosConfig';
 import Calendar from '../../components/common/Calendar';
 import TimePicker from '../../components/common/TimePicker';
 import { getMyCheckinList, insertOvertimeReq } from './mainApi';
-import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
+import { alertWarning, alertSuccess, alertError } from '../../utils/alert';
 
 const OvertimeRequestModal = ({ onClose }) => {
   const [date, setDate] = useState('');
