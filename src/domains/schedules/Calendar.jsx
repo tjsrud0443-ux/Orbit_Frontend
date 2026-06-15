@@ -188,10 +188,8 @@ const Calendar = () => {
 
 
   useEffect(() => {
-    console.log('useEffect 실행');
     //일정 출력
     Promise.all([getSchedules(),getApprovedVacations()]).then(([schedResp, vacResp]) => {
-       console.log('연차 데이터:', vacResp.data);
       const allEvents = schedResp.data.map(item => {
         const filter = [...PERSONAL_FILTERS, ...COMPANY_FILTERS].find(f => f.key === item.schedule_type);
         const isMeeting = item.schedule_type === 'MEETING';
@@ -257,7 +255,6 @@ const Calendar = () => {
           color: filter?.color ?? '#10B981',
         };
       });
-console.log('vacEvents:', vacEvents);
         //.some()은 배열에서 조건에 맞는 게 하나라도 있으면 true를 반환
         // allEvents에서 개인 카테고리인 것만 골라내기
         const pEvents = allEvents.filter(e => PERSONAL_FILTERS.some(f => f.key === e.category));
@@ -441,7 +438,6 @@ console.log('vacEvents:', vacEvents);
   const isFormValid = form.title.trim() && form.start_dt && form.end_dt && (form.start_dt <= form.end_dt);
   // 이벤트 삭제
   const handleDeleteEvent = (id) => {
-    console.log('삭제 id:', id, typeof id);
     // 공용 데이터(숫자 아닌 seq)는 API 호출 안 함
     if (isNaN(Number(id))) {
       setPersonalEvents(prev => prev.filter(e => e.id !== id));
