@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown, faTrashCan } from '@fortawesome/free-solid-svg-icons';
-import { deleteMyQuestions, getMyQuestions } from './mypageApi';
+import { deleteMyQuestions, getMyQnaCount, getMyQuestions } from './mypageApi';
 
 const QnaHistory = () => {
   const [filter, setFilter] = useState('전체');
@@ -25,12 +25,19 @@ const QnaHistory = () => {
 
   const [qnaList, setQnaList] = useState([]);
   const [selectedQna, setSelectedQna] = useState(null);
+  const [qnaCount, setQanCount] = useState([]);
 
   useEffect(() => {
     getMyQuestions().then(resp => {
       setQnaList(resp.data);
     })
   }, []);
+
+  useEffect(() => {
+    getMyQnaCount().then(resp => {
+      setQanCount(resp.data);
+    })
+  },[]);
 
   const filteredQna = useMemo(() => {
     return qnaList.filter(item => {
@@ -73,10 +80,17 @@ const QnaHistory = () => {
         <div className={`bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-3 md:p-8 flex flex-col transition-all duration-300 md:overflow-hidden min-w-0 ${selectedQna ? 'md:w-[65%] w-full' : 'w-full'}`}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
             <div className="flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit items-center flex-shrink-0">
-              {['전체', '답변 대기', '답변완료'].map(tab => (
-                <button key={tab} onClick={() => { setFilter(tab); setCurrentPage(1); }}
-                  className={`flex-1 md:flex-none px-2 md:px-6 py-1.5 rounded-xl text-[11px] md:text-sm font-bold transition-all whitespace-nowrap ${filter === tab ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>
-                  {tab}
+              {[
+                { label: '전체', count: qnaCount.allCount ?? 0 },
+                { label: '답변 대기', count: qnaCount.pendingCount ?? 0 },
+                { label: '답변완료', count: qnaCount.answeredCount ?? 0 }
+              ].map(tab => (
+                <button key={tab.label} onClick={() => { setFilter(tab.label); setCurrentPage(1); }}
+                  className={`flex-1 md:flex-none px-2 md:px-6 py-1.5 rounded-xl text-[11px] md:text-sm font-bold transition-all whitespace-nowrap ${filter === tab.label ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>
+                  {tab.label}
+                  <span className="ml-1.5">
+                    ({tab.count})
+                  </span>
                 </button>
               ))}
             </div>
