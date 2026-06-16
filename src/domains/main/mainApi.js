@@ -7,3 +7,4 @@ export const getMyCheckoutList = () => maxios.get('/Attendance/myCheckoutList');
 export const getMyCheckinList = (yearMonth) => maxios.get('/Attendance/myCheckinList',{ params: { year_month: yearMonth } });
 export const insertCheckoutReq = (data) => maxios.post('/checkoutRQ/insert', data);
 export const insertOvertimeReq = (data) => maxios.post('/overtimeRQ/insert', data);
+export const getNoticeList = () => maxios.get('/main/boardList');

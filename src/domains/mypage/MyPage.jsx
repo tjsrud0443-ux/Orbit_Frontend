@@ -405,6 +405,7 @@ const weeklyAttendance = [
               <h3 style={{ fontSize: '0.85rem', fontWeight: '800', color: '#0F172A' }}>{dayModal.date} 일정</h3>
               <button onClick={() => setDayModal({ open: false, date: '', schedules: [] })} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}>✕</button>
             </div>
+            <div style={{ maxHeight: '40vh', overflowY: 'auto', paddingRight: '0.25rem' }} className="custom-scrollbar">
             {dayModal.schedules.length > 0 ? dayModal.schedules.map((s, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem', background: '#F8FAFC', borderRadius: '0.75rem', marginBottom: '0.4rem' }}>
                 <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: s.color || '#3530B8', flexShrink: 0 }} />
@@ -422,6 +423,14 @@ const weeklyAttendance = [
             )) : (
               <p style={{ fontSize: '0.75rem', color: '#94A3B8', textAlign: 'center', padding: '1rem 0' }}>일정이 없습니다.</p>
             )}
+            </div>
+            {/* 스크롤바 스타일 정의 */}
+            <style>{`
+              .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+              .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+              .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
+              .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
+            `}</style>
           </div>
         </div>
       )}

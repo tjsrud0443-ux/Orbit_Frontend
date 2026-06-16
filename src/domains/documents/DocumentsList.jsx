@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Pagination from '../../components/common/Pagination';
 import { addFavorite, getAllDocs, getFavorites, removeFavorite } from './documentsApi';
 import useAuthStore from '../../store/authStore';
@@ -7,7 +8,9 @@ import useLoadingStore from '../../store/useLoadingStore';
 import { alertError } from '../../utils/alert';
 
 const DocumentsList = () => {
-  const [activeTab, setActiveTab] = useState('전체 문서');
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') === '즐겨찾기' ? '즐겨찾기' : '전체 문서';
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [documents, setDocuments] = useState([]);

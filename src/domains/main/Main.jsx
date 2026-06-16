@@ -2,12 +2,13 @@
 import { useNavigate } from 'react-router-dom';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileSignature, faDoorOpen, faFileCirclePlus, faDiagramProject, faClipboard, faBox } from '@fortawesome/free-solid-svg-icons';
+import { faFileSignature, faDoorOpen, faFileCirclePlus, faDiagramProject, faClipboard, faBox, faBookmark } from '@fortawesome/free-solid-svg-icons';
 
 import { IMAGES } from '../../images/images'; 
 
 import usePublicCalendar from '../schedules/publicCalendar';
-import { checkIn_api, checkOut_api, getAttendanceStatus } from './mainApi';
+import { checkIn_api, checkOut_api, getAttendanceStatus, getNoticeList } from './mainApi';
+import { getBoardList } from '../board/boardApi';
 import useUserStore from '../../store/userStore';
 import Calendar from '../../components/common/Calendar';
 
@@ -33,6 +34,8 @@ const Main = () => {
   const [checkOut, setCheckOut] = useState(null); // 퇴근 시간
   const [attendanceSeq, setAttendanceSeq] = useState(null);
 
+  const [boardPosts, setBoardPosts] = useState([]);
+
   // 자정 리셋 useEffect 추가
   useEffect(() => {
     const now = new Date();
@@ -48,7 +51,7 @@ const Main = () => {
     return () => clearTimeout(resetTimer);
   }, []);
 
-  // 근태 정보 초기 로드
+  // 근태 정보 및 게시판 초기 로드
   useEffect(() => {
     if (user && user.id) {
       getAttendanceStatus()
@@ -62,6 +65,14 @@ const Main = () => {
         })
         .catch(err => {
           console.error('근태 정보 로드 실패:', err);
+        });
+
+      // 게시판 목록 가져오기 (최신 5개)
+      getNoticeList().then(resp => {
+          setBoardPosts(resp.data|| []);
+        })
+        .catch(err => {
+          console.error('게시판 목록 로드 실패:', err);
         });
     }
   }, [user]);
@@ -109,16 +120,25 @@ const formatStampTime = (date) =>
     return () => clearInterval(timer);
   }, []);
  //calendar
- const { calendarEvents, selectedDate, selectedSchedules, handleDateClick } = usePublicCalendar();
+ const { calendarEvents, selectedDate, setSelectedDate, selectedSchedules, handleDateClick } = usePublicCalendar();
+
+  // 매 시간 달이 바뀌었는지 체크하여 캘린더 자동 업데이트
+  useEffect(() => {
+    const checkMonth = () => {
+      const now = new Date();
+      if (!selectedDate || new Date(selectedDate).getMonth() !== now.getMonth() || new Date(selectedDate).getFullYear() !== now.getFullYear()) {
+         const newDate = new Date(now.getFullYear(), now.getMonth(), 1);
+         setSelectedDate(newDate.toISOString().split('T')[0]);
+      }
+    };
+    checkMonth();
+    const interval = setInterval(checkMonth, 3600000); 
+    return () => clearInterval(interval);
+  }, [selectedDate, setSelectedDate]);
+
   // 현재 시간 및 날짜
   const formatTime = (date) => date.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
   const formatDate = (date) => date.toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
-
-  const notices = [
-    { type: "공지", title: "5월 정기 보안 점검 안내", date: "2026.05.28", isNotice: true },
-    { type: "일반", title: "사내 워크샵 일정 공지", date: "2026.05.27", isNotice: false },
-    { type: "공지", title: "신규 프로젝트 킥오프 미팅", date: "2026.05.26", isNotice: true },
-  ];
 
 const quickActions = [
   { title: "기안 작성", icon: faFileSignature,
@@ -129,9 +149,9 @@ const quickActions = [
     bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#EFF6FF", color: "#2c7af7",
     onClick: () => navigate('/meetingRooms')
   },
-  { title: "새 문서 등록", icon: faFileCirclePlus,
+  { title: "내 북마크 문서", icon: faBookmark,
     bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#ECFDF5", color: "#09af78",
-
+    onClick: () => navigate('/documents?tab=즐겨찾기')
   },
   { title: "프로젝트 생성", icon: faDiagramProject,
     bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#FFF1F2", color: "#f62f32",
@@ -261,6 +281,11 @@ const quickActions = [
               {/* 달력 */}
               <div className="flex flex-col h-full overflow-hidden">
                   <div className="flex-1 overflow-hidden main-calendar">
+                    <style>{`
+                      .main-calendar .mb-4 button {
+                        display: none !important;
+                      }
+                    `}</style>
                     <Calendar 
                       isStatic={true}
                       value={selectedDate}
@@ -275,7 +300,13 @@ const quickActions = [
                   <h3 className="text-s font-extrabold text-indigo-950">전사 일정 및 공휴일</h3>
                   <button onClick={() => navigate('/calendar')} className="text-[0.625rem] text-gray-400 font-bold hover:text-indigo-950">상세보기</button>
                 </div>
-                <div className="space-y-2.5 overflow-y-auto h-full pr-1">
+                <div className="space-y-2.5 overflow-y-auto h-full pr-1 custom-scrollbar">
+                  <style>{`
+                    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+                    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                    .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
+                    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
+                  `}</style>
                   {selectedSchedules.length > 0 ? (selectedSchedules.map((s, i) => (
                     <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-100 rounded-xl hover:shadow-sm transition-shadow">
                       <div className="w-1 h-8 bg-[#3530B8] rounded-full shrink-0" style={{ backgroundColor: s.color || '#3530B8' }}></div>
@@ -303,22 +334,44 @@ const quickActions = [
           
           {/* Box 3: 사내게시판 */}
           <div className="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex flex-col min-h-[15.625rem] lg:flex-1 overflow-hidden">
-            <div className="flex justify-between items-center mb-3">
+            <div className="flex justify-between items-center mb-6">
               <h3 className="text-s font-extrabold text-indigo-950">사내게시판</h3>
               <button onClick={() => navigate('/board')} className="text-[0.625rem] text-gray-400 font-bold hover:text-indigo-950">전체보기</button>
             </div>
-            <div className="space-y-1 overflow-y-auto pr-1 flex-1">
-              {notices.map((notice, idx) => (
-                <div key={idx} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className={`px-2 py-0.5 rounded text-[0.5625rem] font-bold shrink-0 ${notice.isNotice ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
-                      {notice.type}
-                    </span>
-                    <span className="font-bold text-sm text-gray-700 truncate">{notice.title}</span>
+            <div className="space-y-1 overflow-y-auto pr-1 flex-1 custom-scrollbar">
+              <style>{`
+                .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
+              `}</style>
+              {boardPosts.length > 0 ? (
+                boardPosts.map((post) => (
+                  <div 
+                    key={post.post_seq} 
+                    onClick={() => navigate(`/boardDetail/${post.post_seq}`)}
+                    className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0 cursor-pointer hover:bg-gray-50 transition-colors group"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`px-2 py-0.5 rounded text-[0.5625rem] font-bold shrink-0 
+                        ${['공지', '경조', '생일', '승진', '부서 이동'].includes(post.category?.trim()) 
+                          ? 'bg-red-50 text-red-500' 
+                          : 'bg-blue-50 text-blue-500'}`}
+                      >
+                        {post.category || '일반'}
+                      </span>
+                      <span className="font-bold text-sm text-gray-700 truncate group-hover:text-indigo-600 transition-colors">
+                        {post.title}
+                      </span>
+                    </div>
+                    <span className="text-gray-400 text-[0.625rem] shrink-0 ml-2">{post.created_at?.slice(0, 10)}</span>
                   </div>
-                  <span className="text-gray-400 text-[0.625rem] shrink-0 ml-2">{notice.date}</span>
+                ))
+              ) : (
+                <div className="h-full flex items-center justify-center">
+                  <p className="text-xs text-gray-400">게시글이 없습니다.</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
 

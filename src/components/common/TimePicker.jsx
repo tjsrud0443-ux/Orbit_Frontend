@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-const TimePicker = ({ value, onChange, hasError, placeholder = "시간 선택", disableMinutes = false }) => {
+const TimePicker = ({ value, onChange, hasError, placeholder = "시간 선택", disableMinutes = false, minHour = 0 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
   const inputRef = useRef(null);
   const dropdownRef = useRef(null);
 
-  const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+  const hours = Array.from({ length: 24 - minHour }, (_, i) => String(i + minHour).padStart(2, '0'));
   const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
 
   const selectedHour = value ? value.split(':')[0] : null;

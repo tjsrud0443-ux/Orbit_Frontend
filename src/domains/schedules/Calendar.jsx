@@ -8,6 +8,7 @@ import { fetchHolidays } from '../../api/holidayApi';
 import { getSchedules, createSchedule, deleteSchedule, updateSchedule, getApprovedVacations } from './schedulesApi';
 import useLoadingStore from '../../store/useLoadingStore';
 import useUserStore from '../../store/userStore';
+import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
@@ -169,6 +170,7 @@ const Calendar = () => {
   const [form, setForm] = useState({ schedule_seq: '', title: '', schedule_type: 'personal', start_dt: '', end_dt: '', sked_reason: '', is_public: 0 });
   // 지금 모달이 추가 모드인지 수정 모드인지
   const [isEditing, setIsEditing] = useState(false);
+  const [isPermissionOpen, setIsPermissionOpen] = useState(false); // Add this line
   // 일정 클릭 시 상세 보기 모달
   const [detailModal, setDetailModal] = useState({ open: false, event: null });
 
@@ -220,6 +222,7 @@ const Calendar = () => {
           start: isMeeting && startTime ? `${startDate}T${startTime}` : startDate,
           end: isMeeting && endTime ? `${endDate}T${endTime}` : displayEnd,
           allDay: isMeeting ? false : !isSameDay, // 하루면 false(점), 이틀 이상이면 true(바)
+          order: isMeeting ? 2 : (isSameDay ? 1 : 0),
           extendedProps: {
             category: item.schedule_type,
             description: item.sked_reason,
@@ -292,12 +295,9 @@ const Calendar = () => {
     }
     return () => document.removeEventListener('click', handleClickOutside);
   }, [openCalendar]);
-  //useRef : 컴포넌트가 재렌더링되어도 값을 유지
-  const loadedYears = useRef(new Set());
+
   // API에서 공휴일 가져와서 companyEvents에 추가
   const loadHolidaysForYear = useCallback(async (year) => {
-    if (loadedYears.current.has(year)) return;//공휴일 이미있음. return
-    loadedYears.current.add(year);//아직이면 공휴일 api 부름
     try {
       const holidays = await fetchHolidays(year);//해당 연도 공휴일 1년치
       if (holidays?.length > 0) {
@@ -339,7 +339,7 @@ const Calendar = () => {
     setForm({
       schedule_seq: '',
       title: '',
-      schedule_type: 'personal',
+      schedule_type: 'PERSONAL',
       start_dt: info.dateStr,
       end_dt: '',
       sked_reason: '',
@@ -421,30 +421,42 @@ const Calendar = () => {
           if (isPersonalCategory) setPersonalEvents(updater);
           else setCompanyEvents(updater);
           setModal({ open: false, date: '' });
+          alertSuccess('일정 수정 완료', '일정이 성공적으로 수정되었습니다.');
         })
-        .catch(err => console.error('일정 수정 실패:', err));
+        .catch(err => {
+          console.error('일정 수정 실패:', err);
+          alertError('일정 수정 실패', '일정 수정 중 오류가 발생했습니다.');
+        });
     } else {
       createSchedule(payload)
         .then((resp) => {
           const realSeq = resp.data.schedule_seq.toString(); // 서버에서 받은 진짜 seq
-        const realEventData = { ...eventData, id: realSeq }; 
+          const realEventData = { ...eventData, id: realSeq }; 
           if (isPersonalCategory) setPersonalEvents(prev => [...prev, realEventData]);
-      else setCompanyEvents(prev => [...prev, realEventData]);
-      setModal({ open: false, date: '' });
+          else setCompanyEvents(prev => [...prev, realEventData]);
+          setModal({ open: false, date: '' });
+          alertSuccess('일정 추가 완료', '새 일정이 성공적으로 추가되었습니다.');
         })
-        .catch(err => console.error('일정 추가 실패:', err));
+        .catch(err => {
+          console.error('일정 추가 실패:', err);
+          alertError('일정 추가 실패', '일정 추가 중 오류가 발생했습니다.');
+        });
     }
   };
 
   // 폼 유효성 검사 (모든 필드 입력 및 날짜 순서 확인)
   const isFormValid = form.title.trim() && form.start_dt && form.end_dt && (form.start_dt <= form.end_dt);
   // 이벤트 삭제
-  const handleDeleteEvent = (id) => {
+  const handleDeleteEvent = async (id) => {
+    const result = await alertConfirm('일정 삭제', '정말로 이 일정을 삭제하시겠습니까?');
+    if (!result.isConfirmed) return;
+
     // 공용 데이터(숫자 아닌 seq)는 API 호출 안 함
     if (isNaN(Number(id))) {
       setPersonalEvents(prev => prev.filter(e => e.id !== id));
       setCompanyEvents(prev => prev.filter(e => e.id !== id));
       setModal({ open: false, date: '' });
+      alertSuccess('일정 삭제 완료', '일정이 성공적으로 삭제되었습니다.');
       return;
     }
     deleteSchedule(id)
@@ -452,8 +464,12 @@ const Calendar = () => {
         setPersonalEvents(prev => prev.filter(e => e.id !== id));
         setCompanyEvents(prev => prev.filter(e => e.id !== id));
         setModal({ open: false, date: '' });
+        alertSuccess('일정 삭제 완료', '일정이 성공적으로 삭제되었습니다.');
       })
-      .catch(err => console.error('일정 삭제 실패:', err));
+      .catch(err => {
+        console.error('일정 삭제 실패:', err);
+        alertError('일정 삭제 실패', '일정 삭제 중 오류가 발생했습니다.');
+      });
   };
 
   // --- [Calendar 컴포넌트 내부 맨 밑바닥에 배치할 함수] ---
@@ -465,17 +481,17 @@ const Calendar = () => {
     return (
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`absolute z-30 w-[15rem] bottom-full mb-1 ${positionClass} bg-white border border-gray-100 rounded-2xl shadow-2xl p-4 animate-in fade-in slide-in-from-bottom-2 duration-200`}
+        className={`absolute z-[100] w-[11.5rem] top-full mt-1 ${positionClass} bg-white border border-gray-100 rounded-xl shadow-2xl p-2.5 animate-in fade-in slide-in-from-top-2 duration-200`}
       >
         {/* 달력 헤더 */}
-        <div className="flex items-center justify-between mb-3 px-1">
+        <div className="flex items-center justify-between mb-2 px-0.5">
           <button
             onClick={(e) => { e.stopPropagation(); setViewDate(new Date(calendarYear, calendarMonth - 1, 1)); }}
             className="p-1 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-[#3530B8] transition-colors"
           >
             &lt;
           </button>
-          <div className="text-xs font-bold text-gray-900">{calendarYear}년 {calendarMonth + 1}월</div>
+          <div className="text-[0.6875rem] font-bold text-gray-900">{calendarYear}년 {calendarMonth + 1}월</div>
           <button
             onClick={(e) => { e.stopPropagation(); setViewDate(new Date(calendarYear, calendarMonth + 1, 1)); }}
             className="p-1 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-[#3530B8] transition-colors"
@@ -485,14 +501,14 @@ const Calendar = () => {
         </div>
 
         {/* 요일 표시 */}
-        <div className="grid grid-cols-7 gap-1 mb-1.5">
+        <div className="grid grid-cols-7 gap-0.5 mb-1">
           {['일', '월', '화', '수', '목', '금', '토'].map(d => (
-            <div key={d} className="text-[0.625rem] font-bold text-gray-400 text-center py-0.5">{d}</div>
+            <div key={d} className="text-[0.5625rem] font-bold text-gray-400 text-center py-0.5">{d}</div>
           ))}
         </div>
 
         {/* 날짜 그리드 */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-0.5">
           {calendarDays.map((d, i) => {
             const isSelected = d && currentTargetDate === `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
@@ -519,7 +535,7 @@ const Calendar = () => {
                   setForm(prev => ({ ...prev, [type === 'start' ? 'start_dt' : 'end_dt']: formattedDate }));
                   setOpenCalendar(null);
                 }}
-                className={`text-[0.625rem] font-medium text-center py-1.5 rounded-lg transition-all
+                className={`text-[0.625rem] font-medium text-center py-1 rounded-lg transition-all
                   ${!d ? 'invisible' : 'cursor-pointer'}
                   ${d && !isSelected ? 'hover:bg-[#F0F4FF] hover:text-[#3530B8] text-slate-600' : ''}
                   ${isSelected ? 'bg-[#3530B8] text-white font-bold' : ''}
@@ -591,17 +607,25 @@ const Calendar = () => {
             margin-top: 0.125rem;
             display: inline-block;
           }
-            /* 캘린더 각 주(행) 높이 고정 */
-    .fc .fc-daygrid-body tr {
-      height: 5.5rem !important;
-    }
-    .fc .fc-daygrid-day-frame {
-      min-height: 6rem !important;
-      // overflow: hidden;
-    }
+          @media (min-width: 1024px) {
+
+            .fc .fc-daygrid-day-frame {
+             min-height: 0!important;
+            }
+            .fc .fc-scroller {
+              overflow: hidden !important;
+            }
+            .fc .fc-scroller-harness {
+              overflow: hidden !important;
+            }
+              /* 마지막 행 잘림 방지 */
+  .fc-daygrid-body-unbalanced .fc-daygrid-body-natural {
+    overflow: hidden !important;
+  }
+          }   
         `}
       </style>
-      <div className="flex-1 p-4 flex flex-col gap-4 overflow-y-auto lg:overflow-hidden min-h-0 h-full bg-white">
+      <div className="flex-1 p-4 flex flex-col gap-4 min-h-0 h-full bg-white overflow-y-auto lg:overflow-hidden">
         <div className="px-1">
           <h1 className="text-xl font-bold text-slate-900 leading-tight">캘린더</h1>
           <p className="text-xs text-slate-500 mt-0.5">일정을 한눈에 확인하세요.</p>
@@ -618,8 +642,8 @@ const Calendar = () => {
           ))}
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-2 flex-1 lg:items-stretch min-h-0 lg:overflow-hidden">
-          <div className={`bg-white border border-slate-200 rounded-xl shadow-sm p-4 flex flex-col min-w-0 transition-all duration-300 flex-1 shrink-0 lg:shrink lg:overflow-hidden`}>
+        <div className="flex flex-col lg:flex-row gap-2 lg:flex-1 lg:min-h-0 lg:items-stretch lg:overflow-hidden">
+          <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 flex flex-col min-w-0 min-h-0 transition-all duration-300 lg:flex-1 lg:shrink ">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div className="flex items-center gap-2">
                 <button onClick={() => { getApi()?.today(); updateTitle(); }}
@@ -650,22 +674,22 @@ const Calendar = () => {
               )}
             </div>
 
-            <div className="calendar-container flex-1" style={{
-              minHeight: isMobile ? 'auto' : 0,
+            <div className="calendar-container flex-1 min-h-0" style={{
               height: isMobile ? 'auto' : '100%',
+              overflow: isMobile ? 'visible' : 'auto'
             }}>
                 <style>{`
-                @media (max-width: 1023px) {
+                @media (max-width: 1024px) {
                   .fc-daygrid-body,
                   .fc-scrollgrid-sync-table {
                     height: auto !important;
                   }
-                  .fc .fc-daygrid-body tr {
-                    height: 4rem !important;
+                  /* 추가: 캘린더 전체 높이 강제 해제 */
+                  .fc, .fc-view-harness {
+                    height: auto !important;
+                    min-height: unset !important;
                   }
-                  .fc .fc-daygrid-day-frame {
-                    min-height: 4rem !important;
-                  } /* 점 이벤트 컨테이너 크기 최소화 */
+                  /* 점 이벤트 컨테이너 크기 최소화 */
                   .fc-daygrid-event.fc-daygrid-dot-event {
                     padding: 0 !important;
                   }
@@ -687,18 +711,23 @@ const Calendar = () => {
                 initialView="dayGridMonth"
                 locale="ko"
                 headerToolbar={false}
-                stickyHeaderDates={false}  // 헤더 고정 해제 - 스크롤하면 같이 올라감                 
-                dayMaxEvents={isMobile ? 1 : 3}
+                stickyHeaderDates={false}  // 헤더 고정 해제 - 스크롤하면 같이 올라감     
+                eventOrder="order,-duration,start,title"        
+                dayMaxEvents={isMobile ? 1 : 2}
                 moreLinkContent={(args) => isMobile ? `+${args.num}` : `+${args.num} more`}
                 aspectRatio={isMobile ? 0.8 : undefined}
                 height={isMobile ? 'auto' : '100%'}
+                // expandRows={true}
+                expandRows={true} 
+                fixedWeekCount={true}
                 editable={activeTab === 'personal'}
                 selectable={activeTab === 'personal'}
                 events={filteredEvents}
                 dateClick={handleDateClick}
                 eventClick={handleEventClick}
                 datesSet={updateTitle}
-                displayEventTime={false} // 이벤트 시간 표시 숨기기
+                displayEventTime={false} // 이벤트 
+                // 시간 표시 숨기기
                 moreLinkClick={(arg) => {
                   setSelectedDayEvents(arg.allSegs.map(seg => seg.event));
                   setSelectedDayLabel(`${arg.date.getMonth() + 1}월 ${arg.date.getDate()}일`);
@@ -713,7 +742,7 @@ const Calendar = () => {
             <div className="w-full lg:w-64 flex flex-col gap-4 lg:gap-2 shrink-0">
               {activeTab === 'personal' ? (
                 <>
-                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-hidden max-h-80 lg:max-h-none overflow-y-auto lg:overflow-hidden">
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 lg:overflow-hidden max-h-64 lg:max-h-none custom-scrollbar">
                     <MonthlyEvents
                       events={personalEvents.filter(e => e.category !== 'holiday')}
                       currentTitle={currentTitle}
@@ -726,7 +755,7 @@ const Calendar = () => {
                 </>
               ) : (
                 <>
-                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-hidden max-h-80 lg:max-h-none overflow-y-auto lg:overflow-hidden">
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 lg:overflow-hidden max-h-64 lg:max-h-none custom-scrollbar">
                     <MonthlyEvents events={companyEvents} currentTitle={currentTitle} title="이달의 전사 일정 및 공휴일" />
                   </div>
                   <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:flex-1 lg:min-h-0 overflow-y-auto mb-4 lg:mb-0">
@@ -776,7 +805,10 @@ const Calendar = () => {
       )}
 
       {modal.open && (
-        <ModalOverlay onClose={() => setModal({ open: false, date: '' })}>
+        <ModalOverlay 
+          onClose={() => setModal({ open: false, date: '' })}
+          overflow="overflow-visible"
+        >
           <h3 className="text-sm font-bold text-slate-800 mb-4">{isEditing ? '일정 수정' : '새 일정 추가'}</h3>
           {/* 제목 */}
           <div className="mb-3">
@@ -793,16 +825,34 @@ const Calendar = () => {
             </p>
           </div>
           {activeTab === 'company' && isHrAdmin ? (
-            <select value={form.schedule_type} onChange={e => setForm(f => ({ ...f, schedule_type: e.target.value }))} className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs mb-3">
-              <optgroup label="공용">
-                {COMPANY_FILTERS.filter(f => f.key !== 'holiday').map(f => (
-                  <option key={f.key} value={f.key}>{f.label}</option>
-                ))}
-              </optgroup>
-            </select>
+            <div className="relative mb-3 z-20">
+              <div
+                onClick={() => setIsPermissionOpen(!isPermissionOpen)}
+                className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs flex justify-between items-center cursor-pointer bg-white hover:border-[#3530B8] transition-colors"
+              >
+                <span>{COMPANY_FILTERS.find(f => f.key === form.schedule_type)?.label || '카테고리 선택'}</span>
+                <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              {isPermissionOpen && (
+                <div className="absolute top-full left-0 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                  {COMPANY_FILTERS.filter(f => f.key !== 'holiday').map(f => (
+                    <div
+                      key={f.key}
+                      onClick={() => { setForm(prev => ({ ...prev, schedule_type: f.key })); setIsPermissionOpen(false); }}
+                      className="px-3 py-2 text-xs hover:bg-[#F0F4FF] cursor-pointer transition-colors flex items-center gap-2"
+                    >
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: f.color }} />
+                      {f.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           ) : null}
           {/* 날짜 선택 영역 (커스텀 달력 팝업 적용) */}
-          <div className="flex gap-2 mb-3">
+          <div className="flex gap-2 mb-3 overflow-visible relative z-10">
 
             {/* [시작일 커스텀 달력] */}
             <div className="flex-1 relative">
@@ -847,7 +897,7 @@ const Calendar = () => {
                 if (e.target.value.length <= 1000) setForm(f => ({ ...f, sked_reason: e.target.value }));
               }}
               placeholder="일정 설명을 입력하세요"
-              className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs h-20 resize-none focus:outline-none focus:ring-1 focus:ring-[#3530B8]"
+              className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs h-20 resize-none focus:outline-none focus:ring-1 focus:ring-[#3530B8] custom-scrollbar pr-3"
             />
             <p className={`text-right text-[0.625rem] mt-0.5 ${form.sked_reason.length >= 900 ? 'text-red-400' : 'text-slate-400'}`}>
               {form.sked_reason.length}/1000
@@ -904,7 +954,9 @@ const Calendar = () => {
             {detailModal.event.extendedProps?.description && (
               <div className="pt-2 border-t border-slate-100">
                 <p className="text-[0.625rem] text-slate-400 mb-1">설명</p>
-                <p className="text-slate-700 whitespace-pre-wrap">{detailModal.event.extendedProps.description}</p>
+                <div className="max-h-40 overflow-y-auto custom-scrollbar pr-1">
+                  <p className="text-slate-700 whitespace-pre-wrap break-words">{detailModal.event.extendedProps.description}</p>
+                </div>
               </div>
             )}
           </div>
@@ -981,14 +1033,24 @@ const FilterSection = ({ title, filters, checked, onChange }) => (
   </div>
 );
 
-const ModalOverlay = ({ children, onClose }) => (
-  <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
-    onClick={e => e.target === e.currentTarget && onClose()}>
-    <div className="bg-white rounded-2xl p-6 w-full max-w-sm mx-4 max-h-[80vh] overflow-y-auto">
+const ModalOverlay = ({ children, onClose, overflow = "overflow-y-auto" }) => {
+  const mouseDownTarget = useRef(null); 
+  return(
+    <div
+      className="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
+      onMouseDown={(e) => { mouseDownTarget.current = e.target; }} // ✅ 추가
+      onClick={(e) => {
+        // ✅ mousedown과 click 모두 overlay여야 닫힘
+        if (e.target === e.currentTarget && mouseDownTarget.current === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+    <div className={`bg-white rounded-2xl p-6 w-full max-w-sm mx-4 max-h-[80vh] ${overflow}`}>
       {children}
     </div>
   </div>
-);
+);}
 
 
 

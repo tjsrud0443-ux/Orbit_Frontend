@@ -125,6 +125,7 @@ const OvertimeRequestModal = ({ onClose }) => {
                   onChange={(time) => setEndTime(time)}
                   placeholder="시간 선택"
                   disableMinutes={true} 
+                  minHour={19}
                 />
               </div>
             </div>
@@ -133,15 +134,15 @@ const OvertimeRequestModal = ({ onClose }) => {
               <label className="block text-xs font-bold text-gray-500 mb-1.5 ml-1">신청 사유</label>
               <textarea 
                 required
-                placeholder="연장근무 사유를 입력해주세요. (최대 330자)"
+                placeholder="연장근무 사유를 입력해주세요. (최대 30자)"
                 value={reason}
                 onChange={(e) => {
-                  if (e.target.value.length <= 330) setReason(e.target.value);
+                  if (e.target.value.length <= 30) setReason(e.target.value);
                 }}
                 className="w-full px-4 py-3 border border-gray-200 rounded-2xl text-sm h-32 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all custom-scrollbar py-3"
               />
-              <p className={`text-right text-[10px] mt-1 ${reason.length >= 300 ? 'text-red-400' : 'text-gray-400'}`}>
-                {reason.length} / 330자
+              <p className={`text-right text-[10px] mt-1 ${reason.length >= 25 ? 'text-red-400' : 'text-gray-400'}`}>
+                {reason.length} / 30자
               </p>
             </div>
 
