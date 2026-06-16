@@ -158,7 +158,7 @@ const DocumentsList = () => {
                 </tr>
               ) : (
                 displayedDocs.map((doc) => (
-                  <tr key={doc.document_seq} className="hover:bg-slate-50/40 transition-colors">
+                  <tr key={doc.document_seq}>
                     <td className="py-4 text-center">
                       <a 
                         href={`http://localhost/file/download/${doc.file_sysname}?token=${token}`} 
