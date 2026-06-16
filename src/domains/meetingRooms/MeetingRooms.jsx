@@ -34,6 +34,7 @@ const MeetingRooms = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showFormCalendar, setShowFormCalendar] = useState(false);
+  const calendarRef = useRef(null);
   const [showStartTimeDropdown, setShowStartTimeDropdown] = useState(false);
   const [showEndTimeDropdown, setShowEndTimeDropdown] = useState(false);
   const startTimeRef = useRef(null);
@@ -41,6 +42,24 @@ const MeetingRooms = () => {
   const [showValidation, setShowValidation] = useState(false);
   const searchInputRef = useRef(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (calendarRef.current && !calendarRef.current.contains(event.target)) {
+        setShowFormCalendar(false);
+      }
+    };
+
+    if (showFormCalendar) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showFormCalendar]);
 
   const [form, setForm] = useState({
     title: '',
@@ -498,7 +517,7 @@ const MeetingRooms = () => {
                 <div className="space-y-4 pt-2">
                   <h3 className="text-xs font-bold text-[#3530B8] uppercase ml-1 tracking-widest">날짜 및 시간 설정</h3>
                   
-                  <div className="space-y-1.5 relative">
+                  <div className="space-y-1.5 relative" ref={calendarRef}>
                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">예약일</label>
                     <div 
                       onClick={() => setShowFormCalendar(!showFormCalendar)}
