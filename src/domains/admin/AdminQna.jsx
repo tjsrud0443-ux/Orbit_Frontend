@@ -77,7 +77,9 @@ const AdminQna = () => {
   const handleDelete = async (question_seq) => {
     const result = await alertConfirm('정말 삭제하시겠습니까?', '삭제 후 복구는 불가합니다.');
     if (result.isConfirmed) {
+      showLoading();
       await deleteMyAnswer(question_seq);
+      hideLoading();
       await alertSuccess('삭제 완료', '답변 삭제가 완료되었습니다.');
       const resp = await getMyDeptQuestion(user.dept_seq, user.auth_group);
       setQnaList(resp.data);
@@ -137,7 +139,10 @@ const AdminQna = () => {
       setAnswerError("글자수가 초과되었습니다. 300자까지만 입력 가능합니다.");
       return;
     }
+
+    showLoading();
     insertUpdateAnswer(payload).then(resp => {
+      hideLoading();
       alertSuccess(
         selectedQna.status === 'PENDING' ? '등록 완료' : '수정 완료',
         selectedQna.status === 'PENDING' ? '답변 등록이 완료되었습니다.' : '답변이 수정되었습니다.'
