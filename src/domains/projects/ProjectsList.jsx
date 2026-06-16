@@ -162,9 +162,9 @@ const ProjectsList = () => {
     if (!newProject.contents) newErrors.contents = '내용을 입력해주세요.';
     else if (newProject.contents.length > 800) newErrors.contents = '글자수가 초과되었습니다. 800자까지만 입력 가능합니다.';
     if (!newProject.start_date) newErrors.start_date = '시작일을 선택해주세요.';
-    if (!newProject.end_date) newErrors.end_date = '종료일을 선택해주세요.';
+    if (!newProject.end_date) newErrors.end_date = '마감일을 선택해주세요.';
     if (newProject.start_date && newProject.end_date && newProject.end_date < newProject.start_date) {
-      newErrors.end_date = '종료일은 시작일보다 이전일 수 없습니다.';
+      newErrors.end_date = '마감일은 시작일보다 이전일 수 없습니다.';
     }
     if (newProject.members.length === 0) newErrors.members = '참여자를 추가해주세요.';
 
@@ -258,7 +258,7 @@ const ProjectsList = () => {
     if (!editData.contents) newErrors.contents = '내용을 입력해주세요.';
     else if (editData.contents.length > 800) newErrors.contents = '글자수가 초과되었습니다. 800자까지만 입력 가능합니다.';
     if (!editData.start_date) newErrors.start_date = '시작일을 선택해주세요.';
-    if (!editData.end_date) newErrors.end_date = '종료일을 선택해주세요.';
+    if (!editData.end_date) newErrors.end_date = '마감일을 선택해주세요.';
     if (editData.members.length === 0) newErrors.members = '참여자를 추가해주세요.';
 
     if (Object.keys(newErrors).length > 0) {
@@ -323,11 +323,11 @@ const ProjectsList = () => {
   };
 
   const handleComplete = async (project_seq) => {
-    const result = await alertConfirm('종료 처리하시겠습니까?', '종료 처리 시 변경은 불가합니다.');
+    const result = await alertConfirm('완료 처리하시겠습니까?', '완료 처리 시 변경은 불가합니다.');
     if (!result.isConfirmed) return;
 
     await completeProject(project_seq);
-    await alertSuccess('처리 완료', '프로젝트 종료 처리가 완료되었습니다.');
+    await alertSuccess('처리 완료', '프로젝트가 완료 처리되었습니다.');
     const resp = await getMyAllProject();
     setProjects(resp.data);
     setIsModalOpen(false);
@@ -466,7 +466,7 @@ const ProjectsList = () => {
               )}
             </div>
             <div className="flex-1 relative" ref={endCalRef}>
-              <label className="block text-xs font-bold text-[#1a1c3d] mb-2">종료일 *</label>
+              <label className="block text-xs font-bold text-[#1a1c3d] mb-2">마감일 *</label>
               <div
                 onClick={() => { setIsEditEndCalendarOpen(!isEditEndCalendarOpen); setIsEditStartCalendarOpen(false); }}
                 className={`w-full p-3 bg-[#f4f7fc] rounded-xl cursor-pointer text-xs ${editData.end_date ? 'text-black' : 'text-[#9CA3AF]'} ${editErrors.end_date ? 'border border-red-500' : ''}`}
@@ -480,7 +480,7 @@ const ProjectsList = () => {
                   minDate={editData.start_date || undefined}
                   onChange={(date) => {
                     if (editData.start_date && date < editData.start_date) {
-                      setEditErrors(prev => ({ ...prev, end_date: '종료일은 시작일보다 이전일 수 없습니다.' }));
+                      setEditErrors(prev => ({ ...prev, end_date: '마감일은 시작일보다 이전일 수 없습니다.' }));
                       return;
                     }
                     setEditErrors(prev => ({ ...prev, end_date: null }));
@@ -918,7 +918,7 @@ const ProjectsList = () => {
                     </div>
 
                     <div className="flex-1 relative" ref={endCalendarRef}>
-                      <label className="block text-xs font-bold text-[#1a1c3d] mb-2">종료일 *</label>
+                      <label className="block text-xs font-bold text-[#1a1c3d] mb-2">마감일 *</label>
                       <div onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }} className={`w-full p-4 bg-[#f4f7fc] rounded-xl cursor-pointer text-xs ${newProject.end_date ? 'text-black' : 'text-[#9CA3AF]'} ${errors.end_date ? 'border border-red-500' : ''}`}>
                         {newProject.end_date || "날짜 선택"}
                       </div>
@@ -930,7 +930,7 @@ const ProjectsList = () => {
                             minDate={newProject.start_date || new Date().toISOString().split('T')[0]}
                             onChange={(date) => {
                               if (newProject.start_date && date < newProject.start_date) {
-                                setErrors(prev => ({ ...prev, end_date: '종료일은 시작일보다 이전일 수 없습니다.' }));
+                                setErrors(prev => ({ ...prev, end_date: '마감일은 시작일보다 이전일 수 없습니다.' }));
                                 return;
                               }
                               setErrors(prev => ({ ...prev, end_date: null }));
