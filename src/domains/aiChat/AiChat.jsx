@@ -514,7 +514,7 @@ const AiChat = () => {
                   setInquiryError("");
                 }
               }}
-              className={`w-full p-3 border rounded-lg mb-2 text-sm h-32 outline-none custom-scrollbar transition-all ${inquiryError ? 'border-red-500' : 'border-[#edf2f9]'}`}
+              className={`resize-none w-full p-3 border rounded-lg mb-2 text-sm h-32 outline-none custom-scrollbar transition-all ${inquiryError ? 'border-red-500' : 'border-[#edf2f9]'}`}
               placeholder="AI가 답변하지 못한 상세 문의 내용을 작성해주시면 담당자가 검토 후 그룹웨어로 답변을 드립니다."
             ></textarea>
             {inquiryError && <p className="text-[11px] text-red-500 mb-4 ml-1">{inquiryError}</p>}
