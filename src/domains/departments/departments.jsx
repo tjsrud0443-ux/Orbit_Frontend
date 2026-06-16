@@ -368,11 +368,11 @@ const Departments = () => {
     const matchedEmployees = employees.filter(emp =>
       emp.name.toLowerCase().includes(lower) ||
       emp.position.toLowerCase().includes(lower)
-    ).slice(0, 5);
+    );
 
     const matchedDepts = Object.values(fullTree.nodeMap).filter(dept =>
       dept.deptName.toLowerCase().includes(lower)
-    ).slice(0, 5);
+    );
 
     return { employees: matchedEmployees, depts: matchedDepts };
   }, [headerSearch, employees, fullTree.nodeMap]);
