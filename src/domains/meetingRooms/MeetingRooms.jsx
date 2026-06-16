@@ -324,8 +324,14 @@ const MeetingRooms = () => {
       setShowValidation(false);
       await alertSuccess('예약 완료', '회의실 예약이 완료되었습니다.<br>캘린더에서 일정을 확인하세요.');
     } catch(error) {
-      console.error('회의실 예약 실패: ', error);
-      await alertError('예약 실패', '회의실 예약에 실패했습니다.');
+      if (error.response?.data?.message === 'CONFLICT') {
+        await alertError('예약 실패', '다른 사용자가 방금 동 시간대에 예약했습니다.<br>예약 현황을 다시 확인해주세요.');
+        const resp = await getReservations(format(currentDate, 'yyyy-MM-dd'), selectedRoomSeq);
+        setEvents(resp.data);
+      } else {
+        console.error('회의실 예약 실패: ', error);
+        await alertError('예약 실패', '회의실 예약에 실패했습니다.');
+      }
     }
   };
 
