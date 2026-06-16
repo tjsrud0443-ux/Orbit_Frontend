@@ -42,6 +42,8 @@ useEffect(() => {
   useEffect(() => {
     if (isPostcodeOpen && postcodeRef.current) {
       new window.kakao.Postcode({
+        width: '100%',
+        height: '300px',
         oncomplete: function (data) {
           setFormData((prev) => ({
             ...prev,
