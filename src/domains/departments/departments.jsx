@@ -14,6 +14,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { getGroup } from './departmentsApi';
 import useAuthStore from '../../store/authStore';
+import useLoadingStore from '../../store/useLoadingStore';
 
 // // Position Rank for Sorting (Lower number = Higher rank)
 
@@ -301,6 +302,8 @@ const Departments = () => {
   const [isHeaderSearchOpen, setIsHeaderSearchOpen] = useState(false);
   const token = useAuthStore(state => state.token);
   const sidebarRef = useRef(null);
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -333,6 +336,7 @@ const Departments = () => {
   }
 
   useEffect(() => {
+    showLoading();
     getGroup().then(resp => {
       setFullTree({
         root: resp.data.root,
@@ -342,6 +346,7 @@ const Departments = () => {
       setEmployees(
         resp.data.users
       )
+      hideLoading();
     })
       .catch(error => {
         console.log("조직도 로딩 실패", error)
