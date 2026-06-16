@@ -32,12 +32,23 @@ const AdminSupplyReq = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedId, setSelectedId] = useState(null);
 
+useEffect(() => {
+  getSuppyReqList({ page: 1, keyword: '', status: '' }).then(res => {
+    const { totalCount, pendingCount, approvedCount, rejectedCount } = res.data;
+    setTabCounts({
+      전체: totalCount,
+      대기: pendingCount,
+      승인: approvedCount,
+      반려: rejectedCount
+    });
+  }).catch(err => console.error(err));
+}, []);
 
   useEffect(() => {
     getSuppyReqList({ page, keyword, status: activeTab === '전체' ? '' 
       : activeTab === '대기' ? 'PENDING' 
       : activeTab === '승인' ? 'APPROVED' : 'REJECTED' }).then(res => {
-      const { list, totalPages: newTotalPages, totalCount, pendingCount, approvedCount, rejectedCount } = res.data;
+      const { list, totalPages: newTotalPages } = res.data;
       const mapped = list.map(item => ({      
         id: item.req_seq,
         users_id: item.users_id,
@@ -60,12 +71,6 @@ const AdminSupplyReq = () => {
       }));
       setRequests(mapped);
       setTotalPages(newTotalPages); 
-      setTabCounts({
-        전체: totalCount,
-        대기: pendingCount,
-        승인: approvedCount,
-        반려: rejectedCount
-      });
     }).catch(err => console.error(err));
   }, [page, keyword, activeTab]);
 
@@ -78,25 +83,50 @@ const AdminSupplyReq = () => {
   };
 
   const handleApprove = async (id) => {
-    const target = requests.find(r => r.id === id);
-//재고가 0인 비품/ 재고가 최소수량 이하인 비품이 1개 이상 있냐
-    const emptyItems = target.items.filter(item => item.stock_qty === 0);
-    const lowItems = target.items.filter(item => item.stock_qty > 0 && item.stock_qty <= item.min_stock_qty);
+      const target = requests.find(r => r.id === id);
 
-    let text = '처리 후 변경은 불가합니다.';
+  const emptyItems = target.items.filter(item => item.stock_qty === 0);
+  const lowItems = target.items.filter(item => item.stock_qty > 0 && item.stock_qty <= item.min_stock_qty);
+  const okItems = target.items.filter(item => item.stock_qty > item.min_stock_qty);
 
-    if (emptyItems.length > 0 || lowItems.length > 0) {
-      const warnings = [];
-      if (emptyItems.length > 0) {
-        warnings.push(`• ${emptyItems.map(i => i.supply_name).join(', ')} : 재고 없음`);
-      }
-      if (lowItems.length > 0) {
-        warnings.push(`• ${lowItems.map(i => i.supply_name).join(', ')} : 재고 부족`);
-      }
-      text = `${warnings.join('<br>')}<br>그래도 승인하시겠습니까?`;
-    }
-    const result = await alertConfirm('신청을 승인하시겠습니까?', text);
+  // ✅ 재고 없는 항목이 있으면 전체 현황 보여주고 차단
+  if (emptyItems.length > 0) {
+    const lines = [
+      ...emptyItems.map(i => `${i.supply_name} : 재고 없음 ❌`),
+      ...lowItems.map(i => ` ${i.supply_name} : 재고 부족 ⚠️`)
+    ].join('<br>');
+    await alertWarning('승인 불가', `${lines}<br><br>재고가 없으면 승인이 불가합니다.`);
+    return;
+  }
+
+  // ✅ 재고 부족만 있으면 현황 보여주고 계속 승인 가능
+  if (lowItems.length > 0) {
+    const lines = [
+      ...lowItems.map(i => `${i.supply_name} : 재고 부족 ⚠️`),
+    ].join('<br>');
+    const result = await alertConfirm('재고 부족 경고', `${lines}<br><br>그래도 승인하시겠습니까?`);
     if (!result.isConfirmed) return;
+  } else {
+    const result = await alertConfirm('신청을 승인하시겠습니까?', '처리 후 변경은 불가합니다.');
+    if (!result.isConfirmed) return;
+  }
+    // const target = requests.find(r => r.id === id);
+    // //재고가 0인 비품이 1개 이상 있냐
+    // const emptyItems = target.items.filter(item => item.stock_qty === 0);
+    // if (emptyItems.length > 0) {
+    //   await alertWarning('승인 불가', '재고가 부족하여 승인이 불가합니다.');
+    //   return;
+    // }
+    // //재고 부족
+    // const lowItems = target.items.filter(item => item.stock_qty > 0 && item.stock_qty <= item.min_stock_qty);
+    // if (lowItems.length > 0) {
+    //   const warnings = lowItems.map(i => `• ${i.supply_name} : 재고 부족`).join('<br>');
+    //   const result = await alertConfirm('재고 부족 경고', `${warnings}<br>그래도 승인하시겠습니까?`);
+    //   if (!result.isConfirmed) return;
+    // } else {
+    //   const result = await alertConfirm('신청을 승인하시겠습니까?', '처리 후 변경은 불가합니다.');
+    //   if (!result.isConfirmed) return;
+    // }
 
     try {
       await updateSupplyReqStatus({

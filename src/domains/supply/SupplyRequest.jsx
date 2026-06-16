@@ -3,6 +3,7 @@ import useUserStore from '../../store/userStore';
 import Calendar from '../../components/common/Calendar';
 import { getSupplies,supplyRequest } from './supplyApi';
 import { alertSuccess, alertError } from '../../utils/alert';
+import { useNavigate } from 'react-router-dom';
 
 // 비품 전체 카테고리
 const CATEGORIES = ['전체', '사무용품', '전자기기', '가구', '네트워크 장비'];
@@ -254,6 +255,8 @@ const AddItemModal = ({ onAdd, onClose }) => {
 // ── 메인 페이지 ────────────────────────────────────────────────
 const SupplyRequest = () => {
   const { user } = useUserStore();
+  const navigate = useNavigate();
+
   const today = (() => {
     const d = new Date();
     const yyyy = d.getFullYear();
@@ -331,9 +334,9 @@ const SupplyRequest = () => {
             ea: item.qty,
             use_type: item.usageType
         }))
-    }).then(() => {
-        alertSuccess('신청 완료', '비품 신청이 완료되었습니다.');
-        handleCancel();
+    }).then(async () => {
+        await alertSuccess('신청 완료', '비품 신청이 완료되었습니다.');
+        navigate('/supplyHistory');
     }).catch(() => {
         alertError('오류 발생', '비품 신청 중 오류가 발생했습니다.');
     });
@@ -409,8 +412,9 @@ const SupplyRequest = () => {
                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>
               </div>
-              {showCalendar && (
-                <div className="absolute top-full left-0 w-full z-40 [&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-1 [&>div]:mb-0">
+              {showCalendar && (               
+                <div ref={calendarRef}
+                  className="absolute top-full left-0 w-full z-40 [&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-1 [&>div]:mb-0">
                   <Calendar 
                     value={reqDate} 
                     onChange={handleDateChange} 
@@ -546,7 +550,7 @@ const SupplyRequest = () => {
             onClick={handleCancel}
             className="px-5 py-2 border border-gray-200 rounded-xl text-sm font-bold text-gray-500 bg-white hover:bg-gray-50 transition-all"
           >
-            취소
+            전체 취소
           </button>
           <button
             onClick={handleSubmit}

@@ -161,7 +161,7 @@ const SupplyHistory = () => {
 
         {/* Detail View Section */}
         {selectedRequest && (
-          <div className={`flex flex-col bg-white rounded-none md:rounded-[2rem] border-0 md:border border-[#F0F4FF] shadow-sm overflow-hidden animate-in slide-in-from-right duration-500 flex-1 md:flex-[0.4] md:h-fit self-start`}>
+          <div className={`flex flex-col bg-white rounded-none md:rounded-[2rem] border-0 md:border border-[#F0F4FF] shadow-sm overflow-hidden animate-in slide-in-from-right duration-500 flex-1 md:flex-[0.4] md:max-h-full self-start`}>
             <div className="p-6 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
               <h2 className="text-lg font-bold text-gray-900">신청 상세 내역</h2>
               <button onClick={() => setSelectedRequest(null)} className="text-gray-300 hover:text-gray-500 transition-colors">
@@ -169,7 +169,7 @@ const SupplyHistory = () => {
               </button>
             </div>
 
-            <div className="overflow-y-auto p-6 custom-scrollbar space-y-6">
+            <div className="overflow-y-auto p-6 custom-scrollbar space-y-6 ">
               {/* Basic Info */}
               <div className="space-y-4">
                 <h3 className="text-xs font-bold text-gray-400 uppercase ml-1 text-left">신청 정보</h3>
@@ -189,29 +189,31 @@ const SupplyHistory = () => {
               <div className="space-y-4">
                 <h3 className="text-xs font-bold text-gray-400 uppercase ml-1 text-left">신청 비품 목록 ({selectedRequest.items?.length || 0}종)</h3>
                 <div className="border border-gray-100 rounded-2xl overflow-hidden">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="bg-gray-50 text-gray-500 font-bold border-b border-gray-100">
-                        <th className="py-3 px-4 text-left">비품명</th>
-                        <th className="py-3 px-4 text-right">수량</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedRequest.items?.map((item, idx) => (
-                        <tr key={idx} className="border-b border-gray-50 last:border-0">
-                          <td className="py-3 px-4 text-gray-700 font-bold text-left">{item.supply_name}</td>
-                          <td className="py-3 px-4 text-gray-500 font-bold text-right">{item.ea}개</td>
+                  <div className="max-h-32 overflow-y-auto overflow-x-hidden custom-scrollbar">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="bg-gray-50 text-gray-500 font-bold border-b border-gray-100">
+                          <th className="py-3 px-4 text-left">비품명</th>
+                          <th className="py-3 px-4 text-right">수량</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {selectedRequest.items?.map((item, idx) => (
+                          <tr key={idx} className="border-b border-gray-50 last:border-0">
+                            <td className="py-3 px-4 text-gray-700 font-bold text-left">{item.supply_name}</td>
+                            <td className="py-3 px-4 text-gray-500 font-bold text-right">{item.ea}개</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
 
               {/* Reason */}
               <div className="space-y-4">
                 <h3 className="text-xs font-bold text-gray-400 uppercase ml-1 text-left">신청 사유</h3>
-                <div className="bg-gray-50 rounded-2xl p-5">
+                <div className="bg-gray-50 rounded-2xl p-5 max-h-32 overflow-y-auto custom-scrollbar">
                   <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
                     {selectedRequest.reason || '입력된 사유가 없습니다.'}
                   </p>

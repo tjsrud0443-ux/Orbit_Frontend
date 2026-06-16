@@ -582,7 +582,7 @@ const handleSave = async (form) => {
               {paginated.length > 0 ? paginated.map(item => {
                 const stockStatus = getStockStatus(item);
                 return (
-                  <div key={item.id} className="grid grid-cols-12 border-b border-gray-50 last:border-0 items-center hover:bg-gray-50/60 transition-colors">
+                  <div key={item.id} className="grid grid-cols-12 border-b border-gray-50 last:border-0 items-center transition-colors">
                     <div className="col-span-1 px-4 py-3.5 flex items-center justify-center">
                       <input
                         type="checkbox"
