@@ -374,7 +374,7 @@ const AdminDept = () => {
               <input
                 type="text"
                 placeholder="예: 개발본부, 인사팀"
-                maxLength={20}
+                maxLength={10}
                 className={`w-full h-10 px-3 bg-slate-50 border ${errors.dept_name ? 'border-red-500' : 'border-slate-200'} rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20 focus:border-[#3530B8] transition-all`}
                 value={formData.dept_name}
                 onChange={(e) => {
@@ -385,7 +385,7 @@ const AdminDept = () => {
               {errors.dept_name && <p className="text-[9px] text-red-500 font-medium ml-1">{errors.dept_name}</p>}
               <div className="flex items-center justify-between gap-1.5 text-[9px] text-slate-400 font-medium ml-1">
                 <div className="flex items-center gap-1.5"><FontAwesomeIcon icon={faInfoCircle} className="text-[#3530B8]/50" /> <span>한글만 입력 가능</span></div>
-                <span>{formData.dept_name.length}/20</span>
+                <span>{formData.dept_name.length}/10</span>
               </div>
             </div>
             <div className="space-y-1.5">
