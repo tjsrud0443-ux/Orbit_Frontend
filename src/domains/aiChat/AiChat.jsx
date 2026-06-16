@@ -28,6 +28,7 @@ const AiChat = () => {
   const [inputError, setInputError] = useState("");
   const [currentChatSeq, setCurrentChatSeq] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
+  const [adminQanSelectedMsgSeq, setAdminQanSelectedMsgSeq] = useState(null);
   const [activeMenuId, setActiveMenuId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -152,7 +153,7 @@ const AiChat = () => {
 
         setMessages(prev => prev.map(msg => {
           if (msg.id === aiMessageId) {
-            return { ...msg, content: "", isTyping: true, showInquiry: needInquiryButton, sourceFileName: sourceFileName };
+            return { ...msg, msg_seq: resp.data.msg_seq, content: "", isTyping: true, showInquiry: needInquiryButton, sourceFileName: sourceFileName };
           }
           return msg;
         }));
@@ -248,19 +249,20 @@ const AiChat = () => {
       category: selectedDept.deptName,
       question: inputQuestion,
       dept_seq: selectedDept.deptSeq,
-      chat_seq: currentChatSeq
+      chat_seq: currentChatSeq,
+      msg_seq: adminQanSelectedMsgSeq
     };
 
     insertQuestion(dept).then(resp => {
       alertSuccess('접수 완료', '문의 접수가 완료되었습니다.');
-
       // 현재 UI 화면의 메시지 중, '문의하기'가 활성화되어 있던 메시지 상태를 '문의 완료'로 변경
-      setMessages(prev => prev.map(msg => {
-        if (msg.role === 'AI' && msg.showInquiry) {
-          return { ...msg, isInquiryComplete: true };
-        }
-        return msg;
-      }));
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.msg_seq === adminQanSelectedMsgSeq
+            ? { ...msg, isInquiryComplete: true }
+            : msg
+        )
+      );
 
       // 인풋 초기화 및 모달 닫기
       setInputQuestion("");
@@ -366,7 +368,7 @@ const AiChat = () => {
               <div className={`max-w-[70%] p-4 rounded-2xl ${msg.role === 'USER' ? 'bg-[#3530B8] text-white' : 'bg-[#f4f7fc] text-[#1a1c3d]'}`}>
                 <div className="text-sm leading-relaxed whitespace-pre-wrap">
                   {msg.content === '데이터를 분석하고 있습니다...' ? (
-                    <span>데이터를 분석하고 있습니다<span className="dot-animate"></span><FontAwesomeIcon icon={faRobot}/></span>
+                    <span>데이터를 분석하고 있습니다<span className="dot-animate"></span><FontAwesomeIcon icon={faRobot} /></span>
                   ) : (
                     msg.content
                   )}
@@ -381,7 +383,10 @@ const AiChat = () => {
                     </button>
                   ) : (
                     // 아직 문의하지 않은 상태의 버튼
-                    <button onClick={() => setIsModalOpen(true)} className="mt-3 text-xs bg-white text-[#3530B8] px-3 py-1.5 rounded-lg font-bold border border-[#3530B8] hover:bg-slate-50">
+                    <button onClick={() => {
+                      setAdminQanSelectedMsgSeq(msg.msg_seq);
+                      setIsModalOpen(true);
+                    }} className="mt-3 text-xs bg-white text-[#3530B8] px-3 py-1.5 rounded-lg font-bold border border-[#3530B8] hover:bg-slate-50">
                       담당 부서에 문의하기
                     </button>
                   )

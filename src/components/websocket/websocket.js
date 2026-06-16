@@ -28,51 +28,51 @@ export const connectSocket = (usersId) => {
                         .getState()
                         .addNotification(noti);
 
+                    const showToast = (content, icon) => {
+                        const isMobile = window.matchMedia("(max-width:768px)").matches;
+                        
+                        if(isMobile){
+                            toast.dismiss();
+                        }
+
+                        toast(content, {
+                            icon: () => icon
+                        });
+                    }
+
                     switch (noti.noti_type) {
                         // 프로젝트 알림
                         case "PROJECT":
-                            toast(noti.content, {
-                                icon: () => "📅"
-                            });
+                            showToast(noti.content, "📅");
                             break;
 
                         // 결재 요청 알림
                         case "APPROVAL":
-                            toast(noti.content, {
-                                icon: () => "🔔"
-                            });
+                            showToast(noti.content, "🔔");
                             break;
                         
                         // 결재 승인 알림
                         case "APPROVED":
-                            toast(noti.content, {
-                                icon: () => "✅"
-                            });
+                            showToast(noti.content, "✅");
                             break;
 
                         // 결재 반려 알림
                         case "REJECTED":
-                            toast(noti.content, {
-                                icon: () => "❌"
-                            });
+                            showToast(noti.content, "❌");
                             break;
 
                         // 미팅 참석 알림
                         case "MEETING":
-                            toast(noti.content, {
-                                icon: () => "📅"
-                            });
+                            showToast(noti.content, "📅");
                             break;
                         
                         // 칸반 담당자 지정 알림
                         case "TASK":
-                            toast(noti.content, {
-                                icon: () => "👨‍💻"
-                            });
+                            showToast(noti.content, "📌");
                             break;
                             
                         default:
-                            toast(noti.content);
+                            showToast(noti.content);
                     }
 
                 }
