@@ -377,7 +377,7 @@ const RoomHistory = () => {
                         </button>
                       </>
                     ) : (
-                      "-"
+                      <div className='text-gray-500'>-</div>
                     )}
                   </div>
                 </div>
