@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+﻿import { useEffect, useState, useRef } from 'react';
 import Pagination from '../../components/common/Pagination';
 import { approveUserSignup, getAllRequest, getDeptList, getHrInfo, getRankList, getUserInfo, rejectUserSignup } from './adminApi';
 import useAuthStore from '../../store/authStore';
@@ -27,6 +27,7 @@ const AdminSignup = () => {
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [isRejectSuccess, setIsRejectSuccess] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const calendarRef = useRef(null);
 
   const token = useAuthStore(state => state.token);
   const showLoading = useLoadingStore(state => state.showLoading);
@@ -78,9 +79,30 @@ const AdminSignup = () => {
     setPage(1);
   }, [searchTerm]);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (calendarRef.current && !calendarRef.current.contains(event.target)) {
+        setIsCalendarOpen(false);
+      }
+    };
+
+    if (isCalendarOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isCalendarOpen]);
+
   const handleUserClick = (info) => {
     setSelectedUser(info.signup_seq);
     setErrors({ dept: '', rank: '', hireDate: '' });
+    setHireDate('');
+    setSelectedDept({ dept_seq: null, dept_name: '부서 또는 본부를 선택하세요' });
+    setSelectedRank({ rank_seq: null, rank_name: '직급을 선택하세요' });
 
     getUserInfo(info.signup_seq).then(resp => {
       const basicInfo = resp.data;
@@ -458,7 +480,7 @@ const AdminSignup = () => {
                             )}
                           </div>
 
-                          <div className="relative">
+                          <div className="relative" ref={calendarRef}>
                             <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1 ml-1">입사일자</label>
                             <div 
                               onClick={() => { setIsCalendarOpen(!isCalendarOpen); setIsDeptOpen(false); setIsRankOpen(false); }}
