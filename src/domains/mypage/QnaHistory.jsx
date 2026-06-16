@@ -140,7 +140,7 @@ const QnaHistory = () => {
                 </thead>
                 <tbody>
                   {paginatedQna.map(item => (
-                    <tr key={item.question_seq} className="border-b border-gray-100 hover:bg-[#f8fbff] transition-colors md:table-row align-middle">
+                    <tr key={item.question_seq} className="border-b border-gray-100 transition-colors md:table-row align-middle">
                       <td className="py-7 px-6 md:table-cell text-sm font-medium text-[#1a1c3d] whitespace-nowrap align-middle">
                         <span className="inline-flex items-center px-3 py-1 bg-[#F0F4FF] text-[#3530B8] rounded-lg text-xs font-bold">
                           {item.category.replace("팀", "")}
