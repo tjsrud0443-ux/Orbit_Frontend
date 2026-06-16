@@ -55,20 +55,16 @@ const AdminSignup = () => {
   };
 
   const loadList = () => {
-    showLoading();
+    if (!searchTerm) showLoading();
     getAllRequest(page, statusMap[activeTab], searchTerm).then(resp => {
       setAllInfo(resp.data.list);
       const calculatedPages = Math.ceil(resp.data.count / 10);
       setTotalPages(calculatedPages === 0 ? 1 : calculatedPages);
       setTabCount(resp.data.tabCount);
     }).finally(() => {
-      hideLoading();
-    })
+      if (!searchTerm) hideLoading();
+    });
   };
-
-  useEffect(() => {
-    loadList();
-  }, [page, activeTab, searchTerm]);
 
   useEffect(() => {
     getDeptList().then(resp => setDeptList(resp.data));
@@ -76,8 +72,16 @@ const AdminSignup = () => {
   },[])
 
   useEffect(() => {
-    setPage(1);
-  }, [searchTerm]);
+    if (page !== 1) {
+      setPage(1);
+    } else {
+      loadList();
+    }
+  }, [searchTerm, activeTab]);
+
+  useEffect(() => {
+    loadList();
+  }, [page]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
