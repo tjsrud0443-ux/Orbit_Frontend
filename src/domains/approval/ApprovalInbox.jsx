@@ -9,6 +9,7 @@ import {
 import Pagination from '../../components/common/Pagination';
 import { getMyDraftDoc, getPageMyDoneDoc } from './approvalApi';
 import useAuthStore from '../../store/authStore';
+import useLoadingStore from '../../store/useLoadingStore';
 
 // --- Sub Components ---
 
@@ -48,7 +49,7 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, coun
       <div className="pl-4 md:pl-6 pr-4 py-3 border-b border-slate-100 bg-white">
         <h3 className="text-base md:text-lg font-bold text-slate-800">{title}</h3>
       </div>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto custom-scrollbar">
         <table className="w-full min-w-[900px] md:min-w-full text-left border-collapse md:table-fixed">
           <thead>
             <tr className="bg-white text-gray-400 text-[0.8125rem] font-bold uppercase tracking-wider border-b border-slate-100">
@@ -57,12 +58,12 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, coun
               <th className="px-3 py-3 w-[15%] whitespace-nowrap">기안자</th>
               <th className="px-3 py-3 text-center w-[14%] whitespace-nowrap">기안일</th>
               <th className="px-3 py-3 text-center w-[10%] whitespace-nowrap">결재 상태</th>
-              <th className="px-3 py-3 text-center w-[8%] whitespace-nowrap">상세보기</th>
+              <th className="px-3 py-3 text-center w-[12%] whitespace-nowrap">상세보기</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {displayData.map((doc) => (
-              <tr key={doc.doc_seq} className="hover:bg-slate-50/50 transition-colors">
+              <tr key={doc.doc_seq} className="transition-colors">
                 <td className="pl-4 md:pl-6 pr-3 py-4 text-sm font-bold text-gray-700 truncate whitespace-nowrap">{doc.title}</td>
                 <td className="px-3 py-4 text-xs font-medium text-gray-500 truncate whitespace-nowrap">{docTypeText[doc.doc_type] || doc.doc_type}</td>
                 <td className="px-3 py-4 truncate whitespace-nowrap">
@@ -161,14 +162,17 @@ const ApprovalInbox = () => {
   };
 
   const [draftDocument, setDraftDocuments] = useState([]);
-
   const [doneDocument, setDoneDocument] = useState([]);
   const [doneDocumentPage, setDoneDocumentPage] = useState(1);
   const [doneDocumentCount, setDoneDocumentCount] = useState(0);
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
 
   useEffect(() => {
+    showLoading();
     getMyDraftDoc().then(resp => {
       setDraftDocuments(resp.data);
+      hideLoading();
     })
   }, []);
 
@@ -251,7 +255,7 @@ const ApprovalInbox = () => {
         </div>
       </div>
       <style dangerouslySetInnerHTML={{ __html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
