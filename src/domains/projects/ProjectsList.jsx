@@ -8,6 +8,7 @@ import { completeProject, deleteProject, getAllEmp, getMyAllProject, getProjectC
 import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
 import { alertSuccess, alertConfirm } from '../../utils/alert';
+import useLoadingStore from '../../store/useLoadingStore';
 
 const ProjectsList = () => {
   const navigate = useNavigate();
@@ -29,6 +30,8 @@ const ProjectsList = () => {
   const user = useUserStore(state => state.user);
   const token = useAuthStore(state => state.token);
   const [searchParam] = useSearchParams(); // 알림용
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -182,6 +185,7 @@ const ProjectsList = () => {
       contents: newProject.contents
     };
 
+    showLoading();
     insertProjectAndMembers(newEntry).then(resp => {
       getMyAllProject().then(resp => {
         setProjects(resp.data);
@@ -189,9 +193,10 @@ const ProjectsList = () => {
         setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
         setEmpSearch('');
         setErrors({});
+        hideLoading();
         alertSuccess('등록 완료', '프로젝트 등록이 완료되었습니다.<br>캘린더에서 일정을 확인하세요.');
-      });
-    });
+      }).catch(() => hideLoading());
+    }).catch(() => hideLoading());
   };
 
   const addMember = (emp) => {
@@ -285,8 +290,10 @@ const ProjectsList = () => {
       projectMembersDTO: newMembersDTO,
     };
 
+    showLoading();
     updateProject(updatedEntry).then(() => {
       alertSuccess('수정 완료', '프로젝트 정보가 수정되었습니다.');
+      hideLoading();
       getMyAllProject().then(resp => {
         setProjects(resp.data);
         const updatedProject = resp.data.find(
@@ -303,15 +310,17 @@ const ProjectsList = () => {
         setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
         setEmpSearch('');
         setErrors({});
-      })
-    });
+      }).catch(() => hideLoading());
+    }).catch(() => hideLoading());
   };
 
   const handleDelete = async (project_seq) => {
     const result = await alertConfirm('정말 삭제하시겠습니까?', '삭제 시 복구는 불가합니다.');
     if (!result.isConfirmed) return;
 
+    showLoading();
     await deleteProject(project_seq);
+    hideLoading();
     await alertSuccess('삭제 완료', '프로젝트 삭제가 완료되었습니다.');
     const resp = await getMyAllProject();
     setProjects(resp.data);
@@ -324,9 +333,13 @@ const ProjectsList = () => {
 
   const handleComplete = async (project_seq) => {
     const result = await alertConfirm('완료 처리하시겠습니까?', '완료 처리 시 변경은 불가합니다.');
+
     if (!result.isConfirmed) return;
 
+    showLoading();
     await completeProject(project_seq);
+    hideLoading();
+
     await alertSuccess('처리 완료', '프로젝트가 완료 처리되었습니다.');
     const resp = await getMyAllProject();
     setProjects(resp.data);
@@ -345,6 +358,7 @@ const ProjectsList = () => {
       return;
     }
 
+    showLoading();
     getMyAllProject().then(resp => {
 
       setProjects(resp.data);
@@ -360,33 +374,40 @@ const ProjectsList = () => {
       navigate("/projects", {
         replace: true
       });
+      hideLoading();
 
-    });
+    }).catch(() => hideLoading());
 
   }, [projectSeq]);
 
   useEffect(() => {
+    showLoading();
     getAllEmp().then(resp => {
       setEmployees(resp.data)
-    })
+      hideLoading();
+    }).catch(() => hideLoading());
   }, []);
 
   useEffect(() => {
+    showLoading();
     getMyAllProject().then(resp => {
       setProjects(resp.data);
       setIsModalOpen(false);
       setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
       setEmpSearch('');
       setErrors({});
-    })
+      hideLoading();
+    }).catch(() => hideLoading());
   }, []);
 
   useEffect(() => {
     const getCount = async () => {
       if(!user?.role) return;
 
+      showLoading();
       const resp = await getProjectCount(user?.role);
       setProjectCount(resp.data);
+      hideLoading();
     }
     getCount();
   }, [user?.role]);
@@ -434,7 +455,7 @@ const ProjectsList = () => {
                 if (editErrors.contents) setEditErrors(prev => ({ ...prev, contents: null }));
               }
             }}
-            className={`w-full text-xs p-3 bg-[#f4f7fc] rounded-xl outline-none custom-scrollbar ${editErrors.contents ? 'border border-red-500' : ''}`}
+            className={`resize-none w-full text-xs p-3 bg-[#f4f7fc] rounded-xl outline-none custom-scrollbar ${editErrors.contents ? 'border border-red-500' : ''}`}
           />
           {editErrors.contents && <p className="text-[9px] text-red-500 font-medium ml-1 mt-1">{editErrors.contents}</p>}
 
@@ -873,7 +894,7 @@ const ProjectsList = () => {
                     <label className="block text-xs font-bold text-[#1a1c3d] mb-2">프로젝트 내용 *</label>
                     <textarea
                       rows={3}
-                      className={`w-full text-xs p-4 bg-[#f4f7fc] rounded-xl outline-none custom-scrollbar ${errors.contents ? 'border border-red-500' : ''}`}
+                      className={`resize-none w-full text-xs p-4 bg-[#f4f7fc] rounded-xl outline-none custom-scrollbar ${errors.contents ? 'border border-red-500' : ''}`}
                       value={newProject.contents}
                       onChange={e => {
                         const val = e.target.value;
@@ -901,9 +922,9 @@ const ProjectsList = () => {
                         <div className="absolute top-full left-0 z-[60] mt-2 w-[280px]">
                           <Calendar
                             value={newProject.start_date}
-                            minDate={new Date().toISOString().split('T')[0]}
+                            minDate={new Date().toLocaleDateString('sv-SE')}
                             onChange={(date) => {
-                              if (date < new Date().toISOString().split('T')[0]) {
+                              if (date < new Date().toLocaleDateString('sv-SE')) {
                                 setErrors(prev => ({ ...prev, start_date: '시작일은 오늘 이후의 날짜만 선택할 수 있습니다.' }));
                                 return;
                               }
@@ -927,7 +948,7 @@ const ProjectsList = () => {
                         <div className="absolute top-full right-0 z-[60] mt-2 w-[280px]">
                           <Calendar
                             value={newProject.end_date}
-                            minDate={newProject.start_date || new Date().toISOString().split('T')[0]}
+                            minDate={newProject.start_date || new Date().toLocaleDateString('sv-SE')}
                             onChange={(date) => {
                               if (newProject.start_date && date < newProject.start_date) {
                                 setErrors(prev => ({ ...prev, end_date: '마감일은 시작일보다 이전일 수 없습니다.' }));
