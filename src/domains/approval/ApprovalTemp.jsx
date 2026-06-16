@@ -98,7 +98,7 @@ const ApprovalTemp = () => {
   };
 
   return (
-    <div className="flex-1 bg-white overflow-y-auto p-5 lg:p-6">
+    <div className="flex-1 bg-white overflow-y-auto p-5 lg:p-6 custom-scrollbar">
       <div className="max-w-[1440px] mx-auto space-y-10">
 
         {/* Title & Description */}
@@ -157,7 +157,7 @@ const ApprovalTemp = () => {
 
         {/* Sections: 목록 테이블 */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-100 text-[0.8125rem] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
@@ -235,6 +235,12 @@ const ApprovalTemp = () => {
           )}
         </div>
       </div>
+      <style dangerouslySetInnerHTML={{ __html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
+      `}} />
     </div>
   );
 };
