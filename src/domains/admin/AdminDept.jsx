@@ -15,6 +15,7 @@ import {
 import { getGroup } from '../departments/departmentsApi';
 import { addDept, delDept, updateDept } from './adminApi';
 import { alertSuccess, alertConfirm, alertWarning } from '../../utils/alert';
+import useLoadingStore from '../../store/useLoadingStore';
 
 const AdminDept = () => {
   // --- 1. Data States ---
@@ -23,8 +24,9 @@ const AdminDept = () => {
     nodeMap: {}
   });
   const [employees, setEmployees] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); // 드롭다운 상태 추가
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
 
   // --- 2. UI States ---
   const sidePanelRef = useRef(null);
@@ -42,6 +44,7 @@ const AdminDept = () => {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
+    showLoading();
     getGroup()
       .then(resp => {
         setFullTree({
@@ -52,11 +55,11 @@ const AdminDept = () => {
         if (resp.data.root) {
           setExpandedNodes(new Set([resp.data.root.deptSeq]));
         }
-        setLoading(false);
+        hideLoading();
       })
       .catch(err => {
         console.error("조직도 로딩 실패", err);
-        setLoading(false);
+        hideLoading();
       });
   }, []);
 
@@ -170,13 +173,16 @@ const AdminDept = () => {
       payload.dept_type = "SUB";
     }
 
-
     if (formMode === 'EDIT') {
       const result = await alertConfirm('수정 확인', '정말 수정하시겠습니까?');
-      if (!result.isConfirmed) return;
+      if (!result.isConfirmed) {
+        return;
+      }
 
+      showLoading();
       await updateDept(formData);
       const resp = await getGroup();
+      hideLoading();
       setFullTree({
         root: resp.data.root,
         nodeMap: resp.data.nodeMap
@@ -185,11 +191,12 @@ const AdminDept = () => {
       if (resp.data.root) {
         setExpandedNodes(new Set([resp.data.root.deptSeq]));
       }
-      setLoading(false);
 
     } else {
+      showLoading();
       await addDept(payload);
       const resp = await getGroup();
+      hideLoading();
       setFullTree({
         root: resp.data.root,
         nodeMap: resp.data.nodeMap
@@ -198,7 +205,6 @@ const AdminDept = () => {
       if (resp.data.root) {
         setExpandedNodes(new Set([resp.data.root.deptSeq]));
       }
-      setLoading(false);
     }
 
     await alertSuccess(
@@ -226,7 +232,9 @@ const AdminDept = () => {
     );
 
     if (result.isConfirmed) {
+      showLoading();
       await delDept(node.deptSeq);
+      hideLoading();
       await alertSuccess('삭제 완료', '삭제가 완료되었습니다.');
       
       const resp = await getGroup();
@@ -238,7 +246,6 @@ const AdminDept = () => {
       if (resp.data.root) {
         setExpandedNodes(new Set([resp.data.root.deptSeq]));
       }
-      setLoading(false);
     }
   };
 
@@ -251,7 +258,7 @@ const AdminDept = () => {
 
     return (
       <React.Fragment key={node.deptSeq}>
-        <tr className="hover:bg-slate-50 transition-colors border-b border-slate-100 group">
+        <tr className="transition-colors border-b border-slate-100 group">
           <td className="py-4 pl-6 pr-4">
             <div className="flex items-center" style={{ paddingLeft: `${level * 24}px` }}>
               <div
