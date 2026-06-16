@@ -153,6 +153,13 @@ const AdminDept = () => {
       newErrors.dept_code = "부서 코드를 입력해주세요.";
     } else if (!/^[A-Z]+$/.test(formData.dept_code)) {
       newErrors.dept_code = "영문(대문자)만 입력 가능합니다.";
+    } else {
+      const isDuplicateCode = Object.values(fullTree.nodeMap).some(node => 
+        node.deptCode === formData.dept_code && node.deptSeq !== formData.dept_seq
+      );
+      if (isDuplicateCode) {
+        newErrors.dept_code = "이미 존재하는 부서코드입니다. 다시 작성해 주세요";
+      }
     }
 
     if (formMode === 'CREATE_SUB' && !formData.parent_dept_seq) {
