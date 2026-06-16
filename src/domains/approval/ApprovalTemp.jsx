@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faEdit, faTrashAlt , faChevronDown} from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faEdit, faTrashAlt, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import Pagination from '../../components/common/Pagination';
 import { deleteDoc, getTempDoc } from './approvalApi';
 import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
+import useLoadingStore from '../../store/useLoadingStore';
 
 
 const docTypeMap = {
@@ -23,6 +24,8 @@ const ApprovalTemp = () => {
   const [page, setPage] = useState(1);
   const itemsPerPage = 10;
   const [documents, setDocuments] = useState([]);
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -38,8 +41,10 @@ const ApprovalTemp = () => {
   }, []);
 
   useEffect(() => {
+    showLoading();
     getTempDoc().then(resp => {
       setDocuments(resp.data);
+      hideLoading();
     })
   }, []);
 
@@ -69,7 +74,7 @@ const ApprovalTemp = () => {
 
   const handleDelete = async (doc) => {
     const result = await alertConfirm('정말 삭제하시겠습니까?', '삭제 후 복구는 불가합니다.');
-    if(!result.isConfirmed) return;
+    if (!result.isConfirmed) return;
     try {
       await deleteDoc(doc.doc_seq, doc.doc_type);
       await alertSuccess('삭제 완료', '문서 삭제가 완료되었습니다.');
@@ -122,7 +127,7 @@ const ApprovalTemp = () => {
                       key={type}
                       onClick={() => {
                         setSelectedType(type);
-                        setPage(1); 
+                        setPage(1);
                         setIsTypeOpen(false);
                       }}
                       className="px-3 py-1.5 text-xs text-slate-400 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
