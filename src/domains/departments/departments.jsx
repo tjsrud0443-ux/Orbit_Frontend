@@ -249,10 +249,10 @@ const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptNa
           <tbody className="divide-y divide-gray-50">
             {filteredEmployees.length > 0 ? (
               filteredEmployees.map((emp) => (
-                <tr key={emp.id} className="hover:bg-blue-50/30 transition-colors group">
+                <tr key={emp.id} className="transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#DDE8FF] text-[#3530B8] flex items-center justify-center text-xs font-bold group-hover:bg-[#3530B8] group-hover:text-white transition-all overflow-hidden">
+                      <div className="w-8 h-8 rounded-full bg-[#DDE8FF] text-[#3530B8] flex items-center justify-center text-xs font-bold transition-all overflow-hidden">
                         <img
                           src={`http://localhost/file/profile/view?sysname=${emp.sysname}&token=${token}`}
                           alt={emp.name}
@@ -429,7 +429,7 @@ const Departments = () => {
                 setSearchTerm('');
               }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all mb-4 ${selectedDept === 'ALL' ? 'bg-[#3530B8] text-white font-bold shadow-md' : 'text-gray-600 hover:bg-gray-50'}`}
-            >
+              >
               <FontAwesomeIcon icon={faLayerGroup} />
               전체 조직도
             </button>
