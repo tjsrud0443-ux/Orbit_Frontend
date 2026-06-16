@@ -195,16 +195,19 @@ const Signup = () => {
   };
 
   const phoneRegex = /^010-\d{4}-\d{4}$/;
-  const idRegex = /^[A-Za-z\d_]{5,20}$/;
+  const nameRegex = /^([가-힣]{2,5}|[a-zA-Z]{2,10})$/;
+  const idRegex = /^[A-Za-z\d_]{5,15}$/;
   const pwRegex = /^[A-Za-z\d!@#$%^&*]{8,20}$/;
   const ssnRegex = /^\d{6}-\d{7}$/;
-  const emailRegex = /^[A-Za-z0-9._%+-]+@[a-z]+\.[a-z]+\.*[a-z]*$/;
+  const emailRegex = /^[A-Za-z0-9._%+-]{1,20}@[a-z]+\.[a-z]{2,3}$/;
 
   const handleSubmit = () => {
     const newErrors = {};
     if (!profileImage) newErrors.profileImage = '프로필 사진을 선택해주세요.';
     if (!formData.name) {
       newErrors.name = '이름을 입력해주세요.';
+    } else if (!nameRegex.test(formData.name)) {
+      newErrors.name = '한글은 2~5자, 영어는 2~10자까지 입력 가능합니다.';
     }
     if (!formData.phone) {
       newErrors.phone = '전화번호를 입력해주세요.';
@@ -214,7 +217,7 @@ const Signup = () => {
     if (!formData.id) {
       newErrors.id = '아이디를 입력해주세요.';
     } else if (!idRegex.test(formData.id)) {
-      newErrors.id = '영문 대/소문자와 _로 5~20자 입력 가능합니다.';
+      newErrors.id = '영문 대/소문자와 _로 5~15자 입력 가능합니다.';
     } else if (!isIdChecked) {
       newErrors.idCheck = '아이디 중복확인을 해주세요.';
     }
@@ -241,7 +244,7 @@ const Signup = () => {
     if (!formData.email) {
       newErrors.email = '이메일 주소를 입력해주세요.';
     } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = 'example@email.com(또는 co.kr) 등 알맞은 형식으로 입력해주세요.';
+      newErrors.email = 'example@email.com 등 알맞은 형식으로 입력해주세요.';
     } else if (!isEmailChecked) {
       newErrors.emailCheck = '이메일 중복확인을 해주세요.';
     }
