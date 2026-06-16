@@ -200,10 +200,10 @@ const BoardList = () => {
         {/* 목록 */}
         <div className="flex-1 overflow-y-auto divide-y divide-gray-50 custom-scrollbar">
           <style>{`
-            .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+            .custom-scrollbar::-webkit-scrollbar { width: 4px; }
             .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-            .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
-            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
           `}</style>
           {posts.length > 0 ? (
             posts.map((post, i) => {

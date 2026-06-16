@@ -16,6 +16,7 @@ const AdminUsers = () => {
   // 상세 정보 수정 모드 관리
   const [isDetailEditing, setIsDetailEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
+  const [nameError, setNameError] = useState(false); // 이름 오류 상태 추가
   // 커스텀 드롭다운 상태 관리
   const [isDeptOpen, setIsDeptOpen] = useState(false);
   const [isRankOpen, setIsRankOpen] = useState(false);
@@ -36,6 +37,20 @@ const AdminUsers = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
 
   const containerRef = useRef(null);
+
+  // 상태값 한글 변환 헬퍼
+  const getStatusLabel = (status) => {
+    const map = {
+      'ACTIVE': '재직',
+      'INACTIVE': '휴직',
+      'RETIRE': '퇴사',
+      'REJECTED': '퇴사',
+      '재직': '재직',
+      '휴직': '휴직',
+      '퇴사': '퇴사'
+    };
+    return map[status] || status;
+  };
 
   // 외부 클릭 시 수정 모드 및 드롭다운 해제
  useEffect(() => {
@@ -70,7 +85,7 @@ const AdminUsers = () => {
     const statusMap = {
       '재직': 'ACTIVE',
       '휴직': 'INACTIVE',
-      '퇴사': 'REJECTED',
+      '퇴사': 'RETIRE',
       '전체': ''
     };
     getAllUsers(page, keyword, statusMap[tab]).then(resp => {
@@ -80,7 +95,7 @@ const AdminUsers = () => {
             전체: (resp.data.activeCount || 0) + (resp.data.inactiveCount || 0) + (resp.data.rejectedCount || 0),
             재직: resp.data.activeCount || 0,
             휴직: resp.data.inactiveCount || 0,
-            퇴사: resp.data.rejectedCount || 0
+            퇴사: resp.data.retireCount || 0
         });
     });
   };
@@ -119,11 +134,17 @@ const AdminUsers = () => {
       rank_seq: selectedUser.rank_seq ,
       role: selectedUser.role
     });
+    setNameError(false); // 수정 시작 시 에러 초기화
     setIsDetailEditing(true);
   };
 
   // 상세 정보 저장
   const handleDetailSave = () => {
+    if (!editForm.name.trim()) {
+      setNameError(true);
+      return;
+    }
+    setNameError(false);
     updateUsersInfo(selectedUser.users_seq, editForm).then(() => {
       setEmployees(prev => prev.map(emp => 
         emp.users_seq === selectedUser.users_seq ? 
@@ -160,6 +181,7 @@ const AdminUsers = () => {
     const statusMap = {
       'ACTIVE': '재직',
       'INACTIVE': '휴직',
+      'RETIRE': '퇴사',
       'REJECTED': '퇴사'
     };
     const koreanStatus = statusMap[newStatus] || newStatus;
@@ -276,11 +298,11 @@ const AdminUsers = () => {
                       <td className="py-1 sm:py-4 pl-1 sm:pl-0 text-[10px] text-slate-400 font-mono inline-block sm:table-cell sm:text-left whitespace-nowrap align-baseline sm:align-middle">
                         {emp.id}
                         <span className={`inline sm:hidden ml-2 px-1.5 py-0.5 rounded-full text-[9px] font-semibold text-center ${
-                          emp.status === '재직' ? 'bg-[#F0FDF4] text-[#10B981]' : 
-                          emp.status === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' : 
+                          getStatusLabel(emp.status) === '재직' ? 'bg-[#F0FDF4] text-[#10B981]' : 
+                          getStatusLabel(emp.status) === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' : 
                           'bg-[#FFF0F0] text-[#FF4D4F]'
                         }`}>
-                          {emp.status}
+                          {getStatusLabel(emp.status)}
                         </span>
                       </td>
 
@@ -306,11 +328,11 @@ const AdminUsers = () => {
 
                       <td className="hidden sm:table-cell py-1 sm:py-4 pl-4 sm:pl-0 text-left sm:text-center sm:align-middle">
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-center whitespace-nowrap ${
-                          emp.status === '재직' ? 'bg-[#F0FDF4] text-[#10B981]' : 
-                          emp.status === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' : 
+                          getStatusLabel(emp.status) === '재직' ? 'bg-[#F0FDF4] text-[#10B981]' : 
+                          getStatusLabel(emp.status) === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' : 
                           'bg-[#FFF0F0] text-[#FF4D4F]'
                         }`}>
-                          {emp.status}
+                          {getStatusLabel(emp.status)}
                         </span>
                       </td>
 
@@ -336,7 +358,7 @@ const AdminUsers = () => {
                             </button>
                             <button 
                               type="button"
-                              onClick={(e) => { e.stopPropagation(); handleStatusChange(e, emp.users_seq, 'REJECTED'); }}
+                              onClick={(e) => { e.stopPropagation(); handleStatusChange(e, emp.users_seq, 'RETIRE'); }}
                               className="px-2 py-1 text-[10px] font-semibold text-[#FF4D4F] bg-white border border-[#FF4D4F]/30 rounded-full">
                               퇴사
                             </button>
@@ -385,12 +407,22 @@ const AdminUsers = () => {
             <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
               <div className="flex flex-col mb-8">
                 {isDetailEditing ? (
-                  <input 
-                    type="text" 
-                    value={editForm.name} 
-                    onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                    className="text-xl font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1 outline-none focus:border-[#3530B8]"
-                  />
+                  <>
+                    {nameError && (
+                      <div className="text-[0.6875rem] text-red-500 mb-1">이름을 1~6자 사이로 입력해주세요.</div>
+                    )}
+                    <input
+                      type="text"
+                      value={editForm.name}
+                      onChange={(e) => {
+                        if (e.target.value.length <= 6) {
+                          setEditForm({...editForm, name: e.target.value});
+                          if (e.target.value.trim()) setNameError(false); // 입력 시 에러 해제
+                        }
+                      }}
+                      className={`text-xl font-bold text-slate-900 bg-slate-50 border ${nameError ? 'border-red-500' : 'border-slate-200'} rounded-lg px-3 py-1 outline-none focus:border-[#3530B8]`}
+                    />
+                  </>
                 ) : (
                   <h3 className="text-xl font-bold text-slate-900">{selectedUser.name}</h3>
                 )}
@@ -417,10 +449,10 @@ const AdminUsers = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-500 min-w-[50px] whitespace-nowrap">재직 상태</span>
                       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-center whitespace-nowrap ${
-                        selectedUser.status === '재직' ? 'bg-[#F0FDF4] text-[#10B981]' : 
-                        selectedUser.status === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' : 
+                        getStatusLabel(selectedUser.status) === '재직' ? 'bg-[#F0FDF4] text-[#10B981]' : 
+                        getStatusLabel(selectedUser.status) === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' : 
                         'bg-[#FFF0F0] text-[#FF4D4F]'}`}>
-                        {selectedUser.status}
+                        {getStatusLabel(selectedUser.status)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">

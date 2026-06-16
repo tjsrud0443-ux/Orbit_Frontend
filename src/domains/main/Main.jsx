@@ -120,7 +120,22 @@ const formatStampTime = (date) =>
     return () => clearInterval(timer);
   }, []);
  //calendar
- const { calendarEvents, selectedDate, selectedSchedules, handleDateClick } = usePublicCalendar();
+ const { calendarEvents, selectedDate, setSelectedDate, selectedSchedules, handleDateClick } = usePublicCalendar();
+
+  // 매 시간 달이 바뀌었는지 체크하여 캘린더 자동 업데이트
+  useEffect(() => {
+    const checkMonth = () => {
+      const now = new Date();
+      if (!selectedDate || new Date(selectedDate).getMonth() !== now.getMonth() || new Date(selectedDate).getFullYear() !== now.getFullYear()) {
+         const newDate = new Date(now.getFullYear(), now.getMonth(), 1);
+         setSelectedDate(newDate.toISOString().split('T')[0]);
+      }
+    };
+    checkMonth();
+    const interval = setInterval(checkMonth, 3600000); 
+    return () => clearInterval(interval);
+  }, [selectedDate, setSelectedDate]);
+
   // 현재 시간 및 날짜
   const formatTime = (date) => date.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
   const formatDate = (date) => date.toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
@@ -266,6 +281,11 @@ const quickActions = [
               {/* 달력 */}
               <div className="flex flex-col h-full overflow-hidden">
                   <div className="flex-1 overflow-hidden main-calendar">
+                    <style>{`
+                      .main-calendar .mb-4 button {
+                        display: none !important;
+                      }
+                    `}</style>
                     <Calendar 
                       isStatic={true}
                       value={selectedDate}
@@ -280,7 +300,13 @@ const quickActions = [
                   <h3 className="text-s font-extrabold text-indigo-950">전사 일정 및 공휴일</h3>
                   <button onClick={() => navigate('/calendar')} className="text-[0.625rem] text-gray-400 font-bold hover:text-indigo-950">상세보기</button>
                 </div>
-                <div className="space-y-2.5 overflow-y-auto h-full pr-1">
+                <div className="space-y-2.5 overflow-y-auto h-full pr-1 custom-scrollbar">
+                  <style>{`
+                    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+                    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                    .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
+                    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
+                  `}</style>
                   {selectedSchedules.length > 0 ? (selectedSchedules.map((s, i) => (
                     <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-100 rounded-xl hover:shadow-sm transition-shadow">
                       <div className="w-1 h-8 bg-[#3530B8] rounded-full shrink-0" style={{ backgroundColor: s.color || '#3530B8' }}></div>
@@ -312,7 +338,13 @@ const quickActions = [
               <h3 className="text-s font-extrabold text-indigo-950">사내게시판</h3>
               <button onClick={() => navigate('/board')} className="text-[0.625rem] text-gray-400 font-bold hover:text-indigo-950">전체보기</button>
             </div>
-            <div className="space-y-1 overflow-y-auto pr-1 flex-1">
+            <div className="space-y-1 overflow-y-auto pr-1 flex-1 custom-scrollbar">
+              <style>{`
+                .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
+              `}</style>
               {boardPosts.length > 0 ? (
                 boardPosts.map((post) => (
                   <div 
