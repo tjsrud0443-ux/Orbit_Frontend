@@ -146,9 +146,13 @@ const MeetingRooms = () => {
 
     const defaultEnd = format(addMinutes(parse(time, 'HH:mm', new Date()), 60), 'HH:mm');
 
-    const endTime = nextEvent && defaultEnd > getTime(nextEvent.start_dt)
+    let endTime = nextEvent && defaultEnd > getTime(nextEvent.start_dt)
       ? getTime(nextEvent.start_dt)
       : defaultEnd;
+
+    if (endTime > '18:00') {
+      endTime = '18:00';
+    }
 
     setForm({
       ...form,
