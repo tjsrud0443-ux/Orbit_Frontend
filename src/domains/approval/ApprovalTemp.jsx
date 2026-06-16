@@ -1,19 +1,41 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faEdit, faTrashAlt , faChevronDown} from '@fortawesome/free-solid-svg-icons';
 import Pagination from '../../components/common/Pagination';
 import { deleteDoc, getTempDoc } from './approvalApi';
 import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 
 
+const docTypeMap = {
+  '일반품의서': 'GENERAL',
+  '지출결의서': 'PAYMENT',
+  '휴가신청서': 'VACATION',
+  '구매신청서': 'PURCHASE'
+};
+
 const ApprovalTemp = () => {
   const navi = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('전체 문서');
+  const [isTypeOpen, setIsTypeOpen] = useState(false);
+  const dropdownRef = useRef(null);
   const [page, setPage] = useState(1);
   const itemsPerPage = 10;
   const [documents, setDocuments] = useState([]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsTypeOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     getTempDoc().then(resp => {
@@ -33,7 +55,7 @@ const ApprovalTemp = () => {
   }
 
   const filteredDocs = documents.filter(doc => {
-    const matchesType = selectedType === '전체 문서' || doc.doc_type === selectedType;
+    const matchesType = selectedType === '전체 문서' || doc.doc_type === docTypeMap[selectedType];
     const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesType && matchesSearch;
   });
@@ -85,20 +107,32 @@ const ApprovalTemp = () => {
 
           {/* Search Bar */}
           <div className="flex items-center gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-slate-200 w-full md:w-auto focus-within:ring-2 focus-within:ring-[#3530B8]/20 focus-within:border-[#3530B8] transition-all">
-            <select
-              value={selectedType}
-              onChange={(e) => {
-                setSelectedType(e.target.value);
-                setPage(1);
-              }}
-              className="px-3 py-1.5 text-xs bg-slate-50 border-none rounded-lg focus:ring-0 text-slate-600 font-medium cursor-pointer outline-none whitespace-nowrap"
-            >
-              <option>전체 문서</option>
-              <option>일반 품의서</option>
-              <option>지출 결의서</option>
-              <option>휴가 신청서</option>
-              <option>구매 신청서</option>
-            </select>
+            <div className="relative" ref={dropdownRef}>
+              <div
+                onClick={() => setIsTypeOpen(!isTypeOpen)}
+                className="px-3 py-1.5 text-xs bg-slate-50 border-none rounded-lg text-slate-400 font-medium cursor-pointer outline-none flex items-center justify-between min-w-[100px]"
+              >
+                <span>{selectedType}</span>
+                <FontAwesomeIcon icon={faChevronDown} className={`ml-2 text-[10px] transition-transform ${isTypeOpen ? 'rotate-180' : ''}`} />
+              </div>
+              {isTypeOpen && (
+                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1">
+                  {['전체 문서', '일반품의서', '지출결의서', '휴가신청서', '구매신청서'].map((type) => (
+                    <div
+                      key={type}
+                      onClick={() => {
+                        setSelectedType(type);
+                        setPage(1); 
+                        setIsTypeOpen(false);
+                      }}
+                      className="px-3 py-1.5 text-xs text-slate-400 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
+                    >
+                      {type}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className="h-5 w-[1px] bg-slate-200 mx-1"></div>
             <div className="relative flex-1 md:w-56">
               <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
@@ -132,7 +166,7 @@ const ApprovalTemp = () => {
               <tbody className="divide-y divide-slate-50">
                 {displayDocs.length > 0 ? (
                   displayDocs.map((doc) => (
-                    <tr key={doc.seq} className="hover:bg-slate-50 transition-colors group">
+                    <tr key={doc.seq} className="transition-colors group">
                       <td className="py-5 pl-8 pr-4">
                         <span className="text-sm font-bold text-slate-700 transition-colors whitespace-nowrap">
                           {doc.title}
