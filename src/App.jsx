@@ -4,7 +4,6 @@ import Signup from './domains/auth/Signup';
 import Calendar from './domains/schedules/Calendar';
 import Departments from './domains/departments/Departments';
 import Layout from './components/layout/Layout';
-import './App.css';
 import Main from './domains/main/Main';
 import AdminAttendance from './domains/admin/AdminAttendance';
 import AdminSignup from './domains/admin/AdminSignup';
@@ -44,12 +43,23 @@ import SupplyHistory from './domains/mypage/SupplyHistory';
 import useLoadingStore from './store/useLoadingStore';
 import Loading from './components/common/Loading';
 import NotificationProvider from "./components/websocket/NotificationProvider";
-import { ToastContainer, Zoom } from "react-toastify";
+import { ToastContainer, Zoom, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import './App.css';
+import { useEffect, useState } from 'react';
 
 function App() {
   const loading = useLoadingStore(state => state.loading);
   const loadingType = useLoadingStore(state => state.loadingType);
+  const [isMobile, setIsMobile] = useState(window.matchMedia("(max-width:768px)").matches);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width:768px)");
+    const handler = (e) => { setIsMobile(e.matches) };
+    media.addEventListener("change", handler);
+    return () => { media.removeEventListener("change", handler); }
+  }, []);
+
   return (
     <>
       {loading && (
@@ -58,17 +68,14 @@ function App() {
         </div>
       )}
       <ToastContainer
-        position="bottom-right"
-        transition={Zoom}
+        position={isMobile ? "top-center" : "bottom-right"}
+        transition={isMobile ? Slide : Zoom}
+        limit={isMobile ? 1 : undefined}
+        draggable={isMobile ? "touch" : true}
+        draggableDirection={isMobile ? "y" : "x"}
         autoClose={3000}
         hideProgressBar
-        toastStyle={{
-          minWidth: "360px",
-          minHeight: "80px",
-          borderRadius: "16px",
-          padding: "16px",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.12)"
-        }}
+        toastClassName="customToast"
       />
       <NotificationProvider>
         <Router>
