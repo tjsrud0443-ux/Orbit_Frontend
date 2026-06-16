@@ -9,6 +9,7 @@ import {
 import Pagination from '../../components/common/Pagination';
 import { getMyDoc, getPageMyDoc } from './approvalApi';
 import useAuthStore from '../../store/authStore';
+import useLoadingStore from '../../store/useLoadingStore';
 
 // 결재선
 const ApprovalLineStack = ({ line }) => {
@@ -199,9 +200,14 @@ const ApprovalMyPage = () => {
   const [rejectedPage, setRejectedPage] = useState(1);
   const [rejectedCount, setRejectedCount] = useState(0);
 
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
+
   useEffect(() => {
+    showLoading();
     getMyDoc().then(resp => {
       setDocuments(resp.data);
+      hideLoading();
     })
   }, [])
 
