@@ -6,6 +6,7 @@ import { maxios } from '../../api/axiosConfig';
 import { adminAiQuestionsData, deleteMyAnswer, getMyDeptQuestion, insertUpdateAnswer } from './adminApi';
 import useUserStore from '../../store/userStore';
 import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
+import useLoadingStore from '../../store/useLoadingStore';
 
 const AdminQna = () => {
   const [filter, setFilter] = useState('전체');
@@ -19,6 +20,8 @@ const AdminQna = () => {
   const [answerText, setAnswerText] = useState('');
   const [answerError, setAnswerError] = useState('');
   const user = useUserStore(state => state.user);
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -37,14 +40,18 @@ const AdminQna = () => {
   const [selectedQna, setSelectedQna] = useState(null);
 
   useEffect(() => {
+    showLoading();
     getMyDeptQuestion(user.dept_seq, user.auth_group).then(resp => {
       setQnaList(resp.data);
+      hideLoading();
     });
   }, []);
 
   useEffect(() => {
+    showLoading();
     adminAiQuestionsData(user.dept_seq, user.auth_group).then(resp => {
       setCount(resp.data);
+      hideLoading();
     });
   }, []);
 
