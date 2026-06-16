@@ -339,7 +339,7 @@ const Calendar = () => {
     setForm({
       schedule_seq: '',
       title: '',
-      schedule_type: 'personal',
+      schedule_type: 'PERSONAL',
       start_dt: info.dateStr,
       end_dt: '',
       sked_reason: '',
