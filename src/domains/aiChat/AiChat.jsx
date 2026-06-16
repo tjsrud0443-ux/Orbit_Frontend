@@ -288,7 +288,9 @@ const AiChat = () => {
             onClick={() => detailChat(chat.chat_seq)}
             className="relative group flex items-center justify-between p-3 rounded-lg hover:bg-white transition-all cursor-pointer"
           >
-            <span className="text-sm font-medium text-[#1a1c3d] truncate flex-1 min-w-0 mr-2">{chat.title}</span>
+            <span className="text-sm font-medium text-[#1a1c3d] truncate flex-1 min-w-0 mr-2">
+              {chat.title.length > 15 ? `${chat.title.substring(0, 15)}...` : chat.title}
+            </span>
             <button
               onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === chat.chat_seq ? null : chat.chat_seq); }}
               className="md:opacity-0 md:group-hover:opacity-100 text-[#8a92a6] flex-shrink-0"
