@@ -52,24 +52,22 @@ const getDefaultApprovers = (docType, user, allEmployees) => {
   const candidates = (lines[docType]?.[role] ?? []).filter(Boolean);
   const unique = candidates.filter(
     (e, idx, arr) => arr.findIndex(i => i.users_seq === e.users_seq) === idx
+    && e.users_seq !== user.users_seq
   );
   return unique.map(e => ({...e, status: 'WAITING'}));
 };
 
-// 결재자 선택 모달 컴포넌트
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
   const { allEmployees } = useEmployeeStore();
   const { user } = useUserStore();
   const [searchQuery, setSearchQuery] = useState('');
   if (!isOpen) return null;
 
-  // 1. 직급 필터링 (부서장, 본부장, 대표) 및 기안자 제외
   const allowedRanks = ['부서장', '본부장', '대표'];
   const baseFiltered = allEmployees.filter(emp => 
     allowedRanks.includes(emp.rank_name) && emp.users_seq !== user?.users_seq
   );
 
-  // 2. 검색어 필터링
   const filtered = searchQuery 
     ? baseFiltered.filter(emp => 
         emp.name.includes(searchQuery) || emp.dept_name.includes(searchQuery)
@@ -145,8 +143,6 @@ const ApprovalDetail = () => {
 
     const upperType = type.toUpperCase();
     setDoc_type(upperType);
-    
-    // 이전 데이터 초기화 (화면 깜빡임 방지 및 정확한 폼 렌더링을 위해)
     setFormData({});
     setIsSubmitClicked(false);
     setIsRejecting(false);
@@ -196,9 +192,9 @@ const ApprovalDetail = () => {
     try {
       await getApprovalDetail(type, docSeq).then(resp => {
         setFormData({
-          ...resp.data.common,   // draft_documents 정보
-          ...resp.data.detail,   // 각 문서별 본문 디테일 정보
-          items: resp.data.items || [], // 상세 품목 리스트
+          ...resp.data.common,
+          ...resp.data.detail,
+          items: resp.data.items || [],
           attachments: resp.data.attachments || [],
           referrers: resp.data.referrers || []
         });
@@ -209,7 +205,6 @@ const ApprovalDetail = () => {
         const documentStatus = resp.data.common?.status;
         const drafterId = resp.data.common?.users_id || resp.data.users_id;
 
-        // 역할 및 모드 설정
         if (drafterId === user?.id) {
           setUserRole('DRAFTER');
           setMode(documentStatus === 'TEMP' ? 'EDIT' : 'VIEW');
@@ -222,6 +217,7 @@ const ApprovalDetail = () => {
         }
       })
     } catch (error) {
+      hideLoading();
       console.error('기안 문서 조회 실패:', error);
     } finally {
       hideLoading();
@@ -231,13 +227,11 @@ const ApprovalDetail = () => {
   const [isSubmitClicked, setIsSubmitClicked] = useState(false);
   const [isTempSaveClicked, setIsTempSaveClicked] = useState(false);
 
-  // 상신 vs 임시저장
   const handleSave = async (actionType) => {
     const isTempSave = actionType === 'TEMP_SAVE';
     const isSubmit = actionType === 'SUBMIT';
     const isNew = !docSeq;
 
-    // 유효성 검사 분기
     if (isSubmit) setIsSubmitClicked(true);
     if (isTempSave) setIsTempSaveClicked(true);
     if (isSubmit) setIsTempSaveClicked(false);
@@ -257,7 +251,6 @@ const ApprovalDetail = () => {
           }
           if (!formData.reason?.trim() || formData.reason.length > 300) return false;
         } else if (doc_type === 'PAYMENT') {
-          // 모바일 필수 입력 체크
           if (isMobile) {
             if (!formData.pay_date || !formData.pay_reason?.trim() || !formData.account_info?.trim()) {
               alertWarning('정보 미입력', '필수 항목을 입력해주세요.');
@@ -286,7 +279,6 @@ const ApprovalDetail = () => {
           if (!formData.purpose?.trim() || formData.purpose.length > 300) return false;
           if (!formData.content?.trim() || formData.content.length > 1000) return false;
         } else if (doc_type === 'PURCHASE') {
-          // 모바일 필수 입력 체크
           if (isMobile) {
             if (!formData.purchase_date || !formData.purpose?.trim() || !formData.vendor?.trim() || (!formData.attachments || formData.attachments.length === 0)) {
               alertWarning('정보 미입력', '필수 항목을 입력해주세요.');
@@ -321,7 +313,6 @@ const ApprovalDetail = () => {
         return;
       }
     }
-    // 데이터 가공 및 Payload 조립
     showLoading();
     try {
       const { referrers, title, ...restOfData } = formData;
@@ -354,7 +345,6 @@ const ApprovalDetail = () => {
 
       let response;
 
-      // 신규: POST / 임시저장 재작성: PUT
       if (doc_type === 'VACATION') {
         response = await (isNew ? submitVacation(submitPayload) : updateVacation(docSeq, submitPayload));
       } else if (doc_type === 'GENERAL') {
@@ -384,7 +374,6 @@ const ApprovalDetail = () => {
           .filter(f => !(f instanceof File))
           .map(({oriname, sysname}) => ({oriname, sysname}));
 
-        // 백엔드가 기존 데이터를 DELETE 하므로, 유지할 기존 파일 정보를 DTO에 포함
         const dto = { ...submitPayload, attachments: keptAttachments };
 
         formDataObj.append("dto", new Blob([JSON.stringify(dto)], { type: "application/json" }));
@@ -407,8 +396,10 @@ const ApprovalDetail = () => {
       }
     } catch (error) {
       if(error.response && error.response.data){
+        hideLoading();
         await alertError('오류 발생', error.response.data);
       }else{
+        hideLoading();
         await alertError('오류 발생', '기안 문서 처리 중 오류가 발생했습니다.');
       }
     } finally {
@@ -416,7 +407,6 @@ const ApprovalDetail = () => {
     }
   };
 
-  // 버튼 액션
   const handleAction = async (actionType, payload) => {
     const isTempSave = actionType === 'TEMP_SAVE';
     
@@ -428,6 +418,7 @@ const ApprovalDetail = () => {
         await alertSuccess('승인 완료', '승인 처리가 완료되었습니다.');
         setRefresh(prev => prev + 1);
       } catch (error) {
+        hideLoading();
         await alertError('오류 발생', '승인 처리 중 오류가 발생했습니다.');
       }
       return;
@@ -445,6 +436,7 @@ const ApprovalDetail = () => {
         await alertSuccess('반려 완료', '반려 처리가 완료되었습니다.');
         setRefresh(prev => prev + 1);
       } catch (error) {
+        hideLoading();
         await alertError('오류 발생', '반려 처리 중 오류가 발생했습니다.');
       }
       return;
@@ -458,12 +450,12 @@ const ApprovalDetail = () => {
         await alertSuccess('취소 완료', '취소 처리가 완료되었습니다.');
         navigate('/approvalMypage');
       } catch (error) {
+        hideLoading();
         await alertError('오류 발생', '취소 처리 중 오류가 발생했습니다.');
       }
       return;
     }
 
-    // [결재 상신 / 임시 저장]
     if (actionType === 'SUBMIT' || actionType === 'TEMP_SAVE') {
       await handleSave(actionType);
     }
@@ -486,7 +478,6 @@ const ApprovalDetail = () => {
     setApprovers(prev => prev.filter((_, i) => i !== idx));
   };
 
-  // 4. 문서 타입에 따른 폼 렌더링
   const renderForm = () => {
     const props = {
       data: formData,
@@ -529,7 +520,6 @@ const ApprovalDetail = () => {
       created_at: formData.created_at
     };
 
-  // 반려 여부 및 사유 확인
   const rejectedApprover = approvers?.find(app => app.status === 'REJECTED');
   const showRejectReason = mode === 'VIEW' && rejectedApprover;
 
@@ -561,7 +551,6 @@ const ApprovalDetail = () => {
       >
         {renderForm()}
 
-        {/* 반려 사유 영역 (조회 모드에서 반려된 경우 또는 결재자가 반려 진행 중인 경우) */}
         {(showRejectReason || isRejecting) && (
           <div className="mt-8 pt-8 border-t-2 border-red-50 animate-in fade-in slide-in-from-top-4 duration-300">
             <div className="flex items-center gap-2 mb-3">

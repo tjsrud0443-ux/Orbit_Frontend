@@ -21,22 +21,21 @@ const ApprovalActionButtons = ({
   const myApproverInfo = approvers?.find(a => a.users_id === user?.id);
   const myStatus = myApproverInfo?.status;
 
-  // 1. 단순 기안자 (첫 번째 결재자가 결재를 완료한 상태)
+  // 단순 기안자 (첫 번째 결재자가 결재를 완료한 상태)
   const isSimpleDrafter = userRole === 'DRAFTER' && mode === 'VIEW' && (firstApproverStatus === 'APPROVED' || firstApproverStatus === 'REJECTED');
   
-  // 2. 수정 가능한 기안자 (첫 번째 결재자가 결재하기 전 상태)
+  // 수정 가능한 기안자 (첫 번째 결재자가 결재하기 전 상태)
   const isEditableDrafter = userRole === 'DRAFTER' && mode === 'VIEW' && firstApproverStatus === 'IN_PROGRESS';
 
-  // 3. 참조자 (기안자나 결재자가 아닌 경우)
+  // 참조자 (기안자나 결재자가 아닌 경우)
   const isActualReferrer = userRole === 'REFERRER' && mode === 'VIEW';
 
-  // 4. 결재자 (현재 결재 순서인 경우)
+  // 결재자 (현재 결재 순서인 경우)
   const isCurrentApprover = userRole === 'APPROVER' && mode === 'VIEW' && myStatus === 'IN_PROGRESS';
 
-  // 5. 결재자 (결재를 이미 완료한 경우)
+  // 결재자 (결재를 이미 완료한 경우)
   const isPastApprover = userRole === 'APPROVER' && mode === 'VIEW' && (myStatus === 'APPROVED' || myStatus === 'REJECTED');
 
-  // 반려 처리 실행
   const handleRejectConfirm = () => {
     if (!rejectReason.trim()) {
       setRejectError(true);
@@ -45,14 +44,12 @@ const ApprovalActionButtons = ({
     onAction('REJECT', rejectReason);
   };
 
-  // 반려 취소 (입력창 닫기)
   const handleRejectCancel = () => {
     setIsRejecting(false);
     setRejectReason('');
     setRejectError(false);
   };
 
-  // 닫기 버튼
   const CloseButton = () => (
     <button 
       className="px-6 py-2 border border-gray-200 text-gray-500 font-bold text-xs rounded-xl hover:bg-gray-50 transition-all active:scale-95"
@@ -64,7 +61,7 @@ const ApprovalActionButtons = ({
 
   return (
     <div className="flex flex-col items-center w-full gap-3 pt-8 pb-2 border-t border-gray-100 flex-shrink-0">
-      {/* [Desktop View] - 기존 스타일 완벽 유지 */}
+      {/* [Desktop] */}
       <div className="hidden md:flex justify-center gap-3 w-full">
         {mode === 'EDIT' && userRole === 'DRAFTER' && (
           <>
@@ -134,7 +131,7 @@ const ApprovalActionButtons = ({
         )}
       </div>
 
-      {/* [Mobile View] - 한 줄에 모든 버튼 배치 */}
+      {/* [Mobile View] */}
       <div className="md:hidden flex justify-center gap-2 w-full px-2">
         {mode === 'EDIT' && userRole === 'DRAFTER' && (
           <>
