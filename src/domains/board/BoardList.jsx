@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Pagination from '../../components/common/Pagination';
 import { maxios } from "../../api/axiosConfig"; 
 import { getBoardList } from './boardApi';
+import useLoadingStore from '../../store/useLoadingStore';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -104,6 +105,7 @@ const BoardList = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const { showLoading, hideLoading } = useLoadingStore();
 
   const navigate = useNavigate();
   const nav = () => {
@@ -111,6 +113,7 @@ const BoardList = () => {
   }
     // API 호출
   useEffect(() => {
+    showLoading();
     getBoardList({page, size:10, keyword:search}).then(resp=>{
 
       setPosts(resp.data.list);
@@ -118,7 +121,9 @@ const BoardList = () => {
       setTotal(resp.data.total);
     }).catch (err=> {
         console.error('게시글 목록 조회 실패', err);
-      })
+      }).finally(() => {
+        hideLoading();
+      });
     }, [page, search]); // page나 search 바뀔 때마다 재호출
 
   // 검색어 바뀌면 1페이지로 초기화

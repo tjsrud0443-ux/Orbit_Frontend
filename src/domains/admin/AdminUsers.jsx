@@ -92,7 +92,7 @@ const AdminUsers = () => {
         setEmployees(resp.data.users || []);
         setTotalCount(resp.data.totalCount || 0);
         setStatusCounts({
-            전체: (resp.data.activeCount || 0) + (resp.data.inactiveCount || 0) + (resp.data.rejectedCount || 0),
+            전체: (resp.data.activeCount || 0) + (resp.data.inactiveCount || 0) + (resp.data.retireCount || 0),
             재직: resp.data.activeCount || 0,
             휴직: resp.data.inactiveCount || 0,
             퇴사: resp.data.retireCount || 0
@@ -264,7 +264,6 @@ const AdminUsers = () => {
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-24">아이디</th>
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-32">부서</th>
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-14">직급</th>
-                  <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-16">권한</th>
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-16">상태</th>
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-28">입사일</th>
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider pl-10 w-24">관리</th>
@@ -274,7 +273,7 @@ const AdminUsers = () => {
               <tbody className="divide-y divide-slate-100 sm:divide-slate-50/60 block sm:table-row-group">
                 {filteredEmployees.length === 0 ? (
                   <tr className="block sm:table-row">
-                    <td colSpan={9} className="block sm:table-cell text-center py-12 text-slate-400 text-sm">
+                    <td colSpan={8} className="block sm:table-cell text-center py-12 text-slate-400 text-sm">
                       결과가 없습니다.
                     </td>
                   </tr>
@@ -283,7 +282,7 @@ const AdminUsers = () => {
                     <tr 
                       key={emp.users_seq} 
                       onClick={() => { setSelectedUser(emp); setIsDetailEditing(false); }}
-                      className={`hover:bg-slate-50/40 transition-colors block sm:table-row py-4 sm:py-0 border-b border-slate-50 sm:border-none
+                      className={`hover:bg-[#F5F8FF] transition-colors block sm:table-row py-4 sm:py-0 border-b border-slate-50 sm:border-none
                          relative cursor-pointer ${selectedUser?.users_seq === emp.users_seq ? 'bg-[#F0F4FF] hover:bg-[#F0F4FF]' : ''}`}>
                       
                       <td className="py-1 sm:py-4 pl-4 text-xs font-bold text-slate-400 font-mono block sm:table-cell sm:text-slate-700 sm:align-middle ">
@@ -315,15 +314,6 @@ const AdminUsers = () => {
                       <td className="py-1 sm:py-4 pl-4 sm:pl-0 text-xs text-slate-400 sm:text-slate-500 inline-block sm:table-cell sm:align-middle">
                         <span className="inline sm:hidden text-slate-300 mr-1">직급:</span>
                         {emp.rank_name}
-                      </td>
-                      <td className="py-1 sm:py-4 pl-1 sm:pl-0 text-left sm:text-center inline-block sm:table-cell sm:align-middle">
-                        <span className={`inline-block px-2 py-0.5 rounded-md text-[0.625rem] font-bold ${
-                          emp.role === 'ADMIN'
-                            ? 'bg-purple-50 text-purple-600 border border-purple-100'
-                            : 'bg-slate-50 text-slate-500 border border-slate-100'
-                        }`}>
-                          {emp.role}
-                        </span>
                       </td>
 
                       <td className="hidden sm:table-cell py-1 sm:py-4 pl-4 sm:pl-0 text-left sm:text-center sm:align-middle">
@@ -559,7 +549,7 @@ const AdminUsers = () => {
                       <span className="text-xs font-bold text-slate-700">{selectedUser.rank_name}</span>
                     )}
                     </div>
-                    <div className="flex justify-between items-center">
+                    {/* <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-500 min-w-[50px] whitespace-nowrap">권한</span>
                       {isDetailEditing ? (
                         <div className="relative custom-dropdown w-full">
@@ -598,7 +588,7 @@ const AdminUsers = () => {
                           {selectedUser.role}
                         </span>
                       )}
-                    </div>
+                    </div> */}
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-500 min-w-[50px] whitespace-nowrap">입사일</span>
                       <span className="text-xs font-bold text-slate-700 font-mono">{selectedUser.hire_date ? String(selectedUser.hire_date).split(' ')[0] : ''}</span>

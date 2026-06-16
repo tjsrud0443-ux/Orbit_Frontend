@@ -963,12 +963,17 @@ const Calendar = () => {
           <div className="flex justify-end gap-2">
             <button onClick={() => setDetailModal({ open: false, event: null })} className="px-4 py-1.5 text-xs border rounded-lg text-slate-500 font-semibold hover:bg-slate-50">닫기</button>
             {detailModal.event.extendedProps?.category !== 'ANNUAL' &&
+            detailModal.event.extendedProps?.category !== 'PROJECT' &&
+            detailModal.event.extendedProps?.category !== 'MEETING' &&
             (!COMPANY_CATEGORIES.includes(detailModal.event.extendedProps?.category) || isHrAdmin) && (
               <button onClick={handleEditStart} className="px-4 py-1.5 text-xs bg-[#3530B8] text-white rounded-lg font-semibold">수정</button>
             )}
           </div>
           {detailModal.event.extendedProps?.category === 'ANNUAL' && (
             <p className="mt-2 text-[0.625rem] text-slate-400 text-right">* 연차/휴가는 결재 문서를 통해 관리됩니다.</p>
+          )}
+          {(detailModal.event.extendedProps?.category === 'PROJECT' || detailModal.event.extendedProps?.category === 'MEETING') && (
+            <p className="mt-2 text-[0.625rem] text-slate-400 text-right">* 프로젝트 및 회의 일정은 수정할 수 없습니다.</p>
           )}
           {COMPANY_CATEGORIES.includes(detailModal.event.extendedProps?.category) && !isHrAdmin && (
             <p className="mt-2 text-[0.625rem] text-slate-400 text-right">* 공용 일정은 수정할 수 없습니다.</p>

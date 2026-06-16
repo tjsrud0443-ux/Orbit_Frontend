@@ -58,6 +58,9 @@ useEffect(() => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === 'address2' && value.length > 20) return;
+
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -115,6 +118,9 @@ useEffect(() => {
     }
     if (formData.phone && !phoneRegex.test(formData.phone)) {
       newErrors.phone = '010-0000-0000 형식으로 입력해주세요.';
+    }
+    if (!formData.address2 || !formData.address2.trim()) {
+      newErrors.address2 = '상세주소를 입력해주세요.';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -337,10 +343,20 @@ useEffect(() => {
             </div>
 
             {/* 상세주소 */}
-            <div style={{...infoRowStyle, height: '2.8rem'}} className="info-row">
+            <div style={{...infoRowStyle, minHeight: '2.8rem'}} className="info-row">
               <label style={labelStyle} className="info-label">상세주소</label>
               {isEditing ? (
-                <input type="text" name="address2" value={formData.address2} onChange={handleChange} style={{...inputStyle, height: '2.2rem'}} />
+                <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                  <input 
+                    type="text" 
+                    name="address2" 
+                    value={formData.address2} 
+                    onChange={handleChange} 
+                    style={{...inputStyle, height: '2.2rem', border: errors.address2 ? '1px solid #EF4444' : '1px solid #3530B8'}} 
+                    maxLength={20} 
+                  />
+                  {errors.address2 && <span style={{ fontSize: '0.7rem', color: '#EF4444', marginTop: '2px' }}>{errors.address2}</span>}
+                </div>
               ) : (
                 <span style={valueStyle} className="info-value">{profileData?.address2 || '-'}</span>
               )}

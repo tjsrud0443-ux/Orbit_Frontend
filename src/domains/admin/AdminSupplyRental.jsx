@@ -49,6 +49,7 @@ const AdminSupplyRental = () => {
     setActiveTab(tab);
     setPage(1);
     setSelectedId(null);
+    setTotalPages(1);
   };
 
   const handleRowClick = (id) => {
@@ -290,7 +291,7 @@ const handleReturn = async () => {
 
               {/* 관리 버튼 (필요 시) */}
               <div className="flex gap-3 pt-6 shrink-0">
-                {selectedItem.status === '대여중' && (
+                {selectedItem.status === '대여중' && selectedItem.cat !== '사무용품' && (
                   <button onClick={handleReturn}
                     className="flex-1 py-3 bg-[#3530B8] text-white text-sm font-bold rounded-2xl hover:bg-[#2a2696] transition-all shadow-lg shadow-[#3530B8]/20"
                   >
