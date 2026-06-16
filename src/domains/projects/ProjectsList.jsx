@@ -675,10 +675,10 @@ const ProjectsList = () => {
                 <tr className="text-[#8a92a6] text-sm border-b border-gray-100">
                   <th className={`pb-4 font-medium px-2 text-left ${selectedProject ? 'md:w-[18%]' : 'md:w-[30%]'}`}>프로젝트명 (클릭 시 칸반 보드로 이동)</th>
                   <th className={`pb-4 font-medium px-2 text-left whitespace-nowrap ${selectedProject ? 'md:w-[12%]' : 'md:w-[18%]'}`}>기간</th>
-                  <th className={`pb-4 font-medium px-3 text-left whitespace-nowrap ${selectedProject ? 'md:w-[10%]' : 'md:w-[12%]'}`}>진행상황</th>
+                  <th className={`pb-4 font-medium px-5 text-left whitespace-nowrap ${selectedProject ? 'md:w-[10%]' : 'md:w-[12%]'}`}>상태</th>
                   <th className={`pb-4 font-medium px-2 text-left whitespace-nowrap min-w-[70px] ${selectedProject ? 'md:w-[12%]' : 'md:w-[10%]'}`}>생성자</th>
                   <th className={`pb-4 font-medium px-2 text-left whitespace-nowrap min-w-[120px] ${selectedProject ? 'md:w-[22%]' : 'md:w-[15%]'}`}>참여자</th>
-                  <th className={`pb-4 font-medium px-2 text-left whitespace-nowrap min-w-[90px] ${selectedProject ? 'md:w-[14%]' : 'md:w-[10%]'}`}>상세보기</th>
+                  <th className={`pb-4 font-medium px-4 text-left whitespace-nowrap min-w-[90px] ${selectedProject ? 'md:w-[14%]' : 'md:w-[10%]'}`}>상세보기</th>
                   <th className={`pb-4 font-medium px-2 text-left whitespace-nowrap min-w-[60px] ${selectedProject ? 'md:w-[12%]' : 'md:w-[5%]'}`}>완료</th>
                 </tr>
               </thead>
