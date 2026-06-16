@@ -44,7 +44,6 @@ const AdminQna = () => {
 
   useEffect(() => {
     adminAiQuestionsData(user.dept_seq, user.auth_group).then(resp => {
-      console.log(resp.data);
       setCount(resp.data);
     });
   }, []);
