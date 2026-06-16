@@ -228,7 +228,7 @@ const AdminMain = () => {
     { id: 1, title: '전체 직원 수', value: `${dashboard.allEmployeeCount}명`, icon: faUsers, iconColor: 'text-[#3530B8]', bgColor: 'bg-[#F0F4FF]' },
     { id: 2, title: '신규 입사자 (이번 달)', value: `${dashboard.joinEmployeeCount}명`, icon: faUserPlus, iconColor: 'text-emerald-500', bgColor: 'bg-[#F0F4FF]' },
     { id: 3, title: '퇴사자 (이번 달)', value: `${dashboard.resignEmployeeCount}명`, icon: faUserMinus, iconColor: 'text-[#FF4D4F]', bgColor: 'bg-[#F0F4FF]' },
-    { id: 4, title: 'AI 미답변 질문', value: `${dashboard.aiQuestionsCount}건`, icon: faCommentDots, iconColor: 'text-amber-500', bgColor: 'bg-[#F0F4FF]' },
+    { id: 4, title: 'AI 미답변 질문 (대기)', value: `${dashboard.aiQuestionsCount}건`, icon: faCommentDots, iconColor: 'text-amber-500', bgColor: 'bg-[#F0F4FF]' },
     { id: 5, title: '비품 신청 (승인 대기)', value: `${dashboard.supplyRequestCount}건`, icon: faBoxOpen, iconColor: 'text-[#7c3aed]', bgColor: 'bg-[#F0F4FF]' },
   ];
 
