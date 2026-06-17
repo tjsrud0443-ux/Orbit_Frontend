@@ -21,7 +21,7 @@ import { alertWarning, alertSuccess } from '../../utils/alert';
 const AiChat = () => {
   // --- 1. States ---
   const [messages, setMessages] = useState([
-    { id: Date.now(), role: 'AI', content: '안녕하세요! Orbit AI 비서입니다.\n회사 문서와 회의록을 기반으로 필요한 정보를 찾아 답변해 드립니다. 궁금하신 내용을 질문해 주세요!', isTyping: false }
+    { id: Date.now(), role: 'AI', content: '안녕하세요! Orbit AI 비서입니다.\n사내 문서와 회의록을 기반으로 필요한 정보를 찾아 답변해 드립니다. 궁금하신 내용을 질문해 주세요!', isTyping: false }
   ]);
 
   const [input, setInput] = useState("");
@@ -91,7 +91,7 @@ const AiChat = () => {
           {
             id: Date.now(),
             role: 'AI',
-            content: '안녕하세요! Orbit AI 비서입니다.\n회사 문서와 회의록을 기반으로 필요한 정보를 찾아 답변해 드립니다. 궁금하신 내용을 질문해 주세요!',
+            content: '안녕하세요! Orbit AI 비서입니다.\n사내 문서와 회의록을 기반으로 필요한 정보를 찾아 답변해 드립니다. 궁금하신 내용을 질문해 주세요!',
             isTyping: false
           }
         ]);
@@ -106,7 +106,7 @@ const AiChat = () => {
       {
         id: Date.now(),
         role: 'AI',
-        content: '안녕하세요! Orbit AI 비서입니다.\n회사 문서와 회의록을 기반으로 필요한 정보를 찾아 답변해 드립니다. 궁금하신 내용을 질문해 주세요!',
+        content: '안녕하세요! Orbit AI 비서입니다.\n사내 문서와 회의록을 기반으로 필요한 정보를 찾아 답변해 드립니다. 궁금하신 내용을 질문해 주세요!',
         isTyping: false
       }
     ]);
