@@ -44,7 +44,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
 
     if (value) {
       if (field === 'title' && value.length > 50) error = '글자 수 초과 (50자 이하)';
-      if (field === 'reason' && value.length > 300) error = '글자 수 초과 (300자 이하)';
+      if (field === 'reason' && value.length > 100) error = '글자 수 초과 (100자 이하)';
     }
 
     if (field === 'start_date' && value && value < today) {
@@ -280,8 +280,8 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                       <textarea 
                         value={data.reason || ''}
                         onChange={(e) => handleFieldChange('reason', e.target.value)}
-                        placeholder="사유를 입력하세요 (300자 이하)"
-                        maxLength={300}
+                        placeholder="사유를 입력하세요 (100자 이하)"
+                        maxLength={100}
                         className={`w-full h-25 p-2 bg-white border ${errors.reason ? 'border-red-500' : 'border-gray-300'} rounded outline-none focus:border-[#3530B8] resize-none custom-scrollbar`}
                       ></textarea>
                       {errors.reason && <p className="mt-1 text-[10px] text-red-500">{errors.reason}</p>}
