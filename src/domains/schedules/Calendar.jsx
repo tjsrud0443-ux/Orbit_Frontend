@@ -60,8 +60,10 @@ const MonthlyEvents = ({ events, currentTitle, title = "이달의 주요 일정"
   const month = parseInt(match[2]);
 
   const monthlyEvents = events.filter(e => {
-    const d = new Date(e.start);
-    return d.getFullYear() === year && (d.getMonth() + 1) === month;
+    if (!e.start) return false;
+    const datePart = e.start.split('T')[0];
+    const [y, m] = datePart.split('-').map(Number);
+    return y === year && m === month;
   }).sort((a, b) => new Date(a.start) - new Date(b.start));
 
   return (
@@ -72,7 +74,7 @@ const MonthlyEvents = ({ events, currentTitle, title = "이달의 주요 일정"
           monthlyEvents.map(e => (
             <div key={e.id} className="flex gap-3 items-start p-1.5 rounded-lg hover:bg-slate-50 transition-colors group">
               <div className="text-[0.625rem] font-bold text-[#3530B8] bg-[#F0F4FF] px-1.5 py-1 rounded shrink-0 min-w-[2.125rem] text-center group-hover:bg-[#3530B8] group-hover:text-white transition-colors">
-                {new Date(e.start).getDate()}일
+                {Number(e.start.split('T')[0].split('-')[2])}일
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[0.6875rem] font-semibold text-slate-800 truncate">{e.title}</p>
@@ -303,7 +305,12 @@ const Calendar = () => {
       if (holidays?.length > 0) {
         const addHolidays = (prev) => {
           const existingIds = new Set(prev.map(e => e.id));//기존 이벤트 id 목록
-          return [...prev, ...holidays.filter(h => !existingIds.has(h.id))];
+          const mappedHolidays = holidays.map(h => ({
+            ...h,
+            allDay: true,
+            display: 'list-item'
+          }));
+          return [...prev, ...mappedHolidays.filter(h => !existingIds.has(h.id))];
         };
         setCompanyEvents(addHolidays);  // 기존
         setPersonalEvents(addHolidays); // 추가
@@ -619,9 +626,12 @@ const Calendar = () => {
               overflow: hidden !important;
             }
               /* 마지막 행 잘림 방지 */
-  .fc-daygrid-body-unbalanced .fc-daygrid-body-natural {
-    overflow: hidden !important;
-  }
+            .fc-daygrid-body-unbalanced .fc-daygrid-body-natural {
+              overflow: hidden !important;
+            }
+            .fc .fc-daygrid-day-frame {
+              min-height: 5rem !important; /* 원하는 기본 높이값, 직접 조정 가능 */
+            }
           }   
         `}
       </style>
@@ -717,9 +727,9 @@ const Calendar = () => {
                 moreLinkContent={(args) => isMobile ? `+${args.num}` : `+${args.num} more`}
                 aspectRatio={isMobile ? 0.8 : undefined}
                 height={isMobile ? 'auto' : '100%'}
-                // expandRows={true}
-                expandRows={true} 
-                fixedWeekCount={true}
+                expandRows={false} 
+                //fixedWeekCount={true}
+                fixedWeekCount={false}
                 editable={activeTab === 'personal'}
                 selectable={activeTab === 'personal'}
                 events={filteredEvents}
@@ -936,7 +946,7 @@ const Calendar = () => {
       {detailModal.open && detailModal.event && (
         <ModalOverlay onClose={() => setDetailModal({ open: false, event: null })}>
           <h3 className="text-sm font-bold mb-4">일정 상세</h3>
-          <div className="p-3 mb-4 rounded-lg bg-[#3530B8] text-white text-xs font-semibold"
+          <div className="p-3 mb-4 rounded-lg bg-[#3530B8] text-white text-xs font-semibold break-words"
             style={{ backgroundColor: detailModal.event.backgroundColor || detailModal.event.extendedProps?.color || '#3530B8' }}>{detailModal.event.title}</div>
           <div className="space-y-2 mb-5 text-xs text-slate-600">
             <p><span className="font-semibold">시작:</span> {detailModal.event.startStr.split('T')[0]}</p>
@@ -954,7 +964,7 @@ const Calendar = () => {
             {detailModal.event.extendedProps?.description && (
               <div className="pt-2 border-t border-slate-100">
                 <p className="text-[0.625rem] text-slate-400 mb-1">설명</p>
-                <div className="max-h-40 overflow-y-auto custom-scrollbar pr-1">
+                <div className="max-h-40 overflow-y-auto overflow-x-hidden custom-scrollbar pr-1">
                   <p className="text-slate-700 whitespace-pre-wrap break-words">{detailModal.event.extendedProps.description}</p>
                 </div>
               </div>
@@ -965,6 +975,7 @@ const Calendar = () => {
             {detailModal.event.extendedProps?.category !== 'ANNUAL' &&
             detailModal.event.extendedProps?.category !== 'PROJECT' &&
             detailModal.event.extendedProps?.category !== 'MEETING' &&
+            detailModal.event.extendedProps?.category !== 'holiday' &&
             (!COMPANY_CATEGORIES.includes(detailModal.event.extendedProps?.category) || isHrAdmin) && (
               <button onClick={handleEditStart} className="px-4 py-1.5 text-xs bg-[#3530B8] text-white rounded-lg font-semibold">수정</button>
             )}
@@ -975,7 +986,12 @@ const Calendar = () => {
           {(detailModal.event.extendedProps?.category === 'PROJECT' || detailModal.event.extendedProps?.category === 'MEETING') && (
             <p className="mt-2 text-[0.625rem] text-slate-400 text-right">* 프로젝트 및 회의 일정은 수정할 수 없습니다.</p>
           )}
-          {COMPANY_CATEGORIES.includes(detailModal.event.extendedProps?.category) && !isHrAdmin && (
+          {detailModal.event.extendedProps?.category === 'holiday' && (
+            <p className="mt-2 text-[0.625rem] text-slate-400 text-right">* 공휴일은 수정할 수 없습니다.</p>
+          )}
+          {COMPANY_CATEGORIES.includes(detailModal.event.extendedProps?.category) && 
+          detailModal.event.extendedProps?.category !== 'holiday' && 
+          !isHrAdmin && (
             <p className="mt-2 text-[0.625rem] text-slate-400 text-right">* 공용 일정은 수정할 수 없습니다.</p>
           )}
         </ModalOverlay>
@@ -1038,7 +1054,7 @@ const FilterSection = ({ title, filters, checked, onChange }) => (
   </div>
 );
 
-const ModalOverlay = ({ children, onClose, overflow = "overflow-y-auto" }) => {
+const ModalOverlay = ({ children, onClose, overflow = "overflow-y-auto overflow-x-hidden" }) => {
   const mouseDownTarget = useRef(null); 
   return(
     <div
