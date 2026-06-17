@@ -118,7 +118,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
       if (!value) itemErrors[`${index}-receipt`] = '영수증을 첨부해주세요.';
       else delete itemErrors[`${index}-receipt`];
     } else if (!value && (field === 'item_name' || field === 'amount')) {
-      itemErrors[`${index}-${field}`] = field === 'item_name' ? '항목명을 입력해주세요.' : '금액을 입력해주세요.';
+      itemErrors[`${index}-${field}`] = field === 'item_name' ? '항목명을 입력해주세요.' : '숫자로 금액을 입력해주세요.';
     } else {
       if (field === 'item_name' && value.length > 30) itemErrors[`${index}-item_name`] = '글자 수 초과 (30자 이하)';
       else if (field === 'note' && value.length > 50) itemErrors[`${index}-note`] = '글자 수 초과 (50자 이하)';
