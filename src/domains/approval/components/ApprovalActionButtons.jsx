@@ -37,7 +37,7 @@ const ApprovalActionButtons = ({
   const isPastApprover = userRole === 'APPROVER' && mode === 'VIEW' && (myStatus === 'APPROVED' || myStatus === 'REJECTED');
 
   const handleRejectConfirm = () => {
-    if (!rejectReason.trim()) {
+    if (!rejectReason.trim() || rejectReason.length > 100) {
       setRejectError(true);
       return;
     }

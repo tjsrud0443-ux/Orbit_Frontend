@@ -35,7 +35,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
         else if (item.item_name.length > 50) itemErrors[`${index}-item_name`] = '글자 수 초과 (50자 이하)';
         
         if (!item.ea || item.ea <= 0) itemErrors[`${index}-ea`] = '수량을 입력해주세요.';
-        if (!item.unit_price || item.unit_price <= 0) itemErrors[`${index}-unit_price`] = '단가를 입력해주세요.';
+        if (!item.unit_price || item.unit_price <= 0) itemErrors[`${index}-unit_price`] = '숫자로 단가를 입력해주세요.';
       });
       newErrors.items = itemErrors;
       
@@ -223,7 +223,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                           value={data.purchase_date || ''} 
                           onClick={() => setIsCalendarOpen(!isCalendarOpen)} 
                           placeholder="요청일 선택" 
-                          className={`w-full h-full p-2 border ${errors.purchase_date ? 'border-red-500' : isCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-lg outline-none cursor-pointer text-[11px] transition-all pr-10`}
+                          className={`w-full h-full p-2 border ${errors.purchase_date ? 'border-red-500' : isCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-lg outline-none transition-all`}
                         />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -270,7 +270,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                   onChange={(e) => handleFieldChange('purpose', e.target.value)}
                   placeholder="구매 목적을 입력하세요 (300자 이하)"
                   maxLength={300}
-                  className={`w-full h-20 p-3 text-xs bg-white border ${errors.purpose ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all`}
+                  className={`w-full h-20 p-3 text-xs bg-white border ${errors.purpose ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all custom-scrollbar`}
                 ></textarea>
                 {errors.purpose && <p className="mt-1 text-[10px] text-red-500">{errors.purpose}</p>}
               </div>
@@ -292,7 +292,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                   onChange={(e) => handleFieldChange('vendor', e.target.value)}
                   placeholder="구매처 정보를 입력하세요 (50자 이하)"
                   maxLength={50}
-                  className={`w-full h-20 p-3 text-xs bg-white border ${errors.vendor ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all`}
+                  className={`w-full h-20 p-3 text-xs bg-white border ${errors.vendor ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all custom-scrollbar`}
                 ></textarea>
                 {errors.vendor && <p className="mt-1 text-[10px] text-red-500">{errors.vendor}</p>}
               </div>
@@ -526,7 +526,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                 value={data.title || ''}
                 onChange={(e) => handleFieldChange('title', e.target.value)}
                 placeholder="제목을 입력하세요"
-                className={`w-full p-2.5 text-xs bg-white border ${errors.title ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none`}
+                className={`w-full p-2.5 text-xs bg-white border ${errors.title ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none custom-scrollbar`}
               />
               {errors.title && <p className="text-[10px] text-red-500">{errors.title}</p>}
             </div>
@@ -605,7 +605,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
               <textarea 
                 value={data.purpose || ''}
                 onChange={(e) => handleFieldChange('purpose', e.target.value)}
-                className="w-full h-20 p-2.5 text-xs border border-gray-200 rounded-lg outline-none"
+                className="w-full h-20 p-2.5 text-xs border border-gray-200 rounded-lg outline-none custom-scrollbar"
               ></textarea>
             ) : (
               <div className="p-2.5 bg-gray-50 rounded-lg text-xs border border-gray-100 min-h-[5rem] whitespace-pre-wrap">{data.purpose || '-'}</div>
@@ -620,7 +620,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
               <textarea 
                 value={data.vendor || ''}
                 onChange={(e) => handleFieldChange('vendor', e.target.value)}
-                className="w-full h-20 p-2.5 text-xs border border-gray-200 rounded-lg outline-none"
+                className="w-full h-20 p-2.5 text-xs border border-gray-200 rounded-lg outline-none custom-scrollbar"
               ></textarea>
             ) : (
               <div className="p-2.5 bg-gray-50 rounded-lg text-xs border border-gray-100 min-h-[5rem] whitespace-pre-wrap">{data.vendor || '-'}</div>

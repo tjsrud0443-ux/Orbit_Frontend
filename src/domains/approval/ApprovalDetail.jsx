@@ -425,7 +425,7 @@ const ApprovalDetail = () => {
     }
 
     if (actionType === 'REJECT') {
-      if (!payload?.trim()) {
+      if (!payload?.trim() || payload.length > 100) {
         setRejectError(true);
         return;
       }
@@ -561,22 +561,35 @@ const ApprovalDetail = () => {
             {isRejecting ? (
               <>
                 <textarea
-                  className={`w-full p-4 text-sm border-2 rounded-xl bg-red-50/30 focus:outline-none transition-all resize-none h-32 ${
-                    rejectError ? 'border-red-500 ring-4 ring-red-500/10 shadow-lg shadow-red-500/5' : 'border-red-100 focus:border-red-200'
+                  className={`w-full p-4 text-sm border-2 rounded-xl bg-red-50/30 focus:outline-none transition-all resize-none h-32 custom-scrollbar ${
+                    rejectError || rejectReason.length > 100 ? 'border-red-500 ring-4 ring-red-500/10 shadow-lg shadow-red-500/5' : 'border-red-100 focus:border-red-200'
                   }`}
                   value={rejectReason}
                   onChange={(e) => {
-                    setRejectReason(e.target.value);
-                    if (e.target.value.trim()) setRejectError(false);
+                    const value = e.target.value;
+                    setRejectReason(value);
+                    if (value.trim() && value.length <= 100) setRejectError(false);
                   }}
                   placeholder="반려 사유를 입력해주세요."
                   autoFocus
                 />
-                {rejectError && (
-                  <p className="text-xs text-red-500 mt-2 font-bold flex items-center gap-1 animate-pulse">
-                    <span>⚠️</span> 반려 사유를 입력해주세요.
-                  </p>
-                )}
+                <div className="flex justify-between items-center mt-2">
+                  <div className="flex-1">
+                    {rejectError && (
+                      <p className="text-xs text-red-500 font-bold flex items-center gap-1 animate-pulse">
+                        <span>⚠️</span> {!rejectReason.trim() ? '반려 사유를 입력해주세요.' : '반려 사유는 100자 이내로 입력해주세요.'}
+                      </p>
+                    )}
+                    {!rejectError && rejectReason.length > 100 && (
+                      <p className="text-xs text-red-500 font-bold flex items-center gap-1">
+                        <span>⚠️</span> 반려 사유는 100자 이내로 입력해주세요.
+                      </p>
+                    )}
+                  </div>
+                  <span className={`text-[10px] font-medium ml-2 ${rejectReason.length > 100 ? 'text-red-500 font-bold' : 'text-gray-400'}`}>
+                    {rejectReason.length}/100
+                  </span>
+                </div>
               </>
             ) : (
               <div className="p-5 bg-red-50 rounded-xl border border-red-100 shadow-sm">

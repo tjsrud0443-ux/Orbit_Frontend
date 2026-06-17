@@ -276,7 +276,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                   onChange={(e) => handleFieldChange('pay_reason', e.target.value)}
                   placeholder="지출 목적을 입력하세요 (300자 이하)"
                   maxLength={300}
-                  className={`w-full h-20 p-2 text-xs bg-white border ${errors.pay_reason ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all`}
+                  className={`w-full h-20 p-2 text-xs bg-white border ${errors.pay_reason ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all custom-scrollbar`}
                 ></textarea>
                 {errors.pay_reason && <p className="mt-1 text-[10px] text-red-500">{errors.pay_reason}</p>}
               </div>
@@ -298,7 +298,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                   onChange={(e) => handleFieldChange('account_info', e.target.value)}
                   placeholder="은행명 / 계좌번호 / 예금주 (50자 이하)"
                   maxLength={50}
-                  className={`w-full h-20 p-2 text-xs bg-white border ${errors.account_info ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all`}
+                  className={`w-full h-20 p-2 text-xs bg-white border ${errors.account_info ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all custom-scrollbar`}
                 ></textarea>
                 {errors.account_info && <p className="mt-1 text-[10px] text-red-500">{errors.account_info}</p>}
               </div>
@@ -519,7 +519,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                 value={data.title || ''}
                 onChange={(e) => handleFieldChange('title', e.target.value)}
                 placeholder="제목을 입력하세요"
-                className={`w-full p-2.5 text-xs bg-white border ${errors.title ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none`}
+                className={`w-full p-2.5 text-xs bg-white border ${errors.title ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none custom-scrollbar`}
               />
               {errors.title && <p className="text-[10px] text-red-500">{errors.title}</p>}
             </div>
@@ -598,7 +598,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                 <textarea 
                   value={data.pay_reason || ''}
                   onChange={(e) => handleFieldChange('pay_reason', e.target.value)}
-                  className={`w-full h-20 p-2.5 text-xs border ${errors.pay_reason ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none`}
+                  className={`w-full h-20 p-2.5 text-xs border ${errors.pay_reason ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none custom-scrollbar`}
                 ></textarea>
                 {errors.pay_reason && <p className="text-[10px] text-red-500">{errors.pay_reason}</p>}
               </div>
@@ -616,7 +616,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                 <textarea 
                   value={data.account_info || ''}
                   onChange={(e) => handleFieldChange('account_info', e.target.value)}
-                  className={`w-full h-20 p-2.5 text-xs border ${errors.account_info ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none`}
+                  className={`w-full h-20 p-2.5 text-xs border ${errors.account_info ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none custom-scrollbar`}
                 ></textarea>
                 {errors.account_info && <p className="text-[10px] text-red-500">{errors.account_info}</p>}
               </div>
