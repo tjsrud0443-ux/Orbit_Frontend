@@ -353,7 +353,7 @@ const AdminUsers = () => {
                               퇴사
                             </button>
                           </div>
-                        ) : (
+                        ) :getStatusLabel(emp.status) !== '퇴사' ?  (
                           <button 
                             type="button"
                             onClick={(e) => {
@@ -363,7 +363,7 @@ const AdminUsers = () => {
                             className="w-max px-7 py-1 text-xs font-bold text-slate-600 bg-white border border-slate-300 rounded-full hover:bg-slate-50 shadow-sm">
                             수정
                           </button>
-                        )}
+                        ) :null}
                       </td>
                     </tr>
                   ))
@@ -579,11 +579,13 @@ const AdminUsers = () => {
                     className="flex-1 py-3 bg-white border border-slate-200 text-slate-500 text-sm font-bold rounded-xl hover:bg-slate-50 transition-all">
                     닫기
                   </button>
-                  <button 
-                    onClick={handleDetailEdit}
-                    className="flex-[2] py-3 bg-[#3530B8] text-white text-sm font-bold rounded-xl shadow-lg shadow-[#3530B8]/20 hover:bg-[#2a2696] transition-all">
-                    정보 수정
-                  </button>
+                  {getStatusLabel(selectedUser.status) !== '퇴사' && (
+                    <button 
+                      onClick={handleDetailEdit}
+                      className="flex-[2] py-3 bg-[#3530B8] text-white text-sm font-bold rounded-xl shadow-lg shadow-[#3530B8]/20 hover:bg-[#2a2696] transition-all">
+                      정보 수정
+                    </button>
+                  )}
                 </>
               )}
             </div>
