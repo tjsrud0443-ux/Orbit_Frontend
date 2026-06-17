@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Calendar from '../../../components/common/Calendar';
 import ReferrerSelector from '../components/ReferrerSelector';
 import useAuthStore from '../../../store/authStore';
@@ -9,6 +9,24 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
 
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [errors, setErrors] = useState({});
+  const calendarRef = useRef(null);
+  const mobileCalendarRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        (calendarRef.current && !calendarRef.current.contains(event.target)) &&
+        (mobileCalendarRef.current && !mobileCalendarRef.current.contains(event.target))
+      ) {
+        setIsCalendarOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const token = useAuthStore(state => state.token);
 
@@ -185,6 +203,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                 onChange={(e) => handleFieldChange('title', e.target.value)}
                 placeholder="제목을 입력하세요 (50자 이하)"
                 maxLength={50}
+                autoComplete="off"
                 className={`w-full p-2.5 text-xs bg-white border ${errors.title ? 'border-red-500' : 'border-gray-200'} rounded-xl outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 transition-all`}
               />
               {errors.title && <p className="mt-1 text-[10px] text-red-500">{errors.title}</p>}
@@ -220,7 +239,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                 <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">지출일</th>
                 <td className="p-2 border-r border-gray-200">
                   {isEditMode ? (
-                    <div className="relative w-65">
+                    <div className="relative w-65" ref={calendarRef}>
                       <div className="relative h-[34px]">
                         <input 
                           type="text" 
@@ -236,11 +255,13 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                           </svg>
                         </div>
                         {isCalendarOpen && (
+                          <div className="absolute z-50 mt-1 w-full min-w-[260px]">
                           <Calendar 
                             value={data.pay_date} 
                             onChange={(d) => { handleFieldChange('pay_date', d); setIsCalendarOpen(false); }} 
                             onClose={() => setIsCalendarOpen(false)}
                           />
+                          </div>
                         )}
                       </div>
                       {errors.pay_date && (
@@ -528,6 +549,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                 onChange={(e) => handleFieldChange('title', e.target.value)}
                 placeholder="제목을 입력하세요"
                 className={`w-full p-2.5 text-xs bg-white border ${errors.title ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none custom-scrollbar`}
+                autoComplete="off"
               />
               {errors.title && <p className="text-[10px] text-red-500">{errors.title}</p>}
             </div>
@@ -559,7 +581,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
               <div className="w-20 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100">직급</div>
               <div className="flex-grow p-2">{applicant?.rank_name || '-'}</div>
             </div>
-            <div className="flex border-b border-gray-100 relative overflow-visible">
+            <div className="flex border-b border-gray-100 relative overflow-visible" ref={mobileCalendarRef}>
               <div className="w-20 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100">지출일</div>
               <div className="flex-grow p-2 overflow-visible">
                 {isEditMode ? (
