@@ -252,6 +252,8 @@ const MeetingRooms = () => {
 
   const handleAddAttendee = (emp) => {
     if (form.attendees.some(a => a.users_seq === emp.users_seq)) {
+      setSearchQuery('');
+      setShowSearchResults(false);
       alertWarning('중복 입력', '이미 추가된 참석자입니다.');
       return;
     }

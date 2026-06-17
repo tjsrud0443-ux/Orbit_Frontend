@@ -199,7 +199,7 @@ const Signup = () => {
   const idRegex = /^[A-Za-z\d_]{5,15}$/;
   const pwRegex = /^[A-Za-z\d!@#$%^&*]{8,20}$/;
   const ssnRegex = /^\d{6}-\d{7}$/;
-  const emailRegex = /^[A-Za-z0-9._%+-]{1,20}@[a-z]+\.[a-z]{2,3}$/;
+  const emailRegex = /^[A-Za-z0-9._%+-]{1,20}@[a-z]+\.[a-z]{3}$/;
 
   const handleSubmit = () => {
     const newErrors = {};
