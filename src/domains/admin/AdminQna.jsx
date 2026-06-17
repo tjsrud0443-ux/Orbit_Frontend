@@ -333,102 +333,31 @@ const AdminQna = () => {
 
         {/* 데스크탑 뷰: 상세 정보 패널 */}
         {selectedQna && (
-          <div className="hidden md:flex w-[35%] bg-white rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-10 transition-all duration-300 flex-col md:overflow-y-auto md:min-h-0 custom-scrollbar">
-            <div className="flex justify-between items-center mb-8">
+          <div className="hidden md:flex w-[35%] bg-white rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-10 transition-all duration-300 flex-col md:min-h-0">
+            <div className="flex justify-between items-center mb-8 flex-shrink-0">
               <h2 className="text-xl font-bold text-[#1a1c3d]">문의 상세</h2>
-              <button onClick={() => setSelectedQna(null)}><FontAwesomeIcon icon={faTimes} /></button>
-            </div>
-            <div className="flex items-center gap-3 mb-4">
-              <span className="px-3 py-1 bg-[#F0F4FF] text-[#3530B8] rounded-lg text-xs font-bold">{selectedQna.category.replace("팀", "")}</span>
-              <span className={`px-3 py-1 rounded-lg text-xs font-bold ${selectedQna.status === 'ANSWERED' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
-                {selectedQna.status === 'ANSWERED' ? '답변완료' : '답변 대기'}
-              </span>
-            </div>
-            <h3 className="text-lg font-bold mb-2 text-[#1a1c3d]">Q. 질문 내용</h3>
-            <div className="bg-[#f4f7fc] p-6 rounded-2xl mb-8">
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedQna.question}</p>
-              <p className="text-xs text-[#8a92a6] mt-4">{selectedQna?.created_at?.substring(0, 10)}</p>
+              <button onClick={() => setSelectedQna(null)} className="text-gray-400 hover:text-gray-600 transition-colors"><FontAwesomeIcon icon={faTimes} /></button>
             </div>
 
-            <h3 className="text-lg font-bold mb-2 text-[#3530B8]">A. 관리자 답변</h3>
-            <div className={`p-6 rounded-2xl border ${selectedQna.status === 'ANSWERED' && !isEditing ? 'bg-white border-[#edf2f9]' : 'bg-gray-50 border-dashed border-gray-200'}`}>
-              {isEditing ? (
-                <>
-                  <textarea
-                    className="w-full h-32 p-4 bg-white border border-[#edf2f9] rounded-xl text-sm outline-none resize-none custom-scrollbar transition-all"
-                    placeholder="답변을 입력해 주세요."
-                    value={answerText}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setAnswerText(val);
-                      if (val.length > 300) {
-                        setAnswerError("글자수가 초과되었습니다. 300자까지만 입력 가능합니다.");
-                      } else {
-                        setAnswerError("");
-                      }
-                    }}
-                  />
-                  {answerError && <p className="text-[11px] text-red-500 mt-2 ml-1">{answerError}</p>}
-                </>
-              ) : selectedQna.status === 'ANSWERED' ? (
-                <div>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedQna.handle_answer}</p>
-                  <p className="text-xs text-[#8a92a6] mt-4">{selectedQna?.answer_at?.substring(0, 10)} | {selectedQna.admin_name}</p>
-                </div>
-              ) : (
-                <p className="text-sm font-bold text-gray-400 text-center py-4">답변을 작성해 주세요.</p>
-              )}
-            </div>
-
-            {isEditing ? (
-              <div className="flex gap-2 mt-auto">
-                <button onClick={handleCancelClick} className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-xl font-bold hover:bg-gray-200 transition-all">
-                  취소
-                </button>
-                <button onClick={handleAnswerSubmit} className="flex-1 py-4 bg-[#3530B8] text-white rounded-xl font-bold hover:bg-[#2a2594] transition-all">
-                  {selectedQna.status === 'PENDING' ? '등록' : '저장'}
-                </button>
-              </div>
-            ) : (selectedQna.status === 'ANSWERED' && hasPermission(selectedQna)) ? (
-              <div className="flex gap-2 mt-auto">
-                <button onClick={handleEditClick} className="flex-1 py-4 bg-[#3530B8] text-white rounded-xl font-bold hover:bg-[#2a2594] transition-all">
-                  수정
-                </button>
-                <button onClick={() => handleDelete(selectedQna.question_seq)} className="flex-1 py-4 bg-red-50 text-red-600 border border-red-50 rounded-xl font-bold hover:bg-red-600 hover:text-white transition-all">
-                  삭제
-                </button>
-              </div>
-            ) : (
-              <button onClick={() => setSelectedQna(null)} className="mt-auto w-full py-4 bg-[#3530B8] text-white rounded-xl font-bold hover:bg-[#2a2594] transition-all">
-                닫기
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* 모바일 뷰: 상세 정보 모달 */}
-        {selectedQna && (
-          <div className="md:hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-bold">문의 상세</h2>
-                <button onClick={() => setSelectedQna(null)}><FontAwesomeIcon icon={faTimes} /></button>
-              </div>
-              <div className="flex gap-2 mb-4">
-                <span className="px-2 py-1 bg-[#F0F4FF] text-[#3530B8] rounded-md text-[10px] font-bold">{selectedQna.category.replace("팀", "")}</span>
-                <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${selectedQna.status === 'ANSWERED' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
+            <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="px-3 py-1 bg-[#F0F4FF] text-[#3530B8] rounded-lg text-xs font-bold">{selectedQna.category.replace("팀", "")}</span>
+                <span className={`px-3 py-1 rounded-lg text-xs font-bold ${selectedQna.status === 'ANSWERED' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
                   {selectedQna.status === 'ANSWERED' ? '답변완료' : '답변 대기'}
                 </span>
               </div>
-              <h4 className="text-[11px] font-bold text-[#8a92a6] uppercase mb-2">질문 내용</h4>
-              <p className="text-xs text-gray-700 mb-4 bg-[#f4f7fc] p-4 rounded-xl whitespace-pre-wrap">{selectedQna.question}</p>
+              <h3 className="text-lg font-bold mb-2 text-[#1a1c3d]">Q. 질문 내용</h3>
+              <div className="bg-[#f4f7fc] p-6 rounded-2xl mb-8">
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedQna.question}</p>
+                <p className="text-xs text-[#8a92a6] mt-4">{selectedQna?.created_at?.substring(0, 10)}</p>
+              </div>
 
-              <h4 className="text-[11px] font-bold text-[#3530B8] uppercase mb-2">관리자 답변</h4>
-              <div className={`p-4 rounded-xl border ${selectedQna.status === 'ANSWERED' && !isEditing ? 'bg-white border-[#edf2f9]' : 'bg-gray-50 border-dashed border-gray-200'}`}>
+              <h3 className="text-lg font-bold mb-2 text-[#3530B8]">A. 관리자 답변</h3>
+              <div className={`p-6 rounded-2xl border ${selectedQna.status === 'ANSWERED' && !isEditing ? 'bg-white border-[#edf2f9]' : 'bg-gray-50 border-dashed border-gray-200'}`}>
                 {isEditing ? (
                   <>
                     <textarea
-                      className="w-full h-24 p-3 bg-white border border-[#edf2f9] rounded-xl text-xs outline-none resize-none custom-scrollbar transition-all"
+                      className="w-full h-32 p-4 bg-white border border-[#edf2f9] rounded-xl text-sm outline-none resize-none custom-scrollbar transition-all"
                       placeholder="답변을 입력해 주세요."
                       value={answerText}
                       onChange={(e) => {
@@ -441,7 +370,7 @@ const AdminQna = () => {
                         }
                       }}
                     />
-                    {answerError && <p className="text-[10px] text-red-500 mt-2 ml-1">{answerError}</p>}
+                    {answerError && <p className="text-[11px] text-red-500 mt-2 ml-1">{answerError}</p>}
                   </>
                 ) : selectedQna.status === 'ANSWERED' ? (
                   <div>
@@ -449,12 +378,91 @@ const AdminQna = () => {
                     <p className="text-xs text-[#8a92a6] mt-4">{selectedQna?.answer_at?.substring(0, 10)} | {selectedQna.admin_name}</p>
                   </div>
                 ) : (
-                  <p className="text-xs text-gray-400 text-center">답변을 작성해 주세요.</p>
+                  <p className="text-sm font-bold text-gray-400 text-center py-4">답변을 작성해 주세요.</p>
                 )}
+              </div>
+            </div>
+
+            {isEditing ? (
+              <div className="flex gap-2 mt-auto pt-8 flex-shrink-0">
+                <button onClick={handleCancelClick} className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-xl font-bold hover:bg-gray-200 transition-all">
+                  취소
+                </button>
+                <button onClick={handleAnswerSubmit} className="flex-1 py-4 bg-[#3530B8] text-white rounded-xl font-bold hover:bg-[#2a2594] transition-all">
+                  {selectedQna.status === 'PENDING' ? '등록' : '저장'}
+                </button>
+              </div>
+            ) : (selectedQna.status === 'ANSWERED' && hasPermission(selectedQna)) ? (
+              <div className="flex gap-2 mt-auto pt-8 flex-shrink-0">
+                <button onClick={handleEditClick} className="flex-1 py-4 bg-[#3530B8] text-white rounded-xl font-bold hover:bg-[#2a2594] transition-all">
+                  수정
+                </button>
+                <button onClick={() => handleDelete(selectedQna.question_seq)} className="flex-1 py-4 bg-red-50 text-red-600 border border-red-50 rounded-xl font-bold hover:bg-red-600 hover:text-white transition-all">
+                  삭제
+                </button>
+              </div>
+            ) : (
+              <div className="mt-auto pt-8 flex-shrink-0">
+                <button onClick={() => setSelectedQna(null)} className="w-full py-4 bg-[#3530B8] text-white rounded-xl font-bold hover:bg-[#2a2594] transition-all">
+                  닫기
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 모바일 뷰: 상세 정보 모달 */}
+        {selectedQna && (
+          <div className="md:hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm shadow-2xl flex flex-col max-h-[90vh]">
+              <div className="flex justify-between items-center mb-4 flex-shrink-0">
+                <h2 className="text-lg font-bold">문의 상세</h2>
+                <button onClick={() => setSelectedQna(null)} className="text-gray-400"><FontAwesomeIcon icon={faTimes} /></button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
+                <div className="flex gap-2 mb-4">
+                  <span className="px-2 py-1 bg-[#F0F4FF] text-[#3530B8] rounded-md text-[10px] font-bold">{selectedQna.category.replace("팀", "")}</span>
+                  <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${selectedQna.status === 'ANSWERED' ? 'bg-[#F0FDF4] text-[#10B981]' : 'bg-[#FFF9F0] text-[#FF9800]'}`}>
+                    {selectedQna.status === 'ANSWERED' ? '답변완료' : '답변 대기'}
+                  </span>
+                </div>
+                <h4 className="text-[11px] font-bold text-[#8a92a6] uppercase mb-2">질문 내용</h4>
+                <p className="text-xs text-gray-700 mb-4 bg-[#f4f7fc] p-4 rounded-xl whitespace-pre-wrap">{selectedQna.question}</p>
+
+                <h4 className="text-[11px] font-bold text-[#3530B8] uppercase mb-2">관리자 답변</h4>
+                <div className={`p-4 rounded-xl border ${selectedQna.status === 'ANSWERED' && !isEditing ? 'bg-white border-[#edf2f9]' : 'bg-gray-50 border-dashed border-gray-200'}`}>
+                  {isEditing ? (
+                    <>
+                      <textarea
+                        className="w-full h-24 p-3 bg-white border border-[#edf2f9] rounded-xl text-xs outline-none resize-none custom-scrollbar transition-all"
+                        placeholder="답변을 입력해 주세요."
+                        value={answerText}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setAnswerText(val);
+                          if (val.length > 300) {
+                            setAnswerError("글자수가 초과되었습니다. 300자까지만 입력 가능합니다.");
+                          } else {
+                            setAnswerError("");
+                          }
+                        }}
+                      />
+                      {answerError && <p className="text-[10px] text-red-500 mt-2 ml-1">{answerError}</p>}
+                    </>
+                  ) : selectedQna.status === 'ANSWERED' ? (
+                    <div>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedQna.handle_answer}</p>
+                      <p className="text-xs text-[#8a92a6] mt-4">{selectedQna?.answer_at?.substring(0, 10)} | {selectedQna.admin_name}</p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-400 text-center">답변을 작성해 주세요.</p>
+                  )}
+                </div>
               </div>
 
               {isEditing ? (
-                <div className="flex gap-2 mt-6">
+                <div className="flex gap-2 mt-6 pt-2 flex-shrink-0">
                   <button onClick={handleAnswerSubmit} className="flex-1 py-3 bg-[#3530B8] text-white rounded-xl font-bold">
                     {selectedQna.status === 'PENDING' ? '등록' : '저장'}
                   </button>
@@ -463,7 +471,7 @@ const AdminQna = () => {
                   </button>
                 </div>
               ) : (selectedQna.status === 'ANSWERED' && hasPermission(selectedQna)) ? (
-                <div className="flex gap-2 mt-6">
+                <div className="flex gap-2 mt-6 pt-2 flex-shrink-0">
                   <button onClick={handleEditClick} className="flex-1 py-3 bg-[#3530B8] text-white rounded-xl font-bold">
                     수정
                   </button>
@@ -472,9 +480,11 @@ const AdminQna = () => {
                   </button>
                 </div>
               ) : (
-                <button onClick={() => setSelectedQna(null)} className="w-full mt-6 py-3 bg-[#3530B8] text-white rounded-xl font-bold">
-                  닫기
-                </button>
+                <div className="mt-6 pt-2 flex-shrink-0">
+                  <button onClick={() => setSelectedQna(null)} className="w-full py-3 bg-[#3530B8] text-white rounded-xl font-bold">
+                    닫기
+                  </button>
+                </div>
               )}
             </div>
           </div>
