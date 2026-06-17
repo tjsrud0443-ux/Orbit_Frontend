@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Calendar from '../../../components/common/Calendar';
 import ReferrerSelector from '../components/ReferrerSelector';
 import useAuthStore from '../../../store/authStore';
@@ -9,6 +9,24 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
 
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [errors, setErrors] = useState({});
+  const containerRef = useRef(null);
+  const calendarRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        (containerRef.current && !containerRef.current.contains(event.target)) &&
+        (calendarRef.current && !calendarRef.current.contains(event.target))
+      ) {
+        setIsCalendarOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // 초기 데이터 설정
   useEffect(() => {
@@ -32,10 +50,10 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
       const itemErrors = {};
       data.items?.forEach((item, index) => {
         if (!item.item_name?.trim()) itemErrors[`${index}-item_name`] = '품목명을 입력해주세요.';
-        else if (item.item_name.length > 50) itemErrors[`${index}-item_name`] = '글자 수 초과 (50자 이하)';
+        else if (item.item_name.length > 30) itemErrors[`${index}-item_name`] = '글자 수 초과 (30자 이하)';
         
         if (!item.ea || item.ea <= 0) itemErrors[`${index}-ea`] = '수량을 입력해주세요.';
-        if (!item.unit_price || item.unit_price <= 0) itemErrors[`${index}-unit_price`] = '단가를 입력해주세요.';
+        if (!item.unit_price || item.unit_price <= 0) itemErrors[`${index}-unit_price`] = '숫자로 단가를 입력해주세요.';
       });
       newErrors.items = itemErrors;
       
@@ -96,8 +114,8 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
       if (field === 'ea') itemErrors[`${index}-ea`] = '수량을 입력해주세요.';
       if (field === 'unit_price') itemErrors[`${index}-unit_price`] = '단가를 입력해주세요.';
     } else {
-      if (field === 'item_name' && value.length > 50) {
-        itemErrors[`${index}-item_name`] = '글자 수 초과 (50자 이하)';
+      if (field === 'item_name' && value.length > 30) {
+        itemErrors[`${index}-item_name`] = '글자 수 초과 (30자 이하)';
       } else {
         delete itemErrors[`${index}-${field}`];
       }
@@ -215,15 +233,18 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                 <th className="w-24 bg-gray-50 p-2.5 border-r border-gray-200 text-left font-bold">구매 요청일</th>
                 <td className="p-2.5 w-125 border-r border-gray-200">
                   {isEditMode ? (
-                    <div className="relative w-65">
+                    <div className="relative w-65" ref={containerRef}>
                       <div className="relative h-[34px]">
                         <input 
-                          type="text" 
-                          readOnly 
-                          value={data.purchase_date || ''} 
-                          onClick={() => setIsCalendarOpen(!isCalendarOpen)} 
-                          placeholder="요청일 선택" 
-                          className={`w-full h-full p-2 border ${errors.purchase_date ? 'border-red-500' : isCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-lg outline-none cursor-pointer text-[11px] transition-all pr-10`}
+                        type="text" 
+                        readOnly 
+                        value={data.purchase_date || ''} 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsCalendarOpen(!isCalendarOpen);
+                        }} 
+                        placeholder="요청일 선택" 
+                        className={`w-full h-full p-2 border ${errors.purchase_date ? 'border-red-500' : isCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-lg outline-none transition-all`}
                         />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -231,11 +252,13 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                           </svg>
                         </div>
                         {isCalendarOpen && (
-                          <Calendar 
-                            value={data.purchase_date} 
-                            onChange={(d) => { handleFieldChange('purchase_date', d); setIsCalendarOpen(false); }} 
-                            onClose={() => setIsCalendarOpen(false)}
-                          />
+                          <div ref={calendarRef} className="absolute z-50 mt-1 w-full min-w-[260px]">
+                            <Calendar 
+                              value={data.purchase_date} 
+                              onChange={(d) => { handleFieldChange('purchase_date', d); setIsCalendarOpen(false); }} 
+                              onClose={() => setIsCalendarOpen(false)}
+                            />
+                          </div>
                         )}
                       </div>
                       {errors.purchase_date && (
@@ -257,8 +280,8 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
         </div>
 
         {/* 구매 목적 및 구매처 Section */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-3">
+        <div className="space-y-4">
+          <div className="space-y-2">
             <div className="flex items-center gap-2">
               <div className="w-1 h-3.5 bg-[#3530B8] rounded-full"></div>
               <h2 className="text-xs font-bold text-gray-800">구매 목적</h2>
@@ -267,20 +290,28 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
               <div>
                 <textarea 
                   value={data.purpose || ''}
-                  onChange={(e) => handleFieldChange('purpose', e.target.value)}
+                  onChange={(e) => {
+                    handleFieldChange('purpose', e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
+                  onInput={(e) => {
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
                   placeholder="구매 목적을 입력하세요 (300자 이하)"
                   maxLength={300}
-                  className={`w-full h-20 p-3 text-xs bg-white border ${errors.purpose ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all`}
+                  className={`w-full p-3 text-xs bg-white border ${errors.purpose ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all min-h-[80px] overflow-hidden`}
                 ></textarea>
                 {errors.purpose && <p className="mt-1 text-[10px] text-red-500">{errors.purpose}</p>}
               </div>
             ) : (
-              <div className="w-full h-20 p-3 text-xs bg-gray-50 border border-gray-100 rounded-lg whitespace-pre-wrap overflow-y-auto">
+              <div className="w-full p-3 text-xs bg-gray-50 border border-gray-100 rounded-lg whitespace-pre-wrap">
                 {data.purpose || '-'}
               </div>
             )}
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2">
             <div className="flex items-center gap-2">
               <div className="w-1 h-3.5 bg-[#3530B8] rounded-full"></div>
               <h2 className="text-xs font-bold text-gray-800">구매처</h2>
@@ -289,15 +320,23 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
               <div>
                 <textarea 
                   value={data.vendor || ''}
-                  onChange={(e) => handleFieldChange('vendor', e.target.value)}
+                  onChange={(e) => {
+                    handleFieldChange('vendor', e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
+                  onInput={(e) => {
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
                   placeholder="구매처 정보를 입력하세요 (50자 이하)"
                   maxLength={50}
-                  className={`w-full h-20 p-3 text-xs bg-white border ${errors.vendor ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all`}
+                  className={`w-full p-3 text-xs bg-white border ${errors.vendor ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all min-h-[80px] overflow-hidden`}
                 ></textarea>
                 {errors.vendor && <p className="mt-1 text-[10px] text-red-500">{errors.vendor}</p>}
               </div>
             ) : (
-              <div className="w-full h-20 p-3 text-xs bg-gray-50 border border-gray-100 rounded-lg whitespace-pre-wrap overflow-y-auto">
+              <div className="w-full p-3 text-xs bg-gray-50 border border-gray-100 rounded-lg whitespace-pre-wrap">
                 {data.vendor || '-'}
               </div>
             )}
@@ -350,7 +389,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                               type="text"
                               value={item.item_name || ''}
                               onChange={(e) => handleItemChange(index, 'item_name', e.target.value)}
-                              maxLength={50}
+                              maxLength={30}
                               className={`w-full p-1 bg-white border ${errors.items?.[`${index}-item_name`] ? 'border-red-500' : 'border-gray-300'} rounded outline-none focus:border-[#3530B8]`}
                             />
                             {errors.items?.[`${index}-item_name`] && <p className="text-[9px] text-red-500 mt-0.5">{errors.items[`${index}-item_name`]}</p>}
@@ -405,7 +444,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                             type="text"
                             value={item.note || ''}
                             onChange={(e) => handleItemChange(index, 'note', e.target.value)}
-                            maxLength={100}
+                            maxLength={50}
                             className="w-full p-1 bg-white border border-gray-300 rounded outline-none focus:border-[#3530B8]"
                           />
                         ) : (
@@ -526,7 +565,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                 value={data.title || ''}
                 onChange={(e) => handleFieldChange('title', e.target.value)}
                 placeholder="제목을 입력하세요"
-                className={`w-full p-2.5 text-xs bg-white border ${errors.title ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none`}
+                className={`w-full p-2.5 text-xs bg-white border ${errors.title ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none custom-scrollbar`}
               />
               {errors.title && <p className="text-[10px] text-red-500">{errors.title}</p>}
             </div>
@@ -558,7 +597,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
               <div className="w-24 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100">직급</div>
               <div className="flex-grow p-2">{applicant?.rank_name || '-'}</div>
             </div>
-            <div className="flex border-b border-gray-100">
+            <div className="flex border-b border-gray-100 relative overflow-visible">
               <div className="w-24 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100">요청일</div>
               <div className="flex-grow p-2">
                 {isEditMode ? (
@@ -567,13 +606,16 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                       type="text" 
                       readOnly 
                       value={data.purchase_date || ''} 
-                      onClick={() => setIsCalendarOpen(!isCalendarOpen)} 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsCalendarOpen(!isCalendarOpen);
+                      }} 
                       placeholder="날짜 선택" 
                       className={`w-full p-1 border ${errors.purchase_date ? 'border-red-500' : 'border-gray-200'} rounded outline-none text-xs`}
                     />
                     {errors.purchase_date && <p className="text-[10px] text-red-500">{errors.purchase_date}</p>}
                     {isCalendarOpen && (
-                      <div className="absolute z-50 left-0 w-full">
+                      <div ref={calendarRef} className="absolute z-50 left-0 w-full">
                         <Calendar 
                           value={data.purchase_date} 
                           onChange={(d) => { handleFieldChange('purchase_date', d); setIsCalendarOpen(false); }} 
@@ -605,7 +647,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
               <textarea 
                 value={data.purpose || ''}
                 onChange={(e) => handleFieldChange('purpose', e.target.value)}
-                className="w-full h-20 p-2.5 text-xs border border-gray-200 rounded-lg outline-none"
+                className="w-full h-20 p-2.5 text-xs border border-gray-200 rounded-lg outline-none custom-scrollbar"
               ></textarea>
             ) : (
               <div className="p-2.5 bg-gray-50 rounded-lg text-xs border border-gray-100 min-h-[5rem] whitespace-pre-wrap">{data.purpose || '-'}</div>
@@ -620,7 +662,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
               <textarea 
                 value={data.vendor || ''}
                 onChange={(e) => handleFieldChange('vendor', e.target.value)}
-                className="w-full h-20 p-2.5 text-xs border border-gray-200 rounded-lg outline-none"
+                className="w-full h-20 p-2.5 text-xs border border-gray-200 rounded-lg outline-none custom-scrollbar"
               ></textarea>
             ) : (
               <div className="p-2.5 bg-gray-50 rounded-lg text-xs border border-gray-100 min-h-[5rem] whitespace-pre-wrap">{data.vendor || '-'}</div>

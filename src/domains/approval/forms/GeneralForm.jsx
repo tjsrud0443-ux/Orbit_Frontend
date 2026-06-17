@@ -129,7 +129,7 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                 onChange={(e) => handleFieldChange('purpose', e.target.value)}
                 placeholder="품의 목적을 간략하게 입력하세요 (300자 이하)"
                 maxLength={300}
-                className={`w-full h-20 p-3 text-xs bg-white border ${errors.purpose ? 'border-red-500' : 'border-gray-200'} rounded-xl outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 resize-none transition-all`}
+                className={`w-full h-20 p-3 text-xs bg-white border ${errors.purpose ? 'border-red-500' : 'border-gray-200'} rounded-xl outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 resize-none transition-all custom-scrollbar`}
               ></textarea>
               {errors.purpose && <p className="mt-1 text-[10px] text-red-500">{errors.purpose}</p>}
             </div>
@@ -153,7 +153,7 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                 onChange={(e) => handleFieldChange('content', e.target.value)}
                 placeholder="품의 내용을 자유롭게 입력하세요 (1000자 이하)"
                 maxLength={1000}
-                className={`w-full h-80 p-4 text-xs bg-white border ${errors.content ? 'border-red-500' : 'border-gray-200'} rounded-xl outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 resize-none transition-all`}
+                className={`w-full h-80 p-4 text-xs bg-white border ${errors.content ? 'border-red-500' : 'border-gray-200'} rounded-xl outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 resize-none transition-all custom-scrollbar`}
               ></textarea>
               {errors.content && <p className="mt-1 text-[10px] text-red-500">{errors.content}</p>}
             </div>
@@ -238,7 +238,7 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                 value={purpose}
                 onChange={(e) => handleFieldChange('purpose', e.target.value)}
                 placeholder="품의 목적을 입력하세요"
-                className={`w-full h-24 p-2.5 text-xs bg-white border ${errors.purpose ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none resize-none`}
+                className={`w-full h-24 p-2.5 text-xs bg-white border ${errors.purpose ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none resize-none custom-scrollbar`}
               ></textarea>
               {errors.purpose && <p className="text-[10px] text-red-500">{errors.purpose}</p>}
             </div>
@@ -259,7 +259,7 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                 value={content}
                 onChange={(e) => handleFieldChange('content', e.target.value)}
                 placeholder="품의 내용을 입력하세요"
-                className={`w-full h-64 p-2.5 text-xs bg-white border ${errors.content ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none resize-none`}
+                className={`w-full h-64 p-2.5 text-xs bg-white border ${errors.content ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none resize-none custom-scrollbar`}
               ></textarea>
               {errors.content && <p className="text-[10px] text-red-500">{errors.content}</p>}
             </div>

@@ -56,9 +56,6 @@ const AdminDocuments = () => {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      // 이미지
-      'image/*': ['.png', '.jpg', '.jpeg', '.gif'],
-
       // PDF
       'application/pdf': ['.pdf'],
 
@@ -256,7 +253,7 @@ const AdminDocuments = () => {
                 </tr>
               ) : (
                 displayedDocs.map((doc) => (
-                  <tr key={doc.document_seq} className="hover:bg-slate-50/40 transition-colors">
+                  <tr key={doc.document_seq}>
                     <td className="py-4 text-sm font-semibold text-slate-800 whitespace-nowrap">
                       <button onClick={() => setPreviewDoc({ sysname: doc.file_sysname, mimeType: doc.mime_type, title: doc.title })} className="hover:text-[#3530B8] hover:underline cursor-pointer">
                         {doc.title}

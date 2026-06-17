@@ -262,11 +262,11 @@ const ApprovalHome = () => {
         </div>
 
         <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex-1 flex flex-col">
-          <div className="p-6 px-10 border-b border-gray-50 flex items-center justify-between bg-gray-50/30 flex-shrink-0">
-            <h2 className="text-lg font-bold text-gray-900">최근 문서 목록</h2>
+          <div className="p-5 px-10 border-b border-gray-50 flex items-center justify-between bg-gray-50/30 flex-shrink-0">
+            <h2 className="text-lg font-bold text-gray-900">최근 상신한 기안 목록</h2>
             <button 
               onClick={handleAllDoc}
-              className="text-xs font-bold text-[#3530B8] bg-[#F0F4FF] px-4 py-2 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all">
+              className="text-xs font-bold text-[#3530B8] bg-[#F0F4FF] px-4 py-2 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all cursor-pointer">
               전체보기
             </button>
           </div>
@@ -285,7 +285,7 @@ const ApprovalHome = () => {
                 <div className="flex-1">
                   {
                     homeData.recentDocs.map((doc, idx) => (
-                      <div key={doc.doc_seq || idx} className="grid grid-cols-12 px-10 py-5 border-b border-gray-50 items-center hover:bg-gray-50/50 transition-colors cursor-pointer group whitespace-nowrap">
+                      <div key={doc.doc_seq || idx} className="grid grid-cols-12 px-10 py-5 border-b border-gray-50 items-center group whitespace-nowrap">
                         <div className="col-span-4 text-sm font-bold text-gray-700 truncate pr-4">
                           {doc.title}
                         </div>

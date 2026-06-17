@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Calendar from '../../../components/common/Calendar';
 import ReferrerSelector from '../components/ReferrerSelector';
 import useAuthStore from '../../../store/authStore';
@@ -9,6 +9,24 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
 
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [errors, setErrors] = useState({});
+  const calendarRef = useRef(null);
+  const mobileCalendarRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        (calendarRef.current && !calendarRef.current.contains(event.target)) &&
+        (mobileCalendarRef.current && !mobileCalendarRef.current.contains(event.target))
+      ) {
+        setIsCalendarOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const token = useAuthStore(state => state.token);
 
@@ -38,7 +56,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
         if (!item.amount || item.amount <= 0) itemErrors[`${index}-amount`] = '금액을 입력해주세요.';
         if (!item.receipt && !item.oriname) itemErrors[`${index}-receipt`] = '영수증을 첨부해주세요.';
         
-        if (item.note && item.note.length > 100) itemErrors[`${index}-note`] = '글자 수 초과 (100자 이하)';
+        if (item.note && item.note.length > 50) itemErrors[`${index}-note`] = '글자 수 초과 (50자 이하)';
       });
       newErrors.items = itemErrors;
       
@@ -100,10 +118,10 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
       if (!value) itemErrors[`${index}-receipt`] = '영수증을 첨부해주세요.';
       else delete itemErrors[`${index}-receipt`];
     } else if (!value && (field === 'item_name' || field === 'amount')) {
-      itemErrors[`${index}-${field}`] = field === 'item_name' ? '항목명을 입력해주세요.' : '금액을 입력해주세요.';
+      itemErrors[`${index}-${field}`] = field === 'item_name' ? '항목명을 입력해주세요.' : '숫자로 금액을 입력해주세요.';
     } else {
       if (field === 'item_name' && value.length > 30) itemErrors[`${index}-item_name`] = '글자 수 초과 (30자 이하)';
-      else if (field === 'note' && value.length > 100) itemErrors[`${index}-note`] = '글자 수 초과 (100자 이하)';
+      else if (field === 'note' && value.length > 50) itemErrors[`${index}-note`] = '글자 수 초과 (50자 이하)';
       else {
         delete itemErrors[`${index}-${field}`];
         if (field === 'note') delete itemErrors[`${index}-note`];
@@ -185,6 +203,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                 onChange={(e) => handleFieldChange('title', e.target.value)}
                 placeholder="제목을 입력하세요 (50자 이하)"
                 maxLength={50}
+                autoComplete="off"
                 className={`w-full p-2.5 text-xs bg-white border ${errors.title ? 'border-red-500' : 'border-gray-200'} rounded-xl outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 transition-all`}
               />
               {errors.title && <p className="mt-1 text-[10px] text-red-500">{errors.title}</p>}
@@ -220,7 +239,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                 <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">지출일</th>
                 <td className="p-2 border-r border-gray-200">
                   {isEditMode ? (
-                    <div className="relative w-65">
+                    <div className="relative w-65" ref={calendarRef}>
                       <div className="relative h-[34px]">
                         <input 
                           type="text" 
@@ -236,11 +255,13 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                           </svg>
                         </div>
                         {isCalendarOpen && (
+                          <div className="absolute z-50 mt-1 w-full min-w-[260px]">
                           <Calendar 
                             value={data.pay_date} 
                             onChange={(d) => { handleFieldChange('pay_date', d); setIsCalendarOpen(false); }} 
                             onClose={() => setIsCalendarOpen(false)}
                           />
+                          </div>
                         )}
                       </div>
                       {errors.pay_date && (
@@ -263,7 +284,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
         </div>
 
         {/* 지출 목적 및 계좌 정보 Section */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <div className="w-1 h-3.5 bg-[#3530B8] rounded-full"></div>
@@ -271,17 +292,25 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
             </div>
             {isEditMode ? (
               <div>
-                <textarea 
+                  <textarea 
                   value={data.pay_reason || ''}
-                  onChange={(e) => handleFieldChange('pay_reason', e.target.value)}
+                  onChange={(e) => {
+                    handleFieldChange('pay_reason', e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
+                  onInput={(e) => {
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
                   placeholder="지출 목적을 입력하세요 (300자 이하)"
                   maxLength={300}
-                  className={`w-full h-20 p-2 text-xs bg-white border ${errors.pay_reason ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all`}
+                  className={`w-full p-2 text-xs bg-white border ${errors.pay_reason ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all min-h-[80px] overflow-hidden`}
                 ></textarea>
                 {errors.pay_reason && <p className="mt-1 text-[10px] text-red-500">{errors.pay_reason}</p>}
               </div>
             ) : (
-              <div className="w-full h-20 p-2 text-xs bg-gray-50 border border-gray-100 rounded-lg whitespace-pre-wrap overflow-y-auto">
+              <div className="w-full p-2 text-xs bg-gray-50 border border-gray-100 rounded-lg whitespace-pre-wrap">
                 {data.pay_reason || '-'}
               </div>
             )}
@@ -298,12 +327,12 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                   onChange={(e) => handleFieldChange('account_info', e.target.value)}
                   placeholder="은행명 / 계좌번호 / 예금주 (50자 이하)"
                   maxLength={50}
-                  className={`w-full h-20 p-2 text-xs bg-white border ${errors.account_info ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all`}
+                  className={`w-full p-2 text-xs bg-white border ${errors.account_info ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all custom-scrollbar min-h-[80px]`}
                 ></textarea>
                 {errors.account_info && <p className="mt-1 text-[10px] text-red-500">{errors.account_info}</p>}
               </div>
             ) : (
-              <div className="w-full h-20 p-2 text-xs bg-gray-50 border border-gray-100 rounded-lg whitespace-pre-wrap overflow-y-auto">
+              <div className="w-full p-2 text-xs bg-gray-50 border border-gray-100 rounded-lg whitespace-pre-wrap">
                 {data.account_info || '-'}
               </div>
             )}
@@ -419,7 +448,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                             type="text"
                             value={item.note || ''}
                             onChange={(e) => handleItemChange(index, 'note', e.target.value)}
-                            maxLength={100}
+                            maxLength={50}
                             className={`w-full p-1 bg-white border ${errors.items?.[`${index}-note`] ? 'border-red-500' : 'border-gray-300'} rounded outline-none focus:border-[#3530B8]`}
                           />
                           {errors.items?.[`${index}-note`] && <p className="text-[9px] text-red-500 mt-0.5">{errors.items[`${index}-note`]}</p>}
@@ -519,7 +548,8 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                 value={data.title || ''}
                 onChange={(e) => handleFieldChange('title', e.target.value)}
                 placeholder="제목을 입력하세요"
-                className={`w-full p-2.5 text-xs bg-white border ${errors.title ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none`}
+                className={`w-full p-2.5 text-xs bg-white border ${errors.title ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none custom-scrollbar`}
+                autoComplete="off"
               />
               {errors.title && <p className="text-[10px] text-red-500">{errors.title}</p>}
             </div>
@@ -551,7 +581,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
               <div className="w-20 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100">직급</div>
               <div className="flex-grow p-2">{applicant?.rank_name || '-'}</div>
             </div>
-            <div className="flex border-b border-gray-100 relative overflow-visible">
+            <div className="flex border-b border-gray-100 relative overflow-visible" ref={mobileCalendarRef}>
               <div className="w-20 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100">지출일</div>
               <div className="flex-grow p-2 overflow-visible">
                 {isEditMode ? (
@@ -597,8 +627,16 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
               <div className="space-y-1">
                 <textarea 
                   value={data.pay_reason || ''}
-                  onChange={(e) => handleFieldChange('pay_reason', e.target.value)}
-                  className={`w-full h-20 p-2.5 text-xs border ${errors.pay_reason ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none`}
+                  onChange={(e) => {
+                    handleFieldChange('pay_reason', e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
+                  onInput={(e) => {
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
+                  className={`w-full p-2.5 text-xs border ${errors.pay_reason ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none overflow-hidden min-h-[80px]`}
                 ></textarea>
                 {errors.pay_reason && <p className="text-[10px] text-red-500">{errors.pay_reason}</p>}
               </div>
@@ -615,8 +653,16 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
               <div className="space-y-1">
                 <textarea 
                   value={data.account_info || ''}
-                  onChange={(e) => handleFieldChange('account_info', e.target.value)}
-                  className={`w-full h-20 p-2.5 text-xs border ${errors.account_info ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none`}
+                  onChange={(e) => {
+                    handleFieldChange('account_info', e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
+                  onInput={(e) => {
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
+                  className={`w-full p-2.5 text-xs border ${errors.account_info ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none overflow-hidden min-h-[80px]`}
                 ></textarea>
                 {errors.account_info && <p className="text-[10px] text-red-500">{errors.account_info}</p>}
               </div>

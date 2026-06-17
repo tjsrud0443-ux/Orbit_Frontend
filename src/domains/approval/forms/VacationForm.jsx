@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Calendar from '../../../components/common/Calendar';
 import ReferrerSelector from '../components/ReferrerSelector';
 
@@ -10,6 +10,31 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
   const [isEndCalendarOpen, setIsEndCalendarOpen] = useState(false);
   const [isTypeOpen, setIsTypeOpen] = useState(false);
   const [errors, setErrors] = useState({});
+
+  const startCalendarRef = useRef(null);
+  const endCalendarRef = useRef(null);
+  const mobileStartCalendarRef = useRef(null);
+  const mobileEndCalendarRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const isOutsideStart = 
+        (!startCalendarRef.current || !startCalendarRef.current.contains(event.target)) &&
+        (!mobileStartCalendarRef.current || !mobileStartCalendarRef.current.contains(event.target));
+      
+      const isOutsideEnd = 
+        (!endCalendarRef.current || !endCalendarRef.current.contains(event.target)) &&
+        (!mobileEndCalendarRef.current || !mobileEndCalendarRef.current.contains(event.target));
+
+      if (isOutsideStart) setIsStartCalendarOpen(false);
+      if (isOutsideEnd) setIsEndCalendarOpen(false);
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     if (isSubmitClicked) {
@@ -44,7 +69,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
 
     if (value) {
       if (field === 'title' && value.length > 50) error = '글자 수 초과 (50자 이하)';
-      if (field === 'reason' && value.length > 300) error = '글자 수 초과 (300자 이하)';
+      if (field === 'reason' && value.length > 100) error = '글자 수 초과 (100자 이하)';
     }
 
     if (field === 'start_date' && value && value < today) {
@@ -217,7 +242,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                   {isEditMode ? (
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
-                        <div className="relative w-50">
+                        <div className="relative w-50" ref={startCalendarRef}>
                           <input 
                             type="text" 
                             readOnly 
@@ -237,7 +262,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                         {data.vac_type === '연차' && (
                           <>
                             <span className="px-1">~</span>
-                            <div className="relative w-50">
+                            <div className="relative w-50" ref={endCalendarRef}>
                               <input 
                                 type="text" 
                                 readOnly 
@@ -280,9 +305,9 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                       <textarea 
                         value={data.reason || ''}
                         onChange={(e) => handleFieldChange('reason', e.target.value)}
-                        placeholder="사유를 입력하세요 (300자 이하)"
-                        maxLength={300}
-                        className={`w-full h-25 p-2 bg-white border ${errors.reason ? 'border-red-500' : 'border-gray-300'} rounded outline-none focus:border-[#3530B8] resize-none`}
+                        placeholder="사유를 입력하세요 (100자 이하)"
+                        maxLength={100}
+                        className={`w-full h-25 p-2 bg-white border ${errors.reason ? 'border-red-500' : 'border-gray-300'} rounded outline-none focus:border-[#3530B8] resize-none custom-scrollbar`}
                       ></textarea>
                       {errors.reason && <p className="mt-1 text-[10px] text-red-500">{errors.reason}</p>}
                     </div>
@@ -401,7 +426,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
               <label className="text-[10px] font-bold text-gray-400">신청 기간</label>
               {isEditMode ? (
                 <div className="flex flex-col gap-2">
-                  <div className="relative space-y-1">
+                  <div className="relative space-y-1" ref={mobileStartCalendarRef}>
                     <input 
                       type="text" readOnly value={data.start_date || ''} 
                       onClick={() => setIsStartCalendarOpen(!isStartCalendarOpen)} 
@@ -416,7 +441,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                     )}
                   </div>
                   {data.vac_type === '연차' && (
-                    <div className="relative space-y-1">
+                    <div className="relative space-y-1" ref={mobileEndCalendarRef}>
                       <input 
                         type="text" readOnly value={data.end_date || ''} 
                         onClick={() => setIsEndCalendarOpen(!isEndCalendarOpen)} 
@@ -451,7 +476,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                   <textarea 
                     value={data.reason || ''}
                     onChange={(e) => handleFieldChange('reason', e.target.value)}
-                    className={`w-full h-24 p-2 text-xs border ${errors.reason ? 'border-red-500' : 'border-gray-200'} rounded bg-gray-50 resize-none outline-none`}
+                    className={`w-full h-24 p-2 text-xs border ${errors.reason ? 'border-red-500' : 'border-gray-200'} rounded bg-gray-50 resize-none outline-none custom-scrollbar`}
                   ></textarea>
                   {errors.reason && <p className="text-[10px] text-red-500">{errors.reason}</p>}
                 </div>

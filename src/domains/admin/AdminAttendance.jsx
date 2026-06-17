@@ -223,15 +223,17 @@ const AdminAttendance = () => {
                     <tr key={req.checkout_seq} className="hover:bg-slate-50/40 transition-colors">
                       <td className="py-4 pl-1 md:pl-2 text-sm font-bold text-slate-800 whitespace-nowrap">{req.name}</td>
                       <td className="py-4 pl-3 md:pl-6 text-xs text-slate-500 font-medium whitespace-nowrap">{req.dept_name} / {req.rank_name}</td>
-                      <td className="py-4 pl-6 md:pl-13 text-[0.6875rem] text-slate-400 font-mono whitespace-nowrap">{req.checkout_date.split(" ")[0]}</td>
-                      <td className="py-4 pl-4 md:pl-8 text-xs text-[#3530B8] font-bold whitespace-nowrap">{req.checkout_date.substring(11,16)}</td>
-                      <td className="py-4 pl-4 md:pl-11 text-xs text-[#3530B8] font-bold whitespace-nowrap">{req.req_check_out.substring(11,16)}</td>
+                      <td className="py-4 pl-6 md:pl-13 text-[0.6875rem] text-slate-400 font-mono whitespace-nowrap">{req.req_check_out?.split(" ")[0]}</td>
+                      <td className="py-4 pl-4 md:pl-8 text-xs text-[#3530B8] font-bold whitespace-nowrap">
+                        {req.checkout_date ? req.checkout_date?.substring(11,16) : '미기록'}
+                      </td>
+                      <td className="py-4 pl-4 md:pl-11 text-xs text-[#3530B8] font-bold whitespace-nowrap">{req.req_check_out?.substring(11,16)}</td>
                       <td className="py-4 pl-10 md:pl-19 text-xs text-slate-500 w-80 md:w-130 truncate whitespace-nowrap" title={req.reason}>
                         {req.reason}
                       </td>
                       {
                         req.approver_name ?
-                        <td className="py-4 pl-1.5 text-xs text-slate-600 font-medium whitespace-nowrap">{req.approver_name}</td>
+                        <td className="py-4 text-xs text-slate-600 font-medium whitespace-nowrap">{req.approver_name}</td>
                         :
                         <td className="py-4 pl-2 md:pl-3 text-xs text-slate-600 font-medium whitespace-nowrap">-</td>
                       }
@@ -286,8 +288,8 @@ const AdminAttendance = () => {
                       <tr key={req.overtime_seq} className="hover:bg-slate-50/40 transition-colors">
                           <td className="py-4 pl-1 md:pl-2 text-sm font-bold text-slate-800 whitespace-nowrap">{req.name}</td>
                           <td className="py-4 pl-3 md:pl-6 text-xs text-slate-500 font-medium whitespace-nowrap">{req.dept_name} / {req.rank_name}</td>
-                          <td className="py-4 pl-6 md:pl-13 text-[0.6875rem] text-slate-400 font-mono whitespace-nowrap">{req.work_date.split(" ")[0]}</td>
-                          <td className="py-4 pl-4 md:pl-9 text-xs text-[#3530B8] font-bold whitespace-nowrap">{req.end_dt.substring(11, 16)}</td>
+                          <td className="py-4 pl-6 md:pl-13 text-[0.6875rem] text-slate-400 font-mono whitespace-nowrap">{req.work_date?.split(" ")[0]}</td>
+                          <td className="py-4 pl-4 md:pl-9 text-xs text-[#3530B8] font-bold whitespace-nowrap">{req.end_dt?.substring(11, 16)}</td>
                           <td className="py-4 pl-10 md:pl-19 text-xs text-slate-500 w-80 md:w-130 truncate whitespace-nowrap" title={req.reason}>
                             {req.reason}
                           </td>

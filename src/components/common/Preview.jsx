@@ -15,10 +15,7 @@ const DocumentPreviewModal = ({ sysname, mimeType, title, token, onClose }) => {
     useEffect(() => {
         const fileUrl = `http://localhost/file/preview/${sysname}?token=${token}`;
 
-        if (mimeType?.startsWith('image/') || /\.(png|jpe?g|gif)$/i.test(sysname)) {
-            setPreviewType('image');
-            setPreviewUrl(fileUrl);
-        } else if (mimeType === 'application/pdf' || sysname?.toLowerCase().endsWith('.pdf')) {
+        if (mimeType === 'application/pdf' || sysname?.toLowerCase().endsWith('.pdf')) {
             setPreviewType('pdf');
             setPreviewUrl(fileUrl);
         } else if (
@@ -65,7 +62,7 @@ const DocumentPreviewModal = ({ sysname, mimeType, title, token, onClose }) => {
             <div className="p-5 border-b flex justify-between items-center bg-slate-50 flex-shrink-0">
               <div className="flex items-center gap-2 truncate pr-4">
                 <span className="bg-[#3530B8] text-white text-[10px] font-bold px-2 py-0.5 rounded">
-                  {previewType === 'docx' ? 'DOCX 뷰어' : previewType === 'pdf' ? 'PDF 뷰어' : '이미지 뷰어'}
+                  {previewType === 'docx' ? 'DOCX 뷰어' : previewType === 'pdf' ? 'PDF 뷰어' : ''}
                 </span>
                 <h2 className="text-sm md:text-base font-bold text-gray-800 truncate">{title}</h2>
               </div>
@@ -88,20 +85,12 @@ const DocumentPreviewModal = ({ sysname, mimeType, title, token, onClose }) => {
                 )}
                 {previewType === 'docx' ? (
                     <div ref={docxContainerRef} className="mx-auto min-w-[800px] sm:min-w-0" />
-                    ) : previewType === 'pdf' && previewUrl ? (
+                ) : previewType === 'pdf' && previewUrl ? (
                     <iframe 
                         src={previewUrl} 
                         className="w-full h-[70vh] rounded-xl border-0 bg-white shadow-inner" 
                         title={title}
                     />
-                    ) : previewType === 'image' && previewUrl ? (
-                    <div className="w-full flex justify-center items-center bg-gray-50 rounded-xl p-2">
-                        <img 
-                        src={previewUrl} 
-                        alt={title} 
-                        className="max-w-full max-h-[68vh] object-contain rounded-lg shadow-sm"
-                        />
-                    </div>
                 ) : null}
               </div>
             </div>

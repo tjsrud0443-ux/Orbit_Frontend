@@ -44,6 +44,7 @@ const RoomHistory = () => {
   });
 
   const [showCalendar, setShowCalendar] = useState(false);
+  const calendarRef = useRef(null);
   const [showRoomDropdown, setShowRoomDropdown] = useState(false);
   const [showStartTimeDropdown, setShowStartTimeDropdown] = useState(false);
   const [showEndTimeDropdown, setShowEndTimeDropdown] = useState(false);
@@ -54,6 +55,24 @@ const RoomHistory = () => {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const inputRef = useRef(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (calendarRef.current && !calendarRef.current.contains(event.target)) {
+        setShowCalendar(false);
+      }
+    };
+
+    if (showCalendar) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCalendar]);
 
   const loadRsvn = () => {
     showLoading();
@@ -317,8 +336,6 @@ const RoomHistory = () => {
 
   return (
     <div className={`h-full flex flex-col ${editingReservation || selectedReservation ? 'p-0 md:p-8' : 'p-6 md:p-8'} font-sans overflow-hidden bg-[#FFFFFF]`}>
-      
-      {/* Header Section */}
       <div className={`mb-6 flex-shrink-0 ${editingReservation || selectedReservation ? 'hidden md:block' : 'block'}`}>
         <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">회의실 신청 내역</h1>
         <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">
@@ -326,10 +343,7 @@ const RoomHistory = () => {
         </p>
       </div>
 
-      {/* Main Content Area */}
       <div className="flex-1 flex gap-6 min-h-0 overflow-hidden">
-        
-        {/* List Section */}
         <div className={`flex flex-col bg-white rounded-[2rem] border border-[#F0F4FF] shadow-sm overflow-hidden transition-all duration-500 min-h-0 ${editingReservation || selectedReservation ? 'hidden md:flex md:flex-[0.6]' : 'flex-1'}`}>
           <div className="hidden md:grid grid-cols-[1fr_1.8fr_1.2fr_1.2fr_0.8fr] px-6 py-4 border-b border-gray-50 text-[0.6875rem] font-bold text-gray-400 uppercase tracking-wider flex-shrink-0">
             <div className="pl-4">회의실명</div>
@@ -353,13 +367,12 @@ const RoomHistory = () => {
                   <div className="hidden md:block text-xs text-gray-500 truncate">{getDate(res.start_dt)}</div>
                   <div className="hidden md:block text-xs text-gray-500 truncate">{`${getTime(res.start_dt)} ~ ${getTime(res.end_dt)}`}</div>
 
-                  {/* Mobile Info Overlay (for smaller screens) */}
+                  {/* Mobile */}
                   <div className="md:hidden flex-1 min-w-0 mx-2">
                     <div className="text-[10px] text-gray-400 truncate">{res.title}</div>
                     <div className="text-[10px] text-gray-500">{getDate(res.start_dt)} | {getTime(res.start_dt)}~{getTime(res.end_dt)}</div>
                   </div>
 
-                  {/* Actions */}
                   <div className="flex-shrink-0 flex justify-center gap-2">
                     {new Date(res.start_dt) > new Date() ? (
                       <>
@@ -377,7 +390,7 @@ const RoomHistory = () => {
                         </button>
                       </>
                     ) : (
-                      "-"
+                      <div className='text-gray-500'>-</div>
                     )}
                   </div>
                 </div>
@@ -392,13 +405,11 @@ const RoomHistory = () => {
             )}
           </div>
 
-          {/* Pagination */}
           <div className="border-t border-gray-50 flex-shrink-0">
             <Pagination count={count} page={page} onChange={handlePageChange} />
           </div>
         </div>
 
-        {/* Edit Detail Section */}
         {editingReservation && (
           <div className={`flex flex-col bg-white rounded-none md:rounded-[2rem] border-0 md:border border-[#F0F4FF] shadow-sm overflow-hidden min-h-0 animate-in slide-in-from-right duration-500 flex-1 md:flex-[0.4]`}>
             <div className="p-6 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
@@ -409,7 +420,6 @@ const RoomHistory = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-6">
-              {/* Room & Meeting Info */}
               <div className="space-y-4">
                 <div>
                   <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1.5 ml-1">회의실 선택</label>
@@ -465,9 +475,8 @@ const RoomHistory = () => {
                 </div>
               </div>
 
-              {/* Date & Time */}
               <div className="space-y-4">
-                <div className="relative">
+                <div className="relative" ref={calendarRef}>
                   <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1.5 ml-1">예약일</label>
                   <div 
                     onClick={() => setShowCalendar(!showCalendar)}
@@ -589,7 +598,6 @@ const RoomHistory = () => {
                 )}
               </div>
 
-              {/* Attendees */}
               <div className="space-y-4">
                 <h3 className="text-xs font-bold text-gray-400 uppercase ml-1">참석자 설정</h3>
                 <div className="relative">
@@ -621,7 +629,6 @@ const RoomHistory = () => {
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="p-6 border-t border-gray-50 flex gap-3 flex-shrink-0 bg-white">
               <button 
                 onClick={() => { setEditingReservation(null); setTitleError(false); }}
@@ -639,7 +646,6 @@ const RoomHistory = () => {
           </div>
         )}
 
-        {/* Detail View Section */}
         {selectedReservation && (
           <div className={`flex flex-col bg-white rounded-none md:rounded-[2rem] border-0 md:border border-[#F0F4FF] shadow-sm overflow-hidden animate-in slide-in-from-right duration-500 flex-1 md:flex-[0.4] md:h-fit self-start`}>
             <div className="p-6 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
@@ -650,7 +656,6 @@ const RoomHistory = () => {
             </div>
 
             <div className="overflow-y-auto p-6 custom-scrollbar space-y-6">
-              {/* Meeting Info Section */}
               <div className="space-y-4">
                 <h3 className="text-xs font-bold text-gray-400 uppercase ml-1">회의 정보</h3>
                 <div className="bg-[#F8FAFF] rounded-2xl p-5 space-y-4">
@@ -668,7 +673,6 @@ const RoomHistory = () => {
                 </div>
               </div>
 
-              {/* Attendees Section */}
               <div className="space-y-4">
                 <h3 className="text-xs font-bold text-gray-400 uppercase ml-1">참석자 ({selectedReservation.attendees?.length || 0}명)</h3>
                 <div className="grid grid-cols-8 gap-2">

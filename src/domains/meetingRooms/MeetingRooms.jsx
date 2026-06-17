@@ -34,6 +34,7 @@ const MeetingRooms = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showFormCalendar, setShowFormCalendar] = useState(false);
+  const calendarRef = useRef(null);
   const [showStartTimeDropdown, setShowStartTimeDropdown] = useState(false);
   const [showEndTimeDropdown, setShowEndTimeDropdown] = useState(false);
   const startTimeRef = useRef(null);
@@ -41,6 +42,24 @@ const MeetingRooms = () => {
   const [showValidation, setShowValidation] = useState(false);
   const searchInputRef = useRef(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (calendarRef.current && !calendarRef.current.contains(event.target)) {
+        setShowFormCalendar(false);
+      }
+    };
+
+    if (showFormCalendar) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showFormCalendar]);
 
   const [form, setForm] = useState({
     title: '',
@@ -146,9 +165,13 @@ const MeetingRooms = () => {
 
     const defaultEnd = format(addMinutes(parse(time, 'HH:mm', new Date()), 60), 'HH:mm');
 
-    const endTime = nextEvent && defaultEnd > getTime(nextEvent.start_dt)
+    let endTime = nextEvent && defaultEnd > getTime(nextEvent.start_dt)
       ? getTime(nextEvent.start_dt)
       : defaultEnd;
+
+    if (endTime > '18:00') {
+      endTime = '18:00';
+    }
 
     setForm({
       ...form,
@@ -228,7 +251,10 @@ const MeetingRooms = () => {
     : [];
 
   const handleAddAttendee = (emp) => {
-    if (form.attendees.some(a => a.users_seq === emp.users_seq)) return;
+    if (form.attendees.some(a => a.users_seq === emp.users_seq)) {
+      alertWarning('중복 입력', '이미 추가된 참석자입니다.');
+      return;
+    }
     setForm({ ...form, attendees: [...form.attendees, emp] });
     setSearchQuery('');
     setShowSearchResults(false);
@@ -298,8 +324,14 @@ const MeetingRooms = () => {
       setShowValidation(false);
       await alertSuccess('예약 완료', '회의실 예약이 완료되었습니다.<br>캘린더에서 일정을 확인하세요.');
     } catch(error) {
-      console.error('회의실 예약 실패: ', error);
-      await alertError('예약 실패', '회의실 예약에 실패했습니다.');
+      if (error.response?.data?.message === 'CONFLICT') {
+        await alertError('예약 실패', '다른 사용자가 방금 동 시간대에 예약했습니다.<br>예약 현황을 다시 확인해주세요.');
+        const resp = await getReservations(format(currentDate, 'yyyy-MM-dd'), selectedRoomSeq);
+        setEvents(resp.data);
+      } else {
+        console.error('회의실 예약 실패: ', error);
+        await alertError('예약 실패', '회의실 예약에 실패했습니다.');
+      }
     }
   };
 
@@ -494,7 +526,7 @@ const MeetingRooms = () => {
                 <div className="space-y-4 pt-2">
                   <h3 className="text-xs font-bold text-[#3530B8] uppercase ml-1 tracking-widest">날짜 및 시간 설정</h3>
                   
-                  <div className="space-y-1.5 relative">
+                  <div className="space-y-1.5 relative" ref={calendarRef}>
                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">예약일</label>
                     <div 
                       onClick={() => setShowFormCalendar(!showFormCalendar)}
