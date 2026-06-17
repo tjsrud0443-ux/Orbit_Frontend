@@ -92,7 +92,7 @@ const AdminUsers = () => {
         setEmployees(resp.data.users || []);
         setTotalCount(resp.data.totalCount || 0);
         setStatusCounts({
-            전체: (resp.data.activeCount || 0) + (resp.data.inactiveCount || 0) + (resp.data.rejectedCount || 0),
+            전체: (resp.data.activeCount || 0) + (resp.data.inactiveCount || 0) + (resp.data.retireCount || 0),
             재직: resp.data.activeCount || 0,
             휴직: resp.data.inactiveCount || 0,
             퇴사: resp.data.retireCount || 0
@@ -264,7 +264,6 @@ const AdminUsers = () => {
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-24">아이디</th>
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-32">부서</th>
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-14">직급</th>
-                  <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-16">권한</th>
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-16">상태</th>
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-28">입사일</th>
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider pl-10 w-24">관리</th>
@@ -274,7 +273,7 @@ const AdminUsers = () => {
               <tbody className="divide-y divide-slate-100 sm:divide-slate-50/60 block sm:table-row-group">
                 {filteredEmployees.length === 0 ? (
                   <tr className="block sm:table-row">
-                    <td colSpan={9} className="block sm:table-cell text-center py-12 text-slate-400 text-sm">
+                    <td colSpan={8} className="block sm:table-cell text-center py-12 text-slate-400 text-sm">
                       결과가 없습니다.
                     </td>
                   </tr>
@@ -283,7 +282,7 @@ const AdminUsers = () => {
                     <tr 
                       key={emp.users_seq} 
                       onClick={() => { setSelectedUser(emp); setIsDetailEditing(false); }}
-                      className={`hover:bg-slate-50/40 transition-colors block sm:table-row py-4 sm:py-0 border-b border-slate-50 sm:border-none
+                      className={`hover:bg-[#F5F8FF] transition-colors block sm:table-row py-4 sm:py-0 border-b border-slate-50 sm:border-none
                          relative cursor-pointer ${selectedUser?.users_seq === emp.users_seq ? 'bg-[#F0F4FF] hover:bg-[#F0F4FF]' : ''}`}>
                       
                       <td className="py-1 sm:py-4 pl-4 text-xs font-bold text-slate-400 font-mono block sm:table-cell sm:text-slate-700 sm:align-middle ">
@@ -315,15 +314,6 @@ const AdminUsers = () => {
                       <td className="py-1 sm:py-4 pl-4 sm:pl-0 text-xs text-slate-400 sm:text-slate-500 inline-block sm:table-cell sm:align-middle">
                         <span className="inline sm:hidden text-slate-300 mr-1">직급:</span>
                         {emp.rank_name}
-                      </td>
-                      <td className="py-1 sm:py-4 pl-1 sm:pl-0 text-left sm:text-center inline-block sm:table-cell sm:align-middle">
-                        <span className={`inline-block px-2 py-0.5 rounded-md text-[0.625rem] font-bold ${
-                          emp.role === 'ADMIN'
-                            ? 'bg-purple-50 text-purple-600 border border-purple-100'
-                            : 'bg-slate-50 text-slate-500 border border-slate-100'
-                        }`}>
-                          {emp.role}
-                        </span>
                       </td>
 
                       <td className="hidden sm:table-cell py-1 sm:py-4 pl-4 sm:pl-0 text-left sm:text-center sm:align-middle">
@@ -363,7 +353,7 @@ const AdminUsers = () => {
                               퇴사
                             </button>
                           </div>
-                        ) : (
+                        ) :getStatusLabel(emp.status) !== '퇴사' ?  (
                           <button 
                             type="button"
                             onClick={(e) => {
@@ -373,7 +363,7 @@ const AdminUsers = () => {
                             className="w-max px-7 py-1 text-xs font-bold text-slate-600 bg-white border border-slate-300 rounded-full hover:bg-slate-50 shadow-sm">
                             수정
                           </button>
-                        )}
+                        ) :null}
                       </td>
                     </tr>
                   ))
@@ -560,46 +550,6 @@ const AdminUsers = () => {
                     )}
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-500 min-w-[50px] whitespace-nowrap">권한</span>
-                      {isDetailEditing ? (
-                        <div className="relative custom-dropdown w-full">
-                          <div 
-                            onClick={() => { setIsPermissionOpen(!isPermissionOpen); setIsDeptOpen(false); setIsRankOpen(false); }}
-                            className={`w-full px-3 py-1.5 bg-white border ${isPermissionOpen ? 'border-[#3530B8] ring-2 ring-[#3530B8]/5' : 'border-gray-200'} rounded-lg text-[0.6875rem] font-bold transition-all cursor-pointer flex justify-between items-center text-slate-700`}
-                          >
-                            <span>{editForm.role}</span>
-                            <svg className={`w-3 h-3 text-gray-400 transition-transform ${isPermissionOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </div>
-                          {isPermissionOpen && (
-                            <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
-                              {permissionList.map((perm, idx) => (
-                                <div 
-                                  key={idx}
-                                  onClick={() => { 
-                                    setEditForm(prev => ({ ...prev, role: perm }));
-                                    setIsPermissionOpen(false); 
-                                  }}
-                                  className="px-3 py-2 text-[0.625rem] hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-bold border-b border-gray-50 last:border-0"
-                                >
-                                  {perm}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <span className={`inline-block px-2 py-0.5 rounded-md text-[0.625rem] font-bold ${
-                          selectedUser.role === 'ADMIN' 
-                            ? 'bg-purple-50 text-purple-600 border border-purple-100' 
-                            : 'bg-slate-50 text-slate-500 border border-slate-100'
-                        }`}>
-                          {selectedUser.role}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-500 min-w-[50px] whitespace-nowrap">입사일</span>
                       <span className="text-xs font-bold text-slate-700 font-mono">{selectedUser.hire_date ? String(selectedUser.hire_date).split(' ')[0] : ''}</span>
                     </div>
@@ -629,11 +579,13 @@ const AdminUsers = () => {
                     className="flex-1 py-3 bg-white border border-slate-200 text-slate-500 text-sm font-bold rounded-xl hover:bg-slate-50 transition-all">
                     닫기
                   </button>
-                  <button 
-                    onClick={handleDetailEdit}
-                    className="flex-[2] py-3 bg-[#3530B8] text-white text-sm font-bold rounded-xl shadow-lg shadow-[#3530B8]/20 hover:bg-[#2a2696] transition-all">
-                    정보 수정
-                  </button>
+                  {getStatusLabel(selectedUser.status) !== '퇴사' && (
+                    <button 
+                      onClick={handleDetailEdit}
+                      className="flex-[2] py-3 bg-[#3530B8] text-white text-sm font-bold rounded-xl shadow-lg shadow-[#3530B8]/20 hover:bg-[#2a2696] transition-all">
+                      정보 수정
+                    </button>
+                  )}
                 </>
               )}
             </div>

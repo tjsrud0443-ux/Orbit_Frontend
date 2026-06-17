@@ -98,10 +98,12 @@ const Calendar = ({ value, onChange, onClose, isStatic = false, events = [], onM
             isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
           }
 
-          // Check for events on this day
-          const hasEvents = events.some(e => {
-            const eStart = e.start?.split(' ')[0] || e.start;
-            return eStart === currentFormatted;
+          // Check for events on this day (supporting multi-day and colored dots)
+          const dayEvents = events.filter(e => {
+            if (!e) return false;
+            const eStart = (typeof e === 'string' ? e : (e.start?.split('T')[0]?.split(' ')[0] || e.start));
+            const eEnd = (typeof e === 'string' ? e : (e.originalEnd || e.end || eStart).split('T')[0]?.split(' ')[0]);
+            return currentFormatted >= eStart && currentFormatted <= eEnd;
           });
 
           return (
@@ -115,8 +117,16 @@ const Calendar = ({ value, onChange, onClose, isStatic = false, events = [], onM
               `}
             >
               <span>{d}</span>
-              {hasEvents && (
-                <div className={`w-1 h-1 rounded-full bg-[#3530B8] mt-0.5 ${isSelected ? 'bg-white' : ''}`}></div>
+              {dayEvents.length > 0 && (
+                <div className="flex gap-0.5 mt-0.5 justify-center">
+                  {dayEvents.slice(0, 4).map((e, idx) => (
+                    <div 
+                      key={idx} 
+                      className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : ''}`}
+                      style={{ backgroundColor: isSelected ? undefined : (typeof e === 'object' && e.color ? e.color : '#3530B8') }}
+                    ></div>
+                  ))}
+                </div>
               )}
             </div>
           );

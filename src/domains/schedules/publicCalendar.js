@@ -4,6 +4,7 @@ import { fetchHolidays } from '../../api/holidayApi';
 import { getSchedules } from '../schedules/schedulesApi';
 import useLoadingStore from '../../store/useLoadingStore';
 import { alertConfirm } from '../../utils/alert';
+import useCalendarStore from '../../store/useCalendarStore';
 
 const COMPANY_CATEGORIES = ['COMPANY', 'TEAM', 'ANNIVERSARY'];
 
@@ -15,24 +16,32 @@ const COMPANY_COLORS = {
 };
 
 const usePublicCalendar = () => {
+  const calendarStore = useCalendarStore();
   const navigate = useNavigate();
   const calendarEventsRef = useRef([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [selectedSchedules, setSelectedSchedules] = useState([]);
-
+  const [isCalendarLoading, setIsCalendarLoading] = useState(true);   
   useEffect(() => {
   let cancelled = false; // ✅ 여기 추가
   const year = new Date().getFullYear();
 
   const load = async () => {
+    setIsCalendarLoading(true);
+        // 캐시 있으면 API 호출 스킵
+    if (calendarStore.events.length > 0) {
+      setCalendarEvents(calendarStore.events);
+      setIsCalendarLoading(false);
+      return;
+    }
+    // 없으면 기존대로 API 호출
     const schedResp = await getSchedules();
     if (cancelled) return;
 
     const holidaysThisYear = await fetchHolidays(year);
     if (cancelled) return;
 
-    await new Promise(r => setTimeout(r, 300));
     const holidaysNextYear = await fetchHolidays(year + 1);
     if (cancelled) return;
 
@@ -74,9 +83,16 @@ const usePublicCalendar = () => {
     const allEvents = [...companyEvents, ...holidayEvents];
     calendarEventsRef.current = allEvents;
     setCalendarEvents(allEvents);
+    calendarStore.setEvents(allEvents);
+    setIsCalendarLoading(false);
   };
 
-  load().catch(err => console.error('공용 캘린더 로드 실패:', err));
+  load().catch(err => {
+    console.error('공용 캘린더 로드 실패:', err);
+    setIsCalendarLoading(false);
+  }).finally(() => {
+    if (!cancelled) setIsCalendarLoading(false); 
+  });
 
   return () => { cancelled = true; };
 }, []);
@@ -114,6 +130,7 @@ const usePublicCalendar = () => {
     setSelectedDate,
     selectedSchedules,
     handleDateClick,
+    isCalendarLoading,
   };
 };
 
