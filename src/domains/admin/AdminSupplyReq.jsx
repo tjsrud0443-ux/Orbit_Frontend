@@ -32,23 +32,19 @@ const AdminSupplyReq = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedId, setSelectedId] = useState(null);
 
-useEffect(() => {
-  getSuppyReqList({ page: 1, keyword: '', status: '' }).then(res => {
-    const { totalCount, pendingCount, approvedCount, rejectedCount } = res.data;
-    setTabCounts({
-      전체: totalCount,
-      대기: pendingCount,
-      승인: approvedCount,
-      반려: rejectedCount
-    });
-  }).catch(err => console.error(err));
-}, []);
-
   useEffect(() => {
     getSuppyReqList({ page, keyword, status: activeTab === '전체' ? '' 
       : activeTab === '대기' ? 'PENDING' 
-      : activeTab === '승인' ? 'APPROVED' : 'REJECTED' }).then(res => {
-      const { list, totalPages: newTotalPages } = res.data;
+      : activeTab === '승인' ? 'APPROVED' : 'REJECTED' }).then(resp => {
+      const { list, totalPages: newTotalPages, totalCount, pendingCount, approvedCount, rejectedCount } = resp.data;
+
+      setTabCounts({
+        전체: totalCount,
+        대기: pendingCount,
+        승인: approvedCount,
+        반려: rejectedCount
+      });
+
       const mapped = list.map(item => ({      
         id: item.req_seq,
         users_id: item.users_id,
