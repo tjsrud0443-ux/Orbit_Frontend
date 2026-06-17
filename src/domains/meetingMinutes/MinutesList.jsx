@@ -391,11 +391,12 @@ const MinutesList = () => {
     ? allEmployees.filter(emp => {
       const hostId = newMinutes.hostObj?.id || editMinutes?.hostObj?.id;
       if (emp.id === hostId) return false;
-        const name = emp?.name || '';
-        const deptName = emp?.deptName || emp?.dept_name || '';
-        const rankName = emp?.rankName || emp?.rank_name || '';
-        const query = searchQuery.toLowerCase();
-        return name.toLowerCase().includes(query) || deptName.toLowerCase().includes(query) || rankName.toLowerCase().includes(query);
+      if (emp.id === user?.id) return false; 
+      const name = emp?.name || '';
+      const deptName = emp?.deptName || emp?.dept_name || '';
+      const rankName = emp?.rankName || emp?.rank_name || '';
+      const query = searchQuery.toLowerCase();
+      return name.toLowerCase().includes(query) || deptName.toLowerCase().includes(query) || rankName.toLowerCase().includes(query);
       })
     : [];
 
