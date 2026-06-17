@@ -85,6 +85,8 @@ const AdminQna = () => {
       setQnaList(resp.data);
       const updated = resp.data.find(q => q.question_seq === selectedQna.question_seq);
       setSelectedQna(updated);
+      const updateCount = await adminAiQuestionsData(user.dept_seq, user.auth_group);
+      setCount(updateCount.data);
     }
   };
 
@@ -153,7 +155,9 @@ const AdminQna = () => {
         const updated = resp.data.find(q => q.question_seq === selectedQna.question_seq);
         setSelectedQna(updated);
       });
-
+      adminAiQuestionsData(user.dept_seq, user.auth_group).then(resp => {
+        setCount(resp.data);
+      });
     }).catch(err => {
       console.error(err);
       alertError('처리 실패', '답변 처리에 실패했습니다.');
