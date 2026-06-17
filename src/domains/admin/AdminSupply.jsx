@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { deleteAdminSupplies, getAdminSupplies, insertAdminSupplies, updateAdminSupplies} from '../admin/adminApi';
 import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
+import useLoadingStore from '../../store/useLoadingStore';
 
 const CATEGORIES = ['전체', '사무용품', '전자기기', '가구', '네트워크 장비'];
 
@@ -258,6 +259,8 @@ const SupplyModal = ({ mode, supply, onClose, onSave }) => {
 
 // ── 메인 컴포넌트 ─────────────────────────────────────────────
 const AdminSupply = () => {
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
   const [supplies, setSupplies] = useState([]);
 
   // 검색 / 필터
@@ -340,10 +343,17 @@ const AdminSupply = () => {
     const result = await alertConfirm('정말 삭제하시겠습니까?', '삭제 후 복구는 불가합니다.');
     if (!result.isConfirmed) return;
     
-    await deleteAdminSupplies([id]); // ← [id] 배열로 감싸서 전송
-    await alertSuccess('삭제 완료', '비품 삭제가 완료되었습니다.');
-    setSupplies(prev => prev.filter(i => i.id !== id));
-    setCheckedIds(prev => prev.filter(i => i !== id));
+    showLoading();
+    try {
+      await deleteAdminSupplies([id]); // ← [id] 배열로 감싸서 전송
+      hideLoading();
+      await alertSuccess('삭제 완료', '비품 삭제가 완료되었습니다.');
+      setSupplies(prev => prev.filter(i => i.id !== id));
+      setCheckedIds(prev => prev.filter(i => i !== id));
+    } catch (error) {
+      hideLoading();
+      await alertError('오류 발생', '비품 삭제 중 오류가 발생했습니다.');
+    }
   };
   //다중 삭제
   const handleBulkDelete = async () => {
@@ -352,10 +362,17 @@ const AdminSupply = () => {
     const result = await alertConfirm(`${checkedIds.length}개 항목을 삭제하시겠습니까?`, '삭제 후 복구는 불가합니다.');
     if (!result.isConfirmed) return;
 
-    await deleteAdminSupplies(checkedIds); // ← API 호출 추가
-    await alertSuccess('삭제 완료', '비품 삭제가 완료되었습니다.');
-    setSupplies(prev => prev.filter(i => !checkedIds.includes(i.id)));
-    setCheckedIds([]);
+    showLoading();
+    try {
+      await deleteAdminSupplies(checkedIds); // ← API 호출 추가
+      hideLoading();
+      await alertSuccess('삭제 완료', '비품 삭제가 완료되었습니다.');
+      setSupplies(prev => prev.filter(i => !checkedIds.includes(i.id)));
+      setCheckedIds([]);
+    } catch (error) {
+      hideLoading();
+      await alertError('오류 발생', '비품 삭제 중 오류가 발생했습니다.');
+    }
   };
 
   // ── 저장 (추가/수정)
@@ -367,6 +384,7 @@ const handleSave = async (form) => {
       await alertWarning('중복 입력', '이미 존재하는 비품코드입니다.');
       return; 
     }
+    showLoading();
     try {
       await insertAdminSupplies({
         supply_name: form.name,
@@ -376,8 +394,6 @@ const handleSave = async (form) => {
         stock_qty: form.stockQty,
         min_stock_qty: form.minStockQty,
       });
-      await alertSuccess('등록 완료', '비품 등록이 완료되었습니다.');
-      setModal(null); 
       const resp = await getAdminSupplies();
       setSupplies(resp.data.map(item => ({
         id: item.supply_seq,
@@ -386,12 +402,17 @@ const handleSave = async (form) => {
         code: item.supply_code,
         totalQty: item.total_qty,
         stockQty: item.stock_qty,
-        minStockQty: item.min_stock_qty,
+        min_stock_qty: item.min_stock_qty,
       })));
+      hideLoading();
+      await alertSuccess('등록 완료', '비품 등록이 완료되었습니다.');
+      setModal(null); 
     } catch (error) {
+      hideLoading();
       await alertError('오류 발생', error.response?.data || '비품 등록 중 오류가 발생했습니다.');
     }
   } else {
+    showLoading();
     try {
       await updateAdminSupplies({
         supply_seq: form.id,
@@ -400,8 +421,6 @@ const handleSave = async (form) => {
         total_qty: form.totalQty,
         min_stock_qty: form.minStockQty,
       });
-      await alertSuccess('수정 완료', '비품 정보가 수정되었습니다.');
-      setModal(null);
       const resp = await getAdminSupplies();
       setSupplies(resp.data.map(item => ({
         id: item.supply_seq,
@@ -410,9 +429,13 @@ const handleSave = async (form) => {
         code: item.supply_code,
         totalQty: item.total_qty,
         stockQty: item.stock_qty,
-        minStockQty: item.min_stock_qty,
+        min_stock_qty: item.min_stock_qty,
       })));
+      hideLoading();
+      await alertSuccess('수정 완료', '비품 정보가 수정되었습니다.');
+      setModal(null);
     } catch (error) {
+      hideLoading();
       console.log(error);  // ← 추가
       await alertError('오류 발생', error.response?.data || '비품 수정 중 오류가 발생했습니다.');
     }

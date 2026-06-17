@@ -423,18 +423,22 @@ const Calendar = () => {
       : [...prev, eventData];
 
     if (isEditing) {
+      showLoading();
       updateSchedule(form.schedule_seq, payload)
         .then(() => {
           if (isPersonalCategory) setPersonalEvents(updater);
           else setCompanyEvents(updater);
           setModal({ open: false, date: '' });
+          hideLoading();
           alertSuccess('일정 수정 완료', '일정이 성공적으로 수정되었습니다.');
         })
         .catch(err => {
           console.error('일정 수정 실패:', err);
+          hideLoading();
           alertError('일정 수정 실패', '일정 수정 중 오류가 발생했습니다.');
         });
     } else {
+      showLoading();
       createSchedule(payload)
         .then((resp) => {
           const realSeq = resp.data.schedule_seq.toString(); // 서버에서 받은 진짜 seq
@@ -442,10 +446,12 @@ const Calendar = () => {
           if (isPersonalCategory) setPersonalEvents(prev => [...prev, realEventData]);
           else setCompanyEvents(prev => [...prev, realEventData]);
           setModal({ open: false, date: '' });
+          hideLoading();
           alertSuccess('일정 추가 완료', '새 일정이 성공적으로 추가되었습니다.');
         })
         .catch(err => {
           console.error('일정 추가 실패:', err);
+          hideLoading();
           alertError('일정 추가 실패', '일정 추가 중 오류가 발생했습니다.');
         });
     }
@@ -466,15 +472,18 @@ const Calendar = () => {
       alertSuccess('일정 삭제 완료', '일정이 성공적으로 삭제되었습니다.');
       return;
     }
+    showLoading();
     deleteSchedule(id)
       .then(() => {
         setPersonalEvents(prev => prev.filter(e => e.id !== id));
         setCompanyEvents(prev => prev.filter(e => e.id !== id));
         setModal({ open: false, date: '' });
+        hideLoading();
         alertSuccess('일정 삭제 완료', '일정이 성공적으로 삭제되었습니다.');
       })
       .catch(err => {
         console.error('일정 삭제 실패:', err);
+        hideLoading();
         alertError('일정 삭제 실패', '일정 삭제 중 오류가 발생했습니다.');
       });
   };
@@ -730,7 +739,6 @@ const Calendar = () => {
                 expandRows={false} 
                 //fixedWeekCount={true}
                 fixedWeekCount={false}
-                editable={activeTab === 'personal'}
                 selectable={activeTab === 'personal'}
                 events={filteredEvents}
                 dateClick={handleDateClick}
@@ -904,13 +912,13 @@ const Calendar = () => {
             <textarea
               value={form.sked_reason}
               onChange={e => {
-                if (e.target.value.length <= 1000) setForm(f => ({ ...f, sked_reason: e.target.value }));
+                if (e.target.value.length <= 100) setForm(f => ({ ...f, sked_reason: e.target.value }));
               }}
               placeholder="일정 설명을 입력하세요"
               className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs h-20 resize-none focus:outline-none focus:ring-1 focus:ring-[#3530B8] custom-scrollbar pr-3"
             />
-            <p className={`text-right text-[0.625rem] mt-0.5 ${form.sked_reason.length >= 900 ? 'text-red-400' : 'text-slate-400'}`}>
-              {form.sked_reason.length}/1000
+            <p className={`text-right text-[0.625rem] mt-0.5 ${form.sked_reason.length >= 90 ? 'text-red-400' : 'text-slate-400'}`}>
+              {form.sked_reason.length}/100
             </p>
           </div>
           <div className="flex gap-2 justify-end">
