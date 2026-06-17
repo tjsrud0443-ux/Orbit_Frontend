@@ -21,7 +21,7 @@ import { alertWarning, alertSuccess } from '../../utils/alert';
 const AiChat = () => {
   // --- 1. States ---
   const [messages, setMessages] = useState([
-    { id: Date.now(), role: 'AI', content: '안녕하세요! Orbit AI 비서입니다.\n회사 문서와 회의록을 기반으로 필요한 정보를 찾아 답변해 드립니다. 궁금하신 내용을 질문해 주세요!', isTyping: false }
+    { id: Date.now(), role: 'AI', content: '안녕하세요! Orbit AI 비서입니다.\n사내 문서와 회의록을 기반으로 필요한 정보를 찾아 답변해 드립니다. 궁금하신 내용을 질문해 주세요!', isTyping: false }
   ]);
 
   const [input, setInput] = useState("");
@@ -91,7 +91,7 @@ const AiChat = () => {
           {
             id: Date.now(),
             role: 'AI',
-            content: '안녕하세요! Orbit AI 비서입니다.\n회사 문서와 회의록을 기반으로 필요한 정보를 찾아 답변해 드립니다. 궁금하신 내용을 질문해 주세요!',
+            content: '안녕하세요! Orbit AI 비서입니다.\n사내 문서와 회의록을 기반으로 필요한 정보를 찾아 답변해 드립니다. 궁금하신 내용을 질문해 주세요!',
             isTyping: false
           }
         ]);
@@ -106,7 +106,7 @@ const AiChat = () => {
       {
         id: Date.now(),
         role: 'AI',
-        content: '안녕하세요! Orbit AI 비서입니다.\n회사 문서와 회의록을 기반으로 필요한 정보를 찾아 답변해 드립니다. 궁금하신 내용을 질문해 주세요!',
+        content: '안녕하세요! Orbit AI 비서입니다.\n사내 문서와 회의록을 기반으로 필요한 정보를 찾아 답변해 드립니다. 궁금하신 내용을 질문해 주세요!',
         isTyping: false
       }
     ]);
@@ -288,7 +288,9 @@ const AiChat = () => {
             onClick={() => detailChat(chat.chat_seq)}
             className="relative group flex items-center justify-between p-3 rounded-lg hover:bg-white transition-all cursor-pointer"
           >
-            <span className="text-sm font-medium text-[#1a1c3d] truncate flex-1 min-w-0 mr-2">{chat.title}</span>
+            <span className="text-sm font-medium text-[#1a1c3d] truncate flex-1 min-w-0 mr-2">
+              {chat.title.length > 15 ? `${chat.title.substring(0, 15)}...` : chat.title}
+            </span>
             <button
               onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === chat.chat_seq ? null : chat.chat_seq); }}
               className="md:opacity-0 md:group-hover:opacity-100 text-[#8a92a6] flex-shrink-0"
@@ -464,10 +466,10 @@ const AiChat = () => {
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60]">
-          <div className="bg-white p-8 rounded-2xl w-[400px] shadow-2xl">
+          <div className="bg-white p-8 rounded-2xl w-[300px] md:w-[400px] shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-bold text-lg">담당 부서(관리자) 문의</h3>
-              <button onClick={() => { setIsModalOpen(false); setIsDropdownOpen(false); setSelectedDept(null); setInquiryError(""); }}><FontAwesomeIcon icon={faTimes} /></button>
+              <button onClick={() => { setIsModalOpen(false); setIsDropdownOpen(false); setSelectedDept(null); setInquiryError(""); setInputQuestion("");}}><FontAwesomeIcon icon={faTimes} /></button>
             </div>
 
             {/* Custom Dropdown */}
@@ -514,12 +516,12 @@ const AiChat = () => {
                   setInquiryError("");
                 }
               }}
-              className={`w-full p-3 border rounded-lg mb-2 text-sm h-32 outline-none custom-scrollbar transition-all ${inquiryError ? 'border-red-500' : 'border-[#edf2f9]'}`}
+              className={`resize-none w-full p-3 border rounded-lg mb-2 text-sm h-32 outline-none custom-scrollbar transition-all ${inquiryError ? 'border-red-500' : 'border-[#edf2f9]'}`}
               placeholder="AI가 답변하지 못한 상세 문의 내용을 작성해주시면 담당자가 검토 후 그룹웨어로 답변을 드립니다."
             ></textarea>
             {inquiryError && <p className="text-[11px] text-red-500 mb-4 ml-1">{inquiryError}</p>}
             <div className="flex gap-2">
-              <button onClick={() => { setIsModalOpen(false); setIsDropdownOpen(false); setSelectedDept(null); setInquiryError(""); }} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-slate-100">취소</button>
+              <button onClick={() => { setIsModalOpen(false); setIsDropdownOpen(false); setSelectedDept(null); setInquiryError(""); setInputQuestion("");}} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-slate-100">취소</button>
               <button onClick={handleInsertQuestion} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-[#3530B8] text-white">제출</button>
             </div>
           </div>

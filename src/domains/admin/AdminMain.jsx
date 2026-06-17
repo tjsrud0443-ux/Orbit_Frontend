@@ -67,10 +67,17 @@ const KpiCard = ({ title, value, icon, iconColor, bgColor }) => (
   </div>
 );
 
-const ChartCard = ({ title, children, extra }) => (
+const ChartCard = ({ title, subtitle, children, extra }) => (
   <div className="bg-white p-8 rounded-2xl border border-[#edf2f9] shadow-sm flex flex-col h-full">
     <div className="flex items-center justify-between mb-8">
-      <h3 className="text-lg font-bold text-[#1a1c3d]">{title}</h3>
+      <div className="flex items-center gap-2">
+        <h3 className="text-lg font-bold text-[#1a1c3d]">{title}</h3>
+        {subtitle && (
+          <span className="text-xs text-gray-400 mt-1">
+            {subtitle}
+          </span>
+        )}
+      </div>
       {extra}
     </div>
     <div className="flex-1 relative min-h-[250px]">
@@ -228,7 +235,7 @@ const AdminMain = () => {
     { id: 1, title: '전체 직원 수', value: `${dashboard.allEmployeeCount}명`, icon: faUsers, iconColor: 'text-[#3530B8]', bgColor: 'bg-[#F0F4FF]' },
     { id: 2, title: '신규 입사자 (이번 달)', value: `${dashboard.joinEmployeeCount}명`, icon: faUserPlus, iconColor: 'text-emerald-500', bgColor: 'bg-[#F0F4FF]' },
     { id: 3, title: '퇴사자 (이번 달)', value: `${dashboard.resignEmployeeCount}명`, icon: faUserMinus, iconColor: 'text-[#FF4D4F]', bgColor: 'bg-[#F0F4FF]' },
-    { id: 4, title: 'AI 미답변 질문', value: `${dashboard.aiQuestionsCount}건`, icon: faCommentDots, iconColor: 'text-amber-500', bgColor: 'bg-[#F0F4FF]' },
+    { id: 4, title: 'AI 미답변 질문 (대기)', value: `${dashboard.aiQuestionsCount}건`, icon: faCommentDots, iconColor: 'text-amber-500', bgColor: 'bg-[#F0F4FF]' },
     { id: 5, title: '비품 신청 (승인 대기)', value: `${dashboard.supplyRequestCount}건`, icon: faBoxOpen, iconColor: 'text-[#7c3aed]', bgColor: 'bg-[#F0F4FF]' },
   ];
 
@@ -262,7 +269,14 @@ const AdminMain = () => {
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                  y: { beginAtZero: true, grid: { color: '#f5f6fa' }, border: { display: false } },
+                  y: {
+                    beginAtZero: true,
+                    grid: { color: '#f5f6fa' },
+                    border: { display: false },
+                    ticks: {
+                      stepSize: 1
+                    }
+                  },
                   x: {
                     grid: { display: false },
                     border: { display: false },
@@ -276,7 +290,8 @@ const AdminMain = () => {
               }}
             />
           </ChartCard>
-          <ChartCard title="부서별 연차 사용 현황">
+
+          <ChartCard title="부서별 연차 사용 현황" subtitle="올해 기준">
             <div className="flex flex-col sm:flex-row items-center justify-between h-full gap-16 lg:gap-20 pl-4 sm:pl-8 md:pl-12">
               <div className="w-full max-w-[200px] h-[200px]">
                 <Doughnut
@@ -310,7 +325,7 @@ const AdminMain = () => {
 
         {/* 4. 하단 상세 현황 영역 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <ChartCard title="입/퇴사자 현황">
+          <ChartCard title="입/퇴사자 현황" subtitle="최근 6개월 기준">
             <Line
               data={joinResign}
               options={{
@@ -338,8 +353,9 @@ const AdminMain = () => {
               }}
             />
           </ChartCard>
+
           <ChartCard
-            title="AI 미답변 질문 (최근)"
+            title="AI 미답변 질문" subtitle="최근 기준"
             extra={
               <button
                 onClick={() => navigate('/adminQna')}

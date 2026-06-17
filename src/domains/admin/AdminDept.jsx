@@ -15,6 +15,7 @@ import {
 import { getGroup } from '../departments/departmentsApi';
 import { addDept, delDept, updateDept } from './adminApi';
 import { alertSuccess, alertConfirm, alertWarning } from '../../utils/alert';
+import useLoadingStore from '../../store/useLoadingStore';
 
 const AdminDept = () => {
   // --- 1. Data States ---
@@ -23,8 +24,9 @@ const AdminDept = () => {
     nodeMap: {}
   });
   const [employees, setEmployees] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); // 드롭다운 상태 추가
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
 
   // --- 2. UI States ---
   const sidePanelRef = useRef(null);
@@ -42,6 +44,7 @@ const AdminDept = () => {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
+    showLoading();
     getGroup()
       .then(resp => {
         setFullTree({
@@ -52,11 +55,11 @@ const AdminDept = () => {
         if (resp.data.root) {
           setExpandedNodes(new Set([resp.data.root.deptSeq]));
         }
-        setLoading(false);
+        hideLoading();
       })
       .catch(err => {
         console.error("조직도 로딩 실패", err);
-        setLoading(false);
+        hideLoading();
       });
   }, []);
 
@@ -150,6 +153,13 @@ const AdminDept = () => {
       newErrors.dept_code = "부서 코드를 입력해주세요.";
     } else if (!/^[A-Z]+$/.test(formData.dept_code)) {
       newErrors.dept_code = "영문(대문자)만 입력 가능합니다.";
+    } else {
+      const isDuplicateCode = Object.values(fullTree.nodeMap).some(node => 
+        node.deptCode === formData.dept_code && node.deptSeq !== formData.dept_seq
+      );
+      if (isDuplicateCode) {
+        newErrors.dept_code = "이미 존재하는 부서코드입니다. 다시 작성해 주세요";
+      }
     }
 
     if (formMode === 'CREATE_SUB' && !formData.parent_dept_seq) {
@@ -170,13 +180,16 @@ const AdminDept = () => {
       payload.dept_type = "SUB";
     }
 
-
     if (formMode === 'EDIT') {
       const result = await alertConfirm('수정 확인', '정말 수정하시겠습니까?');
-      if (!result.isConfirmed) return;
+      if (!result.isConfirmed) {
+        return;
+      }
 
+      showLoading();
       await updateDept(formData);
       const resp = await getGroup();
+      hideLoading();
       setFullTree({
         root: resp.data.root,
         nodeMap: resp.data.nodeMap
@@ -185,11 +198,12 @@ const AdminDept = () => {
       if (resp.data.root) {
         setExpandedNodes(new Set([resp.data.root.deptSeq]));
       }
-      setLoading(false);
 
     } else {
+      showLoading();
       await addDept(payload);
       const resp = await getGroup();
+      hideLoading();
       setFullTree({
         root: resp.data.root,
         nodeMap: resp.data.nodeMap
@@ -198,7 +212,6 @@ const AdminDept = () => {
       if (resp.data.root) {
         setExpandedNodes(new Set([resp.data.root.deptSeq]));
       }
-      setLoading(false);
     }
 
     await alertSuccess(
@@ -226,7 +239,9 @@ const AdminDept = () => {
     );
 
     if (result.isConfirmed) {
+      showLoading();
       await delDept(node.deptSeq);
+      hideLoading();
       await alertSuccess('삭제 완료', '삭제가 완료되었습니다.');
       
       const resp = await getGroup();
@@ -238,7 +253,6 @@ const AdminDept = () => {
       if (resp.data.root) {
         setExpandedNodes(new Set([resp.data.root.deptSeq]));
       }
-      setLoading(false);
     }
   };
 
@@ -251,7 +265,7 @@ const AdminDept = () => {
 
     return (
       <React.Fragment key={node.deptSeq}>
-        <tr className="hover:bg-slate-50 transition-colors border-b border-slate-100 group">
+        <tr className="transition-colors border-b border-slate-100 group">
           <td className="py-4 pl-6 pr-4">
             <div className="flex items-center" style={{ paddingLeft: `${level * 24}px` }}>
               <div
@@ -374,7 +388,7 @@ const AdminDept = () => {
               <input
                 type="text"
                 placeholder="예: 개발본부, 인사팀"
-                maxLength={20}
+                maxLength={10}
                 className={`w-full h-10 px-3 bg-slate-50 border ${errors.dept_name ? 'border-red-500' : 'border-slate-200'} rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#3530B8]/20 focus:border-[#3530B8] transition-all`}
                 value={formData.dept_name}
                 onChange={(e) => {
@@ -385,7 +399,7 @@ const AdminDept = () => {
               {errors.dept_name && <p className="text-[9px] text-red-500 font-medium ml-1">{errors.dept_name}</p>}
               <div className="flex items-center justify-between gap-1.5 text-[9px] text-slate-400 font-medium ml-1">
                 <div className="flex items-center gap-1.5"><FontAwesomeIcon icon={faInfoCircle} className="text-[#3530B8]/50" /> <span>한글만 입력 가능</span></div>
-                <span>{formData.dept_name.length}/20</span>
+                <span>{formData.dept_name.length}/10</span>
               </div>
             </div>
             <div className="space-y-1.5">

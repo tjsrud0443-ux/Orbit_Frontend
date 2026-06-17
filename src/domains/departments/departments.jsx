@@ -14,6 +14,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { getGroup } from './departmentsApi';
 import useAuthStore from '../../store/authStore';
+import useLoadingStore from '../../store/useLoadingStore';
 
 // // Position Rank for Sorting (Lower number = Higher rank)
 
@@ -248,10 +249,10 @@ const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptNa
           <tbody className="divide-y divide-gray-50">
             {filteredEmployees.length > 0 ? (
               filteredEmployees.map((emp) => (
-                <tr key={emp.id} className="hover:bg-blue-50/30 transition-colors group">
+                <tr key={emp.id} className="transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#DDE8FF] text-[#3530B8] flex items-center justify-center text-xs font-bold group-hover:bg-[#3530B8] group-hover:text-white transition-all overflow-hidden">
+                      <div className="w-8 h-8 rounded-full bg-[#DDE8FF] text-[#3530B8] flex items-center justify-center text-xs font-bold transition-all overflow-hidden">
                         <img
                           src={`http://localhost/file/profile/view?sysname=${emp.sysname}&token=${token}`}
                           alt={emp.name}
@@ -301,6 +302,8 @@ const Departments = () => {
   const [isHeaderSearchOpen, setIsHeaderSearchOpen] = useState(false);
   const token = useAuthStore(state => state.token);
   const sidebarRef = useRef(null);
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -333,6 +336,7 @@ const Departments = () => {
   }
 
   useEffect(() => {
+    showLoading();
     getGroup().then(resp => {
       setFullTree({
         root: resp.data.root,
@@ -342,6 +346,7 @@ const Departments = () => {
       setEmployees(
         resp.data.users
       )
+      hideLoading();
     })
       .catch(error => {
         console.log("조직도 로딩 실패", error)
@@ -368,11 +373,11 @@ const Departments = () => {
     const matchedEmployees = employees.filter(emp =>
       emp.name.toLowerCase().includes(lower) ||
       emp.position.toLowerCase().includes(lower)
-    ).slice(0, 5);
+    );
 
     const matchedDepts = Object.values(fullTree.nodeMap).filter(dept =>
       dept.deptName.toLowerCase().includes(lower)
-    ).slice(0, 5);
+    );
 
     return { employees: matchedEmployees, depts: matchedDepts };
   }, [headerSearch, employees, fullTree.nodeMap]);
@@ -424,7 +429,7 @@ const Departments = () => {
                 setSearchTerm('');
               }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all mb-4 ${selectedDept === 'ALL' ? 'bg-[#3530B8] text-white font-bold shadow-md' : 'text-gray-600 hover:bg-gray-50'}`}
-            >
+              >
               <FontAwesomeIcon icon={faLayerGroup} />
               전체 조직도
             </button>

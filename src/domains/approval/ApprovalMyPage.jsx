@@ -9,6 +9,7 @@ import {
 import Pagination from '../../components/common/Pagination';
 import { getMyDoc, getPageMyDoc } from './approvalApi';
 import useAuthStore from '../../store/authStore';
+import useLoadingStore from '../../store/useLoadingStore';
 
 // 결재선
 const ApprovalLineStack = ({ line }) => {
@@ -109,7 +110,7 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
       <div className="pl-4 md:pl-6 pr-4 py-3 border-b border-slate-100 bg-white">
         <h3 className="text-base md:text-lg font-bold text-slate-800">{title}</h3>
       </div>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto custom-scrollbar">
         <table className="w-full min-w-[1100px] md:min-w-full text-left border-collapse md:table-fixed">
           <thead>
             <tr className="bg-white text-gray-400 text-[0.8125rem] font-bold uppercase tracking-wider border-b border-slate-100">
@@ -124,7 +125,7 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
           </thead>
           <tbody className="divide-y divide-slate-100">
             {displayData.map((doc) => (
-              <tr key={doc.doc_seq} className="hover:bg-slate-50/50 transition-colors">
+              <tr key={doc.doc_seq} className="transition-colors">
                 <td className="pl-4 md:pl-6 pr-3 py-4 text-sm font-bold text-gray-700 truncate whitespace-nowrap">{doc.title}</td>
                 <td className="px-3 py-4 text-xs font-medium text-gray-500 truncate whitespace-nowrap">{docTypeText[doc.doc_type] || doc.doc_type}</td>
                 <td className="px-3 py-4 truncate whitespace-nowrap">
@@ -199,9 +200,14 @@ const ApprovalMyPage = () => {
   const [rejectedPage, setRejectedPage] = useState(1);
   const [rejectedCount, setRejectedCount] = useState(0);
 
+  const showLoading = useLoadingStore(state => state.showLoading);
+  const hideLoading = useLoadingStore(state => state.hideLoading);
+
   useEffect(() => {
+    showLoading();
     getMyDoc().then(resp => {
       setDocuments(resp.data);
+      hideLoading();
     })
   }, [])
 
@@ -339,7 +345,7 @@ const ApprovalMyPage = () => {
         </div>
       </div>
       <style dangerouslySetInnerHTML={{ __html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
