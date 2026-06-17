@@ -45,6 +45,8 @@ const RoomHistory = () => {
 
   const [showCalendar, setShowCalendar] = useState(false);
   const calendarRef = useRef(null);
+  const calendarTriggerRef = useRef(null);
+  const [calendarPos, setCalendarPos] = useState({ top: 0, left: 0, width: 0 });
   const [showRoomDropdown, setShowRoomDropdown] = useState(false);
   const [showStartTimeDropdown, setShowStartTimeDropdown] = useState(false);
   const [showEndTimeDropdown, setShowEndTimeDropdown] = useState(false);
@@ -286,6 +288,8 @@ const RoomHistory = () => {
 
   const handleAddAttendee = (emp) => {
     if (editForm.attendees.some(a => a.users_seq === emp.users_seq)) {
+      setShowSearchResults(false);
+      setSearchQuery('');
       alertWarning('중복 입력', '이미 추가된 참석자입니다.');
       return;
     }
@@ -479,25 +483,39 @@ const RoomHistory = () => {
                 <div className="relative" ref={calendarRef}>
                   <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1.5 ml-1">예약일</label>
                   <div 
-                    onClick={() => setShowCalendar(!showCalendar)}
+                    ref={calendarTriggerRef}
+                    onClick={() => {
+                      if (!showCalendar && calendarTriggerRef.current) {
+                        const rect = calendarTriggerRef.current.getBoundingClientRect();
+                        setCalendarPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+                      }
+                      setShowCalendar(!showCalendar);
+                    }}
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-medium cursor-pointer flex justify-between items-center"
                   >
                     <span className={!editForm.date ? 'text-gray-400' : 'text-gray-800'}>{editForm.date || '날짜를 선택하세요'}</span>
                     <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                   </div>
-                  {showCalendar && (
-                    <Calendar 
-                      value={editForm.date} 
-                      onChange={(date) => {
-                        if (isBefore(parse(date, 'yyyy-MM-dd', new Date()), startOfDay(new Date()))) {
-                          alertWarning('예약 불가', '오늘 이전 날짜는 선택할 수 없습니다.');
-                          return;
-                        }
-                        setEditForm({ ...editForm, date });
-                        setShowCalendar(false);
-                      }} 
-                      onClose={() => setShowCalendar(false)} 
-                    />
+                  {showCalendar && createPortal(
+                    <div
+                      ref={calendarRef}
+                      className="fixed z-[9999]"
+                      style={{ top: `${calendarPos.top}px`, left: `${calendarPos.left}px`, width:`${calendarPos.width}px`}}
+                    >
+                      <Calendar 
+                        value={editForm.date} 
+                        onChange={(date) => {
+                          if (isBefore(parse(date, 'yyyy-MM-dd', new Date()), startOfDay(new Date()))) {
+                            alertWarning('예약 불가', '오늘 이전 날짜는 선택할 수 없습니다.');
+                            return;
+                          }
+                          setEditForm({ ...editForm, date });
+                          setShowCalendar(false);
+                        }} 
+                        onClose={() => setShowCalendar(false)} 
+                      />
+                    </div>,
+                    document.body
                   )}
                 </div>
 
