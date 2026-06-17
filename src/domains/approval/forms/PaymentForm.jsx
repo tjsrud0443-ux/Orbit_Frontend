@@ -271,12 +271,20 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
             </div>
             {isEditMode ? (
               <div>
-                <textarea 
+                  <textarea 
                   value={data.pay_reason || ''}
-                  onChange={(e) => handleFieldChange('pay_reason', e.target.value)}
+                  onChange={(e) => {
+                    handleFieldChange('pay_reason', e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
+                  onInput={(e) => {
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
                   placeholder="지출 목적을 입력하세요 (300자 이하)"
                   maxLength={300}
-                  className={`w-full p-2 text-xs bg-white border ${errors.pay_reason ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all custom-scrollbar min-h-[80px]`}
+                  className={`w-full p-2 text-xs bg-white border ${errors.pay_reason ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all min-h-[80px] overflow-hidden`}
                 ></textarea>
                 {errors.pay_reason && <p className="mt-1 text-[10px] text-red-500">{errors.pay_reason}</p>}
               </div>
@@ -597,8 +605,16 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
               <div className="space-y-1">
                 <textarea 
                   value={data.pay_reason || ''}
-                  onChange={(e) => handleFieldChange('pay_reason', e.target.value)}
-                  className={`w-full h-20 p-2.5 text-xs border ${errors.pay_reason ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none custom-scrollbar`}
+                  onChange={(e) => {
+                    handleFieldChange('pay_reason', e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
+                  onInput={(e) => {
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
+                  className={`w-full p-2.5 text-xs border ${errors.pay_reason ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none overflow-hidden min-h-[80px]`}
                 ></textarea>
                 {errors.pay_reason && <p className="text-[10px] text-red-500">{errors.pay_reason}</p>}
               </div>
@@ -615,8 +631,16 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
               <div className="space-y-1">
                 <textarea 
                   value={data.account_info || ''}
-                  onChange={(e) => handleFieldChange('account_info', e.target.value)}
-                  className={`w-full h-20 p-2.5 text-xs border ${errors.account_info ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none custom-scrollbar`}
+                  onChange={(e) => {
+                    handleFieldChange('account_info', e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
+                  onInput={(e) => {
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
+                  className={`w-full p-2.5 text-xs border ${errors.account_info ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none overflow-hidden min-h-[80px]`}
                 ></textarea>
                 {errors.account_info && <p className="text-[10px] text-red-500">{errors.account_info}</p>}
               </div>
