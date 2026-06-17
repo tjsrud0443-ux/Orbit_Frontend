@@ -101,7 +101,7 @@ const SupplyHistory = () => {
         
         {/* List Section */}
         <div className={`flex flex-col bg-white rounded-[2rem] border border-[#F0F4FF] shadow-sm overflow-hidden transition-all duration-500 min-h-0 ${selectedRequest ? 'hidden md:flex md:flex-[0.6]' : 'flex-1'}`}>
-          <div className="hidden md:grid grid-cols-[1.5fr_1fr_1fr_0.8fr] px-6 py-4 border-b border-gray-50 text-[0.6875rem] font-bold text-gray-400 uppercase tracking-wider flex-shrink-0">
+          <div className="hidden md:grid grid-cols-[1.5fr_1fr_1fr_0.8fr] px-6 py-4 pr-[calc(1.5rem+0.25rem)] border-b border-gray-50 text-[0.6875rem] font-bold text-gray-400 uppercase tracking-wider flex-shrink-0">
             <div className="pl-4">비품명</div>
             <div>신청일</div>
             <div className="pl-1">승인 상태</div>
@@ -161,7 +161,7 @@ const SupplyHistory = () => {
 
         {/* Detail View Section */}
         {selectedRequest && (
-          <div className={`flex flex-col bg-white rounded-none md:rounded-[2rem] border-0 md:border border-[#F0F4FF] shadow-sm overflow-hidden animate-in slide-in-from-right duration-500 flex-1 md:flex-[0.4] md:max-h-full self-start`}>
+          <div className={`flex flex-col bg-white rounded-none md:rounded-[2rem] border-0 md:border border-[#F0F4FF] shadow-sm overflow-hidden animate-in slide-in-from-right duration-500 flex-1 md:flex-[0.4] md:max-h-full`}>
             <div className="p-6 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
               <h2 className="text-lg font-bold text-gray-900">신청 상세 내역</h2>
               <button onClick={() => setSelectedRequest(null)} className="text-gray-300 hover:text-gray-500 transition-colors">
@@ -188,19 +188,25 @@ const SupplyHistory = () => {
               {/* Items List */}
               <div className="space-y-4">
                 <h3 className="text-xs font-bold text-gray-400 uppercase ml-1 text-left">신청 비품 목록 ({selectedRequest.items?.length || 0}종)</h3>
-                <div className="border border-gray-100 rounded-2xl overflow-hidden">
-                  <div className="max-h-32 overflow-y-auto overflow-x-hidden custom-scrollbar">
-                    <table className="w-full text-xs">
+                <div className="border border-gray-100 rounded-2xl overflow-hidden flex flex-col">
+                  {/* Table Header - Separated to avoid scrollbar overlap */}
+                  <div className="bg-gray-50 border-b border-gray-100 flex-shrink-0">
+                    <table className="w-full text-xs table-fixed">
                       <thead>
-                        <tr className="bg-gray-50 text-gray-500 font-bold border-b border-gray-100">
-                          <th className="py-3 px-4 text-left">비품명</th>
-                          <th className="py-3 px-4 text-right">수량</th>
+                        <tr className="text-gray-500 font-bold">
+                          <th className="py-3 px-4 text-left w-[70%]">비품명</th>
+                          <th className="py-3 px-4 text-right pr-[calc(1rem+0.25rem)]">수량</th>
                         </tr>
                       </thead>
+                    </table>
+                  </div>
+                  {/* Table Body - Scrollable */}
+                  <div className="max-h-32 overflow-y-auto overflow-x-hidden custom-scrollbar">
+                    <table className="w-full text-xs table-fixed">
                       <tbody>
                         {selectedRequest.items?.map((item, idx) => (
                           <tr key={idx} className="border-b border-gray-50 last:border-0">
-                            <td className="py-3 px-4 text-gray-700 font-bold text-left">{item.supply_name}</td>
+                            <td className="py-3 px-4 text-gray-700 font-bold text-left w-[70%] truncate">{item.supply_name}</td>
                             <td className="py-3 px-4 text-gray-500 font-bold text-right">{item.ea}개</td>
                           </tr>
                         ))}
@@ -222,7 +228,7 @@ const SupplyHistory = () => {
 
               {/* Action Buttons */}
               {(selectedRequest.status === 'PENDING' || selectedRequest.status === 'REJECTED') && (
-                <div className="pt-4">
+                <div className="pt-1">
                   <button 
                     onClick={() => handleDeleteRequest(selectedRequest.req_seq)}
                     className="w-full py-4 bg-red-50 text-red-500 text-sm font-bold rounded-2xl hover:bg-red-500 hover:text-white transition-all shadow-sm"
@@ -237,6 +243,7 @@ const SupplyHistory = () => {
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
+        .custom-scrollbar { scrollbar-gutter: stable; }
         .custom-scrollbar::-webkit-scrollbar { width: 0.25rem; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 0.625rem; }

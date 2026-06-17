@@ -549,46 +549,6 @@ const AdminUsers = () => {
                       <span className="text-xs font-bold text-slate-700">{selectedUser.rank_name}</span>
                     )}
                     </div>
-                    {/* <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-500 min-w-[50px] whitespace-nowrap">권한</span>
-                      {isDetailEditing ? (
-                        <div className="relative custom-dropdown w-full">
-                          <div 
-                            onClick={() => { setIsPermissionOpen(!isPermissionOpen); setIsDeptOpen(false); setIsRankOpen(false); }}
-                            className={`w-full px-3 py-1.5 bg-white border ${isPermissionOpen ? 'border-[#3530B8] ring-2 ring-[#3530B8]/5' : 'border-gray-200'} rounded-lg text-[0.6875rem] font-bold transition-all cursor-pointer flex justify-between items-center text-slate-700`}
-                          >
-                            <span>{editForm.role}</span>
-                            <svg className={`w-3 h-3 text-gray-400 transition-transform ${isPermissionOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </div>
-                          {isPermissionOpen && (
-                            <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
-                              {permissionList.map((perm, idx) => (
-                                <div 
-                                  key={idx}
-                                  onClick={() => { 
-                                    setEditForm(prev => ({ ...prev, role: perm }));
-                                    setIsPermissionOpen(false); 
-                                  }}
-                                  className="px-3 py-2 text-[0.625rem] hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-bold border-b border-gray-50 last:border-0"
-                                >
-                                  {perm}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <span className={`inline-block px-2 py-0.5 rounded-md text-[0.625rem] font-bold ${
-                          selectedUser.role === 'ADMIN' 
-                            ? 'bg-purple-50 text-purple-600 border border-purple-100' 
-                            : 'bg-slate-50 text-slate-500 border border-slate-100'
-                        }`}>
-                          {selectedUser.role}
-                        </span>
-                      )}
-                    </div> */}
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-500 min-w-[50px] whitespace-nowrap">입사일</span>
                       <span className="text-xs font-bold text-slate-700 font-mono">{selectedUser.hire_date ? String(selectedUser.hire_date).split(' ')[0] : ''}</span>

@@ -120,7 +120,7 @@ const formatStampTime = (date) =>
     return () => clearInterval(timer);
   }, []);
  //calendar
- const { calendarEvents, selectedDate, setSelectedDate, selectedSchedules, handleDateClick } = usePublicCalendar();
+ const { calendarEvents, selectedDate, setSelectedDate, selectedSchedules, handleDateClick, isCalendarLoading } = usePublicCalendar();
 
   // 매 시간 달이 바뀌었는지 체크하여 캘린더 자동 업데이트
   useEffect(() => {
@@ -286,12 +286,25 @@ const quickActions = [
                         display: none !important;
                       }
                     `}</style>
-                    <Calendar 
-                      isStatic={true}
-                      value={selectedDate}
-                      events={calendarEvents}
-                      onChange={handleDateClick}
-                    />
+                        {isCalendarLoading ? (
+      // 스켈레톤
+      <div className="animate-pulse p-2">
+        <div className="h-4 bg-gray-200 rounded w-1/3 mb-4" />
+        <div className="grid grid-cols-7 gap-1">
+          {Array(35).fill(0).map((_, i) => (
+            <div key={i} className="h-7 bg-gray-100 rounded" />
+          ))}
+        </div>
+      </div>
+    ) : (
+      // 실제 캘린더
+      <Calendar 
+        isStatic={true}
+        value={selectedDate}
+        events={calendarEvents}
+        onChange={handleDateClick}
+      />
+    )}
                   </div>
               </div>
               {/* 일정 */}
