@@ -285,6 +285,16 @@ const quickActions = [
                       .main-calendar .mb-4 button {
                         display: none !important;
                       }
+                      .main-calendar .grid.grid-cols-7:last-child > div {
+                        height: 3rem !important;
+                      }
+                      .main-calendar .grid.grid-cols-7:last-child > div > div {
+                        position: absolute !important;
+                        bottom: 4px !important;
+                        left: 0 !important;
+                        right: 0 !important;
+                        margin-top: 0 !important;
+                      }
                     `}</style>
                         {isCalendarLoading ? (
       // 스켈레톤
@@ -313,7 +323,7 @@ const quickActions = [
                   <h3 className="text-s font-extrabold text-indigo-950">전사 일정 및 공휴일</h3>
                   <button onClick={() => navigate('/calendar')} className="text-[0.625rem] text-gray-400 font-bold hover:text-indigo-950">상세보기</button>
                 </div>
-                <div className="space-y-2.5 overflow-y-auto h-full pr-1 custom-scrollbar">
+                <div className="space-y-2.5 overflow-y-auto max-h-[300px] md:max-h-none h-full pr-1 custom-scrollbar">
                   <style>{`
                     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
                     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }

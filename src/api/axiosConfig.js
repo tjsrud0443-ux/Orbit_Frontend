@@ -1,7 +1,8 @@
 ﻿import axios from 'axios';
 
 export const maxios = axios.create({
-    baseURL: "https://api.sukong.shop"
+    // baseURL: "https://api.sukong.shop"
+     baseURL: "http://localhost:8080"
 });
 
 maxios.interceptors.request.use(config => {
