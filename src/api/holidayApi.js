@@ -9,7 +9,7 @@ const HOLIDAY_API_KEY = import.meta.env.VITE_HOLIDAY_API_KEY || '';
 const fetchHolidaysByMonth = async (year, month) => {
   // 공공데이터포털 특성상 Vite 프록시 설정(/holiday-api)을 경유하여 호출합니다.
   const url =
-    `/holiday-api/B090041/openapi/service/SpcdeInfoService/getRestDeInfo` +
+    `https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo` +
     `?serviceKey=${HOLIDAY_API_KEY}` +
     `&solYear=${year}` +
     `&solMonth=${String(month).padStart(2, '0')}` +
