@@ -254,7 +254,7 @@ const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptNa
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-[#DDE8FF] text-[#3530B8] flex items-center justify-center text-xs font-bold transition-all overflow-hidden">
                         {
-                          sysname && 
+                          emp?.sysname && 
                             <img
                               src={`https://api.sukong.shop/file/profile/view?sysname=${emp.sysname}&token=${token}`}
                               alt={emp.name}
@@ -539,7 +539,7 @@ const Departments = () => {
                             >
                               <div className="w-8 h-8 rounded-full bg-[#DDE8FF] overflow-hidden shrink-0">
                                 {
-                                  sysname && 
+                                  emp?.sysname && 
                                     <img
                                       src={`https://api.sukong.shop/file/profile/view?sysname=${emp.sysname}&token=${token}`}
                                       className="w-full h-full object-cover"

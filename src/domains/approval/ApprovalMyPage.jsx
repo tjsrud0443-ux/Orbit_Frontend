@@ -29,7 +29,7 @@ const ApprovalLineStack = ({ line }) => {
           >
             <div className="w-full h-full bg-indigo-50 flex items-center justify-center text-[10px] md:text-[11px] font-bold text-indigo-600 uppercase">
               {
-                sysname && 
+                lineUser?.sysname && 
                   <img src={`https://api.sukong.shop/file/profile/view?sysname=${lineUser?.sysname}&token=${token}`}
                     alt={lineUser?.name}
                     className="w-full h-full object-cover"

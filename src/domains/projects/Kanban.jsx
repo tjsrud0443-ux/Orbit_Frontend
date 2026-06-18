@@ -308,7 +308,7 @@ const Kanban = () => {
                 String(member.users_id) !== String(user?.id)).map((member, index) => (
                   <div key={index} className="w-9 h-9 rounded-full border-2 border-white overflow-hidden shadow-sm hover:z-10 transition-all cursor-pointer">
                     {
-                      sysname && 
+                      member?.sysname && 
                         <img src={`https://api.sukong.shop/file/profile/view?sysname=${member?.sysname}&token=${token}`} alt={member?.name} className="w-full h-full object-cover" />
                     }
                   </div>
@@ -397,7 +397,7 @@ const Kanban = () => {
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
                               {
-                                sysname && 
+                                task?.sysname && 
                                   <img
                                     src={`https://api.sukong.shop/file/profile/view?sysname=${task?.sysname}&token=${token}`}
                                     alt={task?.name}
@@ -581,7 +581,7 @@ const Kanban = () => {
               String(member.users_id) !== String(user?.id)).map((member, index) => (
                 <div key={index} className="w-8 h-8 rounded-full border-2 border-white overflow-hidden shadow-sm hover:z-10 transition-all cursor-pointer">
                   {
-                    sysname && 
+                    member?.sysname && 
                      <img src={`https://api.sukong.shop/file/profile/view?sysname=${member?.sysname}&token=${token}`} alt={member?.name} className="w-full h-full object-cover" />
                   }
                 </div>
@@ -660,7 +660,7 @@ const Kanban = () => {
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden shrink-0">
                       {
-                        sysname && 
+                        task?.sysname && 
                           <img
                             src={`https://api.sukong.shop/file/profile/view?sysname=${task?.sysname}&token=${token}`}
                             alt={task?.name}
@@ -901,7 +901,7 @@ const Kanban = () => {
                         >
                           <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-100">
                             {
-                              sysname && 
+                              member?.sysname && 
                                 <img src={`https://api.sukong.shop/file/profile/view?sysname=${member.sysname}&token=${token}`} alt={member.name} className="w-full h-full object-cover" />
                             }
                           </div>
@@ -1132,7 +1132,7 @@ const Kanban = () => {
                         >
                           <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-100">
                             {
-                              sysname && 
+                              member?.sysname && 
                                 <img src={`https://api.sukong.shop/file/profile/view?sysname=${member.sysname}&token=${token}`} alt={member.name} className="w-full h-full object-cover" />
                             }
                           </div>
