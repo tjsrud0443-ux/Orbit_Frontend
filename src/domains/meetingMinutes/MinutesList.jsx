@@ -29,7 +29,7 @@ const ParticipantStack = ({ attendees = [] }) => {
           >
           {user?.sysname && token ? (
             <img
-              src={`http://localhost/file/profile/view?sysname=${user.sysname}&token=${token}`}
+              src={`http://api.sukong.shop/file/profile/view?sysname=${user.sysname}&token=${token}`}
               alt={user?.name || "프로필"}
               className="w-full h-full object-cover"
             />
@@ -746,7 +746,7 @@ const MinutesList = () => {
                             <div className="flex flex-col items-center gap-1.5">
                               <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm border-2 border-white overflow-hidden bg-slate-100">
                                 {author.sysname && author.sysname !== 'system' && token ? (
-                                  <img src={`http://localhost/file/profile/view?sysname=${author.sysname}&token=${token}`} alt={author.name} className="w-full h-full object-cover" />
+                                  <img src={`http://api.sukong.shop/file/profile/view?sysname=${author.sysname}&token=${token}`} alt={author.name} className="w-full h-full object-cover" />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: author.color || '#6366F1' }}>
                                     {author.name ? author.name.slice(0, 1) : '?'}
@@ -809,7 +809,7 @@ const MinutesList = () => {
                               <div className="flex flex-col items-center gap-1.5">
                                 <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm border-2 border-white overflow-hidden bg-slate-100">
                                   {hostPerson.sysname  && hostPerson.sysname !== 'system' && token ? (
-                                     <img src={`http://localhost/file/profile/view?sysname=${hostPerson.sysname}&token=${token}`} alt={hostPerson.name} className="w-full h-full object-cover" />
+                                     <img src={`http://api.sukong.shop/file/profile/view?sysname=${hostPerson.sysname}&token=${token}`} alt={hostPerson.name} className="w-full h-full object-cover" />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: hostPerson.color || '#6366F1' }}>
                                       {hostPerson.name ? hostPerson.name.slice(0, 1) : '?'}
@@ -854,7 +854,7 @@ const MinutesList = () => {
                           <div key={i} className="flex flex-col items-center gap-1.5">
                             <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm border-2 border-white overflow-hidden bg-slate-100">
                               {a.sysname && token ? (
-                                <img src={`http://localhost/file/profile/view?sysname=${a.sysname}&token=${token}`} alt={a.name} className="w-full h-full object-cover" />
+                                <img src={`http://api.sukong.shop/file/profile/view?sysname=${a.sysname}&token=${token}`} alt={a.name} className="w-full h-full object-cover" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: a.color || '#6366F1' }}>
                                   {a.name ? a.name.slice(0, 1) : '?'}

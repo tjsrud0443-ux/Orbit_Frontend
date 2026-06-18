@@ -190,7 +190,7 @@ const weeklyAttendance = [
                 <div className="w-14 h-14 rounded-full bg-slate-50 border-2 border-slate-100 overflow-hidden shrink-0">
                   {user?.sysname && token ? (
                   <img
-                    src={`http://localhost/file/profile/view?sysname=${user?.sysname}&token=${token}`}
+                    src={`http://api.sukong.shop/file/profile/view?sysname=${user?.sysname}&token=${token}`}
                     alt={profileData?.name}
                     className="w-full h-full object-cover"
                   />

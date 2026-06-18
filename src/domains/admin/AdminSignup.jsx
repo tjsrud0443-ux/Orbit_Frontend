@@ -299,7 +299,7 @@ const AdminSignup = () => {
                   <div className="w-10 h-10 md:w-9 md:h-9 rounded-full bg-[#DDE8FF] flex items-center justify-center overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
                     {info.sysname ? (
                       <img 
-                        src={`http://localhost/file/profile/view?sysname=${info.sysname}&token=${token}`} 
+                        src={`http://api.sukong.shop/file/profile/view?sysname=${info.sysname}&token=${token}`} 
                         className="w-full h-full object-cover" 
                         alt="Profile" 
                       />
@@ -370,7 +370,7 @@ const AdminSignup = () => {
                   <div className="w-20 h-20 rounded-full bg-white border-2 border-[#DDE8FF] shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0">
                     {userInfo.sysname ? (
                       <img 
-                        src={`http://localhost/file/profile/view?sysname=${userInfo.sysname}&token=${token}`} 
+                        src={`http://api.sukong.shop/file/profile/view?sysname=${userInfo.sysname}&token=${token}`} 
                         className="w-full h-full object-cover" 
                         alt="Profile" 
                       />

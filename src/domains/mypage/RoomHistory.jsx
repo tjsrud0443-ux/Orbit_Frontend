@@ -699,7 +699,7 @@ const RoomHistory = () => {
                       <div className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white border-2 border-gray-50 shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0">
                         {attendee.sysname ? (
                           <img 
-                            src={`http://localhost/file/profile/view?sysname=${attendee.sysname}&token=${token}`} 
+                            src={`http://api.sukong.shop/file/profile/view?sysname=${attendee.sysname}&token=${token}`} 
                             className="w-full h-full object-cover" 
                             alt="Profile"
                           />
