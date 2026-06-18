@@ -70,8 +70,10 @@ const BoardWrite = () => {
         // 2. 백엔드의 이미지 업로드 전용 API 호출
         // (주의: 이 API는 업로드된 이미지의 저장소 'URL 경로'를 문자열로 리턴해야 함)
       insertEditorImage(formData).then((resp) => {
-        console.log('업로드 완료:', resp.data); // 
-        const imageUrl = resp.data.url;
+       let imageUrl = resp.data.url.replace(
+        /^http:\/\/localhost/,
+        'https://api.sukong.shop'
+      );
         const quill = quillRef.current.getEditor();
         const range = quill.getSelection();
         quill.insertEmbed(range ? range.index : 0, 'image', imageUrl);
