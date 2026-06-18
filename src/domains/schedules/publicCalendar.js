@@ -31,18 +31,17 @@ const usePublicCalendar = () => {
     setIsCalendarLoading(true);
         // 캐시 있으면 API 호출 스킵
     if (calendarStore.events.length > 0) {
+      calendarEventsRef.current = calendarStore.events;
       setCalendarEvents(calendarStore.events);
       setIsCalendarLoading(false);
       return;
     }
     // 없으면 기존대로 API 호출
-    const schedResp = await getSchedules();
-    if (cancelled) return;
-
-    const holidaysThisYear = await fetchHolidays(year);
-    if (cancelled) return;
-
-    const holidaysNextYear = await fetchHolidays(year + 1);
+    const [schedResp, holidaysThisYear, holidaysNextYear] = await Promise.all([
+      getSchedules(),
+      fetchHolidays(year),
+      fetchHolidays(year + 1),
+    ]);
     if (cancelled) return;
 
     const companyEvents = schedResp.data
@@ -89,10 +88,8 @@ const usePublicCalendar = () => {
 
   load().catch(err => {
     console.error('공용 캘린더 로드 실패:', err);
-    setIsCalendarLoading(false);
-  }).finally(() => {
-    if (!cancelled) setIsCalendarLoading(false); 
-  });
+    if (!cancelled) setIsCalendarLoading(false);
+  })
 
   return () => { cancelled = true; };
 }, []);
