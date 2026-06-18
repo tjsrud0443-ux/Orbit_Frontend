@@ -190,12 +190,12 @@ const weeklyAttendance = [
                 <div className="w-14 h-14 rounded-full bg-slate-50 border-2 border-slate-100 overflow-hidden shrink-0">
                   {user?.sysname && token ? (
                   <img
-                    src={`http://api.sukong.shop/file/profile/view?sysname=${user?.sysname}&token=${token}`}
+                    src={`https://api.sukong.shop/file/profile/view?sysname=${user?.sysname}&token=${token}`}
                     alt={profileData?.name}
                     className="w-full h-full object-cover"
                   />
                   ):(
-                    <div className="w-full h-full flex items-center justify-center text-xl font-bold text-[#3530B8]">김</div>
+                    <div className="w-full h-full flex items-center justify-center text-xl font-bold text-[#3530B8]">${profileData?.name?.charAt(0)}</div>
                   )}
                 </div>
                 <div className="grid grid-cols-[3rem_1fr] gap-x-2 gap-y-0.5 text-xs">
@@ -309,7 +309,6 @@ const weeklyAttendance = [
                     dayMaxEvents={1}
                     fixedWeekCount={false}//당 월 만큼 줄 조절
                     moreLinkClick="day" 
-                    moreLinkClick={() => 'none'}
                     events={calendarEvents}
                     dateClick={handleDateClick}
                     eventClick={handleEventClick}

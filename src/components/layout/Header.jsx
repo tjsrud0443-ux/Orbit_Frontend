@@ -208,11 +208,13 @@ const Header = ({ onMenuClick }) => {
           <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center
             font-bold text-sm text-slate-600 overflow-hidden shrink-0
             group-hover:ring-2 group-hover:ring-[#DDE8FF]">
-            <img
-              src={`http://api.sukong.shop/file/profile/view?sysname=${user?.sysname}&token=${token}`}
+            {
+              sysname && <img
+              src={`https://api.sukong.shop/file/profile/view?sysname=${user?.sysname}&token=${token}`}
               alt={user?.name}
               className="w-full h-full object-cover"
             />
+            }
           </div>
           <div className="flex flex-col text-left">
             <span className="text-xs font-semibold text-slate-800 group-hover:text-[#3530B8]">{user?.name}</span>
