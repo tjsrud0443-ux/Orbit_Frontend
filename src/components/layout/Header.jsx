@@ -209,7 +209,7 @@ const Header = ({ onMenuClick }) => {
             font-bold text-sm text-slate-600 overflow-hidden shrink-0
             group-hover:ring-2 group-hover:ring-[#DDE8FF]">
             <img
-              src={`http://localhost/file/profile/view?sysname=${user?.sysname}&token=${token}`}
+              src={`http://api.sukong.shop/file/profile/view?sysname=${user?.sysname}&token=${token}`}
               alt={user?.name}
               className="w-full h-full object-cover"
             />

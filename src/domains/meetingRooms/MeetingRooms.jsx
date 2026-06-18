@@ -375,7 +375,7 @@ const MeetingRooms = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                   {room.sysname ? (
                     <img 
-                      src={`http://localhost/file/profile/view?sysname=${room.sysname}&token=${token}`}
+                      src={`http://api.sukong.shop/file/profile/view?sysname=${room.sysname}&token=${token}`}
                       alt={room.room_name}
                       className="w-full h-full object-cover"
                     />

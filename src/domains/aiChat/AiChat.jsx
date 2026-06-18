@@ -401,7 +401,7 @@ const AiChat = () => {
                       <FontAwesomeIcon icon={faFileAlt} className="mr-1.5" />
                       {source.file_name}
                     </span>
-                    <a href={`http://localhost/file/download/${source.sysname}?token=${token}`} download className="self-end md:self-auto">
+                    <a href={`http://api.sukong.shop/file/download/${source.sysname}?token=${token}`} download className="self-end md:self-auto">
                       <button className="text-[10px] font-medium bg-white border border-[#edf2f9] px-2 py-1 rounded hover:bg-[#F0F4FF] transition-colors flex-shrink-0 cursor-pointer">
                         📄 다운로드
                       </button>

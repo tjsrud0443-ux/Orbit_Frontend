@@ -500,7 +500,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                     </svg>
                     {item.sysname ? (
                       <a 
-                        href={`http://localhost/file/download/${item.sysname}?token=${token}`} 
+                        href={`http://api.sukong.shop/file/download/${item.sysname}?token=${token}`} 
                         download 
                         className="hover:underline"
                       >

@@ -307,7 +307,7 @@ const Kanban = () => {
               {members.filter(member =>
                 String(member.users_id) !== String(user?.id)).map((member, index) => (
                   <div key={index} className="w-9 h-9 rounded-full border-2 border-white overflow-hidden shadow-sm hover:z-10 transition-all cursor-pointer">
-                    <img src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`} alt={member?.name} className="w-full h-full object-cover" />
+                    <img src={`http://api.sukong.shop/file/profile/view?sysname=${member?.sysname}&token=${token}`} alt={member?.name} className="w-full h-full object-cover" />
                   </div>
                 ))}
               {members.filter(member =>
@@ -394,7 +394,7 @@ const Kanban = () => {
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
                               <img
-                                src={`http://localhost/file/profile/view?sysname=${task?.sysname}&token=${token}`}
+                                src={`http://api.sukong.shop/file/profile/view?sysname=${task?.sysname}&token=${token}`}
                                 alt={task?.name}
                                 className="w-full h-full object-cover"
                               />
@@ -574,7 +574,7 @@ const Kanban = () => {
             {members.filter(member =>
               String(member.users_id) !== String(user?.id)).map((member, index) => (
                 <div key={index} className="w-8 h-8 rounded-full border-2 border-white overflow-hidden shadow-sm hover:z-10 transition-all cursor-pointer">
-                  <img src={`http://localhost/file/profile/view?sysname=${member?.sysname}&token=${token}`} alt={member?.name} className="w-full h-full object-cover" />
+                  <img src={`http://api.sukong.shop/file/profile/view?sysname=${member?.sysname}&token=${token}`} alt={member?.name} className="w-full h-full object-cover" />
                 </div>
               ))}
             {members.filter(member =>
@@ -651,7 +651,7 @@ const Kanban = () => {
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden shrink-0">
                       <img
-                        src={`http://localhost/file/profile/view?sysname=${task?.sysname}&token=${token}`}
+                        src={`http://api.sukong.shop/file/profile/view?sysname=${task?.sysname}&token=${token}`}
                         alt={task?.name}
                         className="w-full h-full object-cover"
                       />
@@ -858,7 +858,7 @@ const Kanban = () => {
                     className={`flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition-colors ${errors.globalAssignee ? 'border border-red-500' : ''}`}>
                     <div className="w-7 h-7 rounded-full bg-indigo-50 flex items-center justify-center overflow-hidden border border-white">
                       {newGlobalTask.sysname ? (
-                        <img src={`http://localhost/file/profile/view?sysname=${newGlobalTask.sysname}&token=${token}`} alt={newGlobalTask.name} className="w-full h-full object-cover" />
+                        <img src={`http://api.sukong.shop/file/profile/view?sysname=${newGlobalTask.sysname}&token=${token}`} alt={newGlobalTask.name} className="w-full h-full object-cover" />
                       ) : (
                         <span className="text-[10px] text-[#3530B8] font-bold">{newGlobalTask.name?.charAt(0) || '+'}</span>
                       )}
@@ -888,7 +888,7 @@ const Kanban = () => {
                           className="px-4 py-3 flex items-center gap-3 hover:bg-[#F0F4FF] cursor-pointer transition-colors"
                         >
                           <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-100">
-                            <img src={`http://localhost/file/profile/view?sysname=${member.sysname}&token=${token}`} alt={member.name} className="w-full h-full object-cover" />
+                            <img src={`http://api.sukong.shop/file/profile/view?sysname=${member.sysname}&token=${token}`} alt={member.name} className="w-full h-full object-cover" />
                           </div>
                           <span className="text-sm font-bold text-slate-600">{member.name}</span>
                         </div>
@@ -1096,7 +1096,7 @@ const Kanban = () => {
                   >
                     <div className="w-7 h-7 rounded-full bg-indigo-50 flex items-center justify-center overflow-hidden border border-white">
                       {detailModalTask.sysname ? (
-                        <img src={`http://localhost/file/profile/view?sysname=${detailModalTask.sysname}&token=${token}`} alt={detailModalTask.name} className="w-full h-full object-cover" />
+                        <img src={`http://api.sukong.shop/file/profile/view?sysname=${detailModalTask.sysname}&token=${token}`} alt={detailModalTask.name} className="w-full h-full object-cover" />
                       ) : (
                         <span className="text-[10px] text-[#3530B8] font-bold">{detailModalTask.name?.charAt(0) || 'U'}</span>
                       )}
@@ -1116,7 +1116,7 @@ const Kanban = () => {
                           className="px-4 py-3 flex items-center gap-3 hover:bg-[#F0F4FF] cursor-pointer transition-colors"
                         >
                           <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-100">
-                            <img src={`http://localhost/file/profile/view?sysname=${member.sysname}&token=${token}`} alt={member.name} className="w-full h-full object-cover" />
+                            <img src={`http://api.sukong.shop/file/profile/view?sysname=${member.sysname}&token=${token}`} alt={member.name} className="w-full h-full object-cover" />
                           </div>
                           <span className="text-sm font-bold text-slate-600">{member.name}</span>
                         </div>

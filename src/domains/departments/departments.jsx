@@ -63,7 +63,7 @@ const OrgNode = ({ node, isChild = false }) => {
         `}>
           {profileImg ? (
             <img
-              src={`http://localhost/file/profile/view?sysname=${profileImg}&token=${token}`}
+              src={`http://api.sukong.shop/file/profile/view?sysname=${profileImg}&token=${token}`}
               alt={displayNode.name}
               className="w-full h-full object-cover"
             />
@@ -254,7 +254,7 @@ const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptNa
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-[#DDE8FF] text-[#3530B8] flex items-center justify-center text-xs font-bold transition-all overflow-hidden">
                         <img
-                          src={`http://localhost/file/profile/view?sysname=${emp.sysname}&token=${token}`}
+                          src={`http://api.sukong.shop/file/profile/view?sysname=${emp.sysname}&token=${token}`}
                           alt={emp.name}
                           className="w-full h-full object-cover"
                         />
@@ -536,7 +536,7 @@ const Departments = () => {
                             >
                               <div className="w-8 h-8 rounded-full bg-[#DDE8FF] overflow-hidden shrink-0">
                                 <img
-                                  src={`http://localhost/file/profile/view?sysname=${emp.sysname}&token=${token}`}
+                                  src={`http://api.sukong.shop/file/profile/view?sysname=${emp.sysname}&token=${token}`}
                                   className="w-full h-full object-cover"
                                   alt={emp.name}
                                 />

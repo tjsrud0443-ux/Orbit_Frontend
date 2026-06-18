@@ -518,7 +518,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                     </svg>
                     {file.sysname ? (
                       <a 
-                        href={`http://localhost/file/download/${file.sysname}?token=${token}`} 
+                        href={`http://api.sukong.shop/file/download/${file.sysname}?token=${token}`} 
                         download 
                         className="hover:underline"
                       >

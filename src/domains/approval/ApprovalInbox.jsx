@@ -70,7 +70,7 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, coun
                   <div className="flex items-center gap-2 overflow-hidden">
                     <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 rounded-full bg-slate-200 flex items-center justify-center text-[9px] md:text-[10px] overflow-hidden aspect-square">
                       <img
-                        src={`http://localhost/file/profile/view?sysname=${doc?.sysname}&token=${token}`}
+                        src={`http://api.sukong.shop/file/profile/view?sysname=${doc?.sysname}&token=${token}`}
                         alt={doc.name}
                         className="w-full h-full object-cover"
                       />

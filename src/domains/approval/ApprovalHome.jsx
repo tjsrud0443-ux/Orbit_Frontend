@@ -309,7 +309,7 @@ const ApprovalHome = () => {
                           {doc.sysname ? (
                             <div className="w-6 h-6 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex-shrink-0">
                               <img 
-                                src={`http://localhost/file/profile/view?sysname=${doc.sysname}&token=${token}`} 
+                                src={`http://api.sukong.shop/file/profile/view?sysname=${doc.sysname}&token=${token}`} 
                                 className="w-full h-full object-cover" 
                                 alt="Profile" 
                               />
