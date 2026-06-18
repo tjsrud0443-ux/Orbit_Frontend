@@ -69,11 +69,14 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, coun
                 <td className="px-3 py-4 truncate whitespace-nowrap">
                   <div className="flex items-center gap-2 overflow-hidden">
                     <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 rounded-full bg-slate-200 flex items-center justify-center text-[9px] md:text-[10px] overflow-hidden aspect-square">
-                      <img
-                        src={`http://api.sukong.shop/file/profile/view?sysname=${doc?.sysname}&token=${token}`}
-                        alt={doc.name}
-                        className="w-full h-full object-cover"
-                      />
+                      {
+                        sysname &&
+                          <img
+                            src={`https://api.sukong.shop/file/profile/view?sysname=${doc?.sysname}&token=${token}`}
+                            alt={doc.name}
+                            className="w-full h-full object-cover"
+                          />
+                      }
                     </div>
                     <span className="text-xs font-bold text-gray-600 truncate">{doc.name}</span>
                   </div>

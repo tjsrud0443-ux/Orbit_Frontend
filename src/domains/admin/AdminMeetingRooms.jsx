@@ -74,7 +74,7 @@ const AdminMeetingRooms = () => {
     setIsAddMode(true);
     setSelectedRoom(room);
     setUploadedFiles([]);
-    setPreviewImage(room.sysname ? `http://api.sukong.shop/file/profile/view?sysname=${room.sysname}&token=${token}` : null);
+    setPreviewImage(room.sysname ? `https://api.sukong.shop/file/profile/view?sysname=${room.sysname}&token=${token}` : null);
     setErrors({});
     setFormData({
       room_seq: room.room_seq,
@@ -233,7 +233,7 @@ const AdminMeetingRooms = () => {
                 <div className="flex flex-col items-center mr-4 md:hidden w-24 flex-shrink-0">
                   <div className="w-24 h-16 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shadow-sm">
                     {room.sysname ? (
-                      <img src={`http://api.sukong.shop/file/profile/view?sysname=${room.sysname}&token=${token}`} 
+                      <img src={`https://api.sukong.shop/file/profile/view?sysname=${room.sysname}&token=${token}`} 
                         alt={room.room_name} className="w-full h-full object-cover" />
                     ) : (
                       <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -259,7 +259,7 @@ const AdminMeetingRooms = () => {
                 <div className="hidden md:flex md:justify-center">
                   <div className="md:w-32 md:h-20 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shadow-sm">
                     {room.sysname ? (
-                      <img src={`http://api.sukong.shop/file/profile/view?sysname=${room.sysname}&token=${token}`} 
+                      <img src={`https://api.sukong.shop/file/profile/view?sysname=${room.sysname}&token=${token}`} 
                         alt={room.room_name} className="w-full h-full object-cover" />
                     ) : (
                       <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">

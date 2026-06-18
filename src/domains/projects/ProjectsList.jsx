@@ -602,10 +602,13 @@ const ProjectsList = () => {
             String(member.users_id) !== String(selectedProject.users_id)).map((member, index) => (
               <div key={index} className="flex flex-col items-center gap-2 px-3 py-3">
                 <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-300">
-                  <img
-                    src={`http://api.sukong.shop/file/profile/view?sysname=${member?.sysname}&token=${token}`}
-                    alt={member?.name}
-                    className="w-full h-full object-cover" />
+                  {
+                    sysname && 
+                      <img
+                        src={`https://api.sukong.shop/file/profile/view?sysname=${member?.sysname}&token=${token}`}
+                        alt={member?.name}
+                        className="w-full h-full object-cover" />
+                  }
                 </div>
                 <span className="text-xs font-medium">{member.name}</span>
               </div>
@@ -739,11 +742,14 @@ const ProjectsList = () => {
                               String(member?.users_id) !== String(p?.users_id)).slice(0, 3).map((member, index) => (
                                 <div key={index} className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[9px] font-bold text-[#3530B8] border border-white shrink-0">
                                   <div className="w-6 h-6 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
-                                    <img
-                                      src={`http://api.sukong.shop/file/profile/view?sysname=${member?.sysname}&token=${token}`}
-                                      alt={member?.name}
-                                      className="w-full h-full object-cover"
-                                    />
+                                    {
+                                      sysname && 
+                                        <img
+                                          src={`https://api.sukong.shop/file/profile/view?sysname=${member?.sysname}&token=${token}`}
+                                          alt={member?.name}
+                                          className="w-full h-full object-cover"
+                                        />
+                                    }
                                   </div>
                                 </div>
                               ))}
@@ -767,11 +773,14 @@ const ProjectsList = () => {
                             String(member.users_id) !== String(p.users_id)).slice(0, 3).map((member, index) => (
                               <div key={index} className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-[#3530B8] border-2 border-white shrink-0">
                                 <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
-                                  <img
-                                    src={`http://api.sukong.shop/file/profile/view?sysname=${member?.sysname}&token=${token}`}
-                                    alt={member?.name}
-                                    className="w-full h-full object-cover"
-                                  />
+                                  {
+                                    sysname && 
+                                      <img
+                                        src={`https://api.sukong.shop/file/profile/view?sysname=${member?.sysname}&token=${token}`}
+                                        alt={member?.name}
+                                        className="w-full h-full object-cover"
+                                      />
+                                  }
                                 </div>
                               </div>
                             ))}

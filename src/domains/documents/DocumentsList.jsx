@@ -161,7 +161,7 @@ const DocumentsList = () => {
                   <tr key={doc.document_seq}>
                     <td className="py-4 text-center">
                       <a 
-                        href={`http://api.sukong.shop/file/download/${doc.file_sysname}?token=${token}`} 
+                        href={`https://api.sukong.shop/file/download/${doc.file_sysname}?token=${token}`} 
                         download 
                         className="inline-block p-2 border border-[#3530B8]/30 rounded-lg hover:bg-[#F0F4FF] transition-all group"
                       >

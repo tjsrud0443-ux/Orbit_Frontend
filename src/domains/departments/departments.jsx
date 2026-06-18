@@ -63,7 +63,7 @@ const OrgNode = ({ node, isChild = false }) => {
         `}>
           {profileImg ? (
             <img
-              src={`http://api.sukong.shop/file/profile/view?sysname=${profileImg}&token=${token}`}
+              src={`https://api.sukong.shop/file/profile/view?sysname=${profileImg}&token=${token}`}
               alt={displayNode.name}
               className="w-full h-full object-cover"
             />
@@ -253,11 +253,14 @@ const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptNa
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-[#DDE8FF] text-[#3530B8] flex items-center justify-center text-xs font-bold transition-all overflow-hidden">
-                        <img
-                          src={`http://api.sukong.shop/file/profile/view?sysname=${emp.sysname}&token=${token}`}
-                          alt={emp.name}
-                          className="w-full h-full object-cover"
-                        />
+                        {
+                          sysname && 
+                            <img
+                              src={`https://api.sukong.shop/file/profile/view?sysname=${emp.sysname}&token=${token}`}
+                              alt={emp.name}
+                              className="w-full h-full object-cover"
+                            />
+                        }
                       </div>
                       <span className="text-sm font-bold text-gray-700">{emp.name}</span>
                     </div>
@@ -535,11 +538,14 @@ const Departments = () => {
                               }}
                             >
                               <div className="w-8 h-8 rounded-full bg-[#DDE8FF] overflow-hidden shrink-0">
-                                <img
-                                  src={`http://api.sukong.shop/file/profile/view?sysname=${emp.sysname}&token=${token}`}
-                                  className="w-full h-full object-cover"
-                                  alt={emp.name}
-                                />
+                                {
+                                  sysname && 
+                                    <img
+                                      src={`https://api.sukong.shop/file/profile/view?sysname=${emp.sysname}&token=${token}`}
+                                      className="w-full h-full object-cover"
+                                      alt={emp.name}
+                                    />
+                                }
                               </div>
                               <div className="min-w-0">
                                 <p className="text-xs font-bold text-gray-800 truncate">{emp.name}</p>

@@ -12,7 +12,7 @@ export const connectSocket = (usersId) => {
     }
 
     socket = new Client({
-        brokerURL: "ws://api.sukong.shop/web",
+        brokerURL: "wss://api.sukong.shop/web",
         connectHeaders: {
             Authorization: `Bearer ${token}`
         },

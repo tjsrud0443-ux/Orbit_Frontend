@@ -177,7 +177,7 @@ const BoardDetail = () => {
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-indigo-100 overflow-hidden flex items-center justify-center text-indigo-600 font-bold text-xs">
                     {post.author_sysname ? (
-                      <img src={`http://api.sukong.shop/file/profile/view?sysname=${post.author_sysname}&token=${token}`} alt={post.author_name} className="w-full h-full object-cover" />
+                      <img src={`https://api.sukong.shop/file/profile/view?sysname=${post.author_sysname}&token=${token}`} alt={post.author_name} className="w-full h-full object-cover" />
                     ) : (
                       post.author_name?.charAt(0)
                     )}
@@ -225,7 +225,7 @@ const BoardDetail = () => {
                     <div key={comment.comment_seq} className="flex gap-4">
                       <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden shrink-0 border border-gray-100">
                         {comment.author_sysname ? (
-                          <img src={`http://api.sukong.shop/file/profile/view?sysname=${comment.author_sysname}&token=${token}`} alt={comment.author_name} className="w-full h-full object-cover" />
+                          <img src={`https://api.sukong.shop/file/profile/view?sysname=${comment.author_sysname}&token=${token}`} alt={comment.author_name} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold text-sm bg-gray-50">{comment.author_name?.charAt(0)}</div>
                         )}
@@ -278,7 +278,7 @@ const BoardDetail = () => {
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-8 h-8 rounded-full bg-white overflow-hidden shrink-0 border border-slate-200 shadow-sm">
                     {user?.sysname ? (
-                      <img src={`http://api.sukong.shop/file/profile/view?sysname=${user.sysname}&token=${token}`} alt={user.name} className="w-full h-full object-cover" />
+                      <img src={`https://api.sukong.shop/file/profile/view?sysname=${user.sysname}&token=${token}`} alt={user.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-indigo-600 font-bold text-sm bg-indigo-50">{user?.name?.charAt(0)}</div>
                     )}

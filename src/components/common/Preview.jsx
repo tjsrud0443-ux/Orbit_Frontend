@@ -13,7 +13,8 @@ const DocumentPreviewModal = ({ sysname, mimeType, title, token, onClose }) => {
     const docxContainerRef = useRef(null);
 
     useEffect(() => {
-        const fileUrl = `http://api.sukong.shop/file/preview/${sysname}?token=${token}`;
+        const fileUrl = (sysname && sysname !== 'undefined')
+                        ? `https://api.sukong.shop/file/preview/${sysname}?token=${token}` : ''; 
 
         if (mimeType === 'application/pdf' || sysname?.toLowerCase().endsWith('.pdf')) {
             setPreviewType('pdf');
