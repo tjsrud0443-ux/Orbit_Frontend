@@ -626,7 +626,7 @@ const MinutesList = () => {
                           <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
                         )}
                       </div>
-                      <div className="md:col-span-4 text-xs text-gray-500 font-medium">
+                      <div className="md:col-span-4 text-xs text-gray-500 font-medium whitespace-nowrap">
                         <span className="md:hidden text-gray-400 mr-2 font-bold uppercase text-[10px]">일시</span>
                         {item.meeting_dt} | {formatTime(item.start_time)} – {formatTime(item.end_time)}
                       </div>
@@ -718,7 +718,7 @@ const MinutesList = () => {
                         <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-500 font-medium">
+                    <p className="text-sm text-gray-500 font-medium whitespace-nowrap">
                       {activeDetail.meeting_dt} | {formatTime(activeDetail.start_time)} – {formatTime(activeDetail.end_time)}
                     </p>
                   </div>

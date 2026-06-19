@@ -98,18 +98,20 @@ const OvertimeRequestModal = ({ onClose }) => {
                     className="fixed inset-0 z-10" 
                     onClick={() => setShowCalendar(false)}
                   />
-                  <Calendar 
-                    value={date} 
-                    onChange={(d) => {
-                      if (attendanceMap[d]) {
-                        setDate(d);
-                      } else {
-                        alertWarning('선택 불가', '출근 기록이 없는 날짜는 선택이 불가합니다.');
-                      }
-                    }} 
-                    onClose={() => setShowCalendar(false)}
-                    onMonthChange={(ym) => setYearMonth(ym)}
-                  />
+                  <div className="[&>div]:!top-full [&>div]:!bottom-auto [&>div]:!mt-1 [&>div]:!mb-0">
+                    <Calendar 
+                      value={date} 
+                      onChange={(d) => {
+                        if (attendanceMap[d]) {
+                          setDate(d);
+                        } else {
+                          alertWarning('선택 불가', '출근 기록이 없는 날짜는 선택이 불가합니다.');
+                        }
+                      }} 
+                      onClose={() => setShowCalendar(false)}
+                      onMonthChange={(ym) => setYearMonth(ym)}
+                    />
+                  </div>
                 </>
               )}
             </div>

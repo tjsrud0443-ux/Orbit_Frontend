@@ -402,7 +402,7 @@ const handleSave = async (form) => {
         code: item.supply_code,
         totalQty: item.total_qty,
         stockQty: item.stock_qty,
-        min_stock_qty: item.min_stock_qty,
+        minStockQty: item.min_stock_qty,
       })));
       hideLoading();
       await alertSuccess('등록 완료', '비품 등록이 완료되었습니다.');
@@ -429,7 +429,7 @@ const handleSave = async (form) => {
         code: item.supply_code,
         totalQty: item.total_qty,
         stockQty: item.stock_qty,
-        min_stock_qty: item.min_stock_qty,
+        minStockQty: item.min_stock_qty,
       })));
       hideLoading();
       await alertSuccess('수정 완료', '비품 정보가 수정되었습니다.');
@@ -496,7 +496,7 @@ const handleSave = async (form) => {
           
           <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
             {/* 카테고리 드롭다운 */}
-            <div className="relative flex-1 lg:min-w-[8.75rem]" ref={catRef}>
+            <div className="relative flex-1 min-w-[8.75rem]" ref={catRef}>
               <button
                 onClick={() => setIsCatOpen(!isCatOpen)}
                 className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 outline-none focus:border-[#3530B8] transition-all flex items-center justify-between shadow-sm hover:border-gray-300"
