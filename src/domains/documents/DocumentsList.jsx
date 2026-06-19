@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Pagination from '../../components/common/Pagination';
+import MobilePagination from '../../components/common/MobilePagination';
 import { addFavorite, getAllDocs, getFavorites, removeFavorite } from './documentsApi';
 import useAuthStore from '../../store/authStore';
 import Preview from '../../components/common/Preview';
@@ -205,11 +206,18 @@ const DocumentsList = () => {
         </div>
 
         <div className="border-t border-gray-50 bg-white md:rounded-b-[32px] rounded-b-xl py-2 scale-[0.8] md:scale-100 origin-center">
-          <Pagination 
-            count={totalPages} 
-            page={currentPage} 
-            onChange={handlePageChange} 
+          <MobilePagination
+            count={totalPages}
+            page={currentPage}
+            onChange={handlePageChange}
           />
+          <div className="hidden md:block">
+            <Pagination 
+              count={totalPages} 
+              page={currentPage} 
+              onChange={handlePageChange} 
+            />
+          </div>
         </div>
 
         {previewDoc && (

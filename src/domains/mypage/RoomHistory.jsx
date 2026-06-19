@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { format, startOfDay, parse, isBefore } from 'date-fns';
 import { createPortal } from 'react-dom';
 import Pagination from '../../components/common/Pagination';
+import MobilePagination from '../../components/common/MobilePagination';
 import Calendar from '../../components/common/Calendar';
 import useEmployeeStore from '../../store/useEmployeeStore';
 import useUserStore from '../../store/userStore';
@@ -374,7 +375,7 @@ const RoomHistory = () => {
                   {/* Mobile */}
                   <div className="md:hidden flex-1 min-w-0 mx-2">
                     <div className="text-[10px] text-gray-400 truncate">{res.title}</div>
-                    <div className="text-[10px] text-gray-500">{getDate(res.start_dt)} | {getTime(res.start_dt)}~{getTime(res.end_dt)}</div>
+                    <div className="text-[10px] text-gray-500">{getDate(res.start_dt)} {getTime(res.start_dt)}~{getTime(res.end_dt)}</div>
                   </div>
 
                   <div className="flex-shrink-0 flex justify-center gap-2">
@@ -410,7 +411,10 @@ const RoomHistory = () => {
           </div>
 
           <div className="border-t border-gray-50 flex-shrink-0">
-            <Pagination count={count} page={page} onChange={handlePageChange} />
+            <MobilePagination count={count} page={page} onChange={handlePageChange} />
+            <div className="hidden md:block">
+              <Pagination count={count} page={page} onChange={handlePageChange} />
+            </div>
           </div>
         </div>
 

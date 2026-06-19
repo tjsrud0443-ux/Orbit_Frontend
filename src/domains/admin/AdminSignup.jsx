@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState, useRef } from 'react';
 import Pagination from '../../components/common/Pagination';
+import MobilePagination from '../../components/common/MobilePagination';
 import { approveUserSignup, getAllRequest, getDeptList, getHrInfo, getRankList, getUserInfo, rejectUserSignup } from './adminApi';
 import useAuthStore from '../../store/authStore';
 import Calendar from '../../components/common/Calendar';
@@ -48,7 +49,6 @@ const AdminSignup = () => {
   };
 
   const tabs = ['전체', '승인 대기', '승인 완료', '반려'];
-
   const handleTabClick = (tab) => {
     setActiveTab(tab);
     setPage(1);
@@ -237,12 +237,12 @@ const AdminSignup = () => {
 
       {/* Filters and Search Section - Fixed height */}
       <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 flex-shrink-0 ${selectedUser ? 'hidden md:flex' : 'flex'}`}>
-        <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-[#F0F4FF] flex-shrink-0 overflow-x-auto no-scrollbar">
+        <div className="grid grid-cols-4 gap-1 w-full md:w-auto md:flex md:gap-0 bg-white p-1 rounded-2xl shadow-sm border border-[#F0F4FF] flex-shrink-0 md:overflow-x-auto no-scrollbar">
           {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => handleTabClick(tab)}
-              className={`px-2.5 md:px-4 py-2 rounded-xl text-[0.6875rem] md:text-sm font-bold transition-all whitespace-nowrap flex-shrink-0 ${
+              className={`px-1 md:px-4 py-2 rounded-xl text-[0.5625rem] md:text-sm font-bold transition-all whitespace-nowrap min-w-0 md:flex-shrink-0 ${
                 activeTab === tab
                   ? 'bg-[#3530B8] text-white shadow-md'
                   : 'text-gray-500 hover:text-[#3530B8] hover:bg-[#F0F4FF]'
@@ -346,11 +346,14 @@ const AdminSignup = () => {
 
             {/* Pagination Component */}
             <div className="border-t border-gray-50 flex-shrink-0">
-              <Pagination 
-                count={totalPages} 
-                page={page} 
-                onChange={(e, page) => setPage(page)}
-              />
+              <MobilePagination count={totalPages} page={page} onChange={(e, page) => setPage(page)} />
+              <div className="hidden md:block">
+                <Pagination 
+                  count={totalPages} 
+                  page={page} 
+                  onChange={(e, page) => setPage(page)}
+                />
+              </div>
             </div>
         </div>
 
