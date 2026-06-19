@@ -2,8 +2,9 @@ import React from 'react';
 
 const MobilePagination = ({ count, page, onChange }) => {
   const maxVisiblePages = 5;
-  const startPage = Math.max(1, Math.min(page - 2, count - maxVisiblePages + 1));
-  const endPage = Math.min(count, startPage + maxVisiblePages - 1);
+  const pageCount = Math.max(1, count);
+  const startPage = Math.max(1, Math.min(page - 2, pageCount - maxVisiblePages + 1));
+  const endPage = Math.min(pageCount, startPage + maxVisiblePages - 1);
   const pageNumbers = Array.from({ length: endPage - startPage + 1 }, (_, idx) => startPage + idx);
 
   return (
@@ -32,8 +33,8 @@ const MobilePagination = ({ count, page, onChange }) => {
       ))}
       <button
         type="button"
-        onClick={(event) => onChange(event, Math.min(count, page + 1))}
-        disabled={page === count}
+        onClick={(event) => onChange(event, Math.min(pageCount, page + 1))}
+        disabled={page === pageCount}
         className="w-8 h-8 rounded-lg border border-gray-200 text-xs font-bold text-gray-500 disabled:text-gray-300 disabled:bg-gray-50"
       >
         &gt;
