@@ -193,7 +193,10 @@ const BoardDetail = () => {
             </div>
 
             {/* 본문 */}
-            <div className="post-content min-h-[300px] text-sm md:text-base" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content)}} />
+            <div className="post-content min-h-[300px] text-sm md:text-base" 
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(
+                post.content.replace(/http:\/\/localhost/g, 'https://api.sukong.shop')
+              )}} />
 
             {/* 첨부파일 */}
             {post.files && post.files.length > 0 && (

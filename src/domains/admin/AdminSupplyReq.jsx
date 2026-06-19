@@ -1,5 +1,5 @@
 ﻿import React, { useState, useMemo, useEffect } from 'react';
-import Pagination from '../../components/common/Pagination';
+import { Pagination as MuiPagination, PaginationItem, Stack, useMediaQuery, useTheme } from '@mui/material';
 import { getSuppyReqList, updateSupplyReqStatus } from '../admin/adminApi';
 import { alertWarning, alertSuccess, alertConfirm } from '../../utils/alert';
 
@@ -24,6 +24,8 @@ const StatusBadge = ({ status }) => {
 };
 
 const AdminSupplyReq = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [requests, setRequests] = useState([]);
   const [activeTab, setActiveTab] = useState('전체');
   const [tabCounts, setTabCounts] = useState({ 전체: 0, 대기: 0, 승인: 0, 반려: 0 });
@@ -221,9 +223,9 @@ const AdminSupplyReq = () => {
           {/* 테이블 */}
           <div className="rounded-xl border border-gray-100 flex-1 flex flex-col overflow-hidden min-h-0">
             <div className="flex-1 flex flex-col min-h-0 overflow-x-auto custom-scrollbar">
-              <div className="min-w-[800px] md:min-w-0 flex-1 flex flex-col">
+              <div className="min-w-[800px] md:min-w-0 flex-1 flex flex-col min-h-0">
                 {/* 헤더 */}
-                <div className="grid grid-cols-12 bg-gray-50 border-b border-gray-100 shrink-0">
+                <div className="grid grid-cols-12 bg-gray-50 border-b border-gray-100 shrink-0 sticky top-0 z-10">
                   {['수령 희망 날짜', '신청자', '비품명', '사용 구분', '상태'].map((h, i) => (
                     <div
                       key={h}
@@ -236,7 +238,7 @@ const AdminSupplyReq = () => {
                 </div>
 
                 {/* 바디 */}
-                <div className="flex-1 overflow-y-auto min-h-0">
+                <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0">
                   {requests.length > 0 ? requests.map(item => (
                     <div
                       key={item.id}
@@ -271,12 +273,44 @@ const AdminSupplyReq = () => {
             </div>
           </div>
 
-          <div className="pt-4 shrink-0">
-            <Pagination
-              count={totalPages}
-              page={page}
-              onChange={(_, v) => setPage(v)}
-            />
+          <div className="pt-4 shrink-0 overflow-hidden">
+            <Stack spacing={2} sx={{ alignItems: 'center', py: 3, width: '100%' }}>
+              <MuiPagination
+                count={totalPages}
+                page={page}
+                onChange={(_, v) => setPage(v)}
+                variant="outlined"
+                shape="rounded"
+                color="primary"
+                siblingCount={isMobile ? 0 : 1}
+                boundaryCount={isMobile ? 0 : 1}
+                renderItem={(item) => {
+                  if (isMobile && item.type === 'page' && item.page !== page) return null;
+                  return <PaginationItem {...item} />;
+                }}
+                sx={{
+                  '& .MuiPagination-ul': {
+                    flexWrap: 'nowrap',
+                  },
+                  '& .MuiPaginationItem-root': {
+                    fontFamily: 'inherit',
+                    fontWeight: 'bold',
+                    borderRadius: '12px',
+                  },
+                  '& .MuiPaginationItem-root.Mui-selected': {
+                    backgroundColor: '#3530B8',
+                    color: '#fff',
+                  },
+                  '& .MuiPaginationItem-root.Mui-selected:hover': {
+                    backgroundColor: '#2a2594',
+                  },
+                  '& .MuiPaginationItem-root:hover': {
+                    backgroundColor: '#F0F4FF',
+                    color: '#3530B8',
+                  },
+                }}
+              />
+            </Stack>
           </div>
         </div>
 

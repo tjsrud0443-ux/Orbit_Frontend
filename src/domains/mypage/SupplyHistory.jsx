@@ -26,12 +26,21 @@ const ItemSummary = ({ items }) => {
   if (!items || items.length === 0) return <span className="text-sm font-bold text-gray-400">품목 없음</span>;
   const first = items[0]?.supply_name ?? '';
   const truncated = first.length > 14 ? first.slice(0, 14) + '…' : first;
-  const extra = items.length > 1 ? ` 외 ${items.length - 1}건` : '';
+  const extraCount = items.length - 1;
+  const extra = extraCount > 0 ? ` 외 ${extraCount}건` : '';
   return (
-    <span className="text-sm font-bold text-gray-700">
-      {truncated}
-      {extra && <span className="text-gray-400 text-xs font-normal ml-1">{extra}</span>}
-    </span>
+    <div className="min-w-0">
+      <span className="hidden md:inline text-sm font-bold text-gray-700">
+        {truncated}
+        {extra && <span className="text-gray-400 text-xs font-normal ml-1">{extra}</span>}
+      </span>
+      <span className="md:hidden flex flex-col min-w-0">
+        <span className="text-sm font-bold text-gray-700 truncate">{first}</span>
+        {extraCount > 0 && (
+          <span className="mt-0.5 text-xs font-normal text-gray-400">외 {extraCount}건</span>
+        )}
+      </span>
+    </div>
   );
 };
 
@@ -116,7 +125,7 @@ const SupplyHistory = () => {
                   className={`flex md:grid md:grid-cols-[1.5fr_1fr_1fr_0.8fr] px-4 md:px-6 py-4 items-center border-b border-gray-50/50 transition-colors ${selectedRequest?.req_seq === req.req_seq ? 'bg-[#F0F4FF]' : ''}`}
                 >
                   {/* Mobile & PC Info */}
-                  <div className="flex-1 md:block pl-4">
+                  <div className="flex-1 min-w-0 md:block pl-4">
                     <ItemSummary items={req.items} />
                   </div>
                   <div className="hidden md:block text-xs text-gray-500">{req.req_date}</div>
