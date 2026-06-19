@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState, useRef } from 'react';
 import Pagination from '../../components/common/Pagination';
+import MobilePagination from '../../components/common/MobilePagination';
 import { approveUserSignup, getAllRequest, getDeptList, getHrInfo, getRankList, getUserInfo, rejectUserSignup } from './adminApi';
 import useAuthStore from '../../store/authStore';
 import Calendar from '../../components/common/Calendar';
@@ -48,13 +49,6 @@ const AdminSignup = () => {
   };
 
   const tabs = ['전체', '승인 대기', '승인 완료', '반려'];
-  const mobilePageNumbers = (() => {
-    const maxVisiblePages = 5;
-    const startPage = Math.max(1, Math.min(page - 2, totalPages - maxVisiblePages + 1));
-    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    return Array.from({ length: endPage - startPage + 1 }, (_, idx) => startPage + idx);
-  })();
-
   const handleTabClick = (tab) => {
     setActiveTab(tab);
     setPage(1);
@@ -352,38 +346,7 @@ const AdminSignup = () => {
 
             {/* Pagination Component */}
             <div className="border-t border-gray-50 flex-shrink-0">
-              <div className="md:hidden flex items-center justify-center gap-1 py-3">
-                <button
-                  type="button"
-                  onClick={() => setPage(prev => Math.max(1, prev - 1))}
-                  disabled={page === 1}
-                  className="w-8 h-8 rounded-lg border border-gray-200 text-xs font-bold text-gray-500 disabled:text-gray-300 disabled:bg-gray-50"
-                >
-                  &lt;
-                </button>
-                {mobilePageNumbers.map(pageNumber => (
-                  <button
-                    type="button"
-                    key={pageNumber}
-                    onClick={() => setPage(pageNumber)}
-                    className={`w-8 h-8 rounded-lg border text-xs font-bold ${
-                      page === pageNumber
-                        ? 'bg-[#3530B8] text-white border-[#3530B8]'
-                        : 'bg-white text-gray-500 border-gray-200'
-                    }`}
-                  >
-                    {pageNumber}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={page === totalPages}
-                  className="w-8 h-8 rounded-lg border border-gray-200 text-xs font-bold text-gray-500 disabled:text-gray-300 disabled:bg-gray-50"
-                >
-                  &gt;
-                </button>
-              </div>
+              <MobilePagination count={totalPages} page={page} onChange={(e, page) => setPage(page)} />
               <div className="hidden md:block">
                 <Pagination 
                   count={totalPages} 
