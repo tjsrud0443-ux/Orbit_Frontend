@@ -7,6 +7,7 @@ import { adminAiQuestionsData, deleteMyAnswer, getMyDeptQuestion, insertUpdateAn
 import useUserStore from '../../store/userStore';
 import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 import useLoadingStore from '../../store/useLoadingStore';
+import Pagination from '../../components/common/Pagination';
 
 const AdminQna = () => {
   const [filter, setFilter] = useState('전체');
@@ -73,13 +74,6 @@ const AdminQna = () => {
   }, [filteredQna, currentPage]);
 
   const totalPages = Math.ceil(filteredQna.length / itemsPerPage);
-  const desktopPageNumbers = (() => {
-    if (totalPages <= 0) return [];
-    const maxVisible = 10;
-    const start = Math.max(1, Math.min(currentPage - 4, totalPages - maxVisible + 1));
-    const end = Math.min(totalPages, start + maxVisible - 1);
-    return Array.from({ length: end - start + 1 }, (_, index) => start + index);
-  })();
   const mobilePageNumbers = (() => {
     if (totalPages <= 0) return [];
     const maxVisible = 5;
@@ -342,11 +336,7 @@ const AdminQna = () => {
           </div>
 
           <div className="hidden md:flex justify-center gap-2 mt-4">
-            <button disabled={currentPage === 1} onClick={() => setCurrentPage(c => c - 1)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${currentPage === 1 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}><FontAwesomeIcon icon={faChevronLeft} /></button>
-            {desktopPageNumbers.map(pageNumber => (
-              <button key={pageNumber} onClick={() => setCurrentPage(pageNumber)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${currentPage === pageNumber ? 'bg-[#3530B8] text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>{pageNumber}</button>
-            ))}
-            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(c => c + 1)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${currentPage === totalPages ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}><FontAwesomeIcon icon={faChevronRight} /></button>
+            <Pagination count={totalPages} page={currentPage} onChange={(_, value) => setCurrentPage(value)} />
           </div>
           <div className="md:hidden flex justify-center gap-2 mt-4">
             <button disabled={!hasPaginationData || currentPage === 1} onClick={() => hasPaginationData && currentPage > 1 && setCurrentPage(c => c - 1)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${!hasPaginationData || currentPage === 1 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}><FontAwesomeIcon icon={faChevronLeft} /></button>
