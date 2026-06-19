@@ -122,7 +122,7 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, coun
             type="button"
             disabled={!hasPaginationData || page <= 1}
             onClick={() => hasPaginationData && page > 1 && setPage(page - 1)}
-            className="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold text-slate-500 transition-colors hover:bg-[#F0F4FF] hover:text-[#3530B8] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-slate-500"
+            className="w-8 h-8 rounded-xl border border-[rgba(0,0,0,0.23)] text-xs font-bold text-[rgba(0,0,0,0.87)] transition-colors hover:bg-[#F0F4FF] hover:text-[#3530B8] disabled:opacity-[0.38] disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[rgba(0,0,0,0.87)]"
           >
             &lt;
           </button>
@@ -131,7 +131,7 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, coun
               key={pageNumber}
               type="button"
               onClick={() => setPage(pageNumber)}
-              className={`w-8 h-8 rounded-xl border text-xs font-bold transition-colors ${page === pageNumber ? 'bg-[#3530B8] border-[#3530B8] text-white hover:bg-[#2a2594]' : 'border-slate-200 text-slate-500 hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}
+              className={`w-8 h-8 rounded-xl border text-xs font-bold transition-colors ${page === pageNumber ? 'bg-[#3530B8] border-[#3530B8] text-white hover:bg-[#2a2594]' : 'border-[rgba(0,0,0,0.23)] text-[rgba(0,0,0,0.87)] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}
             >
               {pageNumber}
             </button>
@@ -140,7 +140,7 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, coun
             type="button"
             disabled={!hasPaginationData || page >= count}
             onClick={() => hasPaginationData && page < count && setPage(page + 1)}
-            className="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold text-slate-500 transition-colors hover:bg-[#F0F4FF] hover:text-[#3530B8] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-slate-500"
+            className="w-8 h-8 rounded-xl border border-[rgba(0,0,0,0.23)] text-xs font-bold text-[rgba(0,0,0,0.87)] transition-colors hover:bg-[#F0F4FF] hover:text-[#3530B8] disabled:opacity-[0.38] disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[rgba(0,0,0,0.87)]"
           >
             &gt;
           </button>

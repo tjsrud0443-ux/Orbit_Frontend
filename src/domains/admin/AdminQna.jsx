@@ -339,11 +339,11 @@ const AdminQna = () => {
             <Pagination count={totalPages} page={currentPage} onChange={(_, value) => setCurrentPage(value)} />
           </div>
           <div className="md:hidden flex justify-center gap-2 mt-4">
-            <button disabled={!hasPaginationData || currentPage === 1} onClick={() => hasPaginationData && currentPage > 1 && setCurrentPage(c => c - 1)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${!hasPaginationData || currentPage === 1 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}><FontAwesomeIcon icon={faChevronLeft} /></button>
+            <button disabled={!hasPaginationData || currentPage === 1} onClick={() => hasPaginationData && currentPage > 1 && setCurrentPage(c => c - 1)} className="w-8 h-8 rounded-xl border border-[rgba(0,0,0,0.23)] text-xs font-bold text-[rgba(0,0,0,0.87)] transition-colors hover:bg-[#F0F4FF] hover:text-[#3530B8] disabled:opacity-[0.38] disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[rgba(0,0,0,0.87)]"><FontAwesomeIcon icon={faChevronLeft} /></button>
             {mobilePageNumbers.map(pageNumber => (
-              <button key={pageNumber} onClick={() => setCurrentPage(pageNumber)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${currentPage === pageNumber ? 'bg-[#3530B8] text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>{pageNumber}</button>
+              <button key={pageNumber} onClick={() => setCurrentPage(pageNumber)} className={`w-8 h-8 rounded-xl border text-xs font-bold transition-colors ${currentPage === pageNumber ? 'bg-[#3530B8] border-[#3530B8] text-white hover:bg-[#2a2594]' : 'border-[rgba(0,0,0,0.23)] text-[rgba(0,0,0,0.87)] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>{pageNumber}</button>
             ))}
-            <button disabled={!hasPaginationData || currentPage === totalPages} onClick={() => hasPaginationData && currentPage < totalPages && setCurrentPage(c => c + 1)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${!hasPaginationData || currentPage === totalPages ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}><FontAwesomeIcon icon={faChevronRight} /></button>
+            <button disabled={!hasPaginationData || currentPage === totalPages} onClick={() => hasPaginationData && currentPage < totalPages && setCurrentPage(c => c + 1)} className="w-8 h-8 rounded-xl border border-[rgba(0,0,0,0.23)] text-xs font-bold text-[rgba(0,0,0,0.87)] transition-colors hover:bg-[#F0F4FF] hover:text-[#3530B8] disabled:opacity-[0.38] disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[rgba(0,0,0,0.87)]"><FontAwesomeIcon icon={faChevronRight} /></button>
           </div>
         </div>
 
