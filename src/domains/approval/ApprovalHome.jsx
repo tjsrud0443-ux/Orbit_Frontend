@@ -255,7 +255,7 @@ const ApprovalHome = () => {
                   기안 작성하기
                 </button>
              </div>
-             <div className="absolute -right-4 -bottom-6 w-36 h-36 opacity-90 group-hover:scale-110 transition-transform duration-500 ease-out pointer-events-none">
+             <div className="absolute -right-4 -bottom-6 md:w-36 md:h-36 w-32 h-32 opacity-90 group-hover:scale-110 transition-transform duration-500 ease-out pointer-events-none">
                 <img src={IMAGES.APPROVAL_IMG} alt="Approval Illustration" className="w-full h-full object-contain filter drop-shadow-2xl" />
              </div>
           </div>
@@ -263,7 +263,7 @@ const ApprovalHome = () => {
 
         <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex-1 flex flex-col">
           <div className="p-5 px-10 border-b border-gray-50 flex items-center justify-between bg-gray-50/30 flex-shrink-0">
-            <h2 className="text-lg font-bold text-gray-900">최근 상신한 기안 목록</h2>
+            <h2 className="text-lg font-bold text-gray-900">최근 상신한 기안</h2>
             <button 
               onClick={handleAllDoc}
               className="text-xs font-bold text-[#3530B8] bg-[#F0F4FF] px-4 py-2 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all cursor-pointer">
