@@ -107,7 +107,7 @@ const AdminMain = () => {
         label: '직원 수',
         data: [],
         backgroundColor: BRAND_COLORS.main,
-        barThickness: 24,
+        barThickness: 36,
       },
     ],
   });
@@ -160,7 +160,7 @@ const AdminMain = () => {
             label: '직원 수',
             data: teamList.map(item => item.employeeCount),
             backgroundColor: BRAND_COLORS.main,
-            barThickness: 24,
+            barThickness: 36,
             borderRadius: (context) => {
               const width = window.innerWidth;
               return width >= 1024 ? 8 : 2;
@@ -222,7 +222,7 @@ const AdminMain = () => {
       if (barRef.current) {
         const chart = barRef.current;
         const isMobile = window.innerWidth < 768;
-        chart.data.datasets[0].barThickness = isMobile ? 12 : 24;
+        chart.data.datasets[0].barThickness = isMobile ? 12 : 36;
         chart.update();
       }
     };
