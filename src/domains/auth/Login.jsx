@@ -48,12 +48,12 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div className="min-h-[100dvh] md:min-h-screen flex items-start md:items-center justify-center bg-gray-50 px-4 pt-2 pb-3 md:p-4">
       {/* Main Card Container */}
-      <div className="w-[90%] h-[90vh] md:w-[60%] md:h-[60vh] bg-white rounded-2xl shadow-md overflow-hidden flex flex-col md:flex-row">
+      <div className="w-[90%] h-[calc(100dvh-1.25rem)] -translate-y-1 md:translate-y-0 md:w-[60%] md:h-[60vh] bg-white rounded-2xl shadow-md overflow-hidden flex flex-col md:flex-row">
 
         {/* Area A: Logo & Illustration Area (Top on mobile, Left on desktop) */}
-        <div className="w-full h-1/2 md:h-full md:w-1/2 bg-gradient-to-br from-[#DDE8FF] via-[#F0F4FF] to-[#FFFFFF] p-4 md:p-8 flex flex-col items-center justify-center space-y-4 md:space-y-6">
+        <div className="w-full h-[38%] md:h-full md:w-1/2 bg-gradient-to-br from-[#DDE8FF] via-[#F0F4FF] to-[#FFFFFF] p-3 md:p-8 flex flex-col items-center justify-center space-y-2 md:space-y-6">
           {/* Logo Section */}
           <div className="flex items-center space-x-2">
 
@@ -61,7 +61,7 @@ const Login = () => {
           </div>
 
           {/* Illustration Placeholder */}
-          <div className="w-full h-32 md:h-64 bg-white/60 rounded-2xl relative overflow-hidden border-2 border-dashed border-[#DDE8FF] flex items-center justify-center">
+          <div className="w-full h-28 md:h-64 bg-white/60 rounded-2xl relative overflow-hidden border-2 border-dashed border-[#DDE8FF] flex items-center justify-center">
             {/* Diagonal Lines (X) */}
             <div className="absolute inset-0 flex items-center justify-center opacity-0">
               <div className="w-full h-px bg-[#3530B8] rotate-45 absolute"></div>
@@ -72,8 +72,8 @@ const Login = () => {
         </div>
 
         {/* Area B: Login Form Area (Bottom on mobile, Right on desktop) */}
-        <div className="w-full h-1/2 md:h-full md:w-1/2 p-4 md:p-12 flex flex-col justify-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-800 text-center mb-4 md:mb-8">Login</h2>
+        <div className="w-full h-[62%] md:h-full md:w-1/2 p-4 pt-3 md:p-12 flex flex-col justify-start md:justify-center">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-800 text-center mb-3 md:mb-8">Login</h2>
 
           <div className="space-y-3 md:space-y-6">
             {/* ID Input */}
