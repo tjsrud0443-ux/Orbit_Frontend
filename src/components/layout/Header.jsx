@@ -145,7 +145,7 @@ const Header = ({ onMenuClick }) => {
           </button>
 
           {open && (
-            <div className="absolute top-11 right-[-145px] md:right-0 w-80 bg-white border border-slate-200
+            <div className="absolute top-11 right-[-120px] md:right-0 w-70 md:w-80 bg-white border border-slate-200
               rounded-xl shadow-lg z-50 overflow-hidden">
 
               {/* 헤더 */}

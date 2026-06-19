@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect, useCallback } from 'react';
 import Pagination from '../../components/common/Pagination';
+import MobilePagination from '../../components/common/MobilePagination';
 import useUserStore from '../../store/userStore';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt, faCloudUploadAlt, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -295,11 +296,18 @@ const AdminDocuments = () => {
         </div>
 
         <div className="border-t border-gray-50 bg-white md:rounded-b-[32px] rounded-b-xl py-2 scale-[0.8] md:scale-100 origin-center">
-          <Pagination
+          <MobilePagination
             count={totalPages}
             page={currentPage}
             onChange={handlePageChange}
           />
+          <div className="hidden md:block">
+            <Pagination
+              count={totalPages}
+              page={currentPage}
+              onChange={handlePageChange}
+            />
+          </div>
         </div>
       </div>
 

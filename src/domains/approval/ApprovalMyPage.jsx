@@ -82,6 +82,14 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
     'GENERAL': '일반품의서',
     'PURCHASE': '구매신청서'
   }
+  const mobilePageNumbers = (() => {
+    if (count <= 0) return [];
+    const maxVisible = 5;
+    const start = Math.max(1, Math.min(page - 2, count - maxVisible + 1));
+    const end = Math.min(count, start + maxVisible - 1);
+    return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+  })();
+  const hasPaginationData = displayData.length > 0 && count > 0;
 
   const approverName = (doc) => {
     const currentApprover = doc.approvers?.find(
@@ -164,8 +172,38 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
         </table>
       </div>
       {showPagination && count > 0 && (
-        <div className="py-2 scale-95 origin-center">
+        <div className="hidden md:block py-2 scale-95 origin-center">
           <Pagination count={count} page={page} onChange={(_, value) => setPage(value)} />
+        </div>
+      )}
+      {showPagination && (
+        <div className="md:hidden py-5 flex items-center justify-center gap-1.5">
+          <button
+            type="button"
+            disabled={!hasPaginationData || page <= 1}
+            onClick={() => hasPaginationData && page > 1 && setPage(page - 1)}
+            className="w-8 h-8 rounded-xl border border-[rgba(0,0,0,0.23)] text-xs font-bold text-[rgba(0,0,0,0.87)] transition-colors hover:bg-[#F0F4FF] hover:text-[#3530B8] disabled:opacity-[0.38] disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[rgba(0,0,0,0.87)]"
+          >
+            &lt;
+          </button>
+          {mobilePageNumbers.map(pageNumber => (
+            <button
+              key={pageNumber}
+              type="button"
+              onClick={() => setPage(pageNumber)}
+              className={`w-8 h-8 rounded-xl border text-xs font-bold transition-colors ${page === pageNumber ? 'bg-[#3530B8] border-[#3530B8] text-white hover:bg-[#2a2594]' : 'border-[rgba(0,0,0,0.23)] text-[rgba(0,0,0,0.87)] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}
+            >
+              {pageNumber}
+            </button>
+          ))}
+          <button
+            type="button"
+            disabled={!hasPaginationData || page >= count}
+            onClick={() => hasPaginationData && page < count && setPage(page + 1)}
+            className="w-8 h-8 rounded-xl border border-[rgba(0,0,0,0.23)] text-xs font-bold text-[rgba(0,0,0,0.87)] transition-colors hover:bg-[#F0F4FF] hover:text-[#3530B8] disabled:opacity-[0.38] disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[rgba(0,0,0,0.87)]"
+          >
+            &gt;
+          </button>
         </div>
       )}
     </div>

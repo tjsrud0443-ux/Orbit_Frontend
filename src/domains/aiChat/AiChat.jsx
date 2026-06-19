@@ -35,6 +35,7 @@ const AiChat = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const scrollRef = useRef(null);
+  const aiChatRef = useRef(null);
 
   // 커스텀 드롭다운 상태
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -56,6 +57,17 @@ const AiChat = () => {
     window.addEventListener('click', handleClick);
     return () => window.removeEventListener('click', handleClick);
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (isMobileSidebarOpen && aiChatRef.current && !aiChatRef.current.contains(e.target)) {
+        setIsMobileSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMobileSidebarOpen]);
 
   // 부서 목록 가져오기
   useEffect(() => {
@@ -316,7 +328,7 @@ const AiChat = () => {
   );
 
   return (
-    <div className="relative flex w-full h-full bg-white overflow-hidden rounded-[2.5rem] border border-[#edf2f9] shadow-lg">
+    <div ref={aiChatRef} className="relative flex w-full h-full bg-white overflow-hidden rounded-[2.5rem] border border-[#edf2f9] shadow-lg">
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }

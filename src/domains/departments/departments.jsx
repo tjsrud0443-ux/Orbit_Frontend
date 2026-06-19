@@ -271,15 +271,14 @@ const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptNa
                   <td className="px-6 py-4">
                     <span
                       className={`
-                        text-[10px] font-bold rounded-md
+                        text-[10px] font-bold rounded-md 
                         ${emp.attendanceStatus === '근무중' ? 'px-2 py-1 border bg-[#F0FDF4] text-[#10B981] border-[#F0FDF4]'
                           : emp.attendanceStatus === '퇴근' ? 'px-2 py-1 border bg-[#FFF9F0] text-[#FF9800] border-[#FFF9F0]'
                             : emp.attendanceStatus === '연차' ||
                               emp.attendanceStatus === '오전반차' ||
                               emp.attendanceStatus === '오후반차' ? 'px-2 py-1 border bg-blue-50 text-blue-600 border-blue-50'
-                              : ''}
-                        `}>{emp.attendanceStatus}</span>
-
+                              : 'text-gray-400 px-4 py-1'}
+                        `}>{emp.attendanceStatus || '-' }</span>
                   </td>
                 </tr>
               ))

@@ -371,7 +371,7 @@ const MeetingRooms = () => {
                     ? 'border-[#3530B8] ring-4 ring-[#3530B8]/10 shadow-xl shadow-[#3530B8]/10' 
                     : 'border-gray-100 hover:border-gray-200 hover:shadow-md'}`}
               >
-                <div className={`transition-all duration-500 ${isPanelOpen ? 'h-16 md:h-28' : 'h-20 md:h-32'} bg-gray-100 flex items-center justify-center relative overflow-hidden`}>
+                <div className={`transition-all duration-500 ${isPanelOpen ? 'h-16 md:h-28' : 'h-24 md:h-32'} bg-gray-100 flex items-center justify-center relative overflow-hidden`}>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                   {room.sysname ? (
                     <img 
@@ -465,7 +465,7 @@ const MeetingRooms = () => {
                     return (
                       <div 
                         key={event.rsvn_seq}
-                        className="absolute top-2 md:top-10 bottom-2 md:bottom-10 bg-[#3530B8] rounded-xl shadow-lg shadow-gray-400/25 p-2 md:p-4 flex flex-col justify-center border-l-4 border-white/20 overflow-hidden"
+                        className="absolute top-[17%] md:top-10 bottom-[17%] md:bottom-10 bg-[#3530B8] rounded-xl shadow-lg shadow-gray-400/25 p-2 md:p-4 flex flex-col justify-center border-l-4 border-white/20 overflow-hidden"
                         style={{ left: `${left}%`, width: `${width}%`, zIndex: 10 , backgroundColor: getColor(event.rsvn_seq) }}
                       >
                         <div className="text-black text-[10px] md:text-xs font-bold truncate mb-0.5">{event.title}</div>

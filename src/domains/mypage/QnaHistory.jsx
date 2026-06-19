@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import { deleteMyQuestions, getMyQnaCount, getMyQuestions } from './mypageApi';
 import { alertSuccess, alertConfirm } from '../../utils/alert';
+import Pagination from '../../components/common/Pagination';
 
 const QnaHistory = () => {
   const [filter, setFilter] = useState('전체');
@@ -58,6 +59,14 @@ const QnaHistory = () => {
   }, [filteredQna, currentPage]);
 
   const totalPages = Math.ceil(filteredQna.length / itemsPerPage);
+  const mobilePageNumbers = (() => {
+    if (totalPages <= 0) return [];
+    const maxVisible = 5;
+    const start = Math.max(1, Math.min(currentPage - 2, totalPages - maxVisible + 1));
+    const end = Math.min(totalPages, start + maxVisible - 1);
+    return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+  })();
+  const hasPaginationData = paginatedQna.length > 0 && totalPages > 0;
 
   const handleDelete = async (question_seq) => {
     const result = await alertConfirm('정말 삭제하시겠습니까?', '삭제 후 복구는 불가합니다.');
@@ -217,12 +226,15 @@ const QnaHistory = () => {
             )}
           </div>
 
-          <div className="flex justify-center gap-2 mt-4">
-            <button disabled={currentPage === 1} onClick={() => setCurrentPage(c => c - 1)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${currentPage === 1 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}><FontAwesomeIcon icon={faChevronLeft} /></button>
-            {Array.from({ length: totalPages }).map((_, i) => (
-              <button key={i} onClick={() => setCurrentPage(i + 1)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${currentPage === i + 1 ? 'bg-[#3530B8] text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>{i + 1}</button>
+          <div className="hidden md:block mt-4">
+            <Pagination count={totalPages} page={currentPage} onChange={(_, value) => setCurrentPage(value)} />
+          </div>
+          <div className="md:hidden flex justify-center gap-2 mt-4">
+            <button disabled={!hasPaginationData || currentPage === 1} onClick={() => hasPaginationData && currentPage > 1 && setCurrentPage(c => c - 1)} className="w-8 h-8 rounded-xl border border-[rgba(0,0,0,0.23)] text-xs font-bold text-[rgba(0,0,0,0.87)] transition-colors hover:bg-[#F0F4FF] hover:text-[#3530B8] disabled:opacity-[0.38] disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[rgba(0,0,0,0.87)]"><FontAwesomeIcon icon={faChevronLeft} /></button>
+            {mobilePageNumbers.map(pageNumber => (
+              <button key={pageNumber} onClick={() => setCurrentPage(pageNumber)} className={`w-8 h-8 rounded-xl border text-xs font-bold transition-colors ${currentPage === pageNumber ? 'bg-[#3530B8] border-[#3530B8] text-white hover:bg-[#2a2594]' : 'border-[rgba(0,0,0,0.23)] text-[rgba(0,0,0,0.87)] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>{pageNumber}</button>
             ))}
-            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(c => c + 1)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${currentPage === totalPages ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}><FontAwesomeIcon icon={faChevronRight} /></button>
+            <button disabled={!hasPaginationData || currentPage === totalPages} onClick={() => hasPaginationData && currentPage < totalPages && setCurrentPage(c => c + 1)} className="w-8 h-8 rounded-xl border border-[rgba(0,0,0,0.23)] text-xs font-bold text-[rgba(0,0,0,0.87)] transition-colors hover:bg-[#F0F4FF] hover:text-[#3530B8] disabled:opacity-[0.38] disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[rgba(0,0,0,0.87)]"><FontAwesomeIcon icon={faChevronRight} /></button>
           </div>
         </div>
 
