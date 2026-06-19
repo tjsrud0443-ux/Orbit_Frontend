@@ -157,6 +157,13 @@ const ProjectsList = () => {
   }, [filteredProjects, currentPage]);
 
   const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
+  const mobilePageNumbers = useMemo(() => {
+    const maxMobilePages = 5;
+    const startPage = Math.max(1, Math.min(currentPage - Math.floor(maxMobilePages / 2), totalPages - maxMobilePages + 1));
+    const pageCount = Math.min(totalPages, maxMobilePages);
+
+    return Array.from({ length: pageCount }, (_, i) => startPage + i);
+  }, [currentPage, totalPages]);
 
   const handleCreate = () => {
     const newErrors = {};
@@ -827,11 +834,18 @@ const ProjectsList = () => {
           </div>
 
           <div className="flex justify-center gap-2 mt-4">
-            <button disabled={currentPage === 1} onClick={() => setCurrentPage(c => c - 1)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${currentPage === 1 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}><FontAwesomeIcon icon={faChevronLeft} /></button>
-            {Array.from({ length: totalPages }).map((_, i) => (
-              <button key={i} onClick={() => setCurrentPage(i + 1)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${currentPage === i + 1 ? 'bg-[#3530B8] text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>{i + 1}</button>
-            ))}
-            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(c => c + 1)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${currentPage === totalPages ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}><FontAwesomeIcon icon={faChevronRight} /></button>
+            <button disabled={filteredProjects.length === 0 || currentPage === 1} onClick={() => setCurrentPage(c => c - 1)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${filteredProjects.length === 0 || currentPage === 1 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}><FontAwesomeIcon icon={faChevronLeft} /></button>
+            <div className="hidden md:flex gap-2">
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <button key={i} onClick={() => setCurrentPage(i + 1)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${currentPage === i + 1 ? 'bg-[#3530B8] text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>{i + 1}</button>
+              ))}
+            </div>
+            <div className="flex md:hidden gap-2">
+              {mobilePageNumbers.map(page => (
+                <button key={page} onClick={() => setCurrentPage(page)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${currentPage === page ? 'bg-[#3530B8] text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>{page}</button>
+              ))}
+            </div>
+            <button disabled={filteredProjects.length === 0 || currentPage === totalPages} onClick={() => setCurrentPage(c => c + 1)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${filteredProjects.length === 0 || currentPage === totalPages ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}><FontAwesomeIcon icon={faChevronRight} /></button>
           </div>
         </div>
 
