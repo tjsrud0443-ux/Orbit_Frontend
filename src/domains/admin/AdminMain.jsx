@@ -70,10 +70,10 @@ const KpiCard = ({ title, value, icon, iconColor, bgColor }) => (
 const ChartCard = ({ title, subtitle, children, extra }) => (
   <div className="bg-white p-8 rounded-2xl border border-[#edf2f9] shadow-sm flex flex-col h-full">
     <div className="flex items-center justify-between mb-8">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col min-[376px]:flex-row min-[376px]:items-center gap-1 min-[376px]:gap-2">
         <h3 className="text-lg font-bold text-[#1a1c3d]">{title}</h3>
         {subtitle && (
-          <span className="text-xs text-gray-400 mt-1">
+          <span className="text-xs text-gray-400 min-[376px]:mt-1">
             {subtitle}
           </span>
         )}
@@ -107,7 +107,7 @@ const AdminMain = () => {
         label: '직원 수',
         data: [],
         backgroundColor: BRAND_COLORS.main,
-        barThickness: 32,
+        barThickness: 24,
       },
     ],
   });
@@ -160,7 +160,7 @@ const AdminMain = () => {
             label: '직원 수',
             data: teamList.map(item => item.employeeCount),
             backgroundColor: BRAND_COLORS.main,
-            barThickness: 32,
+            barThickness: 24,
             borderRadius: (context) => {
               const width = window.innerWidth;
               return width >= 1024 ? 8 : 2;
@@ -222,7 +222,7 @@ const AdminMain = () => {
       if (barRef.current) {
         const chart = barRef.current;
         const isMobile = window.innerWidth < 768;
-        chart.data.datasets[0].barThickness = isMobile ? 16 : 32;
+        chart.data.datasets[0].barThickness = isMobile ? 12 : 24;
         chart.update();
       }
     };
