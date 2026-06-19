@@ -189,8 +189,8 @@ const AdminAttendance = () => {
                   <>
                     <th className="pb-4 pl-2 md:pl-3 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">신청자</th>
                     <th className="pb-4 pl-4 md:pl-6 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">부서/직급</th>
-                    <th className="pb-4 pl-8 md:pl-12 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">변경 희망 일자</th>
-                    <th className="pb-4 pl-4 md:pl-7 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">기존 시간</th>
+                    <th className="pb-4 pl-6 md:pl-12 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">변경 희망 일자</th>
+                    <th className="pb-4 pl-3 md:pl-7 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">기존 시간</th>
                     <th className="pb-4 pl-4 md:pl-7 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">변경 요청 시간</th>
                     <th className="pb-4 pl-10 md:pl-20 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">사유</th>
                     <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">관리자</th>
@@ -201,8 +201,8 @@ const AdminAttendance = () => {
                   <>
                     <th className="pb-4 pl-2 md:pl-3 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">신청자</th>
                     <th className="pb-4 pl-4 md:pl-6 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">부서/직급</th>
-                    <th className="pb-4 pl-8 md:pl-12 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">연장 근무 날짜</th>
-                    <th className="pb-4 pl-4 md:pl-5 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">근무 종료 시간</th>
+                    <th className="pb-4 pl-6 md:pl-12 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">연장 근무 날짜</th>
+                    <th className="pb-4 pl-3 md:pl-5 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">근무 종료 시간</th>
                     <th className="pb-4 pl-10 md:pl-20 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">사유</th>
                     <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">관리자</th>
                     <th className="pb-4 pl-10 md:pl-15 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">상태</th>
@@ -227,7 +227,7 @@ const AdminAttendance = () => {
                       <td className="py-4 pl-4 md:pl-8 text-xs text-[#3530B8] font-bold whitespace-nowrap">
                         {req.checkout_date ? req.checkout_date?.substring(11,16) : '미기록'}
                       </td>
-                      <td className="py-4 pl-4 md:pl-11 text-xs text-[#3530B8] font-bold whitespace-nowrap">{req.req_check_out?.substring(11,16)}</td>
+                      <td className="py-4 pl-8 md:pl-11 text-xs text-[#3530B8] font-bold whitespace-nowrap">{req.req_check_out?.substring(11,16)}</td>
                       <td className="py-4 pl-10 md:pl-19 text-xs text-slate-500 w-80 md:w-130 truncate whitespace-nowrap" title={req.reason}>
                         {req.reason}
                       </td>
@@ -237,7 +237,7 @@ const AdminAttendance = () => {
                         :
                         <td className="py-4 pl-2 md:pl-3 text-xs text-slate-600 font-medium whitespace-nowrap">-</td>
                       }
-                      <td className="py-4 pl-10 md:pl-13 whitespace-nowrap">
+                      <td className="py-4 pl-8 md:pl-13 whitespace-nowrap">
                         {
                           req.status === 'PENDING' ? 
                           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#FFF9F0] text-[#FF9800]">대기</span>
@@ -289,7 +289,7 @@ const AdminAttendance = () => {
                           <td className="py-4 pl-1 md:pl-2 text-sm font-bold text-slate-800 whitespace-nowrap">{req.name}</td>
                           <td className="py-4 pl-3 md:pl-6 text-xs text-slate-500 font-medium whitespace-nowrap">{req.dept_name} / {req.rank_name}</td>
                           <td className="py-4 pl-6 md:pl-13 text-[0.6875rem] text-slate-400 font-mono whitespace-nowrap">{req.work_date?.split(" ")[0]}</td>
-                          <td className="py-4 pl-4 md:pl-9 text-xs text-[#3530B8] font-bold whitespace-nowrap">{req.end_dt?.substring(11, 16)}</td>
+                          <td className="py-4 pl-7 md:pl-9 text-xs text-[#3530B8] font-bold whitespace-nowrap">{req.end_dt?.substring(11, 16)}</td>
                           <td className="py-4 pl-10 md:pl-19 text-xs text-slate-500 w-80 md:w-130 truncate whitespace-nowrap" title={req.reason}>
                             {req.reason}
                           </td>
@@ -299,7 +299,7 @@ const AdminAttendance = () => {
                             :
                             <td className="py-4 pl-2 md:pl-3 text-xs text-slate-600 font-medium whitespace-nowrap">-</td>
                           }
-                          <td className="py-4 pl-10 md:pl-13 whitespace-nowrap">
+                          <td className="py-4 pl-8 md:pl-13 whitespace-nowrap">
                             {
                               req.status === 'PENDING' ? 
                               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#FFF9F0] text-[#FF9800]">대기</span>
