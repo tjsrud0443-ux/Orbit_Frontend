@@ -9,6 +9,7 @@ import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
 import { alertSuccess, alertConfirm } from '../../utils/alert';
 import useLoadingStore from '../../store/useLoadingStore';
+import Pagination from '../../components/common/Pagination';
 
 const ProjectsList = () => {
   const navigate = useNavigate();
@@ -157,6 +158,13 @@ const ProjectsList = () => {
   }, [filteredProjects, currentPage]);
 
   const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
+  const mobilePageNumbers = useMemo(() => {
+    const maxMobilePages = 5;
+    const startPage = Math.max(1, Math.min(currentPage - Math.floor(maxMobilePages / 2), totalPages - maxMobilePages + 1));
+    const pageCount = Math.min(totalPages, maxMobilePages);
+
+    return Array.from({ length: pageCount }, (_, i) => startPage + i);
+  }, [currentPage, totalPages]);
 
   const handleCreate = () => {
     const newErrors = {};
@@ -826,12 +834,15 @@ const ProjectsList = () => {
             </table>
           </div>
 
-          <div className="flex justify-center gap-2 mt-4">
-            <button disabled={currentPage === 1} onClick={() => setCurrentPage(c => c - 1)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${currentPage === 1 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}><FontAwesomeIcon icon={faChevronLeft} /></button>
-            {Array.from({ length: totalPages }).map((_, i) => (
-              <button key={i} onClick={() => setCurrentPage(i + 1)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${currentPage === i + 1 ? 'bg-[#3530B8] text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>{i + 1}</button>
+          <div className="hidden md:block mt-4">
+            <Pagination count={totalPages} page={currentPage} onChange={(_, value) => setCurrentPage(value)} />
+          </div>
+          <div className="flex md:hidden justify-center gap-2 mt-4">
+            <button disabled={filteredProjects.length === 0 || currentPage === 1} onClick={() => setCurrentPage(c => c - 1)} className="w-8 h-8 rounded-xl border border-[rgba(0,0,0,0.23)] text-xs font-bold text-[rgba(0,0,0,0.87)] transition-colors hover:bg-[#F0F4FF] hover:text-[#3530B8] disabled:opacity-[0.38] disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[rgba(0,0,0,0.87)]"><FontAwesomeIcon icon={faChevronLeft} /></button>
+            {mobilePageNumbers.map(page => (
+              <button key={page} onClick={() => setCurrentPage(page)} className={`w-8 h-8 rounded-xl border text-xs font-bold transition-colors ${currentPage === page ? 'bg-[#3530B8] border-[#3530B8] text-white hover:bg-[#2a2594]' : 'border-[rgba(0,0,0,0.23)] text-[rgba(0,0,0,0.87)] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>{page}</button>
             ))}
-            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(c => c + 1)} className={`px-2.5 py-1 rounded-lg transition-all text-xs ${currentPage === totalPages ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}><FontAwesomeIcon icon={faChevronRight} /></button>
+            <button disabled={filteredProjects.length === 0 || currentPage === totalPages} onClick={() => setCurrentPage(c => c + 1)} className="w-8 h-8 rounded-xl border border-[rgba(0,0,0,0.23)] text-xs font-bold text-[rgba(0,0,0,0.87)] transition-colors hover:bg-[#F0F4FF] hover:text-[#3530B8] disabled:opacity-[0.38] disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[rgba(0,0,0,0.87)]"><FontAwesomeIcon icon={faChevronRight} /></button>
           </div>
         </div>
 

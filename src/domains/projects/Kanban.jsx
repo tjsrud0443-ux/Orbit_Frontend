@@ -1197,7 +1197,7 @@ const Kanban = () => {
                 <div className="grid grid-cols-2 gap-8">
                   <div className="space-y-2">
                     <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">시작일</p>
-                    <div className="text-sm font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg flex items-center h-[32px]">
+                    <div className="text-sm font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg flex items-center h-[32px] whitespace-nowrap max-[430px]:px-2 max-[430px]:text-xs">
                       {detailModalTask.start_date?.substring(0, 10)}
                     </div>
                   </div>
@@ -1205,13 +1205,13 @@ const Kanban = () => {
                     <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">마감일</p>
                     <div
                       onClick={() => setOpenCalendar(openCalendar === 'detailEnd' ? null : 'detailEnd')}
-                      className="text-sm font-bold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg cursor-pointer flex justify-between items-center min-w-[150px] h-[32px]"
+                      className="text-sm font-bold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg cursor-pointer flex justify-between items-center gap-1 min-w-[150px] h-[32px] whitespace-nowrap max-[430px]:min-w-0 max-[430px]:px-2 max-[430px]:text-xs"
                     >
                       {detailModalTask.due_date.substring(0, 10)}
-                      <FontAwesomeIcon icon={faCalendarAlt} className="text-slate-400 text-[10px]" />
+                      <FontAwesomeIcon icon={faCalendarAlt} className="shrink-0 text-slate-400 text-[10px]" />
                     </div>
                     {openCalendar === 'detailEnd' && (
-                      <div className="absolute top-full right-0 z-[110] mt-2 w-[280px] [&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-0 [&>div]:mb-0">
+                      <div className="absolute top-full right-0 z-[110] mt-2 w-[280px] max-[430px]:fixed max-[430px]:left-1/2 max-[430px]:right-auto max-[430px]:top-[265px] max-[430px]:w-[260px] max-[430px]:-translate-x-1/2 [&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-0 [&>div]:mb-0">
                         <Calendar
                           value={detailModalTask.due_date}
                           minDate={detailModalTask?.start_date?.substring(0, 10)}

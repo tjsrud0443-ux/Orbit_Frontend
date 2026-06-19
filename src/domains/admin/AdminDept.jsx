@@ -278,7 +278,7 @@ const AdminDept = () => {
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${level === 0 ? 'bg-indigo-50 text-[#3530B8]' : 'bg-slate-100 text-slate-500'}`}>
                   <FontAwesomeIcon icon={level === 0 ? faBuilding : faLayerGroup} className="text-xs" />
                 </div>
-                <span className={`text-sm ${level === 0 ? 'font-bold text-slate-800' : 'font-medium text-slate-600'}`}>
+                <span className={`text-sm whitespace-nowrap ${level === 0 ? 'font-bold text-slate-800' : 'font-medium text-slate-600'}`}>
                   {displayName}
                 </span>
               </div>
@@ -293,7 +293,7 @@ const AdminDept = () => {
               <span className="text-sm font-bold text-slate-600">{memberCount}명</span>
             </div>
           </td>
-          <td className="py-4 pl-4 pr-20 text-right">
+          <td className="py-4 pl-4 pr-18 md:pr-20 text-right">
             <div className="flex justify-end gap-2">
               {(level !== 0 && node.auth_group === 'ROLE_USER' && node.deptSeq !== 4) && (
                 <>
@@ -331,7 +331,7 @@ const AdminDept = () => {
                   <th className="py-4 pl-6 pr-4 w-[40%]">부서</th>
                   <th className="py-4 px-4 w-[25%]">부서 코드</th>
                   <th className="py-4 px-4 w-[15%]">총 인원</th>
-                  <th className="py-4 pl-4 pr-27 w-[20%] text-right">관리</th>
+                  <th className="py-4 pl-4 pr-27 w-[20%] text-right whitespace-nowrap">관리</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -343,16 +343,16 @@ const AdminDept = () => {
 
         <aside
           ref={sidePanelRef}
-          className={`bg-white border border-slate-200 rounded-2xl shadow-xl z-40 transition-all duration-500 ease-in-out flex flex-col overflow-hidden self-start
+          className={`admin-dept-form-panel bg-white border border-slate-200 rounded-2xl shadow-xl z-40 transition-all duration-500 ease-in-out flex flex-col overflow-hidden self-start
             ${formMode ? 'w-[320px] lg:w-[380px] opacity-100 translate-x-0 ml-0' : 'w-0 opacity-0 translate-x-10 ml-[-24px] pointer-events-none'}
           `}
-          style={{ height: formMode ? 'auto' : '0', maxHeight: '70%', minHeight: formMode ? '400px' : '0' }}
+          style={{ height: formMode ? '80%' : '0', maxHeight: '80%', minHeight: formMode ? '400px' : '0' }}
         >
           <div className="h-16 px-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
             <h2 className="text-base font-bold text-slate-800">{panelTitle}</h2>
             <button onClick={handleCloseForm} className="w-8 h-8 rounded-full hover:bg-white hover:shadow-sm text-slate-400 hover:text-slate-600 transition-all flex items-center justify-center cursor-pointer"><FontAwesomeIcon icon={faTimes} className="text-xs" /></button>
           </div>
-          <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+          <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6 custom-scrollbar">
             {formMode === 'CREATE_SUB' && (
               <div className="space-y-1.5 relative">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">상위 본부 선택</label>
@@ -474,6 +474,13 @@ const AdminDept = () => {
       </div >
 
       <style>{`
+        @media (max-width: 375px) {
+          .admin-dept-form-panel {
+            height: 100% !important;
+            max-height: 100% !important;
+            min-height: 0 !important;
+          }
+        }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
