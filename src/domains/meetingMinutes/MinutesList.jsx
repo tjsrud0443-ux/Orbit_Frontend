@@ -2,6 +2,7 @@
 import { createPortal } from 'react-dom';
 import Calendar from '../../components/common/Calendar';
 import Pagination from '../../components/common/Pagination';
+import MobilePagination from '../../components/common/MobilePagination';
 import useEmployeeStore from '../../store/useEmployeeStore';
 import useAuthStore from '../../store/authStore';
 import useUserStore from '../../store/userStore';
@@ -644,7 +645,10 @@ const MinutesList = () => {
           </div>
 
           <div className="border-t border-gray-50 bg-white py-2 shrink-0">
-            <Pagination count={totalPages} page={currentPage} onChange={handlePageChange} />
+            <MobilePagination count={totalPages} page={currentPage} onChange={handlePageChange} />
+            <div className="hidden md:block">
+              <Pagination count={totalPages} page={currentPage} onChange={handlePageChange} />
+            </div>
           </div>
         </div>
 

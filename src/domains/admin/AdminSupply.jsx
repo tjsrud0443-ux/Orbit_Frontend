@@ -6,6 +6,7 @@ import { faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { deleteAdminSupplies, getAdminSupplies, insertAdminSupplies, updateAdminSupplies} from '../admin/adminApi';
 import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 import useLoadingStore from '../../store/useLoadingStore';
+import MobilePagination from '../../components/common/MobilePagination';
 
 const CATEGORIES = ['전체', '사무용품', '전자기기', '가구', '네트워크 장비'];
 
@@ -664,7 +665,10 @@ const handleSave = async (form) => {
       </div>
 
         <div className="shrink-0 pt-4">
-          <AdminPagination count={Math.ceil(filtered.length / PER_PAGE)} page={page} onChange={(_, v) => setPage(v)} />
+          <MobilePagination count={Math.ceil(filtered.length / PER_PAGE)} page={page} onChange={(_, v) => setPage(v)} />
+          <div className="hidden md:block">
+            <AdminPagination count={Math.ceil(filtered.length / PER_PAGE)} page={page} onChange={(_, v) => setPage(v)} />
+          </div>
         </div>
       </div>
     </div>

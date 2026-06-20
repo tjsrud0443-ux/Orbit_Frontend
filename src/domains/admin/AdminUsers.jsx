@@ -1,5 +1,6 @@
 ﻿import React, { useState,useEffect,useRef } from 'react';
 import Pagination from '../../components/common/Pagination';
+import MobilePagination from '../../components/common/MobilePagination';
 import { getAllUsers, updateUsersInfo, updateUsersState, getDeptList, getRankList} from './adminApi';
 import { alertError } from '../../utils/alert';
 
@@ -373,11 +374,18 @@ const AdminUsers = () => {
           </div>
 
           <div className="border-t border-gray-50 bg-white rounded-b-[32px] py-2">
-            <Pagination 
+            <MobilePagination
               count={totalPages} 
               page={currentPage} 
               onChange={handlePageChange} 
             />
+            <div className="hidden md:block">
+              <Pagination 
+                count={totalPages} 
+                page={currentPage} 
+                onChange={handlePageChange} 
+              />
+            </div>
           </div>
         </div>
 

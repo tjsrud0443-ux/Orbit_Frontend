@@ -1,5 +1,6 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Pagination from '../../components/common/Pagination';
+import MobilePagination from '../../components/common/MobilePagination';
 import { getMySupplyRequest, deleteMySupplyRequest } from './mypageApi';
 import useLoadingStore from '../../store/useLoadingStore';
 import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
@@ -164,7 +165,10 @@ const SupplyHistory = () => {
 
           {/* Pagination */}
           <div className="border-t border-gray-50 flex-shrink-0">
-            <Pagination count={totalPages} page={page} onChange={handlePageChange} />
+            <MobilePagination count={totalPages} page={page} onChange={handlePageChange} />
+            <div className="hidden md:block">
+              <Pagination count={totalPages} page={page} onChange={handlePageChange} />
+            </div>
           </div>
         </div>
 
