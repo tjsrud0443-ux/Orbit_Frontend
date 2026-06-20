@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Pagination from '../../components/common/Pagination';
+import MobilePagination from '../../components/common/MobilePagination';
 import { getSupplyRentalList, updateRentalStatus } from './adminApi';
 import { alertSuccess, alertConfirm } from '../../utils/alert';
 
@@ -212,11 +213,18 @@ const handleReturn = async () => {
           </div>
 
           <div className="pt-2 md:pt-4 shrink-0">
-            <Pagination
+            <MobilePagination
               count={totalPages}
               page={page}
               onChange={(_, v) => setPage(v)}
             />
+            <div className="hidden md:block">
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={(_, v) => setPage(v)}
+              />
+            </div>
           </div>
         </div>
 

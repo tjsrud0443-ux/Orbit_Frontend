@@ -23,6 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 
-# 환경 변수 (이 부분을 추가해 주세요!)
+# 환경 변수
 .env
 .env.local
+
+#firebase cache
+.firebase/hosting.*.cache

@@ -1,7 +1,8 @@
 ﻿import React, { useState, useMemo, useEffect } from 'react';
-import { Pagination as MuiPagination, PaginationItem, Stack, useMediaQuery, useTheme } from '@mui/material';
+import { Pagination as MuiPagination, Stack } from '@mui/material';
 import { getSuppyReqList, updateSupplyReqStatus } from '../admin/adminApi';
 import { alertWarning, alertSuccess, alertConfirm } from '../../utils/alert';
+import MobilePagination from '../../components/common/MobilePagination';
 
 const STATUS_TABS = [
   { key: '전체', label: '전체' },
@@ -24,8 +25,6 @@ const StatusBadge = ({ status }) => {
 };
 
 const AdminSupplyReq = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [requests, setRequests] = useState([]);
   const [activeTab, setActiveTab] = useState('전체');
   const [tabCounts, setTabCounts] = useState({ 전체: 0, 대기: 0, 승인: 0, 반려: 0 });
@@ -274,43 +273,40 @@ const AdminSupplyReq = () => {
           </div>
 
           <div className="pt-4 shrink-0 overflow-hidden">
-            <Stack spacing={2} sx={{ alignItems: 'center', py: 3, width: '100%' }}>
-              <MuiPagination
-                count={totalPages}
-                page={page}
-                onChange={(_, v) => setPage(v)}
-                variant="outlined"
-                shape="rounded"
-                color="primary"
-                siblingCount={isMobile ? 0 : 1}
-                boundaryCount={isMobile ? 0 : 1}
-                renderItem={(item) => {
-                  if (isMobile && item.type === 'page' && item.page !== page) return null;
-                  return <PaginationItem {...item} />;
-                }}
-                sx={{
-                  '& .MuiPagination-ul': {
-                    flexWrap: 'nowrap',
-                  },
-                  '& .MuiPaginationItem-root': {
-                    fontFamily: 'inherit',
-                    fontWeight: 'bold',
-                    borderRadius: '12px',
-                  },
-                  '& .MuiPaginationItem-root.Mui-selected': {
-                    backgroundColor: '#3530B8',
-                    color: '#fff',
-                  },
-                  '& .MuiPaginationItem-root.Mui-selected:hover': {
-                    backgroundColor: '#2a2594',
-                  },
-                  '& .MuiPaginationItem-root:hover': {
-                    backgroundColor: '#F0F4FF',
-                    color: '#3530B8',
-                  },
-                }}
-              />
-            </Stack>
+            <MobilePagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} />
+            <div className="hidden md:block">
+              <Stack spacing={2} sx={{ alignItems: 'center', py: 3, width: '100%' }}>
+                <MuiPagination
+                  count={totalPages}
+                  page={page}
+                  onChange={(_, v) => setPage(v)}
+                  variant="outlined"
+                  shape="rounded"
+                  color="primary"
+                  sx={{
+                    '& .MuiPagination-ul': {
+                      flexWrap: 'nowrap',
+                    },
+                    '& .MuiPaginationItem-root': {
+                      fontFamily: 'inherit',
+                      fontWeight: 'bold',
+                      borderRadius: '12px',
+                    },
+                    '& .MuiPaginationItem-root.Mui-selected': {
+                      backgroundColor: '#3530B8',
+                      color: '#fff',
+                    },
+                    '& .MuiPaginationItem-root.Mui-selected:hover': {
+                      backgroundColor: '#2a2594',
+                    },
+                    '& .MuiPaginationItem-root:hover': {
+                      backgroundColor: '#F0F4FF',
+                      color: '#3530B8',
+                    },
+                  }}
+                />
+              </Stack>
+            </div>
           </div>
         </div>
 

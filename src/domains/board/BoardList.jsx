@@ -1,6 +1,7 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Pagination from '../../components/common/Pagination';
+import MobilePagination from '../../components/common/MobilePagination';
 import { maxios } from "../../api/axiosConfig"; 
 import { getBoardList } from './boardApi';
 import useLoadingStore from '../../store/useLoadingStore';
@@ -227,7 +228,10 @@ const BoardList = () => {
 
         {/* 페이지네이션 */}
         <div className="border-t border-gray-50 bg-white py-2 shrink-0 rounded-b-3xl">
-          <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} />
+          <MobilePagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} />
+          <div className="hidden md:block">
+            <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} />
+          </div>
         </div>
       </div>
     </div>
