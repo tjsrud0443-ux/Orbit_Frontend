@@ -360,7 +360,7 @@ const Signup = () => {
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1 ml-1">전화번호</label>
                   <input
-                    type="tel"
+                    type="text"
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
@@ -379,7 +379,7 @@ const Signup = () => {
                       value={formData.id}
                       onChange={handleChange}
                       placeholder="아이디"
-                      className="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-sm text-gray-700 text-sm shadow-sm"
+                      className="flex-1 min-w-0 px-4 py-2 bg-white border border-gray-200 rounded-xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-sm text-gray-700 text-sm shadow-sm"
                     />
                     <button
                       type="button"
@@ -424,7 +424,7 @@ const Signup = () => {
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1 ml-1">주민등록번호</label>
                   <input
-                    type="tel"
+                    type="text"
                     name="ssn"
                     value={formData.ssn}
                     onChange={handleChange}
@@ -443,7 +443,7 @@ const Signup = () => {
                       value={formData.zonecode}
                       onChange={handleChange}
                       placeholder="우편번호"
-                      className="flex-1 px-4 py-2 bg-[#F5F8FF] border border-gray-200 rounded-xl outline-none text-gray-500 shadow-inner text-sm placeholder:text-sm"
+                      className="flex-1 min-w-0 px-4 py-2 bg-[#F5F8FF] border border-gray-200 rounded-xl outline-none text-gray-500 shadow-inner text-sm placeholder:text-sm"
                       readOnly
                     />
                     <button
@@ -493,7 +493,7 @@ const Signup = () => {
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="example@email.com"
-                      className="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-sm text-gray-700 text-sm shadow-sm"
+                      className="flex-1 min-w-0 px-4 py-2 bg-white border border-gray-200 rounded-xl focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-sm text-gray-700 text-sm shadow-sm"
                     />
                     <button
                       type="button"
