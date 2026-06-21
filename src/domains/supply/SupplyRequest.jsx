@@ -265,7 +265,14 @@ const SupplyRequest = () => {
     return `${yyyy}-${mm}-${dd}`;
 })();
 
-  const [reqDate, setReqDate] = useState(today);
+const getNextWeekday = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+  const [reqDate, setReqDate] = useState(getNextWeekday()); // today → getNextWeekday()
   const [reason, setReason] = useState('');
   const [items, setItems] = useState([]);
   const [errors, setErrors] = useState({});
@@ -305,7 +312,8 @@ const SupplyRequest = () => {
     const e = {};
     if (!reason.trim()) e.reason = true;
     if (items.length === 0) e.items = true;
-    if (reqDate < today) e.reqDate = true;
+    if (reqDate < today || new Date(reqDate).getDay() === 0 
+    || new Date(reqDate).getDay() === 6) e.reqDate = true;
     setErrors(e);
     //에러가 하나도 없으면 true 반환
     return Object.keys(e).length === 0;
@@ -425,7 +433,7 @@ const SupplyRequest = () => {
             </div>
              {errors.reqDate && (
                 <p className="text-[10px] text-red-500 font-bold mt-0.5 ml-1">
-                    오늘 이후 날짜를 선택해주세요.
+                    오늘 이후 평일만 선택 가능합니다.
                 </p>
               )}
           </div>

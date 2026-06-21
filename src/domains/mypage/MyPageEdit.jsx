@@ -22,7 +22,7 @@ const MyPageEdit = () => {
   const [isEmailChecked, setIsEmailChecked] = useState(true);
   const [errors, setErrors] = useState({});
   const phoneRegex = /^010-\d{4}-\d{4}$/;
-  const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+  const emailRegex = /^[A-Za-z0-9._%+-]{1,20}@[a-z]+\.[a-z]{3}$/;
 
 useEffect(() => {
   getProfileInfo()
@@ -111,7 +111,7 @@ useEffect(() => {
     const newErrors = {};
 
     if (formData.email && !emailRegex.test(formData.email)) {
-      newErrors.email = 'example@email.com(또는 co.kr) 등 알맞은 형식으로 입력해주세요.';
+      newErrors.email = 'example@email.com 등 알맞은 형식으로 입력해주세요.';
     }
     if (!isEmailChecked) {
       newErrors.emailCheck = '이메일 중복 확인이 필요합니다.';
