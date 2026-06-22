@@ -533,7 +533,6 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
         />
       </div>
 
-      {/* [Mobile View] - 새로운 모바일용 레이아웃 */}
       <div className="md:hidden space-y-6">
         {/* 제목 (모바일) */}
         <div className="space-y-2">
@@ -663,6 +662,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                     e.target.style.height = e.target.scrollHeight + 'px';
                   }}
                   className={`w-full p-2.5 text-xs border ${errors.account_info ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none overflow-hidden min-h-[80px]`}
+                  placeholder="은행명 / 계좌번호 / 예금주 (50자 이하)"
                 ></textarea>
                 {errors.account_info && <p className="text-[10px] text-red-500">{errors.account_info}</p>}
               </div>
@@ -672,7 +672,6 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
           </div>
         </div>
 
-        {/* 지출 항목 (모바일 카드 레이아웃) */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
