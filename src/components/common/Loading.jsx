@@ -22,7 +22,7 @@ const Loading = ({ type = "default" }) => {
     return (<div className="flex flex-col items-center gap-4">
       <img src={frame === 0 ? IMAGES.LOBOT_SMILE : IMAGES.LOBOT_THINKING} alt="Loading" className="w-64 md:w-72"/>
       <h3 className="text-lg md:text-xl font-bold text-[#FFFFFF]">AI 챗봇과의 동기화를 위해 <br className="md:hidden" />문서를 분석하고 있습니다...</h3>
-      <p className="text-sm md:text-base text-[#FFFFFF]">문서 크기에 따라 최대 10초 정도 소요될 수 있습니다.</p>
+      <p className="text-sm md:text-base text-[#FFFFFF]">문서 크기에 따라 최대 2분 정도 소요될 수 있습니다.</p>
     </div>)
   }
 
@@ -30,7 +30,7 @@ const Loading = ({ type = "default" }) => {
     return (<div className="flex flex-col items-center gap-4">
       <img src={frame === 0 ? IMAGES.LOBOT_SMILE : IMAGES.LOBOT_THINKING} alt="Loading" className="w-64 md:w-72"/>
       <h3 className="text-lg md:text-xl font-bold text-[#FFFFFF]">AI 챗봇과의 동기화를 위해 <br className="md:hidden" />회의록을 분석하고 있습니다...</h3>
-      <p className="text-sm md:text-base text-[#FFFFFF]">회의록 크기에 따라 최대 10초 정도 소요될 수 있습니다.</p>
+      <p className="text-sm md:text-base text-[#FFFFFF]">회의록 크기에 따라 최대 2분 정도 소요될 수 있습니다.</p>
     </div>)
   }
 
