@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useMemo, useEffect } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css'; // 기본 스노우 테마 CSS 로드
 import { maxios } from "../../api/axiosConfig"; 
@@ -17,9 +17,28 @@ const BoardWrite = () => {
   const isEdit = !!editPost; // 수정 모드 여부
   const quillRef = useRef(null); // 💡 에디터 객체에 직접 접근하기 위한 Ref 추가
   const fileInputRef = useRef(null);
-
+  const categoryRef = useRef(null);
 
   const isHR = user?.auth_group?.includes('HR');
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (categoryRef.current && !categoryRef.current.contains(event.target)) {
+        setIsCategoryOpen(false);
+      }
+    };
+
+    if (isCategoryOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isCategoryOpen]);
 
   const [form, setForm] = useState({
     category: editPost?.category || (isHR ? CATEGORIES_HR[0] : '자유'),
@@ -117,13 +136,13 @@ return {
     if (errors[key]) setErrors(prev => ({ ...prev, [key]: false }));
   };
 
-  const handleCategoryChange = (e) => {
-    const newCategory = e.target.value;
+  const handleCategoryChange = (valueOrEvent) => {
+    const newCategory = typeof valueOrEvent === 'string' ? valueOrEvent : valueOrEvent.target.value;
     set('category', newCategory);
     // 제목 앞의 기존 [태그] 제거 후 새 태그 삽입
     const stripped = form.title.replace(/^\[[^\]]*\]\s*/, '');
     //stripped는 기존 제목에서 [이전태그] 를 제거한 순수 제목 텍스트
-     set('title', newCategory === '자유' ? stripped : `[${newCategory}] ${stripped}`);
+    set('title', newCategory === '자유' ? stripped : `[${newCategory}] ${stripped}`);
   };
 
   const handleEditorChange = (value) => {
@@ -267,19 +286,40 @@ return {
                   <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">
                     카테고리
                   </label>
-                  <div className="relative">
-                    <select
-                      value={form.category}
-                      onChange={handleCategoryChange}
-                      className="w-full appearance-none px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-indigo-600/5 focus:border-indigo-400 transition-all pr-9"
+                  <div className="relative" ref={categoryRef}>
+                    <div 
+                      onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                      className={`w-full px-4 py-3 bg-white border ${
+                        isCategoryOpen ? 'border-indigo-400 ring-4 ring-indigo-600/5' : 'border-gray-200'
+                      } rounded-2xl text-sm font-bold text-gray-700 transition-all cursor-pointer flex justify-between items-center`}
                     >
-                      {CATEGORIES_HR.map(c => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
-                    <svg className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path d="M6 9l6 6 6-6"/>
-                    </svg>
+                      <span>{form.category}</span>
+                      <svg 
+                        className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isCategoryOpen ? 'rotate-180' : ''}`} 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>
+                      </svg>
+                    </div>
+                    {isCategoryOpen && (
+                      <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-2xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
+                        {CATEGORIES_HR.map((c) => (
+                          <div 
+                            key={c}
+                            onClick={() => { 
+                              handleCategoryChange(c);
+                              setIsCategoryOpen(false); 
+                            }}
+                            className="px-4 py-3 text-sm hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer font-bold text-gray-700 border-b border-gray-50 last:border-0"
+                          >
+                            {c}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
