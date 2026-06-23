@@ -181,14 +181,10 @@ const MeetingRooms = () => {
       title: '',
       attendees: []
     });
-  };
-
-  const handleClosePanel = () => {
-    setIsPanelOpen(false);
-    setShowFormCalendar(false);
+    setSearchQuery('');
+    setShowSearchResults(false);
     setShowValidation(false);
-    setSearchQuery(''); // 검색어 초기화
-    setShowSearchResults(false); // 검색 결과창 닫기
+    setIsPanelOpen(true);
   };
 
   const handleQuickSelect = async (hours) => {
@@ -328,7 +324,8 @@ const MeetingRooms = () => {
       await createReservation(newEvent);
       const resp = await getReservations(format(currentDate, 'yyyy-MM-dd'), selectedRoomSeq);
       setEvents(resp.data);
-      handleClosePanel();
+      setIsPanelOpen(false);
+      setShowValidation(false);
       await alertSuccess('예약 완료', '회의실 예약이 완료되었습니다.<br>캘린더에서 일정을 확인하세요.');
     } catch(error) {
       if (error.response?.data?.message === 'CONFLICT') {
@@ -490,7 +487,7 @@ const MeetingRooms = () => {
           <div className={`flex flex-col bg-white rounded-none md:rounded-[2rem] border-0 md:border border-[#F0F4FF] shadow-sm overflow-hidden min-h-0 animate-in slide-in-from-right duration-500 flex-1 md:flex-[0.4]`}>
              <div className="p-6 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
                 <h2 className="text-lg font-bold text-gray-900">신규 회의 예약</h2>
-                <button onClick={handleClosePanel} className="text-gray-300 hover:text-gray-500 transition-colors cursor-pointer">
+                <button onClick={() => { setIsPanelOpen(false); setShowFormCalendar(false); setShowValidation(false); }} className="text-gray-300 hover:text-gray-500 transition-colors cursor-pointer">
                   <FontAwesomeIcon icon={faTimes} />
                 </button>
              </div>
@@ -753,7 +750,7 @@ const MeetingRooms = () => {
 
              <div className="p-8 border-t border-gray-50 flex gap-4 bg-white flex-shrink-0">
                 <button 
-                  onClick={handleClosePanel}
+                  onClick={() => { setIsPanelOpen(false); setShowFormCalendar(false); setShowValidation(false); }}
                   className="flex-1 py-4 border-2 border-gray-100 text-gray-400 text-sm font-bold rounded-2xl hover:bg-gray-50 transition-all cursor-pointer"
                 >
                   취소
