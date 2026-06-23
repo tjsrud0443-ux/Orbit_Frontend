@@ -1,5 +1,4 @@
-﻿import { makeStyles } from "@mui/material";
-import { maxios } from "../../api/axiosConfig";
+﻿import { maxios } from "../../api/axiosConfig";
 
 // 회원가입 관리
 export const getAllRequest = (page, status, searchTerm) => maxios.get("/admin/hr/allRequest", { params: { cPage: page, status: status, searchTerm: searchTerm } });

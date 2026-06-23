@@ -173,6 +173,7 @@ const AdminMain = () => {
 
   useEffect(() => {
     getDeptLeave().then(resp => {
+      console.log("연차 현황", resp.data);
       setDeptsLeave({
         labels: resp.data.map(item => item.deptName),
         datasets: [
@@ -239,6 +240,23 @@ const AdminMain = () => {
     { id: 5, title: '비품 신청 (승인 대기)', value: `${dashboard.supplyRequestCount}건`, icon: faBoxOpen, iconColor: 'text-[#7c3aed]', bgColor: 'bg-[#F0F4FF]' },
   ];
 
+  const leaveValues = deptsLeave.datasets[0].data;
+  const isAllLeaveZero = leaveValues.length > 0 && leaveValues.every(value => Number(value) === 0);
+
+  const doughnutData = isAllLeaveZero
+    ? {
+      labels: deptsLeave.labels,
+      datasets: [
+        {
+          data: deptsLeave.labels.map(() => 1),
+          backgroundColor: deptsLeave.labels.map((_, idx) => BRAND_COLORS.donut[idx % BRAND_COLORS.donut.length]),
+          borderWidth: 0,
+          hoverOffset: 4,
+        },
+      ],
+    }
+    : deptsLeave;
+
   return (
     <div className="flex-1 bg-white min-h-screen p-8 lg:p-12 overflow-y-auto">
       <div className="max-w-7xl mx-auto space-y-10">
@@ -295,13 +313,24 @@ const AdminMain = () => {
             <div className="flex flex-col sm:flex-row items-center justify-between h-full gap-16 lg:gap-20 pl-4 sm:pl-8 md:pl-12">
               <div className="w-full max-w-[200px] h-[200px]">
                 <Doughnut
-                  data={deptsLeave}
+                  data={doughnutData}
                   options={{
                     responsive: true,
                     maintainAspectRatio: false,
                     cutout: '50%',
                     spacing: 3,
-                    plugins: { legend: { display: false } }
+                    plugins: {
+                      legend: { display: false },
+                      tooltip: {
+                        callbacks: {
+                          label: function (context) {
+                            const label = context.label || '';
+                            const realValue = deptsLeave.datasets[0].data[context.dataIndex] ?? 0;
+                            return `${label}: ${realValue}%`;
+                          }
+                        }
+                      }
+                    }
                   }}
                 />
               </div>
