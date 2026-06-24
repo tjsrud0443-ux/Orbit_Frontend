@@ -1,4 +1,4 @@
-﻿import React, { useState,useEffect,useRef } from 'react';
+import React, { useState,useEffect,useRef } from 'react';
 import Pagination from '../../components/common/Pagination';
 import MobilePagination from '../../components/common/MobilePagination';
 import { getAllUsers, updateUsersInfo, updateUsersState, getDeptList, getRankList} from './adminApi';
@@ -56,10 +56,10 @@ const AdminUsers = () => {
   // 외부 클릭 시 수정 모드 및 드롭다운 해제
  useEffect(() => {
     const handleOutsideClick = (e) => {
+      if (editingId !== null && !e.target.closest('.status-edit-buttons') && !e.target.closest('.edit-trigger-btn') && !e.target.closest('.mobile-edit-btn')) {
+        setEditingId(null);
+      }
       if (containerRef.current && !containerRef.current.contains(e.target)) {
-        if (editingId !== null && !e.target.closest('.mobile-edit-btn')) {
-          setEditingId(null);
-        }
         if (!e.target.closest('.custom-dropdown')) {
           setIsDeptOpen(false);
           setIsRankOpen(false);
@@ -332,9 +332,9 @@ const AdminUsers = () => {
                         {emp.hire_date ? String(emp.hire_date).split(' ')[0] : ''}
                       </td>
 
-                      <td className="py-2 px-4 block sm:table-cell text-left w-fit clear-both mt-2">
+                      <td className="py-2 px-4 block sm:table-cell text-left w-fit sm:w-[140px] clear-both mt-2">
                         {editingId === emp.users_seq ? (
-                          <div className="flex gap-1 justify-start w-full transform -translate-x-3 whitespace-nowrap">
+                          <div className="status-edit-buttons flex gap-1 justify-start w-full whitespace-nowrap">
                             <button 
                               type="button"
                               onClick={(e) => { e.stopPropagation(); handleStatusChange(e, emp.users_seq, 'ACTIVE'); }}
@@ -361,7 +361,7 @@ const AdminUsers = () => {
                               e.stopPropagation();
                               setEditingId(emp.users_seq);
                             }}
-                            className="w-max px-7 py-1 text-xs font-bold text-slate-600 bg-white border border-slate-300 rounded-full hover:bg-slate-50 shadow-sm">
+                            className="edit-trigger-btn w-max px-7 py-1 text-xs font-bold text-slate-600 bg-white border border-slate-300 rounded-full hover:bg-slate-50 shadow-sm">
                             수정
                           </button>
                         ) :null}
@@ -455,7 +455,7 @@ const AdminUsers = () => {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-500 min-w-[50px] whitespace-nowrap">부서</span>
-                      {isDetailEditing ? (
+                      {isDetailEditing && selectedUser.rank_name !== '대표' && selectedUser.dept_name !== '대표이사실' ? (
                         <div className="relative custom-dropdown w-full">
                           <div 
                             onClick={() => { setIsDeptOpen(!isDeptOpen); setIsRankOpen(false); setIsPermissionOpen(false); }}
@@ -513,7 +513,7 @@ const AdminUsers = () => {
                     </div>
                     <div className="flex justify-between items-center">
                     <span className="text-xs text-slate-500 min-w-[50px] whitespace-nowrap">직급</span>
-                    {isDetailEditing ? (
+                    {isDetailEditing && selectedUser.rank_name !== '대표' && selectedUser.dept_name !== '대표이사실' ? (
                       <div className="relative custom-dropdown w-full">
                         <div 
                           onClick={() => { 

@@ -27,7 +27,14 @@ const CheckoutCorrectionModal = ({ onClose }) => {
   useEffect(() => {
     getMyCheckoutList()
       .then(resp => {
-        const sorted = (resp.data || []).sort((a, b) => new Date(b.work_date) - new Date(a.work_date));
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const filtered = (resp.data || []).filter(a => {
+          const workDate = new Date(a.work_date);
+          workDate.setHours(0, 0, 0, 0);
+          return workDate < today;
+        });
+        const sorted = filtered.sort((a, b) => new Date(b.work_date) - new Date(a.work_date));
         setAttendanceList(sorted);
       })
       .catch(err => console.error('목록 로드 실패:', err));

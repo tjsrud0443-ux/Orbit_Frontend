@@ -15,14 +15,31 @@ const COMPANY_COLORS = {
   holiday: '#EF4444',
 };
 
+// 특정 날짜의 일정 필터링 헬퍼 함수
+const filterEventsByDate = (events, dateStr) => {
+  return (events || []).filter(e => {
+    const eStartDay = e.start?.split(' ')[0];
+    const eEndDay = e.originalEnd ?? eStartDay;
+    if (eEndDay !== eStartDay) {
+      return dateStr >= eStartDay && dateStr <= eEndDay;
+    }
+    return eStartDay === dateStr;
+  });
+};
+
 const usePublicCalendar = () => {
   const calendarStore = useCalendarStore();
   const navigate = useNavigate();
   const calendarEventsRef = useRef([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [selectedSchedules, setSelectedSchedules] = useState([]);
-  const [isCalendarLoading, setIsCalendarLoading] = useState(true);   
+  const [selectedSchedules, setSelectedSchedules] = useState(() => {
+  const todayStr = new Date().toISOString().split('T')[0];
+  return filterEventsByDate(useCalendarStore.getState().events, todayStr);
+});
+  const [isCalendarLoading, setIsCalendarLoading] = useState(
+    () => useCalendarStore.getState().events.length === 0
+  );   
   useEffect(() => {
   let cancelled = false; // ✅ 여기 추가
   const year = new Date().getFullYear();
@@ -33,6 +50,8 @@ const usePublicCalendar = () => {
     if (calendarStore.events.length > 0) {
       calendarEventsRef.current = calendarStore.events;
       setCalendarEvents(calendarStore.events);
+      const todayStr = new Date().toISOString().split('T')[0];
+      setSelectedSchedules(filterEventsByDate(calendarStore.events, todayStr));
       setIsCalendarLoading(false);
       return;
     }
@@ -83,6 +102,8 @@ const usePublicCalendar = () => {
     calendarEventsRef.current = allEvents;
     setCalendarEvents(allEvents);
     calendarStore.setEvents(allEvents);
+    const todayStr = new Date().toISOString().split('T')[0];
+    setSelectedSchedules(filterEventsByDate(allEvents, todayStr));
     setIsCalendarLoading(false);
   };
 
@@ -107,15 +128,7 @@ const usePublicCalendar = () => {
       if (result.isConfirmed) navigate('/calendar');
     }
 
-    const filtered = calendarEventsRef.current.filter(e => {
-      const eStartDay = e.start?.split(' ')[0];
-      const eEndDay = e.originalEnd ?? eStartDay;
-
-      if (eEndDay !== eStartDay) {
-        return info.dateStr >= eStartDay && info.dateStr <= eEndDay;
-      }
-      return eStartDay === info.dateStr;
-    });
+    const filtered = filterEventsByDate(calendarEventsRef.current, info.dateStr);
 
     setSelectedDate(info.dateStr);
     setSelectedSchedules(filtered);

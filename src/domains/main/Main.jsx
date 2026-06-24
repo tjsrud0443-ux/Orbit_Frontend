@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -276,7 +276,7 @@ const quickActions = [
           </div>
 
           {/* 하단: 달력 및 일정 */}
-          <div className="flex-1 bg-white p-4 rounded-3xl border border-gray-200 shadow-sm min-h-[13rem] lg:min-h-0 overflow-hidden">
+          <div className="flex-1 bg-white p-4 rounded-3xl border border-gray-200 shadow-sm min-h-[18rem] lg:min-h-[18rem] overflow-hidden">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
               {/* 달력 */}
               <div className="flex flex-col h-full overflow-hidden">
@@ -284,16 +284,6 @@ const quickActions = [
                     <style>{`
                       .main-calendar .mb-4 button {
                         display: none !important;
-                      }
-                      .main-calendar .grid.grid-cols-7:last-child > div {
-                        height: 3rem !important;
-                      }
-                      .main-calendar .grid.grid-cols-7:last-child > div > div {
-                        position: absolute !important;
-                        bottom: 4px !important;
-                        left: 0 !important;
-                        right: 0 !important;
-                        margin-top: 0 !important;
                       }
                     `}</style>
                         {isCalendarLoading ? (
