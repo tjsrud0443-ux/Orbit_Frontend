@@ -232,16 +232,14 @@ return {
 
     if (isEdit) {
       updateBoard(editPost.post_seq, formData).then(() => {
-        alertSuccess('수정 완료', '게시글이 수정되었습니다.');
-        navigate('/board');
+        navigate('/board', { state: { alert: { type: 'success', title: '수정 완료', text: '게시글이 수정되었습니다.' } } });
       }).catch(err => {
         console.error(err);
         alertError('오류 발생', '수정 중 오류가 발생했습니다.');
       });
     } else {
       insertBoard(formData).then(() => {
-        alertSuccess('등록 완료', '게시글이 등록되었습니다.');
-        navigate('/board');
+        navigate('/board', { state: { alert: { type: 'success', title: '등록 완료', text: '게시글이 등록되었습니다.' } } });
       }).catch(err => {
         console.error(err);
         alertError('오류 발생', '등록 중 오류가 발생했습니다.');

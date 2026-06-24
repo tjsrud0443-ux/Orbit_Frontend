@@ -102,8 +102,7 @@ const BoardDetail = () => {
     try {
       showLoading();
       await deletePost(seq);
-      alertSuccess('삭제 완료', '게시글 삭제가 완료되었습니다.');
-      navigate('/board');
+      navigate('/board', { state: { alert: { type: 'success', title: '삭제 완료', text: '게시글 삭제가 완료되었습니다.' } } });
     } catch (err) {
       console.error('게시글 삭제 실패:', err);
       alertError('오류 발생', '게시글 삭제 중 오류가 발생했습니다.');

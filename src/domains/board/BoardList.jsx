@@ -1,10 +1,11 @@
-﻿import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Pagination from '../../components/common/Pagination';
 import MobilePagination from '../../components/common/MobilePagination';
 import { maxios } from "../../api/axiosConfig"; 
 import { getBoardList } from './boardApi';
 import useLoadingStore from '../../store/useLoadingStore';
+import { alertSuccess, alertError } from '../../utils/alert';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -107,24 +108,41 @@ const BoardList = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const { showLoading, hideLoading } = useLoadingStore();
+  const isFirstLoad = useRef(true);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const nav = () => {
     navigate('/BoardWrite');
   }
     // API 호출
   useEffect(() => {
-    showLoading();
-    getBoardList({page, size:10, keyword:search}).then(resp=>{
-
-      setPosts(resp.data.list);
-      setTotalPages(resp.data.totalPages);
-      setTotal(resp.data.total);
-    }).catch (err=> {
+    if (isFirstLoad.current) {
+      showLoading();
+      isFirstLoad.current = false;
+    }
+    const timer = setTimeout(() => {
+      getBoardList({page, size:10, keyword:search}).then(resp=>{
+        setPosts(resp.data.list);
+        setTotalPages(resp.data.totalPages);
+        setTotal(resp.data.total);
+      }).catch(err => {
         console.error('게시글 목록 조회 실패', err);
       }).finally(() => {
         hideLoading();
+        if (location.state?.alert) {
+          const { type, title, text } = location.state.alert;
+          if (type === 'success') {
+            alertSuccess(title, text);
+          } else if (type === 'error') {
+            alertError(title, text);
+          }
+          navigate(location.pathname, { replace: true, state: {} });
+        }
       });
+    }, 300);
+    
+    return () => clearTimeout(timer);
     }, [page, search]); // page나 search 바뀔 때마다 재호출
 
   // 검색어 바뀌면 1페이지로 초기화
