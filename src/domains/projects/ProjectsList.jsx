@@ -197,6 +197,13 @@ const ProjectsList = () => {
     insertProjectAndMembers(newEntry).then(resp => {
       getMyAllProject().then(resp => {
         setProjects(resp.data);
+
+        if (user?.role) {
+          getProjectCount(user?.role).then(resp => {
+            setProjectCount(resp.data);
+          });
+        }
+
         setIsModalOpen(false);
         setNewProject({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
         setEmpSearch('');
@@ -331,6 +338,12 @@ const ProjectsList = () => {
     hideLoading();
     await alertSuccess('삭제 완료', '프로젝트 삭제가 완료되었습니다.');
     const resp = await getMyAllProject();
+
+    if (user?.role) {
+      const resp = await getProjectCount(user?.role);
+      setProjectCount(resp.data);
+    }
+    
     setProjects(resp.data);
     setIsModalOpen(false);
     handleCloseDetail();
@@ -410,7 +423,7 @@ const ProjectsList = () => {
 
   useEffect(() => {
     const getCount = async () => {
-      if(!user?.role) return;
+      if (!user?.role) return;
 
       showLoading();
       const resp = await getProjectCount(user?.role);
@@ -611,11 +624,11 @@ const ProjectsList = () => {
               <div key={index} className="flex flex-col items-center gap-2 px-3 py-3">
                 <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-300">
                   {
-                    member?.sysname && 
-                      <img
-                        src={`https://api.sukong.shop/file/profile/view?sysname=${member?.sysname}&token=${token}`}
-                        alt={member?.name}
-                        className="w-full h-full object-cover" />
+                    member?.sysname &&
+                    <img
+                      src={`https://api.sukong.shop/file/profile/view?sysname=${member?.sysname}&token=${token}`}
+                      alt={member?.name}
+                      className="w-full h-full object-cover" />
                   }
                 </div>
                 <span className="text-xs font-medium">{member.name}</span>
@@ -662,7 +675,7 @@ const ProjectsList = () => {
                 }}
                   className={`flex-1 md:flex-none px-4 md:px-6 py-1.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${filter === tab.label || (tab.label === '진행중' && filter === 'IN_PROGRESS') || (tab.label === '완료' && filter === 'DONE') ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}>
                   {tab.label}
-                   <span className="ml-1.5">
+                  <span className="ml-1.5">
                     ({tab.count})
                   </span>
                 </button>
@@ -751,12 +764,12 @@ const ProjectsList = () => {
                                 <div key={index} className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[9px] font-bold text-[#3530B8] border border-white shrink-0">
                                   <div className="w-6 h-6 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
                                     {
-                                      member?.sysname && 
-                                        <img
-                                          src={`https://api.sukong.shop/file/profile/view?sysname=${member?.sysname}&token=${token}`}
-                                          alt={member?.name}
-                                          className="w-full h-full object-cover"
-                                        />
+                                      member?.sysname &&
+                                      <img
+                                        src={`https://api.sukong.shop/file/profile/view?sysname=${member?.sysname}&token=${token}`}
+                                        alt={member?.name}
+                                        className="w-full h-full object-cover"
+                                      />
                                     }
                                   </div>
                                 </div>
@@ -782,12 +795,12 @@ const ProjectsList = () => {
                               <div key={index} className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-[#3530B8] border-2 border-white shrink-0">
                                 <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
                                   {
-                                    member?.sysname && 
-                                      <img
-                                        src={`https://api.sukong.shop/file/profile/view?sysname=${member?.sysname}&token=${token}`}
-                                        alt={member?.name}
-                                        className="w-full h-full object-cover"
-                                      />
+                                    member?.sysname &&
+                                    <img
+                                      src={`https://api.sukong.shop/file/profile/view?sysname=${member?.sysname}&token=${token}`}
+                                      alt={member?.name}
+                                      className="w-full h-full object-cover"
+                                    />
                                   }
                                 </div>
                               </div>

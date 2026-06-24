@@ -80,7 +80,6 @@ const BoardWrite = () => {
 
     input.onchange = () => {
       const file = input.files?.[0];
-      console.log('파일 선택됨:', file);
       if (!file) return;
 
       // 이미지 파일 서버 전송용 FormData 생성

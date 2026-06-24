@@ -71,7 +71,6 @@ const CheckoutCorrectionModal = ({ onClose }) => {
       req_check_out: formatted,
       reason,
     };
-    console.log(selectedAttendance.work_date);
     insertCheckoutReq(data).then(() => {
         alertSuccess('신청 완료', '정정 신청이 완료되었습니다.');
         onClose();
