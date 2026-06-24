@@ -113,7 +113,7 @@ const SupplyHistory = () => {
         <div className={`flex flex-col bg-white rounded-[2rem] border border-[#F0F4FF] shadow-sm overflow-hidden transition-all duration-500 min-h-0 ${selectedRequest ? 'hidden md:flex md:flex-[0.6]' : 'flex-1'}`}>
           <div className="hidden md:grid grid-cols-[1.5fr_1fr_1fr_0.8fr] px-6 py-4 pr-[calc(1.5rem+0.25rem)] border-b border-gray-50 text-[0.6875rem] font-bold text-gray-400 uppercase tracking-wider flex-shrink-0">
             <div className="pl-4">비품명</div>
-            <div>신청일</div>
+            <div>수령 희망 날짜</div>
             <div className="pl-1">승인 상태</div>
             <div className="text-center">관리</div>
           </div>
