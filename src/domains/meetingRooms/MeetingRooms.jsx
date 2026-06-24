@@ -453,7 +453,7 @@ const MeetingRooms = () => {
                         className={`flex-1 border-r border-gray-100/50 transition-all 
                           ${isDisabled ? 'bg-transparent cursor-default' : 
                             isPast ? 'cursor-pointer' : 
-                            'hover:bg-[#F0F4FF]/50 cursor-pointer'}`}
+                            'hover:bg-[#DDE8FF]/50 cursor-pointer'}`}
                       />
                     );
                   })}

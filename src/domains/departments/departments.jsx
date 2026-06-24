@@ -75,13 +75,13 @@ const OrgNode = ({ node, isChild = false }) => {
           )}
         </div>
         <div className="text-left">
-          <p className={`text-[10px] lg:text-[8px] opacity-70 mb-0 ${isRoot ? 'text-white' : 'text-[#3530B8] font-bold'}`}>
+          <p className={`text-[10px] lg:text-[10px] opacity-70 mb-0 ${isRoot ? 'text-white' : 'text-[#3530B8] font-bold'}`}>
             {displayNode.deptName}
           </p>
-          <p className="text-xs lg:text-[10px] font-extrabold leading-tight">
+          <p className="text-xs lg:text-[11px] font-extrabold leading-tight">
             {displayNode.name || (isRoot && !displayNode.id ? '본사' : '')}
           </p>
-          <p className={`text-[9px] lg:text-[8px] mt-0 ${isRoot ? 'text-white/60' : 'text-gray-400'}`}>
+          <p className={`text-[10px] lg:text-[10px] mt-0 ${isRoot ? 'text-white/60' : 'text-gray-700'}`}>
             {displayNode.position || (displayNode.name ? '-' : '')}
           </p>
         </div>
