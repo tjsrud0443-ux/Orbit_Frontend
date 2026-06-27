@@ -15,6 +15,7 @@ import {
 import { getGroup } from './departmentsApi';
 import useAuthStore from '../../store/authStore';
 import useLoadingStore from '../../store/useLoadingStore';
+import useDepartmentsStore from '../../store/useDepartmentsStore';
 
 // // Position Rank for Sorting (Lower number = Higher rank)
 
@@ -81,7 +82,7 @@ const fetchProfileImages = async (sysnames, token) => {
 
 const getRank = (pos) => POSITION_RANK[pos] || 99;
 
-const OrgNode = ({ node, isChild = false, profileImageMap = {} }) => {
+const OrgNode = ({ node, isChild = false, profileImageMap = {}, onEmployeeClick }) => {
 
   const isMember = !!node.id;
   const isRoot = node.parentDeptSeq === null && !isMember;
@@ -106,11 +107,18 @@ const OrgNode = ({ node, isChild = false, profileImageMap = {} }) => {
   return (
     <div className="flex flex-col items-center relative lg:scale-100 origin-top">
       {/* Node Card */}
-      <div className={`
+      <div
+        onClick={() => {
+          if (displayNode?.id) {
+            onEmployeeClick(displayNode);
+          }
+        }}
+        className={`
         relative z-10 flex items-center p-2.5 px-3 min-w-[150px] lg:p-1.5 lg:px-2.5 lg:min-w-[130px] rounded-lg border-2 transition-all gap-2 lg:gap-1.5
+        ${displayNode?.id ? 'cursor-pointer' : ''}
         ${isRoot
-          ? 'bg-[#3530B8] border-[#3530B8] text-white shadow-lg scale-105'
-          : 'bg-white border-[#DDE8FF] text-gray-800 shadow-sm hover:border-[#3530B8]'}
+            ? 'bg-[#3530B8] border-[#3530B8] text-white shadow-lg scale-105'
+            : 'bg-white border-[#DDE8FF] text-gray-800 shadow-sm hover:border-[#3530B8]'}
       `}>
         <div className={`
           w-9 h-9 lg:w-8 lg:h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden
@@ -160,6 +168,7 @@ const OrgNode = ({ node, isChild = false, profileImageMap = {} }) => {
                     }}
                     isChild={true}
                     profileImageMap={profileImageMap}
+                    onEmployeeClick={onEmployeeClick}
                   />
                 </div>
               ))}
@@ -185,7 +194,12 @@ const OrgNode = ({ node, isChild = false, profileImageMap = {} }) => {
                     {/* Vertical Connector down to node */}
                     <div className="w-0.5 h-8 lg:h-5 bg-[#DDE8FF] relative z-10" />
 
-                    <OrgNode node={child} isChild={true} profileImageMap={profileImageMap} />
+                    <OrgNode
+                      node={child}
+                      isChild={true}
+                      profileImageMap={profileImageMap}
+                      onEmployeeClick={onEmployeeClick}
+                    />
                   </div>
                 ))}
               </div>
@@ -356,8 +370,9 @@ const Departments = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [headerSearch, setHeaderSearch] = useState('');
   const [isHeaderSearchOpen, setIsHeaderSearchOpen] = useState(false);
-  const [profileImageMap, setProfileImageMap] = useState({});
-  const profileObjectUrlsRef = useRef([]);
+  // const [profileImageMap, setProfileImageMap] = useState({});
+  // const profileObjectUrlsRef = useRef([]);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
   const token = useAuthStore(state => state.token);
   const sidebarRef = useRef(null);
   const showLoading = useLoadingStore(state => state.showLoading);
@@ -375,12 +390,21 @@ const Departments = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isSidebarOpen]);
 
-  // 1. Initial Static Data
-  const [fullTree, setFullTree] = useState({
-    root: null,
-    nodeMap: {}
-  })
-  const [employees, setEmployees] = useState([]);
+  // // 1. Initial Static Data
+  // const [fullTree, setFullTree] = useState({
+  //   root: null,
+  //   nodeMap: {}
+  // })
+  // const [employees, setEmployees] = useState([]);
+
+  const {
+    fullTree,
+    employees,
+    profileImageMap,
+    loaded,
+    setGroupData,
+    setProfileImages
+  } = useDepartmentsStore();
 
   const allDeptSeq = (node) => {
     const result = [node.deptSeq];
@@ -395,6 +419,9 @@ const Departments = () => {
 
   useEffect(() => {
     const loadGroup = async () => {
+      // 이미 조직도 데이터를 불러온 적 있으면 다시 로딩하지 않음
+      if (loaded) return;
+
       showLoading();
 
       try {
@@ -404,21 +431,16 @@ const Departments = () => {
         const nodeMap = resp.data.nodeMap;
         const users = resp.data.users || [];
 
-        setFullTree({
+        setGroupData({
           root,
-          nodeMap
+          nodeMap,
+          users
         });
 
-        setEmployees(users);
-
         const sysnames = collectProfileSysnames(users, root);
-
         const imageMap = await fetchProfileImages(sysnames, token);
 
-        profileObjectUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
-
-        profileObjectUrlsRef.current = Object.values(imageMap);
-        setProfileImageMap(imageMap);
+        setProfileImages(imageMap);
 
       } catch (error) {
         console.log("조직도 로딩 실패", error);
@@ -430,12 +452,8 @@ const Departments = () => {
     if (token) {
       loadGroup();
     }
+  }, [token, loaded, setGroupData, setProfileImages]);
 
-    return () => {
-      profileObjectUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
-      profileObjectUrlsRef.current = [];
-    };
-  }, [token]);
 
   // Selected department details
   const currentDeptInfo = useMemo(() => {
@@ -688,7 +706,7 @@ const Departments = () => {
             /* CASE 1: Full Org Chart (Visual) */
             <div className="inline-block min-w-full p-2 lg:p-4">
               <div className="flex justify-center min-w-max pb-20 pt-4">
-                {fullTree.root && <OrgNode node={fullTree.root} profileImageMap={profileImageMap} />}
+                {fullTree.root && <OrgNode node={fullTree.root} profileImageMap={profileImageMap} onEmployeeClick={setSelectedEmployee} />}
               </div>
             </div>
           ) : (
@@ -709,7 +727,51 @@ const Departments = () => {
           )}
         </div>
       </main>
+      {selectedEmployee && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 px-4"
+          onClick={() => setSelectedEmployee(null)}
+        >
+          <div
+            className="w-full max-w-[320px] bg-white rounded-2xl shadow-2xl border border-gray-100 p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-base font-extrabold text-gray-800">
+                  {selectedEmployee.name}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {selectedEmployee.deptName} · {selectedEmployee.position}
+                </p>
+              </div>
 
+              <button
+                onClick={() => setSelectedEmployee(null)}
+                className="w-7 h-7 rounded-full bg-gray-100 text-gray-400 hover:text-gray-600"
+              >
+                <FontAwesomeIcon icon={faTimes} className="text-xs" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between gap-4">
+                <span className="text-gray-400 font-bold shrink-0">전화번호</span>
+                <span className="text-gray-700 font-medium text-right">
+                  {selectedEmployee.phone || '-'}
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-4">
+                <span className="text-gray-400 font-bold shrink-0">이메일</span>
+                <span className="text-gray-700 font-medium text-right break-all">
+                  {selectedEmployee.email || '-'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <style dangerouslySetInnerHTML={{
         __html: `
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
