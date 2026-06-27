@@ -40,7 +40,7 @@ const CategoryTag = ({ label }) => {
   );
 };
 
-const PostRow = ({ post, onLike, onClick }) => {
+const PostRow = ({ post, total, onLike, onClick }) => {
  return ( 
   <div 
     onClick={onClick}
@@ -50,7 +50,7 @@ const PostRow = ({ post, onLike, onClick }) => {
     <div className="hidden md:block md:col-span-1 text-center">
       {['공지', '경조', '생일', '승진', '부서 이동'].includes(post.category?.trim())
         ? <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">공지</span>
-        : <span className="text-xs text-gray-400">{post.post_seq}</span>
+        : <span className="text-xs text-gray-400">{total - post.row_rank + 1}</span>
       }
     </div>
 
@@ -123,6 +123,7 @@ const BoardList = () => {
     }
     const timer = setTimeout(() => {
       getBoardList({page, size:10, keyword:search}).then(resp=>{
+        console.log(resp.data.list[0]); 
         setPosts(resp.data.list);
         setTotalPages(resp.data.totalPages);
         setTotal(resp.data.total);
@@ -235,6 +236,7 @@ const BoardList = () => {
               <PostRow 
                 key={post.post_seq || i} 
                 post={post} 
+                total={total}
                 onLike={() => handleLike(posts.indexOf(post))} 
                 onClick={() => navigate(`/boardDetail/${post.post_seq}`)}
               />
