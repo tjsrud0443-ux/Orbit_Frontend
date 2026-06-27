@@ -342,10 +342,12 @@ const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptNa
                         text-[10px] font-bold rounded-md 
                         ${emp.attendanceStatus === '근무중' ? 'px-2 py-1 border bg-[#F0FDF4] text-[#10B981] border-[#F0FDF4]'
                           : emp.attendanceStatus === '퇴근' ? 'px-2 py-1 border bg-[#FFF9F0] text-[#FF9800] border-[#FFF9F0]'
-                            : emp.attendanceStatus === '연차' ||
-                              emp.attendanceStatus === '오전반차' ||
-                              emp.attendanceStatus === '오후반차' ? 'px-2 py-1 border bg-blue-50 text-blue-600 border-blue-50'
-                              : 'text-gray-400 px-4 py-1'}
+                            : emp.attendanceStatus === '휴직'
+                              ? 'px-2 py-1 border bg-slate-50 text-slate-500 border-slate-100'
+                              : emp.attendanceStatus === '연차' ||
+                                emp.attendanceStatus === '오전반차' ||
+                                emp.attendanceStatus === '오후반차' ? 'px-2 py-1 border bg-blue-50 text-blue-600 border-blue-50'
+                                : 'text-gray-400 px-4 py-1'}
                         `}>{emp.attendanceStatus || '-'}</span>
                   </td>
                 </tr>
