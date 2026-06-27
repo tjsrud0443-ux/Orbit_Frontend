@@ -82,7 +82,6 @@ const fetchProfileImages = async (sysnames, token) => {
 const getRank = (pos) => POSITION_RANK[pos] || 99;
 
 const OrgNode = ({ node, isChild = false, profileImageMap = {} }) => {
-  const token = useAuthStore(state => state.token);
 
   const isMember = !!node.id;
   const isRoot = node.parentDeptSeq === null && !isMember;
@@ -117,7 +116,7 @@ const OrgNode = ({ node, isChild = false, profileImageMap = {} }) => {
           w-9 h-9 lg:w-8 lg:h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden
           ${isRoot ? 'bg-white/20 text-white' : 'bg-[#F0F4FF] text-[#3530B8]'}
         `}>
-          {profileImg ? (
+          {profileSrc ? (
             <img
               src={profileSrc}
               alt={displayNode.name}
