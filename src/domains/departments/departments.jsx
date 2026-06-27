@@ -22,11 +22,66 @@ const POSITION_RANK = {
   '대표이사': 1, '본부장': 3, '부서장': 4, '차장': 5, '과장': 6, '대리': 7, '사원': 8
 };
 
+const PROFILE_API = 'https://api.sukong.shop/file/profile/view';
 
+const getProfileName = (obj) => obj?.sysname || obj?.sysName;
+
+const collectProfileSysnames = (users = [], root) => {
+  const set = new Set();
+
+  users.forEach(user => {
+    const sysname = getProfileName(user);
+    if (sysname) set.add(sysname);
+  });
+
+  const walk = (node) => {
+    if (!node) return;
+
+    const nodeSysname = getProfileName(node);
+    if (nodeSysname) set.add(nodeSysname);
+
+    node.members?.forEach(member => {
+      const memberSysname = getProfileName(member);
+      if (memberSysname) set.add(memberSysname);
+    });
+
+    node.children?.forEach(child => walk(child));
+  };
+
+  walk(root);
+
+  return Array.from(set);
+};
+
+const fetchProfileImages = async (sysnames, token) => {
+  const entries = await Promise.all(
+    sysnames.map(async (sysname) => {
+      try {
+        const resp = await fetch(
+          `${PROFILE_API}?sysname=${encodeURIComponent(sysname)}&token=${encodeURIComponent(token)}`
+        );
+
+        if (!resp.ok) {
+          throw new Error(`프로필 이미지 로딩 실패: ${sysname}`);
+        }
+
+        const blob = await resp.blob();
+        const objectUrl = URL.createObjectURL(blob);
+
+        return [sysname, objectUrl];
+      } catch (error) {
+        console.log(error);
+        return [sysname, null];
+      }
+    })
+  );
+
+  return Object.fromEntries(entries.filter(([, url]) => url));
+};
 
 const getRank = (pos) => POSITION_RANK[pos] || 99;
 
-const OrgNode = ({ node, isChild = false }) => {
+const OrgNode = ({ node, isChild = false, profileImageMap = {} }) => {
   const token = useAuthStore(state => state.token);
 
   const isMember = !!node.id;
@@ -47,6 +102,7 @@ const OrgNode = ({ node, isChild = false }) => {
   }
 
   const profileImg = displayNode.sysname || displayNode.sysName;
+  const profileSrc = profileImg ? profileImageMap[profileImg] : null;
 
   return (
     <div className="flex flex-col items-center relative lg:scale-100 origin-top">
@@ -63,7 +119,7 @@ const OrgNode = ({ node, isChild = false }) => {
         `}>
           {profileImg ? (
             <img
-              src={`https://api.sukong.shop/file/profile/view?sysname=${profileImg}&token=${token}`}
+              src={profileSrc}
               alt={displayNode.name}
               className="w-full h-full object-cover"
             />
@@ -104,6 +160,7 @@ const OrgNode = ({ node, isChild = false }) => {
                       children: []
                     }}
                     isChild={true}
+                    profileImageMap={profileImageMap}
                   />
                 </div>
               ))}
@@ -129,7 +186,7 @@ const OrgNode = ({ node, isChild = false }) => {
                     {/* Vertical Connector down to node */}
                     <div className="w-0.5 h-8 lg:h-5 bg-[#DDE8FF] relative z-10" />
 
-                    <OrgNode node={child} isChild={true} />
+                    <OrgNode node={child} isChild={true} profileImageMap={profileImageMap} />
                   </div>
                 ))}
               </div>
@@ -202,7 +259,7 @@ const SidebarItem = ({ node, level = 0, selectedDept, onSelect, nodeMap }) => {
 };
 
 // 3. Employee List Component (Table View)
-const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptName, searchTerm = "" }) => {
+const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptName, searchTerm = "", profileImageMap = {} }) => {
   const filteredEmployees = useMemo(() => {
     let list = [...employees];
 
@@ -230,8 +287,6 @@ const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptNa
     return list;
   }, [employees, deptSeqs, deptCode, searchTerm]);
 
-
-  const token = useAuthStore(state => state.token);
   return (
     // 목록형 조직도
     <div className="bg-white overflow-hidden">
@@ -254,12 +309,12 @@ const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptNa
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-[#DDE8FF] text-[#3530B8] flex items-center justify-center text-xs font-bold transition-all overflow-hidden">
                         {
-                          emp?.sysname && 
-                            <img
-                              src={`https://api.sukong.shop/file/profile/view?sysname=${emp.sysname}&token=${token}`}
-                              alt={emp.name}
-                              className="w-full h-full object-cover"
-                            />
+                          emp?.sysname && profileImageMap[emp.sysname] &&
+                          <img
+                            src={profileImageMap[emp.sysname]}
+                            alt={emp.name}
+                            className="w-full h-full object-cover"
+                          />
                         }
                       </div>
                       <span className="text-sm font-bold text-gray-700">{emp.name}</span>
@@ -278,7 +333,7 @@ const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptNa
                               emp.attendanceStatus === '오전반차' ||
                               emp.attendanceStatus === '오후반차' ? 'px-2 py-1 border bg-blue-50 text-blue-600 border-blue-50'
                               : 'text-gray-400 px-4 py-1'}
-                        `}>{emp.attendanceStatus || '-' }</span>
+                        `}>{emp.attendanceStatus || '-'}</span>
                   </td>
                 </tr>
               ))
@@ -302,6 +357,8 @@ const Departments = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [headerSearch, setHeaderSearch] = useState('');
   const [isHeaderSearchOpen, setIsHeaderSearchOpen] = useState(false);
+  const [profileImageMap, setProfileImageMap] = useState({});
+  const profileObjectUrlsRef = useRef([]);
   const token = useAuthStore(state => state.token);
   const sidebarRef = useRef(null);
   const showLoading = useLoadingStore(state => state.showLoading);
@@ -338,22 +395,48 @@ const Departments = () => {
   }
 
   useEffect(() => {
-    showLoading();
-    getGroup().then(resp => {
-      setFullTree({
-        root: resp.data.root,
-        nodeMap: resp.data.nodeMap
-      });
+    const loadGroup = async () => {
+      showLoading();
 
-      setEmployees(
-        resp.data.users
-      )
-      hideLoading();
-    })
-      .catch(error => {
-        console.log("조직도 로딩 실패", error)
-      })
-  }, []);
+      try {
+        const resp = await getGroup();
+
+        const root = resp.data.root;
+        const nodeMap = resp.data.nodeMap;
+        const users = resp.data.users || [];
+
+        setFullTree({
+          root,
+          nodeMap
+        });
+
+        setEmployees(users);
+
+        const sysnames = collectProfileSysnames(users, root);
+
+        const imageMap = await fetchProfileImages(sysnames, token);
+
+        profileObjectUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+
+        profileObjectUrlsRef.current = Object.values(imageMap);
+        setProfileImageMap(imageMap);
+
+      } catch (error) {
+        console.log("조직도 로딩 실패", error);
+      } finally {
+        hideLoading();
+      }
+    };
+
+    if (token) {
+      loadGroup();
+    }
+
+    return () => {
+      profileObjectUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+      profileObjectUrlsRef.current = [];
+    };
+  }, [token]);
 
   // Selected department details
   const currentDeptInfo = useMemo(() => {
@@ -431,7 +514,7 @@ const Departments = () => {
                 setSearchTerm('');
               }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all mb-4 ${selectedDept === 'ALL' ? 'bg-[#3530B8] text-white font-bold shadow-md' : 'text-gray-600 hover:bg-gray-50'}`}
-              >
+            >
               <FontAwesomeIcon icon={faLayerGroup} />
               전체 조직도
             </button>
@@ -538,12 +621,12 @@ const Departments = () => {
                             >
                               <div className="w-8 h-8 rounded-full bg-[#DDE8FF] overflow-hidden shrink-0">
                                 {
-                                  emp?.sysname && 
-                                    <img
-                                      src={`https://api.sukong.shop/file/profile/view?sysname=${emp.sysname}&token=${token}`}
-                                      className="w-full h-full object-cover"
-                                      alt={emp.name}
-                                    />
+                                  emp?.sysname && profileImageMap[emp.sysname] &&
+                                  <img
+                                    src={profileImageMap[emp.sysname]}
+                                    className="w-full h-full object-cover"
+                                    alt={emp.name}
+                                  />
                                 }
                               </div>
                               <div className="min-w-0">
@@ -599,13 +682,14 @@ const Departments = () => {
                 deptSeq="ALL"
                 deptName="전체"
                 searchTerm={searchTerm}
+                profileImageMap={profileImageMap}
               />
             </div>
           ) : selectedDept === 'ALL' ? (
             /* CASE 1: Full Org Chart (Visual) */
             <div className="inline-block min-w-full p-2 lg:p-4">
               <div className="flex justify-center min-w-max pb-20 pt-4">
-                {fullTree.root && <OrgNode node={fullTree.root} />}
+                {fullTree.root && <OrgNode node={fullTree.root} profileImageMap={profileImageMap} />}
               </div>
             </div>
           ) : (
@@ -619,6 +703,7 @@ const Departments = () => {
                   deptName={currentDeptInfo.deptName}
                   deptSeqs={selectDeptSeq}
                   searchTerm={searchTerm}
+                  profileImageMap={profileImageMap}
                 />
               )}
             </div>
