@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Calendar from '../../components/common/Calendar';
 import Pagination from '../../components/common/Pagination';
@@ -61,6 +61,11 @@ const MinutesList = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editMinutes, setEditMinutes] = useState(null);
+
+  const [audioFile, setAudioFile] = useState(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const audioInputRef = useRef(null);
+
   const { user } = useUserStore();
   const token = useAuthStore(state => state.token);
 
@@ -321,6 +326,33 @@ const MinutesList = () => {
   const handlePageChange = (event, value) => setCurrentPage(value);
   const handleSearchChange = (e) => { setSearchKeyword(e.target.value); setCurrentPage(1); };
 
+  const handleAudioUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setAudioFile(file);
+  };
+
+  const handleSttConvert = async () => {
+    if (!audioFile) return;
+    setIsAnalyzing(true);
+    try {
+      const formData = new FormData();
+      formData.append('audio', audioFile);
+      const res = await maxios.post('/minutes/stt-summary', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setNewMinutes(prev => ({
+        ...prev,
+        main_content: res.data.transcript || '',
+      }));
+      setErrors(prev => ({ ...prev, main_content: false }));
+    } catch (e) {
+      alertError('오류 발생', 'STT 변환 중 오류가 발생했습니다.');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   const handleSave = () => {
     const newErrors = {
       title: !newMinutes.title,
@@ -388,18 +420,21 @@ const MinutesList = () => {
     };
   }, [showResults, updateDropdownPos]);
 
-  const filteredEmployees = searchQuery && searchQuery.trim() !== ''
-    ? allEmployees.filter(emp => {
-      const hostId = newMinutes.hostObj?.id || editMinutes?.hostObj?.id;
-      if (emp.id === hostId) return false;
-      if (emp.id === user?.id) return false; 
-      const name = emp?.name || '';
-      const deptName = emp?.deptName || emp?.dept_name || '';
-      const rankName = emp?.rankName || emp?.rank_name || '';
-      const query = searchQuery.toLowerCase();
-      return name.toLowerCase().includes(query) || deptName.toLowerCase().includes(query) || rankName.toLowerCase().includes(query);
-      })
-    : [];
+  const filteredEmployees = (allEmployees || []).filter(emp => {
+    const hostId = newMinutes.hostObj?.id || editMinutes?.hostObj?.id;
+    const authorId = newMinutes.users_id || editMinutes?.users_id || user?.id;
+    if (emp.id === hostId) return false;
+    if (emp.id === authorId) return false;
+    if (emp.id === user?.id) return false; 
+
+    if (!searchQuery.trim()) return true;
+
+    const name = emp?.name || '';
+    const deptName = emp?.deptName || emp?.dept_name || '';
+    const rankName = emp?.rankName || emp?.rank_name || '';
+    const query = searchQuery.toLowerCase();
+    return name.toLowerCase().includes(query) || deptName.toLowerCase().includes(query) || rankName.toLowerCase().includes(query);
+  });
 
   const handleAddAttendee = (emp) => {
     const isDuplicate = newMinutes.attendees.some(a => {
@@ -845,6 +880,7 @@ const MinutesList = () => {
                             <input ref={attendeeInputRef} type="text" placeholder={editMinutes.attendees.length === 0 ? "검색" : ""}
                               className="w-full bg-transparent border-none outline-none text-xs font-bold text-gray-700 p-1"
                               value={searchQuery}
+                              onClick={() => { setShowResults(true); updateDropdownPos(); }}
                               onChange={(e) => { setSearchQuery(e.target.value); setShowResults(true); updateDropdownPos(); }}
                               onFocus={() => { setShowResults(true); updateDropdownPos(); }} />
                           </div>
@@ -1094,6 +1130,7 @@ const MinutesList = () => {
                           <input ref={attendeeInputRef} type="text" placeholder={newMinutes.attendees.length === 0 ? "검색" : ""}
                             className="w-full bg-transparent border-none outline-none text-xs font-bold text-gray-700 p-1"
                             value={searchQuery}
+                            onClick={() => { setShowResults(true); updateDropdownPos(); }}
                             onChange={(e) => { setSearchQuery(e.target.value); setShowResults(true); updateDropdownPos(); }}
                             onFocus={() => { setShowResults(true); updateDropdownPos(); }} />
                         </div>
@@ -1101,6 +1138,52 @@ const MinutesList = () => {
                       {errors.attendees && <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">필수 입력</p>}
                       {renderAttendeeDropdown()}
                     </div>
+                  </div>
+
+                  {/* 음성 파일 업로드 */}
+                  <div>
+                    <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">
+                      음성 파일 <span className="text-indigo-400 normal-case font-bold">(선택)</span>
+                    </label>
+                    <input
+                      ref={audioInputRef}
+                      type="file"
+                      accept="audio/*"
+                      className="hidden"
+                      onChange={handleAudioUpload}
+                    />
+                    {!audioFile ? (
+                      <button
+                        onClick={() => audioInputRef.current.click()}
+                        className="w-full px-4 py-3 bg-white border border-dashed border-gray-300 rounded-2xl text-xs font-bold text-gray-400 hover:border-indigo-300 hover:text-indigo-500 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2"
+                      >
+                        🎙 음성 파일 업로드
+                      </button>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2 p-1.5 bg-white border border-gray-300 rounded-2xl">
+                          <div className="flex flex-wrap gap-2 flex-1 items-center px-2">
+                            <div className="flex items-center gap-1.5 bg-white border border-indigo-100 px-2.5 py-1 rounded-full text-[11px] font-bold text-indigo-700 shadow-sm">
+                              <span className="max-w-[160px] truncate">🎙 {audioFile.name}</span>
+                              <button
+                                onClick={() => { setAudioFile(null); audioInputRef.current.value = ''; }}
+                                className="text-indigo-300 hover:text-indigo-500 transition-colors"
+                              >✕</button>
+                            </div>
+                          </div>
+                          <button
+                            onClick={handleSttConvert}
+                            disabled={isAnalyzing}
+                            className="shrink-0 px-4 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                          >
+                            {isAnalyzing ? '변환 중...' : '✨ 텍스트 변환'}
+                          </button>
+                        </div>
+                        <p className="text-[10px] text-gray-400 font-bold ml-1">
+                          변환 버튼을 누르면 음성이 텍스트로 변환되어 주요 내용에 자동 입력됩니다.
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* 주요 내용 */}
