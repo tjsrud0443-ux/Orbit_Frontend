@@ -526,7 +526,8 @@ const ApprovalDetail = () => {
     : {
       name: formData.name,
       rank_name: formData.rank_name,
-      created_at: formData.created_at
+      created_at: formData.created_at,
+      stamp_sysname: formData.stamp_sysname
     };
 
   const rejectedApprover = approvers?.find(app => app.status === 'REJECTED');

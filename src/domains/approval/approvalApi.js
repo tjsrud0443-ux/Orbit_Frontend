@@ -1,7 +1,7 @@
 ﻿import { maxios } from "../../api/axiosConfig";
 
 export const getAllEmployees = () => maxios.get("/approval/all");
-export const submitVacation = (payload) => maxios.post("/approval/submit/vacation", formData, {
+export const submitVacation = (formData) => maxios.post("/approval/submit/vacation", formData, {
     headers: {
         "Content-Type": "multipart/form-data"
     }
@@ -12,7 +12,11 @@ export const submitPurchase = (formData) => maxios.post("/approval/submit/purcha
     }
 });
 export const submitPayment = (payload) => maxios.post("/approval/submit/payment", payload);
-export const submitGeneral = (payload) => maxios.post("/approval/submit/general", payload);
+export const submitGeneral = (formData) => maxios.post("/approval/submit/general", formData, {
+    headers: {
+        "Content-Type": "multipart/form-data"
+    }
+});
 
 export const getApprovalDetail = (type, docSeq) => maxios.get(`/approval/detail/${type}/${docSeq}`);
 
