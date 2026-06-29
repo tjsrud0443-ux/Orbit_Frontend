@@ -343,7 +343,18 @@ const MinutesList = () => {
       });
       setNewMinutes(prev => ({
         ...prev,
-        main_content: res.data.transcript || '',
+      main_content: prev.main_content 
+        ? prev.main_content + '\n\n' + (res.data.transcript || '')
+        : res.data.transcript || '',
+      decisions: prev.decisions
+        ? prev.decisions + '\n\n' + (res.data.decisions || '')
+        : res.data.decisions || '',
+      todos: prev.todos
+        ? prev.todos + '\n\n' + (res.data.todos || '')
+        : res.data.todos || '',
+        // main_content: res.data.transcript || '',
+        // decisions: res.data.decisions || '',   
+        // todos: res.data.todos || '',          
       }));
       setErrors(prev => ({ ...prev, main_content: false }));
     } catch (e) {
