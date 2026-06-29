@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { maxios } from "../../api/axiosConfig";
 import useUserStore from '../../store/userStore';
 import useLoadingStore from '../../store/useLoadingStore';
@@ -11,9 +11,13 @@ import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 const BoardDetail = () => {
   const { seq } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
   const token = sessionStorage.getItem("token");
   const { user } = useUserStore();
+
   const { showLoading, hideLoading } = useLoadingStore();
+  
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [commentInput, setCommentInput] = useState("");
@@ -313,7 +317,7 @@ const BoardDetail = () => {
 
         {/* 하단 버튼 */}
         <div className="px-4 md:px-8 py-4 md:py-5 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between gap-2 md:gap-3">
-          <button onClick={() => navigate('/board')} className="px-4 md:px-8 py-2.5 md:py-3 bg-white border border-gray-200 text-gray-500 text-xs md:text-sm font-bold rounded-xl md:rounded-2xl hover:bg-[#F0F4FF] hover:text-indigo-600 transition-all shadow-sm">목록</button>
+          <button onClick={() => navigate('/board',{ state: { page: location.state?.page } })} className="px-4 md:px-8 py-2.5 md:py-3 bg-white border border-gray-200 text-gray-500 text-xs md:text-sm font-bold rounded-xl md:rounded-2xl hover:bg-[#F0F4FF] hover:text-indigo-600 transition-all shadow-sm">목록</button>
           <div className="flex items-center gap-2 md:gap-3">
             {isAuthor && (
               <>

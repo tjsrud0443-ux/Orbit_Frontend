@@ -40,7 +40,7 @@ const CategoryTag = ({ label }) => {
   );
 };
 
-const PostRow = ({ post, onLike, onClick }) => {
+const PostRow = ({ post, total, onLike, onClick }) => {
  return ( 
   <div 
     onClick={onClick}
@@ -50,7 +50,7 @@ const PostRow = ({ post, onLike, onClick }) => {
     <div className="hidden md:block md:col-span-1 text-center">
       {['공지', '경조', '생일', '승진', '부서 이동'].includes(post.category?.trim())
         ? <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">공지</span>
-        : <span className="text-xs text-gray-400">{post.post_seq}</span>
+        : <span className="text-xs text-gray-400">{total - post.row_rank + 1}</span>
       }
     </div>
 
@@ -102,19 +102,21 @@ const PostRow = ({ post, onLike, onClick }) => {
 );
 }
 const BoardList = () => {
-  const [search, setSearch] = useState('');
-  const [posts, setPosts] = useState([]);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const { showLoading, hideLoading } = useLoadingStore();
-  const isFirstLoad = useRef(true);
-
   const navigate = useNavigate();
   const location = useLocation();
   const nav = () => {
     navigate('/BoardWrite');
   }
+
+  const [search, setSearch] = useState('');
+  const [posts, setPosts] = useState([]);
+  const [page, setPage] = useState(location.state?.page || 1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalAll, setTotalAll] = useState(0);
+
+  const { showLoading, hideLoading } = useLoadingStore();
+  const isFirstLoad = useRef(true);
     // API 호출
   useEffect(() => {
     if (isFirstLoad.current) {
@@ -123,6 +125,7 @@ const BoardList = () => {
     }
     const timer = setTimeout(() => {
       getBoardList({page, size:10, keyword:search}).then(resp=>{
+        setTotalAll(resp.data.totalAll);
         setPosts(resp.data.list);
         setTotalPages(resp.data.totalPages);
         setTotal(resp.data.total);
@@ -137,7 +140,7 @@ const BoardList = () => {
           } else if (type === 'error') {
             alertError(title, text);
           }
-          navigate(location.pathname, { replace: true, state: {} });
+          navigate(location.pathname, { replace: true, state: { page } });
         }
       });
     }, 300);
@@ -188,7 +191,7 @@ const BoardList = () => {
           <div className="flex items-center gap-3 flex-wrap">
             <h3 className="text-s font-extrabold text-indigo-950">게시글 목록</h3>
             <span className="bg-indigo-50 text-indigo-600 text-[0.7rem] font-bold px-2.5 py-1 rounded-full">
-              총 {total}건
+              총 {totalAll}건
             </span>
           </div>
 
@@ -235,8 +238,9 @@ const BoardList = () => {
               <PostRow 
                 key={post.post_seq || i} 
                 post={post} 
+                total={totalAll}
                 onLike={() => handleLike(posts.indexOf(post))} 
-                onClick={() => navigate(`/boardDetail/${post.post_seq}`)}
+                onClick={() => navigate(`/boardDetail/${post.post_seq}`, { state: { page } })}
               />
             )})
           ) : (
