@@ -20,7 +20,7 @@ import { alertWarning, alertSuccess } from '../../utils/alert';
 
 const AiChat = () => {
   // --- 1. States ---
-  const AI_GREETING = '안녕하세요! Orbit AI 비서입니다.\n사내 문서와 회의록을 기반으로 필요한 정보를 찾아 답변해 드립니다. 궁금하신 내용을 질문해 주세요!';
+  const AI_GREETING = '안녕하세요! Orbit AI 업무비서입니다.\n사내 문서, 회의록, 그룹웨어 데이터를 바탕으로 업무에 필요한 정보를 찾아드릴게요.\n연차 현황, 근태 기록, 결재 상태, 일정, 회의실 예약, 프로젝트, 비품 정보 등을 질문해 주세요!';
   const createGreetingMessage = () => ({
     id: `greeting-${Date.now()}`,
     role: 'AI',
