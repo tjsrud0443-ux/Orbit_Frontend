@@ -5,7 +5,7 @@ import ReferrerSelector from '../components/ReferrerSelector';
 const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveClicked }) => {
   const isEditMode = mode === 'EDIT';
   const today = new Date().toLocaleDateString('sv-SE');
-  
+
   const [isStartCalendarOpen, setIsStartCalendarOpen] = useState(false);
   const [isEndCalendarOpen, setIsEndCalendarOpen] = useState(false);
   const [isTypeOpen, setIsTypeOpen] = useState(false);
@@ -18,11 +18,11 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      const isOutsideStart = 
+      const isOutsideStart =
         (!startCalendarRef.current || !startCalendarRef.current.contains(event.target)) &&
         (!mobileStartCalendarRef.current || !mobileStartCalendarRef.current.contains(event.target));
-      
-      const isOutsideEnd = 
+
+      const isOutsideEnd =
         (!endCalendarRef.current || !endCalendarRef.current.contains(event.target)) &&
         (!mobileEndCalendarRef.current || !mobileEndCalendarRef.current.contains(event.target));
 
@@ -52,8 +52,8 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
   }, [isSubmitClicked]);
 
   useEffect(() => {
-    if (isTempSaveClicked){
-      const newErrors= {};
+    if (isTempSaveClicked) {
+      const newErrors = {};
       newErrors.title = validateField('title', data.title);
       setErrors(newErrors);
     }
@@ -94,8 +94,8 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
     const error = validateField(key, value, updatedData);
     setErrors(prev => ({ ...prev, [key]: error }));
 
-    if(key === 'vac_type' && value !== '연차'){
-      setErrors(prev => ({...prev, end_date: ''}));
+    if (key === 'vac_type' && value !== '연차') {
+      setErrors(prev => ({ ...prev, end_date: '' }));
     }
 
     if (key === 'start_date') {
@@ -109,12 +109,12 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
     const calculateDays = (type, start, end) => {
       if (type !== '연차') return 0.5;
       if (!start || !end) return 0;
-      
+
       const s = new Date(start);
       const e = new Date(end);
       let count = 0;
       let current = new Date(s);
-      
+
       while (current <= e) {
         const dayOfWeek = current.getDay();
         if (dayOfWeek !== 0 && dayOfWeek !== 6) { // 0: Sunday, 6: Saturday
@@ -126,8 +126,8 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
     };
 
     updatedData.days = Math.max(0, calculateDays(
-      updatedData.vac_type || '연차', 
-      updatedData.start_date, 
+      updatedData.vac_type || '연차',
+      updatedData.start_date,
       updatedData.end_date
     ));
 
@@ -149,7 +149,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
           </div>
           {isEditMode ? (
             <div>
-              <input 
+              <input
                 type="text"
                 value={data.title || ''}
                 onChange={(e) => handleFieldChange('title', e.target.value)}
@@ -186,9 +186,11 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                 <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">직급</th>
                 <td className="p-2">{applicant?.rank_name || '-'}</td>
               </tr>
-              <tr>
+              <tr className="border-b border-gray-200">
                 <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">신청일</th>
-                <td colSpan="3" className="p-2">{displayDate}</td>
+                <td className="p-2 border-r border-gray-200">{displayDate}</td>
+                <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">잔여 연차</th>
+                <td className="p-2">{applicant?.remaining_days || '-'}</td>
               </tr>
             </tbody>
           </table>
@@ -207,7 +209,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                 <td className="p-2">
                   {isEditMode ? (
                     <div className="relative w-full">
-                      <div 
+                      <div
                         onClick={() => setIsTypeOpen(!isTypeOpen)}
                         className={`w-full px-3 py-1.5 bg-white border ${isTypeOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-200'} rounded-lg text-xs font-medium transition-all cursor-pointer flex justify-between items-center`}
                       >
@@ -217,11 +219,11 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                       {isTypeOpen && (
                         <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-32 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-200">
                           {['연차', '오전반차', '오후반차'].map((type) => (
-                            <div 
+                            <div
                               key={type}
-                              onClick={() => { 
-                                handleFieldChange('vac_type', type); 
-                                setIsTypeOpen(false); 
+                              onClick={() => {
+                                handleFieldChange('vac_type', type);
+                                setIsTypeOpen(false);
                               }}
                               className="px-4 py-2.5 text-xs hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-medium border-b border-gray-50 last:border-0 transition-colors"
                             >
@@ -243,18 +245,18 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
                         <div className="relative w-50" ref={startCalendarRef}>
-                          <input 
-                            type="text" 
-                            readOnly 
-                            value={data.start_date || ''} 
-                            onClick={() => { setIsStartCalendarOpen(!isStartCalendarOpen); setIsEndCalendarOpen(false); }} 
-                            placeholder="시작일" 
+                          <input
+                            type="text"
+                            readOnly
+                            value={data.start_date || ''}
+                            onClick={() => { setIsStartCalendarOpen(!isStartCalendarOpen); setIsEndCalendarOpen(false); }}
+                            placeholder="시작일"
                             className={`w-full p-2 border ${errors.start_date ? 'border-red-500' : isStartCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-xl outline-none cursor-pointer text-xs transition-all`}
                           />
                           {isStartCalendarOpen && (
-                            <Calendar 
-                              value={data.start_date} 
-                              onChange={(d) => { handleFieldChange('start_date', d); setIsStartCalendarOpen(false); }} 
+                            <Calendar
+                              value={data.start_date}
+                              onChange={(d) => { handleFieldChange('start_date', d); setIsStartCalendarOpen(false); }}
                               onClose={() => setIsStartCalendarOpen(false)}
                             />
                           )}
@@ -263,18 +265,18 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                           <>
                             <span className="px-1">~</span>
                             <div className="relative w-50" ref={endCalendarRef}>
-                              <input 
-                                type="text" 
-                                readOnly 
-                                value={data.end_date || ''} 
-                                onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }} 
-                                placeholder="종료일" 
+                              <input
+                                type="text"
+                                readOnly
+                                value={data.end_date || ''}
+                                onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }}
+                                placeholder="종료일"
                                 className={`w-full p-2 border ${errors.end_date ? 'border-red-500' : isEndCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-xl outline-none cursor-pointer text-xs transition-all`}
                               />
                               {isEndCalendarOpen && (
-                                <Calendar 
-                                  value={data.end_date} 
-                                  onChange={(d) => { handleFieldChange('end_date', d); setIsEndCalendarOpen(false); }} 
+                                <Calendar
+                                  value={data.end_date}
+                                  onChange={(d) => { handleFieldChange('end_date', d); setIsEndCalendarOpen(false); }}
                                   onClose={() => setIsEndCalendarOpen(false)}
                                 />
                               )}
@@ -302,7 +304,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                 <td className="p-2">
                   {isEditMode ? (
                     <div>
-                      <textarea 
+                      <textarea
                         value={data.reason || ''}
                         onChange={(e) => handleFieldChange('reason', e.target.value)}
                         placeholder="사유를 입력하세요 (100자 이하)"
@@ -321,10 +323,10 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
         </div>
 
         {/* Referrer Selection Section */}
-        <ReferrerSelector 
-          value={data.referrers} 
-          onChange={(val) => onChange({ ...data, referrers: val })} 
-          isEditMode={isEditMode} 
+        <ReferrerSelector
+          value={data.referrers}
+          onChange={(val) => onChange({ ...data, referrers: val })}
+          isEditMode={isEditMode}
         />
       </div>
 
@@ -338,7 +340,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
           </div>
           {isEditMode ? (
             <div className="space-y-1">
-              <input 
+              <input
                 type="text"
                 value={data.title || ''}
                 onChange={(e) => handleFieldChange('title', e.target.value)}
@@ -375,9 +377,13 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
               <div className="w-20 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100">직급</div>
               <div className="flex-grow p-2">{applicant?.rank_name || '-'}</div>
             </div>
-            <div className="flex">
+            <div className="flex border-b border-gray-100">
               <div className="w-20 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100">신청일</div>
               <div className="flex-grow p-2">{displayDate}</div>
+            </div>
+            <div className="flex border-b border-gray-100">
+              <div className="w-20 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100">잔여 연차</div>
+              <div className="flex-grow p-2">{applicant?.remaining_days || '-'}</div>
             </div>
           </div>
         </div>
@@ -388,14 +394,14 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
             <div className="w-1 h-3.5 bg-[#3530B8] rounded-full"></div>
             <h2 className="text-xs font-bold text-gray-800">휴가 신청 내용</h2>
           </div>
-          
+
           <div className="space-y-4 border border-gray-200 rounded-lg p-3 bg-white">
             {/* 연차 종류 */}
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-gray-400">연차 종류</label>
               {isEditMode ? (
                 <div className="relative">
-                   <div 
+                  <div
                     onClick={() => setIsTypeOpen(!isTypeOpen)}
                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded text-xs flex justify-between items-center"
                   >
@@ -405,7 +411,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                   {isTypeOpen && (
                     <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg overflow-hidden">
                       {['연차', '오전반차', '오후반차'].map((type) => (
-                        <div 
+                        <div
                           key={type}
                           onClick={() => { handleFieldChange('vac_type', type); setIsTypeOpen(false); }}
                           className="px-3 py-2 text-xs hover:bg-gray-50"
@@ -427,9 +433,9 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
               {isEditMode ? (
                 <div className="flex flex-col gap-2">
                   <div className="relative space-y-1" ref={mobileStartCalendarRef}>
-                    <input 
-                      type="text" readOnly value={data.start_date || ''} 
-                      onClick={() => setIsStartCalendarOpen(!isStartCalendarOpen)} 
+                    <input
+                      type="text" readOnly value={data.start_date || ''}
+                      onClick={() => setIsStartCalendarOpen(!isStartCalendarOpen)}
                       placeholder="시작일"
                       className={`w-full p-2 text-xs border ${errors.start_date ? 'border-red-500' : 'border-gray-200'} rounded bg-gray-50 outline-none`}
                     />
@@ -442,9 +448,9 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                   </div>
                   {data.vac_type === '연차' && (
                     <div className="relative space-y-1" ref={mobileEndCalendarRef}>
-                      <input 
-                        type="text" readOnly value={data.end_date || ''} 
-                        onClick={() => setIsEndCalendarOpen(!isEndCalendarOpen)} 
+                      <input
+                        type="text" readOnly value={data.end_date || ''}
+                        onClick={() => setIsEndCalendarOpen(!isEndCalendarOpen)}
                         placeholder="종료일"
                         className={`w-full p-2 text-xs border ${errors.end_date ? 'border-red-500' : 'border-gray-200'} rounded bg-gray-50 outline-none`}
                       />
@@ -458,7 +464,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                   )}
                 </div>
               ) : (
-                <div className="text-xs font-bold">{data?.start_date?.substring(0,10)} {data.vac_type === '연차' ? `~ ${data?.end_date?.substring(0,10)}` : ''}</div>
+                <div className="text-xs font-bold">{data?.start_date?.substring(0, 10)} {data.vac_type === '연차' ? `~ ${data?.end_date?.substring(0, 10)}` : ''}</div>
               )}
             </div>
 
@@ -473,7 +479,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
               <label className="text-[10px] font-bold text-gray-400">신청 사유</label>
               {isEditMode ? (
                 <div className="space-y-1">
-                  <textarea 
+                  <textarea
                     value={data.reason || ''}
                     onChange={(e) => handleFieldChange('reason', e.target.value)}
                     className={`w-full h-24 p-2 text-xs border ${errors.reason ? 'border-red-500' : 'border-gray-200'} rounded bg-gray-50 resize-none outline-none custom-scrollbar`}
@@ -488,10 +494,10 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
         </div>
 
         {/* Referrer (모바일) */}
-        <ReferrerSelector 
-          value={data.referrers} 
-          onChange={(val) => onChange({ ...data, referrers: val })} 
-          isEditMode={isEditMode} 
+        <ReferrerSelector
+          value={data.referrers}
+          onChange={(val) => onChange({ ...data, referrers: val })}
+          isEditMode={isEditMode}
         />
       </div>
     </>
