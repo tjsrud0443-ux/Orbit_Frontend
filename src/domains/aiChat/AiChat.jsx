@@ -20,9 +20,14 @@ import { alertWarning, alertSuccess } from '../../utils/alert';
 
 const AiChat = () => {
   // --- 1. States ---
-  const [messages, setMessages] = useState([
-    { id: Date.now(), role: 'AI', content: '안녕하세요! Orbit AI 비서입니다.\n사내 문서와 회의록을 기반으로 필요한 정보를 찾아 답변해 드립니다. 궁금하신 내용을 질문해 주세요!', isTyping: false }
-  ]);
+  const AI_GREETING = '안녕하세요! Orbit AI 비서입니다.\n사내 문서와 회의록을 기반으로 필요한 정보를 찾아 답변해 드립니다. 궁금하신 내용을 질문해 주세요!';
+  const createGreetingMessage = () => ({
+    id: `greeting-${Date.now()}`,
+    role: 'AI',
+    content: AI_GREETING,
+    isTyping: false
+  });
+  const [messages, setMessages] = useState([createGreetingMessage()]);
 
   const [input, setInput] = useState("");
   const [inputError, setInputError] = useState("");
@@ -107,14 +112,7 @@ const AiChat = () => {
 
   const handleNewChat = () => {
     setCurrentChatSeq(null);
-    setMessages([
-      {
-        id: Date.now(),
-        role: 'AI',
-        content: '안녕하세요! Orbit AI 비서입니다.\n사내 문서와 회의록을 기반으로 필요한 정보를 찾아 답변해 드립니다. 궁금하신 내용을 질문해 주세요!',
-        isTyping: false
-      }
-    ]);
+    setMessages([createGreetingMessage()]);
     setIsMobileSidebarOpen(false)
   }
 
@@ -195,7 +193,7 @@ const AiChat = () => {
         return msg;
       });
 
-      setMessages(mappedMessages);
+      setMessages([createGreetingMessage(), ...mappedMessages]);
       setIsMobileSidebarOpen(false);
     })
       .catch(err => {
@@ -474,7 +472,7 @@ const AiChat = () => {
           <div className="bg-white p-8 rounded-2xl w-[300px] md:w-[400px] shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-bold text-lg">담당 부서(관리자) 문의</h3>
-              <button onClick={() => { setIsModalOpen(false); setIsDropdownOpen(false); setSelectedDept(null); setInquiryError(""); setInputQuestion("");}}><FontAwesomeIcon icon={faTimes} /></button>
+              <button onClick={() => { setIsModalOpen(false); setIsDropdownOpen(false); setSelectedDept(null); setInquiryError(""); setInputQuestion(""); }}><FontAwesomeIcon icon={faTimes} /></button>
             </div>
 
             {/* Custom Dropdown */}
@@ -526,7 +524,7 @@ const AiChat = () => {
             ></textarea>
             {inquiryError && <p className="text-[11px] text-red-500 mb-4 ml-1">{inquiryError}</p>}
             <div className="flex gap-2">
-              <button onClick={() => { setIsModalOpen(false); setIsDropdownOpen(false); setSelectedDept(null); setInquiryError(""); setInputQuestion("");}} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-slate-100">취소</button>
+              <button onClick={() => { setIsModalOpen(false); setIsDropdownOpen(false); setSelectedDept(null); setInquiryError(""); setInputQuestion(""); }} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-slate-100">취소</button>
               <button onClick={handleInsertQuestion} className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-[#3530B8] text-white">제출</button>
             </div>
           </div>
