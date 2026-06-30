@@ -18,6 +18,8 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
   const endCalendarRef = useRef(null);
   const mobileStartCalendarRef = useRef(null);
   const mobileEndCalendarRef = useRef(null);
+  const typeDropdownRef = useRef(null);
+  const mobileTypeDropdownRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -29,8 +31,13 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
         (!endCalendarRef.current || !endCalendarRef.current.contains(event.target)) &&
         (!mobileEndCalendarRef.current || !mobileEndCalendarRef.current.contains(event.target));
 
+      const isOutsideType =
+        (!typeDropdownRef.current || !typeDropdownRef.current.contains(event.target)) &&
+        (!mobileTypeDropdownRef.current || !mobileTypeDropdownRef.current.contains(event.target));
+
       if (isOutsideStart) setIsStartCalendarOpen(false);
       if (isOutsideEnd) setIsEndCalendarOpen(false);
+      if (isOutsideType) setIsTypeOpen(false);
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -264,10 +271,10 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
           <table className="w-full border-collapse border border-gray-200 text-xs text-gray-700">
             <tbody>
               <tr className="border-b border-gray-200">
-                <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">연차 종류</th>
+                <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">휴가 종류</th>
                 <td className="p-2">
                   {isEditMode ? (
-                    <div className="relative w-full">
+                    <div className="relative w-full" ref={typeDropdownRef}>
                       <div
                         onClick={() => setIsTypeOpen(!isTypeOpen)}
                         className={`w-full px-3 py-1.5 bg-white border ${isTypeOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-200'} rounded-lg text-xs font-medium transition-all cursor-pointer flex justify-between items-center`}
@@ -518,11 +525,11 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
           </div>
 
           <div className="space-y-4 border border-gray-200 rounded-lg p-3 bg-white">
-            {/* 연차 종류 */}
+            {/* 휴가 종류 */}
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-400">연차 종류</label>
+              <label className="text-[10px] font-bold text-gray-400">휴가 종류</label>
               {isEditMode ? (
-                <div className="relative">
+                <div className="relative" ref={mobileTypeDropdownRef}>
                   <div
                     onClick={() => setIsTypeOpen(!isTypeOpen)}
                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded text-xs flex justify-between items-center"
@@ -532,13 +539,13 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                   </div>
                   {isTypeOpen && (
                     <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg overflow-hidden">
-                      {['연차', '오전반차', '오후반차'].map((type) => (
+                      {vacationTypes.map((type) => (
                         <div
-                          key={type}
-                          onClick={() => { handleFieldChange('vac_type', type); setIsTypeOpen(false); }}
+                          key={type.v_types_seq}
+                          onClick={() => { handleFieldChange('vac_type', type.vac_type); setIsTypeOpen(false); }}
                           className="px-3 py-2 text-xs hover:bg-gray-50"
                         >
-                          {type}
+                          {type.vac_type}
                         </div>
                       ))}
                     </div>
