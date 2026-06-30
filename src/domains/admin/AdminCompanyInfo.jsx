@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Bell, Check } from 'lucide-react';
 import { getCompanyInfo, insertCompanyInfo, updateCompanyInfo } from './adminApi';
 
@@ -30,7 +30,7 @@ const companyFields = [
 
 const initialFormValues = companyFields.flatMap(({ fields }) => fields).reduce(
     (acc, field) => ({ ...acc, [field.label]: field.value }),
-    {}
+    { 우편번호: '' }
 );
 
 const toFormValues = (data) => ({
@@ -39,6 +39,7 @@ const toFormValues = (data) => ({
     사업자등록번호: data.businessNumber || '',
     대표번호: data.companyTel || '',
     이메일: data.companyEmail || '',
+    우편번호: data.companyZonecode || '',
     대표주소: data.companyAddress || '',
     상세주소: data.companyDetailAddr || '',
     팩스번호: data.companyFax || '',
@@ -51,6 +52,7 @@ const toPayload = (values, companySeq) => ({
     businessNumber: values['사업자등록번호'],
     companyTel: values['대표번호'],
     companyEmail: values['이메일'],
+    companyZonecode: values['우편번호'],
     companyAddress: values['대표주소'],
     companyDetailAddr: values['상세주소'],
     companyFax: values['팩스번호'],
@@ -112,25 +114,28 @@ const validateField = (label, value, required = false) => {
     return '';
 };
 
-const Field = ({ label, value, required, readOnly, onChange, error }) => (
+const Field = ({ label, value, required, readOnly, onChange, error, action }) => (
     <label className="flex flex-col gap-2">
         <span className="text-sm font-bold text-slate-700">
             {label}
             {required && <span className="ml-1 text-red-500">*</span>}
         </span>
-        <input
-            type="text"
-            value={value}
-            readOnly={readOnly}
-            maxLength={validationRules[label]?.maxLength}
-            onChange={(event) => onChange(label, event.target.value)}
-            className={`h-12 w-full rounded-xl border px-4 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-300 ${error
-                ? 'border-red-500 bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
-                : readOnly
-                    ? 'border-slate-200 bg-slate-50 cursor-default'
-                    : 'border-slate-200 bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/10'
-                }`}
-        />
+        <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+                type="text"
+                value={value}
+                readOnly={readOnly}
+                maxLength={validationRules[label]?.maxLength}
+                onChange={(event) => onChange(label, event.target.value)}
+                className={`h-12 w-full rounded-xl border px-4 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-300 ${error
+                    ? 'border-red-500 bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
+                    : readOnly
+                        ? 'border-slate-200 bg-slate-50 cursor-default'
+                        : 'border-slate-200 bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/10'
+                    }`}
+            />
+            {action}
+        </div>
         {error && <span className="text-xs font-semibold text-red-500">{error}</span>}
     </label>
 );
@@ -142,6 +147,8 @@ const AdminCompanyInfo = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({});
     const [companySeq, setCompanySeq] = useState(null);
+    const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
+    const postcodeRef = useRef(null);
 
     useEffect(() => {
         const loadCompanyInfo = async () => {
@@ -167,6 +174,38 @@ const AdminCompanyInfo = () => {
 
         loadCompanyInfo();
     }, []);
+
+    useEffect(() => {
+        if (!isPostcodeOpen || !postcodeRef.current) return;
+
+        const Postcode = window.kakao?.Postcode || window.daum?.Postcode;
+
+        if (!Postcode) {
+            alert('주소 검색 API를 불러오지 못했습니다.');
+            setIsPostcodeOpen(false);
+            return;
+        }
+
+        new Postcode({
+            width: '100%',
+            height: '100%',
+            oncomplete: (data) => {
+                const selectedAddress = data.roadAddress || data.jibunAddress || '';
+
+                setFormValues((prev) => ({
+                    ...prev,
+                    우편번호: data.zonecode || '',
+                    대표주소: selectedAddress,
+                }));
+                setFieldErrors((prev) => {
+                    const nextErrors = { ...prev };
+                    delete nextErrors.대표주소;
+                    return nextErrors;
+                });
+                setIsPostcodeOpen(false);
+            },
+        }).embed(postcodeRef.current);
+    }, [isPostcodeOpen]);
 
     const handleChange = (label, value) => {
         setFormValues((prev) => ({ ...prev, [label]: value }));
@@ -247,7 +286,7 @@ const AdminCompanyInfo = () => {
     };
 
     return (
-        <main className="flex-1 overflow-y-auto bg-[#F6F8FC] p-6 md:p-8 lg:p-10">
+        <main className="flex-1 overflow-y-auto bg-[#FFFFFF] p-6 md:p-8 lg:p-10">
             <div className="mx-auto flex max-w-[88rem] flex-col gap-8">
                 <header className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex flex-1 flex-col gap-4 md:flex-row md:items-center">
@@ -259,23 +298,6 @@ const AdminCompanyInfo = () => {
                                 회사 기본 정보를 등록하고 수정할 수 있습니다.
                             </p>
                         </div>
-
-                        {/* {isEditing ? (
-                            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-red-100 bg-red-50 px-4 py-2 text-xs font-bold text-red-700 md:ml-auto">
-                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white">
-                                    ...
-                                </span>
-                                <span>수정 중...</span>
-                            </div>
-                        ) : (
-                            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-700 md:ml-auto">
-                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white">
-                                    <Check size={13} strokeWidth={3} />
-                                </span>
-                                <span>저장 완료</span>
-                                <span className="font-semibold text-emerald-600">{formValues?.created_at}</span>
-                            </div>
-                        )} */}
                     </div>
 
 
@@ -307,13 +329,42 @@ const AdminCompanyInfo = () => {
                         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                             {companyFields[1].fields.map((field) => (
                                 <div key={field.label} className={field.wide ? 'md:col-span-2' : ''}>
-                                    <Field
-                                        {...field}
-                                        value={formValues[field.label]}
-                                        readOnly={!isEditing}
-                                        onChange={handleChange}
-                                        error={fieldErrors[field.label]}
-                                    />
+                                    {field.label === '대표주소' ? (
+                                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[10rem_1fr]">
+                                            <Field
+                                                label="우편번호"
+                                                value={formValues['우편번호']}
+                                                readOnly
+                                                onChange={handleChange}
+                                            />
+                                            <Field
+                                                {...field}
+                                                value={formValues[field.label]}
+                                                readOnly
+                                                onChange={handleChange}
+                                                error={fieldErrors[field.label]}
+                                                action={
+                                                    isEditing ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setIsPostcodeOpen(true)}
+                                                            className="h-12 shrink-0 rounded-xl border border-[#3530B8] bg-white px-5 text-sm font-extrabold text-[#3530B8] transition-colors hover:bg-[#F0F4FF]"
+                                                        >
+                                                            주소 검색
+                                                        </button>
+                                                    ) : null
+                                                }
+                                            />
+                                        </div>
+                                    ) : (
+                                        <Field
+                                            {...field}
+                                            value={formValues[field.label]}
+                                            readOnly={!isEditing}
+                                            onChange={handleChange}
+                                            error={fieldErrors[field.label]}
+                                        />
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -337,6 +388,21 @@ const AdminCompanyInfo = () => {
                         </div>
                     </article>
                 </section>
+
+                {isPostcodeOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                        <div className="relative h-[31.25rem] w-full max-w-[31.25rem] overflow-hidden rounded-2xl bg-white shadow-2xl">
+                            <button
+                                type="button"
+                                onClick={() => setIsPostcodeOpen(false)}
+                                className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-sm font-bold text-slate-500 shadow hover:bg-slate-50"
+                            >
+                                ×
+                            </button>
+                            <div ref={postcodeRef} className="h-full w-full" />
+                        </div>
+                    </div>
+                )}
 
             </div>
         </main>
