@@ -465,6 +465,17 @@ const ApprovalDetail = () => {
       return;
     }
 
+    if (actionType === 'SWITCH_TO_EDIT') {
+      setMode('EDIT');
+      return;
+    }
+
+    if (actionType === 'CANCEL_EDIT') {
+      setMode('VIEW');
+      setRefresh(prev => prev + 1);
+      return;
+    }
+
     if (actionType === 'SUBMIT' || actionType === 'TEMP_SAVE') {
       await handleSave(actionType);
     }

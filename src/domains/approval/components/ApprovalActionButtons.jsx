@@ -23,6 +23,7 @@ const ApprovalActionButtons = ({
 
   // 수정 가능한 기안자 (첫 번째 결재자가 결재하기 전 상태)
   const isEditableDrafter = userRole === 'DRAFTER' && mode === 'VIEW' && firstApproverStatus === 'IN_PROGRESS';
+  const isEditingSubmitted = userRole === 'DRAFTER' && mode === 'EDIT' && firstApproverStatus === 'IN_PROGRESS';
 
   // 결재자 (현재 결재 순서인 경우)
   const isCurrentApprover = userRole === 'APPROVER' && mode === 'VIEW' && myStatus === 'IN_PROGRESS';
@@ -114,19 +115,38 @@ const ApprovalActionButtons = ({
       <div className="hidden md:flex justify-center gap-3 w-full">
         {mode === 'EDIT' && userRole === 'DRAFTER' && (
           <>
-            <CloseButton />
-            <button
-              className="px-6 py-2 bg-[#F0F4FF] text-[#3530B8] font-bold text-xs rounded-xl hover:bg-[#DDE8FF] transition-all active:scale-95"
-              onClick={() => onAction('TEMP_SAVE')}
-            >
-              임시저장
-            </button>
-            <button
-              className="px-8 py-2 bg-[#3530B8] text-white font-bold text-xs rounded-xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all active:scale-95"
-              onClick={() => onAction('SUBMIT')}
-            >
-              결재상신
-            </button>
+            {!isEditingSubmitted && <CloseButton />}
+            {isEditingSubmitted ? (
+              <>
+                <button
+                  className="px-6 py-2 bg-gray-100 text-gray-500 font-bold text-xs rounded-xl hover:bg-gray-200 transition-all active:scale-95"
+                  onClick={() => onAction('CANCEL_EDIT')}
+                >
+                  취소
+                </button>
+                <button
+                  className="px-8 py-2 bg-[#3530B8] text-white font-bold text-xs rounded-xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all active:scale-95"
+                  onClick={() => onAction('SUBMIT')}
+                >
+                  수정완료
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  className="px-6 py-2 bg-[#F0F4FF] text-[#3530B8] font-bold text-xs rounded-xl hover:bg-[#DDE8FF] transition-all active:scale-95"
+                  onClick={() => onAction('TEMP_SAVE')}
+                >
+                  임시저장
+                </button>
+                <button
+                  className="px-8 py-2 bg-[#3530B8] text-white font-bold text-xs rounded-xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all active:scale-95"
+                  onClick={() => onAction('SUBMIT')}
+                >
+                  결재상신
+                </button>
+              </>
+            )}
           </>
         )}
 
@@ -163,12 +183,20 @@ const ApprovalActionButtons = ({
                   <div className="flex gap-3">
                     <CloseButton />
                     {isEditableDrafter && (
-                      <button
-                        className="px-6 py-2 bg-white border border-red-200 text-red-500 font-bold text-xs rounded-xl hover:bg-red-50 transition-all active:scale-95"
-                        onClick={() => onAction('SUBMIT_CANCEL')}
-                      >
-                        상신취소
-                      </button>
+                      <>
+                        <button
+                          className="px-6 py-2 bg-white border border-red-200 text-red-500 font-bold text-xs rounded-xl hover:bg-red-50 transition-all active:scale-95"
+                          onClick={() => onAction('SUBMIT_CANCEL')}
+                        >
+                          상신취소
+                        </button>
+                        <button
+                          className="px-6 py-2 bg-white border border-[#3530B8] text-[#3530B8] font-bold text-xs rounded-xl hover:bg-[#F0F4FF] transition-all active:scale-95"
+                          onClick={() => onAction('SWITCH_TO_EDIT')}
+                        >
+                          수정
+                        </button>
+                      </>
                     )}
                     {isCurrentApprover && (
                       <>
@@ -198,24 +226,45 @@ const ApprovalActionButtons = ({
       <div className="md:hidden flex justify-center gap-2 w-full px-2">
         {mode === 'EDIT' && userRole === 'DRAFTER' && (
           <>
-            <button
-              className="flex-1 py-2.5 border border-gray-200 text-gray-500 font-bold text-[11px] rounded-lg active:scale-95 whitespace-nowrap"
-              onClick={() => navigate(-1)}
-            >
-              닫기
-            </button>
-            <button
-              className="flex-1 py-2.5 bg-[#F0F4FF] text-[#3530B8] font-bold text-[11px] rounded-lg active:scale-95 whitespace-nowrap"
-              onClick={() => onAction('TEMP_SAVE')}
-            >
-              임시저장
-            </button>
-            <button
-              className="flex-1 py-2.5 bg-[#3530B8] text-white font-bold text-[11px] rounded-lg active:scale-95 whitespace-nowrap shadow-md"
-              onClick={() => onAction('SUBMIT')}
-            >
-              결재상신
-            </button>
+            {!isEditingSubmitted && (
+              <button
+                className="flex-1 py-2.5 border border-gray-200 text-gray-500 font-bold text-[11px] rounded-lg active:scale-95 whitespace-nowrap"
+                onClick={() => navigate(-1)}
+              >
+                닫기
+              </button>
+            )}
+            {isEditingSubmitted ? (
+              <>
+                <button
+                  className="flex-1 py-2.5 bg-gray-100 text-gray-500 font-bold text-[11px] rounded-lg active:scale-95 whitespace-nowrap"
+                  onClick={() => onAction('CANCEL_EDIT')}
+                >
+                  취소
+                </button>
+                <button
+                  className="flex-1 py-2.5 bg-[#3530B8] text-white font-bold text-[11px] rounded-lg active:scale-95 whitespace-nowrap shadow-md"
+                  onClick={() => onAction('SUBMIT')}
+                >
+                  수정완료
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  className="flex-1 py-2.5 bg-[#F0F4FF] text-[#3530B8] font-bold text-[11px] rounded-lg active:scale-95 whitespace-nowrap"
+                  onClick={() => onAction('TEMP_SAVE')}
+                >
+                  임시저장
+                </button>
+                <button
+                  className="flex-1 py-2.5 bg-[#3530B8] text-white font-bold text-[11px] rounded-lg active:scale-95 whitespace-nowrap shadow-md"
+                  onClick={() => onAction('SUBMIT')}
+                >
+                  결재상신
+                </button>
+              </>
+            )}
           </>
         )}
 
@@ -245,12 +294,20 @@ const ApprovalActionButtons = ({
                   닫기
                 </button>
                 {isEditableDrafter && (
-                  <button
-                    className="flex-1 py-2.5 bg-white border border-red-200 text-red-500 font-bold text-[11px] rounded-lg active:scale-95 whitespace-nowrap"
-                    onClick={() => onAction('SUBMIT_CANCEL')}
-                  >
-                    상신취소
-                  </button>
+                  <>
+                    <button
+                      className="flex-1 py-2.5 bg-white border border-red-200 text-red-500 font-bold text-[11px] rounded-lg active:scale-95 whitespace-nowrap"
+                      onClick={() => onAction('SUBMIT_CANCEL')}
+                    >
+                      상신취소
+                    </button>
+                    <button
+                      className="flex-1 py-2.5 bg-white border border-[#3530B8] text-[#3530B8] font-bold text-[11px] rounded-lg active:scale-95 whitespace-nowrap"
+                      onClick={() => onAction('SWITCH_TO_EDIT')}
+                    >
+                      수정
+                    </button>
+                  </>
                 )}
                 {isCurrentApprover && (
                   <>
