@@ -243,14 +243,12 @@ const MeetingRooms = () => {
     }
   }, [showSearchResults, showStartTimeDropdown, showEndTimeDropdown]);
 
-  const filteredEmployees = searchQuery 
-    ? allEmployees.filter(emp => {
-        const name = emp?.name || '';
-        const deptName = emp?.dept_name || '';
-        const isMe = emp.id === user?.id;
-        return !isMe && (name.includes(searchQuery) || deptName.includes(searchQuery));
-      }) 
-    : [];
+  const filteredEmployees = allEmployees.filter(emp => {
+    const name = emp?.name || '';
+    const deptName = emp?.dept_name || '';
+    const isMe = emp.id === user?.id;
+    return !isMe && (!searchQuery || name.includes(searchQuery) || deptName.includes(searchQuery));
+  });
 
   const handleAddAttendee = (emp) => {
     if (form.attendees.some(a => a.users_seq === emp.users_seq)) {
@@ -702,10 +700,10 @@ const MeetingRooms = () => {
                       }}
                     />
                     
-                    {showSearchResults && searchQuery && createPortal(
+                    {showSearchResults && createPortal(
                       <div 
-                        className="fixed z-[9999] bg-white border border-gray-100 rounded-2xl shadow-2xl max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95"
-                        style={{ top: `${dropdownPos.top + 8}px`, left: `${dropdownPos.left}px`, width: `${dropdownPos.width}px` }}
+                        className="fixed z-[9999] bg-white border border-gray-100 rounded-2xl shadow-2xl max-h-[11.65rem] overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95"
+                        style={{ top: `${dropdownPos.top + 1}px`, left: `${dropdownPos.left}px`, width: `${dropdownPos.width}px` }}
                       >
                         {filteredEmployees.length > 0 ? (
                           filteredEmployees.map(emp => (
@@ -727,7 +725,7 @@ const MeetingRooms = () => {
                       </div>,
                       document.body
                     )}
-                    {showSearchResults && searchQuery && (
+                    {showSearchResults && (
                       <div className="fixed inset-0 z-[9998]" onClick={() => setShowSearchResults(false)} />
                     )}
                   </div>
