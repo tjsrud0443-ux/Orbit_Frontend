@@ -4,12 +4,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown, faCheck } from '@fortawesome/free-solid-svg-icons';
 import Calendar from '../../components/common/Calendar';
 // updateProject 추가 (projectsApi.js 에 구현 필요)
-import { completeProject, deleteProject, getAllEmp, getMyAllProject, getProjectCount, insertProjectAndMembers, updateProject } from './projectsApi';
+import { completeProject, deleteProject, getMyAllProject, getProjectCount, insertProjectAndMembers, updateProject } from './projectsApi';
 import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
 import { alertSuccess, alertConfirm } from '../../utils/alert';
 import useLoadingStore from '../../store/useLoadingStore';
 import Pagination from '../../components/common/Pagination';
+import useEmployeeStore from '../../store/useEmployeeStore';
 
 const ProjectsList = () => {
   const navigate = useNavigate();
@@ -33,13 +34,13 @@ const ProjectsList = () => {
   const [searchParam] = useSearchParams(); // 알림용
   const showLoading = useLoadingStore(state => state.showLoading);
   const hideLoading = useLoadingStore(state => state.hideLoading);
+  const { allEmployees, fetchEmployees } = useEmployeeStore();
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
   const [projects, setProjects] = useState([{}]);
   const [newProject, setNewProject] = useState({ project_name: '', contents: '', start_date: '', end_date: '', members: [] });
-  const [employees, setEmployees] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [projectCount, setProjectCount] = useState([]);
@@ -89,15 +90,32 @@ const ProjectsList = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (allEmployees.length === 0) {
+      fetchEmployees();
+    }
+  }, [allEmployees.length, fetchEmployees]);
+
+  const employees = useMemo(() => {
+    return allEmployees.map(emp => ({
+      ...emp,
+      id: emp.id ?? emp.users_id ?? emp.users_seq,
+      name: emp.name ?? '',
+      sysname: emp.sysname,
+      dept_name: emp.dept_name ?? emp.deptName ?? '',
+      rank_name: emp.rank_name ?? emp.rankName ?? '',
+    }));
+  }, [allEmployees]);
+
   const filteredEmployees = employees.filter(e => {
-    const matchsSearch = e.name.includes(empSearch);
+    const matchsSearch = !empSearch || e.name.includes(empSearch) || e.dept_name.includes(empSearch);
     const isAlreadyAdded = newProject.members.some(m => m.id === e.id);
     const targetLank = e.rank_name !== "대표";
     const targetMy = e.id !== user?.id;
     return matchsSearch && !isAlreadyAdded && targetLank && targetMy;
   });
 
-  const isDropdownActive = showEmpDropdown && empSearch; // 검색창이 활성화되었는지 여부
+  const isDropdownActive = showEmpDropdown; // 검색창이 활성화되었는지 여부
   const getDynamicMargin = () => {
     if (!isDropdownActive) return 8; // 평소 간격 (mb-2 = 8px)
     if (filteredEmployees.length === 0) {
@@ -109,13 +127,13 @@ const ProjectsList = () => {
 
   // ===== 수정 모드 참여자 검색 =====
   const filteredEditEmployees = employees.filter(e => {
-    const matchesSearch = e.name.includes(editEmpSearch);
+    const matchesSearch = !editEmpSearch || e.name.includes(editEmpSearch) || e.dept_name.includes(editEmpSearch);
     const isAlreadyAdded = editData.members.some(m => m.id === e.id);
     const targetRank = e.rank_name !== "대표";
     const targetMy = e.id !== user.id;
     return matchesSearch && !isAlreadyAdded && targetRank && targetMy;
   });
-  const isEditDropdownActive = showEditEmpDropdown && editEmpSearch;
+  const isEditDropdownActive = showEditEmpDropdown;
 
   // 수정 관련 상태 전체 초기화
   const resetEditState = () => {
@@ -403,14 +421,6 @@ const ProjectsList = () => {
 
   useEffect(() => {
     showLoading();
-    getAllEmp().then(resp => {
-      setEmployees(resp.data)
-      hideLoading();
-    }).catch(() => hideLoading());
-  }, []);
-
-  useEffect(() => {
-    showLoading();
     getMyAllProject().then(resp => {
       setProjects(resp.data);
       setIsModalOpen(false);
@@ -540,6 +550,8 @@ const ProjectsList = () => {
           <div className="relative" ref={empRef}>
             <input
               value={editEmpSearch}
+              onFocus={() => setShowEditEmpDropdown(true)}
+              onClick={() => setShowEditEmpDropdown(true)}
               onChange={e => {
                 setEditEmpSearch(e.target.value);
                 setShowEditEmpDropdown(true);
@@ -1003,6 +1015,8 @@ const ProjectsList = () => {
                     <div className="relative" ref={empDropdownRef}>
                       <input
                         value={empSearch}
+                        onFocus={() => setShowEmpDropdown(true)}
+                        onClick={() => setShowEmpDropdown(true)}
                         onChange={e => {
                           setEmpSearch(e.target.value);
                           setShowEmpDropdown(true);
