@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Bell, Check } from 'lucide-react';
 
 const companyFields = [
@@ -27,7 +27,12 @@ const companyFields = [
   },
 ];
 
-const Field = ({ label, value, required }) => (
+const initialFormValues = companyFields.flatMap(({ fields }) => fields).reduce(
+  (acc, field) => ({ ...acc, [field.label]: field.value }),
+  {}
+);
+
+const Field = ({ label, value, required, readOnly, onChange }) => (
   <label className="flex flex-col gap-2">
     <span className="text-sm font-bold text-slate-700">
       {label}
@@ -35,13 +40,41 @@ const Field = ({ label, value, required }) => (
     </span>
     <input
       type="text"
-      defaultValue={value}
-      className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-300 focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/10"
+      value={value}
+      readOnly={readOnly}
+      onChange={(event) => onChange(label, event.target.value)}
+      className={`h-12 w-full rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-300 ${
+        readOnly
+          ? 'bg-slate-50 cursor-default'
+          : 'bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/10'
+      }`}
     />
   </label>
 );
 
 const AdminCompanyInfo = () => {
+  const [formValues, setFormValues] = useState(initialFormValues);
+  const [savedValues, setSavedValues] = useState(initialFormValues);
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleChange = (label, value) => {
+    setFormValues((prev) => ({ ...prev, [label]: value }));
+  };
+
+  const handleCancel = () => {
+    setFormValues(savedValues);
+    setIsEditing(false);
+  };
+
+  const handleSave = () => {
+    setSavedValues(formValues);
+    setIsEditing(false);
+  };
+
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+
   return (
     <main className="flex-1 overflow-y-auto bg-[#F6F8FC] p-6 md:p-8 lg:p-10">
       <div className="mx-auto flex max-w-[88rem] flex-col gap-8">
@@ -56,13 +89,22 @@ const AdminCompanyInfo = () => {
               </p>
             </div>
 
-            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-700 md:ml-auto">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white">
-                <Check size={13} strokeWidth={3} />
-              </span>
-              <span>저장 완료</span>
-              <span className="font-semibold text-emerald-600">2024.05.20 14:32 · 정선경(Admin)</span>
-            </div>
+            {isEditing ? (
+              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-red-100 bg-red-50 px-4 py-2 text-xs font-bold text-red-700 md:ml-auto">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white">
+                  ...
+                </span>
+                <span>수정 중...</span>
+              </div>
+            ) : (
+              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-700 md:ml-auto">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white">
+                  <Check size={13} strokeWidth={3} />
+                </span>
+                <span>저장 완료</span>
+                <span className="font-semibold text-emerald-600">2024.05.20 14:32 · 정선경(Admin)</span>
+              </div>
+            )}
           </div>
 
           
@@ -77,7 +119,12 @@ const AdminCompanyInfo = () => {
                   key={field.label}
                   className={index < 3 ? 'xl:col-span-2' : 'xl:col-span-3'}
                 >
-                  <Field {...field} />
+                  <Field
+                    {...field}
+                    value={formValues[field.label]}
+                    readOnly={!isEditing}
+                    onChange={handleChange}
+                  />
                 </div>
               ))}
             </div>
@@ -88,22 +135,31 @@ const AdminCompanyInfo = () => {
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
               {companyFields[1].fields.map((field) => (
                 <div key={field.label} className={field.wide ? 'md:col-span-2' : ''}>
-                  <Field {...field} />
+                  <Field
+                    {...field}
+                    value={formValues[field.label]}
+                    readOnly={!isEditing}
+                    onChange={handleChange}
+                  />
                 </div>
               ))}
             </div>
             <div className="mt-6 flex flex-wrap justify-end gap-3">
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  className="rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50"
+                >
+                  취소
+                </button>
+              )}
               <button
                 type="button"
-                className="rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50"
-              >
-                취소
-              </button>
-              <button
-                type="button"
+                onClick={isEditing ? handleSave : handleEdit}
                 className="rounded-xl bg-[#3530B8] px-7 py-3 text-sm font-extrabold text-white shadow-lg shadow-[#3530B8]/20 transition-colors hover:bg-[#2A2696]"
               >
-                수정 완료
+                {isEditing ? '수정 완료' : '수정'}
               </button>
             </div>
           </article>
