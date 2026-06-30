@@ -453,6 +453,7 @@ if (isEditing) {
            calendarStore.setEvents([]);
         } else {
           setCompanyEvents(prev => prev.filter(e => e.id !== form.schedule_seq));
+          calendarStore.setEvents([]); 
         }
       } else {
         setCompanyEvents(updater);
