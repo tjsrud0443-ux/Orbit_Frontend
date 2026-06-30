@@ -32,7 +32,52 @@ const initialFormValues = companyFields.flatMap(({ fields }) => fields).reduce(
   {}
 );
 
-const Field = ({ label, value, required, readOnly, onChange }) => (
+const validationRules = {
+  회사명: {
+    maxLength: 30,
+    message: '회사명은 30자 이하로 입력해 주세요.',
+  },
+  대표자명: {
+    maxLength: 20,
+    pattern: /^[A-Za-z가-힣]+$/,
+    message: '대표자명은 20자 이하의 한글 또는 영문만 입력해 주세요.',
+  },
+  사업자등록번호: {
+    maxLength: 12,
+    pattern: /^\d{3}-\d{2}-\d{5}$/,
+    message: '사업자등록번호는 123-45-67890 형식으로 입력해 주세요.',
+  },
+  대표번호: {
+    maxLength: 13,
+    pattern: /^(?:\d{2}-\d{3}-\d{4}|\d{3}-\d{4}-\d{4}|\d{2}-\d{4}-\d{4})$/,
+    message: '대표번호는 00-000-0000, 000-0000-0000, 00-0000-0000 형식으로 입력해 주세요.',
+  },
+  이메일: {
+    pattern: /^[A-Za-z0-9._%+-]{1,20}@[a-z]+\.[a-z]{3}$/,
+    message: 'example@email.com 등 알맞은 형식으로 입력해주세요.',
+  },
+  상세주소: {
+    maxLength: 20,
+    message: '상세주소는 20자 이하로 입력해 주세요.',
+  },
+  팩스번호: {
+    maxLength: 13,
+    pattern: /^(?:\d{2}-\d{3}-\d{4}|\d{3}-\d{4}-\d{4}|\d{2}-\d{4}-\d{4})$/,
+    message: '팩스번호는 00-000-0000, 000-0000-0000, 00-0000-0000 형식으로 입력해 주세요.',
+  },
+};
+
+const validateField = (label, value) => {
+  const rule = validationRules[label];
+
+  if (!rule) return '';
+  if (rule.maxLength && value.length > rule.maxLength) return rule.message;
+  if (rule.pattern && value && !rule.pattern.test(value)) return rule.message;
+
+  return '';
+};
+
+const Field = ({ label, value, required, readOnly, onChange, error }) => (
   <label className="flex flex-col gap-2">
     <span className="text-sm font-bold text-slate-700">
       {label}
@@ -42,13 +87,17 @@ const Field = ({ label, value, required, readOnly, onChange }) => (
       type="text"
       value={value}
       readOnly={readOnly}
+      maxLength={validationRules[label]?.maxLength}
       onChange={(event) => onChange(label, event.target.value)}
-      className={`h-12 w-full rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-300 ${
-        readOnly
-          ? 'bg-slate-50 cursor-default'
-          : 'bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/10'
+      className={`h-12 w-full rounded-xl border px-4 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-300 ${
+        error
+          ? 'border-red-500 bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
+          : readOnly
+            ? 'border-slate-200 bg-slate-50 cursor-default'
+            : 'border-slate-200 bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/10'
       }`}
     />
+    {error && <span className="text-xs font-semibold text-red-500">{error}</span>}
   </label>
 );
 
@@ -56,22 +105,48 @@ const AdminCompanyInfo = () => {
   const [formValues, setFormValues] = useState(initialFormValues);
   const [savedValues, setSavedValues] = useState(initialFormValues);
   const [isEditing, setIsEditing] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const handleChange = (label, value) => {
     setFormValues((prev) => ({ ...prev, [label]: value }));
+    setFieldErrors((prev) => {
+      const error = validateField(label, value);
+      const nextErrors = { ...prev };
+
+      if (error) {
+        nextErrors[label] = error;
+      } else {
+        delete nextErrors[label];
+      }
+
+      return nextErrors;
+    });
   };
 
   const handleCancel = () => {
     setFormValues(savedValues);
+    setFieldErrors({});
     setIsEditing(false);
   };
 
   const handleSave = () => {
+    const nextErrors = Object.entries(formValues).reduce((acc, [label, value]) => {
+      const error = validateField(label, value);
+      return error ? { ...acc, [label]: error } : acc;
+    }, {});
+
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors(nextErrors);
+      return;
+    }
+
     setSavedValues(formValues);
+    setFieldErrors({});
     setIsEditing(false);
   };
 
   const handleEdit = () => {
+    setFieldErrors({});
     setIsEditing(true);
   };
 
@@ -124,6 +199,7 @@ const AdminCompanyInfo = () => {
                     value={formValues[field.label]}
                     readOnly={!isEditing}
                     onChange={handleChange}
+                    error={fieldErrors[field.label]}
                   />
                 </div>
               ))}
@@ -140,6 +216,7 @@ const AdminCompanyInfo = () => {
                     value={formValues[field.label]}
                     readOnly={!isEditing}
                     onChange={handleChange}
+                    error={fieldErrors[field.label]}
                   />
                 </div>
               ))}
