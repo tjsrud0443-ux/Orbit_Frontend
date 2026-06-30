@@ -47,6 +47,7 @@ import { ToastContainer, Zoom, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import './App.css';
 import { useEffect, useState } from 'react';
+import AdminCompanyInfo from './domains/admin/AdminCompanyInfo';
 
 function App() {
   const loading = useLoadingStore(state => state.loading);
@@ -127,6 +128,7 @@ function App() {
               <Route element={<ProtectedRoute
                 allow={[{ type: "group", value: "ROLE_SUPER_ADMIN" }]} />}>
                 <Route path="/adminMain" element={<AdminMain />} />
+                <Route path="/adminCompanyInfo" element={<AdminCompanyInfo />} />
               </Route>
 
               <Route element={<ProtectedRoute
