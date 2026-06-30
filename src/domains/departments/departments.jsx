@@ -15,19 +15,90 @@ import {
 import { getGroup } from './departmentsApi';
 import useAuthStore from '../../store/authStore';
 import useLoadingStore from '../../store/useLoadingStore';
-
-// // Position Rank for Sorting (Lower number = Higher rank)
+import useDepartmentsStore from '../../store/useDepartmentsStore';
 
 const POSITION_RANK = {
   '대표이사': 1, '본부장': 3, '부서장': 4, '차장': 5, '과장': 6, '대리': 7, '사원': 8
 };
 
+const PROFILE_API = 'https://api.sukong.shop/file/profile/view';
 
+const getProfileName = (obj) => obj?.sysname || obj?.sysName;
+
+const collectProfileSysnames = (users = [], root) => {
+  const set = new Set();
+
+  users.forEach(user => {
+    const sysname = getProfileName(user);
+    if (sysname) set.add(sysname);
+  });
+
+  const walk = (node) => {
+    if (!node) return;
+
+    const nodeSysname = getProfileName(node);
+    if (nodeSysname) set.add(nodeSysname);
+
+    node.members?.forEach(member => {
+      const memberSysname = getProfileName(member);
+      if (memberSysname) set.add(memberSysname);
+    });
+
+    node.children?.forEach(child => walk(child));
+  };
+
+  walk(root);
+
+  return Array.from(set);
+};
+
+const fetchProfileImage = async (sysname, token) => {
+  try {
+    const resp = await fetch(
+      `${PROFILE_API}?sysname=${encodeURIComponent(sysname)}&token=${encodeURIComponent(token)}`
+    );
+
+    if (!resp.ok) {
+      throw new Error(`프로필 이미지 로딩 실패: ${sysname}`);
+    }
+
+    const blob = await resp.blob();
+    return URL.createObjectURL(blob);
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+};
+
+const loadProfileImages = async (sysnames, token) => {
+  const chunkSize = 5;
+
+  const profileImageMap = useDepartmentsStore.getState().profileImageMap;
+
+  const targets = sysnames.filter(sysname => !profileImageMap[sysname]);
+
+  for (let i = 0; i < targets.length; i += chunkSize) {
+    const chunk = targets.slice(i, i + chunkSize);
+
+    await Promise.all(
+      chunk.map(async (sysname) => {
+        const latestMap = useDepartmentsStore.getState().profileImageMap;
+
+        if (latestMap[sysname]) return;
+
+        const imageUrl = await fetchProfileImage(sysname, token);
+
+        if (imageUrl) {
+          useDepartmentsStore.getState().setProfileImage(sysname, imageUrl);
+        }
+      })
+    );
+  }
+};
 
 const getRank = (pos) => POSITION_RANK[pos] || 99;
 
-const OrgNode = ({ node, isChild = false }) => {
-  const token = useAuthStore(state => state.token);
+const OrgNode = ({ node, isChild = false, profileImageMap = {}, onEmployeeClick }) => {
 
   const isMember = !!node.id;
   const isRoot = node.parentDeptSeq === null && !isMember;
@@ -47,23 +118,31 @@ const OrgNode = ({ node, isChild = false }) => {
   }
 
   const profileImg = displayNode.sysname || displayNode.sysName;
+  const profileSrc = profileImg ? profileImageMap[profileImg] : null;
 
   return (
     <div className="flex flex-col items-center relative lg:scale-100 origin-top">
       {/* Node Card */}
-      <div className={`
+      <div
+        onClick={() => {
+          if (displayNode?.id) {
+            onEmployeeClick(displayNode);
+          }
+        }}
+        className={`
         relative z-10 flex items-center p-2.5 px-3 min-w-[150px] lg:p-1.5 lg:px-2.5 lg:min-w-[130px] rounded-lg border-2 transition-all gap-2 lg:gap-1.5
+        ${displayNode?.id ? 'cursor-pointer' : ''}
         ${isRoot
-          ? 'bg-[#3530B8] border-[#3530B8] text-white shadow-lg scale-105'
-          : 'bg-white border-[#DDE8FF] text-gray-800 shadow-sm hover:border-[#3530B8]'}
+            ? 'bg-[#3530B8] border-[#3530B8] text-white shadow-lg scale-105'
+            : 'bg-white border-[#DDE8FF] text-gray-800 shadow-sm hover:border-[#3530B8]'}
       `}>
         <div className={`
           w-9 h-9 lg:w-8 lg:h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden
           ${isRoot ? 'bg-white/20 text-white' : 'bg-[#F0F4FF] text-[#3530B8]'}
         `}>
-          {profileImg ? (
+          {profileSrc ? (
             <img
-              src={`https://api.sukong.shop/file/profile/view?sysname=${profileImg}&token=${token}`}
+              src={profileSrc}
               alt={displayNode.name}
               className="w-full h-full object-cover"
             />
@@ -104,6 +183,8 @@ const OrgNode = ({ node, isChild = false }) => {
                       children: []
                     }}
                     isChild={true}
+                    profileImageMap={profileImageMap}
+                    onEmployeeClick={onEmployeeClick}
                   />
                 </div>
               ))}
@@ -129,7 +210,12 @@ const OrgNode = ({ node, isChild = false }) => {
                     {/* Vertical Connector down to node */}
                     <div className="w-0.5 h-8 lg:h-5 bg-[#DDE8FF] relative z-10" />
 
-                    <OrgNode node={child} isChild={true} />
+                    <OrgNode
+                      node={child}
+                      isChild={true}
+                      profileImageMap={profileImageMap}
+                      onEmployeeClick={onEmployeeClick}
+                    />
                   </div>
                 ))}
               </div>
@@ -202,7 +288,7 @@ const SidebarItem = ({ node, level = 0, selectedDept, onSelect, nodeMap }) => {
 };
 
 // 3. Employee List Component (Table View)
-const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptName, searchTerm = "" }) => {
+const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptName, searchTerm = "", profileImageMap = {} }) => {
   const filteredEmployees = useMemo(() => {
     let list = [...employees];
 
@@ -211,7 +297,6 @@ const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptNa
       if (deptCode === "CEO") {
         list = list.filter(emp => emp.deptSeq === deptSeqs[0]);
       } else {
-        // 일반 부서들은 기존대로 하위 팀/부서원들까지 전부 묶어서 출력
         list = list.filter(emp => deptSeqs.includes(emp.deptSeq));
       }
     }
@@ -230,8 +315,6 @@ const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptNa
     return list;
   }, [employees, deptSeqs, deptCode, searchTerm]);
 
-
-  const token = useAuthStore(state => state.token);
   return (
     // 목록형 조직도
     <div className="bg-white overflow-hidden">
@@ -254,12 +337,12 @@ const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptNa
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-[#DDE8FF] text-[#3530B8] flex items-center justify-center text-xs font-bold transition-all overflow-hidden">
                         {
-                          emp?.sysname && 
-                            <img
-                              src={`https://api.sukong.shop/file/profile/view?sysname=${emp.sysname}&token=${token}`}
-                              alt={emp.name}
-                              className="w-full h-full object-cover"
-                            />
+                          emp?.sysname && profileImageMap[emp.sysname] &&
+                          <img
+                            src={profileImageMap[emp.sysname]}
+                            alt={emp.name}
+                            className="w-full h-full object-cover"
+                          />
                         }
                       </div>
                       <span className="text-sm font-bold text-gray-700">{emp.name}</span>
@@ -274,11 +357,13 @@ const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptNa
                         text-[10px] font-bold rounded-md 
                         ${emp.attendanceStatus === '근무중' ? 'px-2 py-1 border bg-[#F0FDF4] text-[#10B981] border-[#F0FDF4]'
                           : emp.attendanceStatus === '퇴근' ? 'px-2 py-1 border bg-[#FFF9F0] text-[#FF9800] border-[#FFF9F0]'
-                            : emp.attendanceStatus === '연차' ||
-                              emp.attendanceStatus === '오전반차' ||
-                              emp.attendanceStatus === '오후반차' ? 'px-2 py-1 border bg-blue-50 text-blue-600 border-blue-50'
-                              : 'text-gray-400 px-4 py-1'}
-                        `}>{emp.attendanceStatus || '-' }</span>
+                            : emp.attendanceStatus === '휴직'
+                              ? 'px-2 py-1 border bg-slate-50 text-slate-500 border-slate-100'
+                              : emp.attendanceStatus === '연차' ||
+                                emp.attendanceStatus === '오전반차' ||
+                                emp.attendanceStatus === '오후반차' ? 'px-2 py-1 border bg-blue-50 text-blue-600 border-blue-50'
+                                : 'text-gray-400 px-4 py-1'}
+                        `}>{emp.attendanceStatus || '-'}</span>
                   </td>
                 </tr>
               ))
@@ -302,6 +387,7 @@ const Departments = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [headerSearch, setHeaderSearch] = useState('');
   const [isHeaderSearchOpen, setIsHeaderSearchOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
   const token = useAuthStore(state => state.token);
   const sidebarRef = useRef(null);
   const showLoading = useLoadingStore(state => state.showLoading);
@@ -319,12 +405,13 @@ const Departments = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isSidebarOpen]);
 
-  // 1. Initial Static Data
-  const [fullTree, setFullTree] = useState({
-    root: null,
-    nodeMap: {}
-  })
-  const [employees, setEmployees] = useState([]);
+  const {
+    fullTree,
+    employees,
+    profileImageMap,
+    loaded,
+    setGroupData
+  } = useDepartmentsStore();
 
   const allDeptSeq = (node) => {
     const result = [node.deptSeq];
@@ -338,22 +425,44 @@ const Departments = () => {
   }
 
   useEffect(() => {
+  const loadGroup = async () => {
+    if (!token) return;
+
+    if (loaded) {
+      const sysnames = collectProfileSysnames(employees, fullTree.root);
+      loadProfileImages(sysnames, token);
+      return;
+    }
+
     showLoading();
-    getGroup().then(resp => {
-      setFullTree({
-        root: resp.data.root,
-        nodeMap: resp.data.nodeMap
+
+    try {
+      const resp = await getGroup();
+
+      const root = resp.data.root;
+      const nodeMap = resp.data.nodeMap;
+      const users = resp.data.users || [];
+
+      setGroupData({
+        root,
+        nodeMap,
+        users
       });
 
-      setEmployees(
-        resp.data.users
-      )
       hideLoading();
-    })
-      .catch(error => {
-        console.log("조직도 로딩 실패", error)
-      })
-  }, []);
+
+      const sysnames = collectProfileSysnames(users, root);
+      loadProfileImages(sysnames, token);
+
+    } catch (error) {
+      console.log("조직도 로딩 실패", error);
+      hideLoading();
+    }
+  };
+
+  loadGroup();
+}, [token, loaded]);
+
 
   // Selected department details
   const currentDeptInfo = useMemo(() => {
@@ -401,15 +510,12 @@ const Departments = () => {
         className={`
   bg-white border-r border-gray-200 flex flex-col shrink-0 transition-all duration-300 ease-in-out overflow-hidden
   
-  /* 💻 데스크톱: 유저님이 원래 만드신 완벽한 레이아웃 그대로 고정 */
   lg:relative lg:inset-auto lg:translate-x-0
   ${isSidebarOpen ? 'lg:w-64' : 'lg:w-0'}
   
-  /* 📱 모바일: 데스크톱에 절대 영향을 주지 않도록 fixed와 정렬 분리 */
   fixed inset-y-0 left-0 z-50
   ${isSidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full'}
 `}>
-        {/* 💡 [핵심 교정] lg:w-64로 데스크톱 크기를 꽉 잡아두고, 모바일(w-0)일 때만 내부 콘텐츠가 숨겨지도록 처리 */}
         <div className="w-full lg:w-64 flex flex-col h-full shrink-0">
           <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
             <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
@@ -431,7 +537,7 @@ const Departments = () => {
                 setSearchTerm('');
               }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all mb-4 ${selectedDept === 'ALL' ? 'bg-[#3530B8] text-white font-bold shadow-md' : 'text-gray-600 hover:bg-gray-50'}`}
-              >
+            >
               <FontAwesomeIcon icon={faLayerGroup} />
               전체 조직도
             </button>
@@ -538,12 +644,12 @@ const Departments = () => {
                             >
                               <div className="w-8 h-8 rounded-full bg-[#DDE8FF] overflow-hidden shrink-0">
                                 {
-                                  emp?.sysname && 
-                                    <img
-                                      src={`https://api.sukong.shop/file/profile/view?sysname=${emp.sysname}&token=${token}`}
-                                      className="w-full h-full object-cover"
-                                      alt={emp.name}
-                                    />
+                                  emp?.sysname && profileImageMap[emp.sysname] &&
+                                  <img
+                                    src={profileImageMap[emp.sysname]}
+                                    className="w-full h-full object-cover"
+                                    alt={emp.name}
+                                  />
                                 }
                               </div>
                               <div className="min-w-0">
@@ -599,13 +705,14 @@ const Departments = () => {
                 deptSeq="ALL"
                 deptName="전체"
                 searchTerm={searchTerm}
+                profileImageMap={profileImageMap}
               />
             </div>
           ) : selectedDept === 'ALL' ? (
             /* CASE 1: Full Org Chart (Visual) */
             <div className="inline-block min-w-full p-2 lg:p-4">
               <div className="flex justify-center min-w-max pb-20 pt-4">
-                {fullTree.root && <OrgNode node={fullTree.root} />}
+                {fullTree.root && <OrgNode node={fullTree.root} profileImageMap={profileImageMap} onEmployeeClick={setSelectedEmployee} />}
               </div>
             </div>
           ) : (
@@ -619,13 +726,58 @@ const Departments = () => {
                   deptName={currentDeptInfo.deptName}
                   deptSeqs={selectDeptSeq}
                   searchTerm={searchTerm}
+                  profileImageMap={profileImageMap}
                 />
               )}
             </div>
           )}
         </div>
       </main>
+      {selectedEmployee && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 px-4"
+          onClick={() => setSelectedEmployee(null)}
+        >
+          <div
+            className="w-full max-w-[320px] bg-white rounded-2xl shadow-2xl border border-gray-100 p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-base font-extrabold text-gray-800">
+                  {selectedEmployee.name}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {selectedEmployee.deptName} · {selectedEmployee.position}
+                </p>
+              </div>
 
+              <button
+                onClick={() => setSelectedEmployee(null)}
+                className="w-7 h-7 rounded-full bg-gray-100 text-gray-400 hover:text-gray-600"
+              >
+                <FontAwesomeIcon icon={faTimes} className="text-xs" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between gap-4">
+                <span className="text-gray-400 font-bold shrink-0">전화번호</span>
+                <span className="text-gray-700 font-medium text-right">
+                  {selectedEmployee.phone || '-'}
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-4">
+                <span className="text-gray-400 font-bold shrink-0">이메일</span>
+                <span className="text-gray-700 font-medium text-right break-all">
+                  {selectedEmployee.email || '-'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <style dangerouslySetInnerHTML={{
         __html: `
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
