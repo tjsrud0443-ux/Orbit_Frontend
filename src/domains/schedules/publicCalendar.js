@@ -6,6 +6,13 @@ import useLoadingStore from '../../store/useLoadingStore';
 import { alertConfirm } from '../../utils/alert';
 import useCalendarStore from '../../store/useCalendarStore';
 
+const toLocalDateStr = (date) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
 const COMPANY_CATEGORIES = ['COMPANY', 'TEAM', 'ANNIVERSARY', 'PERSONAL'];
 
 const COMPANY_COLORS = {
@@ -33,9 +40,9 @@ const usePublicCalendar = () => {
   const navigate = useNavigate();
   const calendarEventsRef = useRef([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(() => toLocalDateStr(new Date()));
   const [selectedSchedules, setSelectedSchedules] = useState(() => {
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = toLocalDateStr(new Date());
   return filterEventsByDate(useCalendarStore.getState().events, todayStr);
 });
   const [isCalendarLoading, setIsCalendarLoading] = useState(
@@ -51,7 +58,7 @@ const usePublicCalendar = () => {
     if (calendarStore.events.length > 0) {
       calendarEventsRef.current = calendarStore.events;
       setCalendarEvents(calendarStore.events);
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = toLocalDateStr(new Date());
       setSelectedSchedules(filterEventsByDate(calendarStore.events, todayStr));
       setIsCalendarLoading(false);
       return;
@@ -80,7 +87,7 @@ const usePublicCalendar = () => {
         if (endDate && !isSameDay) {
           const d = new Date(endDate);
           d.setDate(d.getDate() + 1);
-          displayEnd = d.toISOString().split('T')[0];
+          displayEnd = toLocalDateStr(d);
         }
 
         return {
@@ -108,7 +115,7 @@ const usePublicCalendar = () => {
     calendarEventsRef.current = allEvents;
     setCalendarEvents(allEvents);
     calendarStore.setEvents(allEvents);
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = toLocalDateStr(new Date());
     setSelectedSchedules(filterEventsByDate(allEvents, todayStr));
     setIsCalendarLoading(false);
   };
