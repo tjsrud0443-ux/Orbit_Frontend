@@ -8,6 +8,7 @@ import { fetchHolidays } from '../../api/holidayApi';
 import { getSchedules, createSchedule, deleteSchedule, updateSchedule, getApprovedVacations } from './schedulesApi';
 import useLoadingStore from '../../store/useLoadingStore';
 import useUserStore from '../../store/userStore';
+import useCalendarStore from '../../store/useCalendarStore';
 import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 
 const currentYear = new Date().getFullYear();
@@ -108,12 +109,14 @@ const COMPANY_FILTERS = [
   { key: 'COMPANY', label: '회사 전체 일정', color: '#F59E0B' },
   { key: 'TEAM', label: '부서/팀 일정', color: '#0EA5E9' },
   { key: 'holiday', label: '공휴일', color: '#EF4444' },
-  { key: 'ANNIVERSARY', label: '기념일', color: '#EC4899' }
+  { key: 'ANNIVERSARY', label: '기념일', color: '#EC4899' },
+  { key: 'PERSONAL',  label: '내 일정', color: '#3530B8' },
 ];
 
 const COMPANY_CATEGORIES = ['COMPANY', 'TEAM', 'holiday', 'ANNIVERSARY'];
 
 const Calendar = () => {
+  const calendarStore = useCalendarStore();
   const user = useUserStore(state => state.user);
   const isHrAdmin = user?.auth_group === 'ROLE_HR_ADMIN';
 
@@ -169,7 +172,7 @@ const Calendar = () => {
   // 일정 추가/수정 모달 열림 여부 + 날짜
   const [modal, setModal] = useState({ open: false, date: '' });
   // 모달 안 입력값들(제목, 카테고리, 날짜 등)
-  const [form, setForm] = useState({ schedule_seq: '', title: '', schedule_type: 'personal', start_dt: '', end_dt: '', sked_reason: '', is_public: 0 });
+  const [form, setForm] = useState({ schedule_seq: '', title: '', schedule_type: 'personal', start_dt: '', end_dt: '', sked_reason: '', is_public: 0 , show_in_company: 0});
   // 지금 모달이 추가 모드인지 수정 모드인지
   const [isEditing, setIsEditing] = useState(false);
   const [isPermissionOpen, setIsPermissionOpen] = useState(false); // Add this line
@@ -229,6 +232,7 @@ const Calendar = () => {
             category: item.schedule_type,
             description: item.sked_reason,
             is_public: item.is_public,
+            show_in_company: item.show_in_company,
             actualEnd: endDate, // 화면 표시용 실제 종료일
             actualEndTime: endTime,
           },
@@ -270,7 +274,8 @@ const Calendar = () => {
         const pEvents = allEvents.filter(e => PERSONAL_FILTERS.some(f => f.key === e.category));
         // allEvents에서 회사 카테고리인 것만 골라내기
         const cEvents = allEvents.filter(e => COMPANY_FILTERS.some(f => f.key === e.category));
-
+        // 개인 일정 중 "공용 캘린더에도 표시" 체크된 것
+        const sharedPersonalEvents = pEvents.filter(e => e.extendedProps.show_in_company === 1);
         setPersonalEvents(prev => {
           // 기존 Mock 데이터(ID가 숫자가 아닌 것)와 공휴일은 유지하고, 서버 데이터만 교체
           const persistentEvents = prev.filter(e => 
@@ -282,7 +287,7 @@ const Calendar = () => {
         setCompanyEvents(prev => {
           // 기존 Mock 데이터(ID가 숫자가 아닌 것)와 공휴일은 유지하고, 서버 데이터만 교체
           const persistentEvents = prev.filter(e => isNaN(Number(e.id)) || e.category === 'holiday');
-          return [...persistentEvents, ...cEvents];
+          return [...persistentEvents, ...cEvents, ...sharedPersonalEvents];
         });
       })
       .catch(err => console.error('일정 로드 실패:', err))
@@ -334,10 +339,16 @@ const Calendar = () => {
       }
     }, 0);
   }, [loadHolidaysForYear]);
-
+//카테고리가 PERSONAL이라 companyChecked 필터에 안 걸리니, 공유된 일정은 별도로 통과
   const filteredEvents = activeTab === 'personal'
     ? personalEvents.filter(e => personalChecked[e.category])
-    : companyEvents.filter(e => companyChecked[e.category]);
+    : companyEvents.filter(e => {
+      // 공유된 개인 일정은 PERSONAL 체크박스로 제어
+      if (e.extendedProps?.show_in_company === 1) {
+        return companyChecked['PERSONAL'] ?? true;
+      }
+      return companyChecked[e.category] ?? true;
+    });
 
   // 날짜 클릭 → 추가 모달 열기
   const handleDateClick = (info) => {
@@ -350,7 +361,8 @@ const Calendar = () => {
       start_dt: info.dateStr,
       end_dt: '',
       sked_reason: '',
-      is_public: 0
+      is_public: 0,
+      show_in_company: 0 
     });
     setModal({ open: true, date: info.dateStr });
   };
@@ -370,7 +382,8 @@ const Calendar = () => {
       start_dt: event.startStr?.split('T')[0],
       end_dt:(event.extendedProps.actualEnd || event.startStr)?.split(/[T ]/)[0],
       sked_reason: event.extendedProps.description || '',
-      is_public: event.extendedProps.is_public || 0
+      is_public: event.extendedProps.is_public || 0,
+      show_in_company: event.extendedProps.show_in_company || 0,
     });
     setDetailModal({ open: false, event: null });
     setModal({ open: true, date: event.startStr });
@@ -391,6 +404,7 @@ const Calendar = () => {
       end_dt: form.end_dt ? `${form.end_dt} 00:00:00` : null,
       sked_reason: form.sked_reason || '',
       is_public: isPersonalCategory ? 0 : 1,
+      show_in_company: isPersonalCategory ? form.show_in_company : 0,
     };
 
     //시작일과 끝일 같냐(당일이냐)
@@ -412,6 +426,7 @@ const Calendar = () => {
         category: form.schedule_type,
         description: form.sked_reason,
         is_public: form.is_public,
+        show_in_company: form.show_in_company,
         actualEnd: form.end_dt
       },
       category: form.schedule_type,
@@ -422,40 +437,64 @@ const Calendar = () => {
       ? prev.map(e => e.id === form.schedule_seq ? eventData : e)
       : [...prev, eventData];
 
-    if (isEditing) {
-      showLoading();
-      updateSchedule(form.schedule_seq, payload)
-        .then(() => {
-          if (isPersonalCategory) setPersonalEvents(updater);
-          else setCompanyEvents(updater);
-          setModal({ open: false, date: '' });
-          hideLoading();
-          alertSuccess('일정 수정 완료', '일정이 성공적으로 수정되었습니다.');
-        })
-        .catch(err => {
-          console.error('일정 수정 실패:', err);
-          hideLoading();
-          alertError('일정 수정 실패', '일정 수정 중 오류가 발생했습니다.');
-        });
-    } else {
-      showLoading();
-      createSchedule(payload)
-        .then((resp) => {
-          const realSeq = resp.data.schedule_seq.toString(); // 서버에서 받은 진짜 seq
-          const realEventData = { ...eventData, id: realSeq }; 
-          if (isPersonalCategory) setPersonalEvents(prev => [...prev, realEventData]);
-          else setCompanyEvents(prev => [...prev, realEventData]);
-          setModal({ open: false, date: '' });
-          hideLoading();
-          alertSuccess('일정 추가 완료', '새 일정이 성공적으로 추가되었습니다.');
-        })
-        .catch(err => {
-          console.error('일정 추가 실패:', err);
-          hideLoading();
-          alertError('일정 추가 실패', '일정 추가 중 오류가 발생했습니다.');
-        });
-    }
-  };
+if (isEditing) {
+  showLoading();
+  updateSchedule(form.schedule_seq, payload)
+    .then(() => {
+      if (isPersonalCategory) {
+        setPersonalEvents(updater);
+        if (form.show_in_company === 1) {
+          setCompanyEvents(prev => {
+            const exists = prev.some(e => e.id === form.schedule_seq);
+            return exists 
+              ? prev.map(e => e.id === form.schedule_seq ? eventData : e)
+              : [...prev, eventData];
+          });
+           calendarStore.setEvents([]);
+        } else {
+          setCompanyEvents(prev => prev.filter(e => e.id !== form.schedule_seq));
+          calendarStore.setEvents([]); 
+        }
+      } else {
+        setCompanyEvents(updater);
+        calendarStore.setEvents([]);
+      }
+      setModal({ open: false, date: '' });
+      hideLoading();
+      alertSuccess('일정 수정 완료', '일정이 성공적으로 수정되었습니다.');
+    })
+    .catch(err => {
+      console.error('일정 수정 실패:', err);
+      hideLoading();
+      alertError('일정 수정 실패', '일정 수정 중 오류가 발생했습니다.');
+    });
+} else {
+  showLoading();
+  createSchedule(payload)
+    .then((resp) => {
+      const realSeq = resp.data.schedule_seq.toString();
+      const realEventData = { ...eventData, id: realSeq };
+      if (isPersonalCategory) {
+        setPersonalEvents(prev => [...prev, realEventData]);
+        if (form.show_in_company === 1) {
+          setCompanyEvents(prev => [...prev, realEventData]);
+          calendarStore.setEvents([]);
+        }
+      } else {
+        setCompanyEvents(prev => [...prev, realEventData]);
+        calendarStore.setEvents([]);
+      }
+      setModal({ open: false, date: '' });
+      hideLoading();
+      alertSuccess('일정 추가 완료', '새 일정이 성공적으로 추가되었습니다.');
+    })
+    .catch(err => {
+      console.error('일정 추가 실패:', err);
+      hideLoading();
+      alertError('일정 추가 실패', '일정 추가 중 오류가 발생했습니다.');
+    });
+  }
+}
 
   // 폼 유효성 검사 (모든 필드 입력 및 날짜 순서 확인)
   const isFormValid = form.title.trim() && form.start_dt && form.end_dt && (form.start_dt <= form.end_dt);
@@ -477,6 +516,7 @@ const Calendar = () => {
       .then(() => {
         setPersonalEvents(prev => prev.filter(e => e.id !== id));
         setCompanyEvents(prev => prev.filter(e => e.id !== id));
+         calendarStore.setEvents([]);
         setModal({ open: false, date: '' });
         hideLoading();
         alertSuccess('일정 삭제 완료', '일정이 성공적으로 삭제되었습니다.');
@@ -685,7 +725,8 @@ const Calendar = () => {
                     start_dt: t,
                     end_dt: '',
                     sked_reason: '',
-                    is_public: activeTab === 'company' ? 1 : 0
+                    is_public: activeTab === 'company' ? 1 : 0,
+                    show_in_company: 0 
                   });
                   setIsEditing(false);
                   setModal({ open: true, date: t });
@@ -869,6 +910,19 @@ const Calendar = () => {
               )}
             </div>
           ) : null}
+          {/* 👇 추가: 개인 일정일 때만 노출되는 공유 토글 */}
+          {activeTab === 'personal' && (
+            <label className="flex items-center gap-2 -mt-3 mb-3 text-xs text-slate-600 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.show_in_company === 1}
+                onChange={e => setForm(f => ({ ...f, show_in_company: e.target.checked ? 1 : 0 }))}
+                className="w-4 h-4 accent-[#3530B8]"
+              />
+              공용 캘린더에도 표시
+            </label>
+          )}
+
           {/* 날짜 선택 영역 (커스텀 달력 팝업 적용) */}
           <div className="flex gap-2 mb-3 overflow-visible relative z-10">
 
@@ -984,10 +1038,22 @@ const Calendar = () => {
             detailModal.event.extendedProps?.category !== 'PROJECT' &&
             detailModal.event.extendedProps?.category !== 'MEETING' &&
             detailModal.event.extendedProps?.category !== 'holiday' &&
+            !(activeTab === 'company' &&                              // ✅ 공용 탭에서
+              detailModal.event.extendedProps?.category === 'PERSONAL' &&  // ✅ 개인 일정이고
+              detailModal.event.extendedProps?.show_in_company === 1) &&   // ✅ 공유된 것이면 수정 불가
+              
             (!COMPANY_CATEGORIES.includes(detailModal.event.extendedProps?.category) || isHrAdmin) && (
               <button onClick={handleEditStart} className="px-4 py-1.5 text-xs bg-[#3530B8] text-white rounded-lg font-semibold">수정</button>
             )}
           </div>
+          {/* 공용일정에서 수정 불가 */}
+            {activeTab === 'company' &&
+            detailModal.event.extendedProps?.category === 'PERSONAL' &&
+            detailModal.event.extendedProps?.show_in_company === 1 && (
+              <p className="mt-2 text-[0.625rem] text-slate-400 text-right">
+                * 공유된 개인 일정은 개인 캘린더에서 수정할 수 있습니다.
+              </p>
+            )}
           {detailModal.event.extendedProps?.category === 'ANNUAL' && (
             <p className="mt-2 text-[0.625rem] text-slate-400 text-right">* 연차/휴가는 결재 문서를 통해 관리됩니다.</p>
           )}
@@ -999,7 +1065,9 @@ const Calendar = () => {
           )}
           {COMPANY_CATEGORIES.includes(detailModal.event.extendedProps?.category) && 
           detailModal.event.extendedProps?.category !== 'holiday' && 
-          !isHrAdmin && (
+          !isHrAdmin &&
+          !(detailModal.event.extendedProps?.category === 'PERSONAL' &&   // ✅ 이 조건 추가
+            detailModal.event.extendedProps?.show_in_company === 1) && (
             <p className="mt-2 text-[0.625rem] text-slate-400 text-right">* 공용 일정은 수정할 수 없습니다.</p>
           )}
         </ModalOverlay>

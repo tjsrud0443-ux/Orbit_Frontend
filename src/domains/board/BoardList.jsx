@@ -19,7 +19,7 @@ const getCategoryStyle = (category) => {
     case '경조': 
       return 'bg-sky-50 text-sky-600 border-sky-100';
     case '생일': 
-      return 'bg-pink-50 text-pink-600 border-pink-100';
+      return 'bg-violet-50 text-violet-600 border-violet-100';
     case '승진': 
       return 'bg-amber-50 text-amber-600 border-amber-100';
     // 💡 공백이 있든('부서 이동') 없든('부서이동') 둘 다 에메랄드 색상으로 처리
@@ -110,6 +110,7 @@ const BoardList = () => {
 
   const [search, setSearch] = useState('');
   const [posts, setPosts] = useState([]);
+  const [noticePosts, setNoticePosts] = useState([]);
   const [page, setPage] = useState(location.state?.page || 1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -127,6 +128,7 @@ const BoardList = () => {
       getBoardList({page, size:10, keyword:search}).then(resp=>{
         setTotalAll(resp.data.totalAll);
         setPosts(resp.data.list);
+        setNoticePosts(resp.data.noticeList || []);
         setTotalPages(resp.data.totalPages);
         setTotal(resp.data.total);
       }).catch(err => {
@@ -232,6 +234,16 @@ const BoardList = () => {
             .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
             .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
           `}</style>
+           {/* 공지 고정 영역 */}
+          {noticePosts.map((post, i) => (
+            <PostRow
+              key={`notice-${post.post_seq}`}
+              post={post}
+              total={totalAll}
+              onClick={() => navigate(`/boardDetail/${post.post_seq}`, { state: { page } })}
+            />
+          ))}
+           {/* 일반 게시글 */}
           {posts.length > 0 ? (
             posts.map((post, i) => {
               return (
@@ -244,8 +256,10 @@ const BoardList = () => {
               />
             )})
           ) : (
+          noticePosts.length === 0 && (
             <div className="py-20 text-center text-gray-400 text-sm font-bold">게시글이 없습니다.</div>
-          )}
+          )
+        )}
         </div>
 
         {/* 페이지네이션 */}

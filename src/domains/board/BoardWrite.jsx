@@ -19,7 +19,7 @@ const BoardWrite = () => {
   const fileInputRef = useRef(null);
   const categoryRef = useRef(null);
 
-  const isHR = user?.auth_group?.includes('HR');
+  const isHR = user?.dept_name === '인사팀' || user?.dept_name === '운영총괄본부' || user?.dept_name === '운영총괄팀';
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
 
   useEffect(() => {
