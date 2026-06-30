@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faHouse, faFolderOpen, faCalendar,
-  faFileLines, faComments
+  faFileLines, faComments, faBuilding
 } from '@fortawesome/free-regular-svg-icons';
 import {
   faSitemap, faFileSignature, faDiagramProject,
@@ -76,6 +76,7 @@ const generalMenuItems = [
 // 관리자 사이드바
 const adminMenuItems = [
   { name: '관리자 홈', path: '/adminMain', icon: faHouse },
+  { name: '회사 정보', path: '/adminCompanyInfo', icon: faBuilding },
   {
     name: '인사 관리',
     icon: faAddressCard,
