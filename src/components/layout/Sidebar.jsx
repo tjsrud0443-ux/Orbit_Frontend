@@ -14,7 +14,7 @@ import {
 import useAuthStore from '../../store/authStore';
 import { IMAGES } from '../../images/images';
 import useUserStore from '../../store/userStore';
-
+import useDepartmentsStore from '../../store/useDepartmentsStore';
 
 // 직원 사이드바
 const generalMenuItems = [
@@ -114,6 +114,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const [openMenuName, setOpenMenuName] = useState(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
   const user = useUserStore(state => state.user);
+  const clearDepartments = useDepartmentsStore(state => state.clearAll);
 
   const currentMenuPool = isAdminMode ? adminMenuItems : generalMenuItems;
 
@@ -127,6 +128,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   }, [location.pathname, isAdminMode]);
 
   const handleLogout = () => {
+    clearDepartments();
     logout();
     navi("/");
   }
