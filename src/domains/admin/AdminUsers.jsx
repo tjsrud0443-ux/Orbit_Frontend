@@ -3,9 +3,12 @@ import Pagination from '../../components/common/Pagination';
 import MobilePagination from '../../components/common/MobilePagination';
 import { getAllUsers, updateUsersInfo, updateUsersState, getDeptList, getRankList} from './adminApi';
 import { alertError } from '../../utils/alert';
+import useUserStore from '../../store/userStore';
+const OPS_TEAM = '운영총괄'; 
 
 const AdminUsers = () => {
-  // UI 확인용 하드코딩 더미 데이터
+  const user = useUserStore(state => state.user);
+  const isOpsManager = user?.dept_name?.includes(OPS_TEAM);
   const [employees, setEmployees] = useState([]);
   // pagenation
   const [totalCount, setTotalCount] = useState(0);
@@ -282,7 +285,7 @@ const AdminUsers = () => {
                   filteredEmployees.map((emp) => (
                     <tr 
                       key={emp.users_seq} 
-                      onClick={() => { setSelectedUser(emp); setIsDetailEditing(false); }}
+                      onClick={() => { setSelectedUser(emp); setIsDetailEditing(false); console.log('선택된 직원:', emp.dept_name, emp.status);}}
                       className={`hover:bg-[#F5F8FF] transition-colors block sm:table-row py-4 sm:py-0 border-b border-slate-50 sm:border-none
                          relative cursor-pointer ${selectedUser?.users_seq === emp.users_seq ? 'bg-[#F0F4FF] hover:bg-[#F0F4FF]' : ''}`}>
                       
@@ -354,7 +357,7 @@ const AdminUsers = () => {
                               퇴사
                             </button>
                           </div>
-                        ) :getStatusLabel(emp.status) !== '퇴사' ?  (
+                        ) : (getStatusLabel(emp.status) !== '퇴사' || isOpsManager) ? (
                           <button 
                             type="button"
                             onClick={(e) => {
@@ -587,7 +590,7 @@ const AdminUsers = () => {
                     className="flex-1 py-3 bg-white border border-slate-200 text-slate-500 text-sm font-bold rounded-xl hover:bg-slate-50 transition-all">
                     닫기
                   </button>
-                  {getStatusLabel(selectedUser.status) !== '퇴사' && (
+                  {(getStatusLabel(selectedUser.status) !== '퇴사' || isOpsManager) && (
                     <button 
                       onClick={handleDetailEdit}
                       className="flex-[2] py-3 bg-[#3530B8] text-white text-sm font-bold rounded-xl shadow-lg shadow-[#3530B8]/20 hover:bg-[#2a2696] transition-all">

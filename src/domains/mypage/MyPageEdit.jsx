@@ -19,7 +19,7 @@ const MyPageEdit = () => {
   useEffect(() => {
     if (profileData?.stamp_sysname) {
       const token = sessionStorage.getItem("token");
-      const imageUrl = `http://localhost:8080/file/profile/view?sysname=${profileData.stamp_sysname}&token=${token}`;
+      const imageUrl = `https://api.sukong.shop/file/profile/view?sysname=${profileData.stamp_sysname}&token=${token}`;
       setStamp(imageUrl);
       setTempStamp(imageUrl);
     } else {
