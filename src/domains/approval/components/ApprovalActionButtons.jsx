@@ -40,7 +40,6 @@ const ApprovalActionButtons = ({
 
   useEffect(() => {
     getCompanyInfo().then(resp => {
-      console.log(resp.data);
       setCompanyInfo(resp.data);
     }).catch(err => {
       console.error('회사 정보 조회 실패', err);
@@ -130,14 +129,14 @@ const ApprovalActionButtons = ({
         <!-- 제목 -->
         <div style="margin-bottom: 16px;">
           <span style="font-size: 13px; color: #64748b; font-weight: 600;">제목 :</span>
-          <span style="font-size: 14px; color: #1a1a1a; margin-left: 8px;">${formTitle || title}</span>
+          <span style="font-size: 14px; color: #1a1a1a; margin-left: 8px;">${formTitle}</span>
         </div>
 
         <div style="border-top: 2px solid #1a1a1a; margin-bottom: 16px;"></div>
 
         <!-- 첨부문서 -->
         <div style="margin-bottom: 60px;">
-          <span style="font-size: 13px; color: #64748b; font-weight: 600;">첨부문서 :</span>
+          <span style="font-size: 13px; color: #64748b; font-weight: 600;">첨부문서</span>
           <div style="margin-top: 6px; margin-left: 4px;">
             ${attachmentList || '<div style="font-size: 12px; color: #94a3b8;">없음</div>'}
           </div>
@@ -153,13 +152,13 @@ const ApprovalActionButtons = ({
         <!-- 회사명 + 주소/연락처 -->
         <div style="text-align: center;">
           <div style="font-size: 22px; font-weight: 800; color: #3530B8; margin-bottom: 8px;">
-            ${companyInfo?.company_name}
+            ${companyInfo?.companyName}
           </div>
           <div style="font-size: 11px; color: #64748b;">
-            ${companyInfo ? `(${companyInfo.company_zonecode}) ${companyInfo.company_address} ${companyInfo.company_detail_addr || ''}` : ''}
+            ${companyInfo ? `(${companyInfo.companyZonecode}) ${companyInfo.companyAddress} ${companyInfo.companyDetailAddr || ''}` : ''}
           </div>
           <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
-            ${companyInfo ? `Tel : ${companyInfo.company_tel}　Fax : ${companyInfo.company_fax}` : ''}
+            ${companyInfo ? `Tel : ${companyInfo.companyTel}　Fax : ${companyInfo.companyFax}` : ''}
           </div>
         </div>
 
@@ -211,7 +210,6 @@ const ApprovalActionButtons = ({
   `);
     printWindow.document.close();
   };
-
   return (
     <div className="flex flex-col items-center w-full gap-3 pt-8 pb-2 border-t border-gray-100 flex-shrink-0">
       {/* [Desktop] */}

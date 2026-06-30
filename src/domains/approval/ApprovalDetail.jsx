@@ -197,7 +197,10 @@ const ApprovalDetail = () => {
           ...resp.data.common,
           ...resp.data.detail,
           items: resp.data.items || [],
-          attachments: resp.data.attachments || [],
+          attachments: [
+            ...(resp.data.attachments || []),
+            ...(resp.data.items || []).filter(item => item.oriname)
+          ],
           referrers: resp.data.referrers || []
         });
 
@@ -569,6 +572,8 @@ const ApprovalDetail = () => {
         user={user}
         drafter={drafter}
         docNo={getDocNo()}
+        formTitle={formData.title}
+        attachments={formData.attachments}
         userRole={userRole}
         mode={mode}
         documentStatus={formData.status}
