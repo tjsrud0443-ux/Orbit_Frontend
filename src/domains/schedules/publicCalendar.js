@@ -6,13 +6,14 @@ import useLoadingStore from '../../store/useLoadingStore';
 import { alertConfirm } from '../../utils/alert';
 import useCalendarStore from '../../store/useCalendarStore';
 
-const COMPANY_CATEGORIES = ['COMPANY', 'TEAM', 'ANNIVERSARY'];
+const COMPANY_CATEGORIES = ['COMPANY', 'TEAM', 'ANNIVERSARY', 'PERSONAL'];
 
 const COMPANY_COLORS = {
   COMPANY: '#F59E0B',
   TEAM: '#0EA5E9',
   ANNIVERSARY: '#EC4899',
   holiday: '#EF4444',
+  PERSONAL: '#3530B8',
 };
 
 // 특정 날짜의 일정 필터링 헬퍼 함수
@@ -64,7 +65,12 @@ const usePublicCalendar = () => {
     if (cancelled) return;
 
     const companyEvents = schedResp.data
-      .filter(item => COMPANY_CATEGORIES.includes(item.schedule_type))
+       .filter(item => {
+          if (item.schedule_type === 'PERSONAL') {
+            return item.show_in_company === 1; // ✅ 공유된 개인 일정만
+          }
+          return COMPANY_CATEGORIES.includes(item.schedule_type);
+        })
       .map(item => {
         const startDate = item.start_dt?.split(/[T ]/)[0];
         const endDate = item.end_dt?.split(/[T ]/)[0];
