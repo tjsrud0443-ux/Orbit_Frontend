@@ -75,3 +75,7 @@ export const approveOvertime = (seq) => maxios.put(`/admin/hr/approveOvertime/${
 export const rejectOvertime = (seq) => maxios.put(`admin/hr/rejectOvertime/${seq}`);
 
 export const adminAiQuestionsData = (dept_seq, auth_group) => maxios.get("/admin/ai/adminAiQuestionsData", { params: { dept_seq: dept_seq, auth_group: auth_group } });
+
+export const getCompanyInfo = () => maxios.get("/admin/company/getCompanyInfo");
+export const insertCompanyInfo = (data) => maxios.post("/admin/company/insertCompanyInfo", data);
+export const updateCompanyInfo = (data) => maxios.put("/admin/company/updateCompanyInfo", data);
