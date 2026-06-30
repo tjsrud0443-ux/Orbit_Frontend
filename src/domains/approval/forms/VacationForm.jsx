@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import Calendar from '../../../components/common/Calendar';
 import ReferrerSelector from '../components/ReferrerSelector';
 import useAuthStore from '../../../store/authStore';
+import { getAllVacationTypes } from '../approvalApi';
 
-const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveClicked }) => {
+const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveClicked, docType }) => {
   const isEditMode = mode === 'EDIT';
   const today = new Date().toLocaleDateString('sv-SE');
 
@@ -11,6 +12,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
   const [isEndCalendarOpen, setIsEndCalendarOpen] = useState(false);
   const [isTypeOpen, setIsTypeOpen] = useState(false);
   const [errors, setErrors] = useState({});
+  const [vacationTypes, setVacationTypes] = useState([]);
 
   const startCalendarRef = useRef(null);
   const endCalendarRef = useRef(null);
@@ -38,11 +40,29 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
   }, []);
 
   useEffect(() => {
+    const getVacationTypes = async () => {
+      try {
+        const resp = await getAllVacationTypes();
+        setVacationTypes(resp.data);
+      } catch (error) {
+        console.error("휴가 유형 조회 실패", error);
+      }
+    };
+    getVacationTypes();
+  }, []);
+
+  const periodVacations = [
+    '연차',
+    '병가',
+    '경조'
+  ];
+
+  useEffect(() => {
     if (isSubmitClicked) {
       const newErrors = {};
       newErrors.title = validateField('title', data.title, data);
       newErrors.start_date = validateField('start_date', data.start_date, data);
-      if (data.vac_type === '연차') {
+      if (periodVacations.includes(data.vac_type)) {
         newErrors.end_date = validateField('end_date', data.end_date, data);
       }
       newErrors.reason = validateField('reason', data.reason, data);
@@ -78,7 +98,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
     }
 
     if (field === 'end_date') {
-      if (currentData.vac_type === '연차' && !value) {
+      if (periodVacations.includes(currentData.vac_type) && !value) {
         error = '종료 날짜를 선택해주세요.';
       } else if (value && currentData.start_date && value < currentData.start_date) {
         error = '종료 날짜는 시작 날짜 이후여야 합니다.';
@@ -95,8 +115,19 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
     const error = validateField(key, value, updatedData);
     setErrors(prev => ({ ...prev, [key]: error }));
 
-    if (key === 'vac_type' && value !== '연차') {
-      setErrors(prev => ({ ...prev, end_date: '' }));
+    if (key === 'vac_type') {
+      updatedData.start_date = '';
+      updatedData.end_date = '';
+      updatedData.days = 0;
+
+      setErrors(prev => ({
+        ...prev,
+        [key]: error,
+        start_date: isSubmitClicked ? validateField('start_date', '', updatedData) : '',
+        end_date: isSubmitClicked ? validateField('end_date', '', updatedData) : ''
+      }));
+    } else {
+      setErrors(prev => ({ ...prev, [key]: error }));
     }
 
     if (key === 'start_date') {
@@ -104,11 +135,13 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
         updatedData.end_date = '';
         setErrors(prev => ({ ...prev, end_date: '종료 날짜를 선택해주세요.' }));
       }
+
+      if (updatedData.vac_type === '조퇴') {
+        updatedData.end_date = value;
+      }
     }
 
-    // 2. 신청 일수 자동 계산
-    const calculateDays = (type, start, end) => {
-      if (type !== '연차') return 0.5;
+    const calculateDays = (start, end) => {
       if (!start || !end) return 0;
 
       const s = new Date(start);
@@ -117,8 +150,8 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
       let current = new Date(s);
 
       while (current <= e) {
-        const dayOfWeek = current.getDay();
-        if (dayOfWeek !== 0 && dayOfWeek !== 6) { // 0: Sunday, 6: Saturday
+        const day = current.getDay();
+        if (day !== 0 && day !== 6) { // 0: Sunday, 6: Saturday
           count++;
         }
         current.setDate(current.getDate() + 1);
@@ -126,12 +159,27 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
       return count;
     };
 
-    updatedData.days = Math.max(0, calculateDays(
-      updatedData.vac_type || '연차',
-      updatedData.start_date,
-      updatedData.end_date
-    ));
+    const selectedType =
+      vacationTypes.find(
+        item => item.vac_type === updatedData.vac_type
+      );
 
+    const selectDays =
+      calculateDays(
+        updatedData.start_date,
+        updatedData.end_date
+      );
+
+    if (selectedType) {
+      if (periodVacations.includes(updatedData.vac_type)) {
+        updatedData.days =
+          selectDays *
+          selectedType.deduct_days;
+      } else {
+        updatedData.days =
+          selectedType.deduct_days;
+      }
+    }
     onChange(updatedData);
   };
 
@@ -229,16 +277,16 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                       </div>
                       {isTypeOpen && (
                         <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-32 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-200">
-                          {['연차', '오전반차', '오후반차'].map((type) => (
+                          {vacationTypes.map((type) => (
                             <div
-                              key={type}
+                              key={type.v_types_seq}
                               onClick={() => {
-                                handleFieldChange('vac_type', type);
+                                handleFieldChange('vac_type', type.vac_type);
                                 setIsTypeOpen(false);
                               }}
                               className="px-4 py-2.5 text-xs hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-medium border-b border-gray-50 last:border-0 transition-colors"
                             >
-                              {type}
+                              {type.vac_type}
                             </div>
                           ))}
                         </div>
@@ -272,7 +320,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                             />
                           )}
                         </div>
-                        {data.vac_type === '연차' && (
+                        {periodVacations.includes(data.vac_type) && (
                           <>
                             <span className="px-1">~</span>
                             <div className="relative w-50" ref={endCalendarRef}>
@@ -302,12 +350,12 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                       )}
                     </div>
                   ) : (
-                    <span>{data?.start_date?.substring(0, 10)} {data.vac_type === '연차' ? `~ ${data?.end_date?.substring(0, 10)}` : ''}</span>
+                    <span>{data?.start_date?.substring(0, 10)} {periodVacations.includes(data.vac_type) ? `~ ${data?.end_date?.substring(0, 10)}` : ''}</span>
                   )}
                 </td>
               </tr>
               <tr className="border-b border-gray-200">
-                <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">신청 일수</th>
+                <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">차감 일수</th>
                 <td className="p-2 font-bold text-[#3530B8]">{data.days || 0}일</td>
               </tr>
               <tr>
@@ -399,6 +447,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
             value={data.referrers}
             onChange={(val) => onChange({ ...data, referrers: val })}
             isEditMode={isEditMode}
+            docType={docType}
           />
         </div>
       </div>
@@ -519,7 +568,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                       </div>
                     )}
                   </div>
-                  {data.vac_type === '연차' && (
+                  {periodVacations.includes(data.vac_type) && (
                     <div className="relative space-y-1" ref={mobileEndCalendarRef}>
                       <input
                         type="text" readOnly value={data.end_date || ''}
@@ -537,13 +586,13 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                   )}
                 </div>
               ) : (
-                <div className="text-xs font-bold">{data?.start_date?.substring(0, 10)} {data.vac_type === '연차' ? `~ ${data?.end_date?.substring(0, 10)}` : ''}</div>
+                <div className="text-xs font-bold">{data?.start_date?.substring(0, 10)} {periodVacations.includes(data.vac_type) ? `~ ${data?.end_date?.substring(0, 10)}` : ''}</div>
               )}
             </div>
 
-            {/* 신청 일수 */}
+            {/* 차감 일수 */}
             <div className="flex justify-between items-center bg-[#F0F4FF] p-2 rounded">
-              <span className="text-[10px] font-bold text-gray-500">총 신청 일수</span>
+              <span className="text-[10px] font-bold text-gray-500">차감 일수</span>
               <span className="text-xs font-black text-[#3530B8]">{data.days || 0}일</span>
             </div>
 
@@ -611,6 +660,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
             value={data.referrers}
             onChange={(val) => onChange({ ...data, referrers: val })}
             isEditMode={isEditMode}
+            docType={docType}
           />
         </div>
       </div>

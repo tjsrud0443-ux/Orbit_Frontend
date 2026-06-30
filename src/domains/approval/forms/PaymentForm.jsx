@@ -3,7 +3,7 @@ import Calendar from '../../../components/common/Calendar';
 import ReferrerSelector from '../components/ReferrerSelector';
 import useAuthStore from '../../../store/authStore';
 
-const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveClicked }) => {
+const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveClicked, docType }) => {
   const isEditMode = mode === 'EDIT';
   const today = new Date().toLocaleDateString('sv-SE');
 
@@ -575,6 +575,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
             value={data.referrers}
             onChange={(val) => onChange(prev => ({ ...prev, referrers: val }))}
             isEditMode={isEditMode}
+            docType={docType}
           />
         </div>
       </div>
@@ -899,6 +900,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
             value={data.referrers}
             onChange={(val) => onChange(prev => ({ ...prev, referrers: val }))}
             isEditMode={isEditMode}
+            docType={docType}
           />
         </div>
       </div>

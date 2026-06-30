@@ -3,7 +3,7 @@ import Calendar from '../../../components/common/Calendar';
 import ReferrerSelector from '../components/ReferrerSelector';
 import useAuthStore from '../../../store/authStore';
 
-const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveClicked }) => {
+const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveClicked, docType }) => {
   const isEditMode = mode === 'EDIT';
   const today = new Date().toLocaleDateString('sv-SE');
 
@@ -548,6 +548,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
             value={data.referrers}
             onChange={(val) => onChange(prev => ({ ...prev, referrers: val }))}
             isEditMode={isEditMode}
+            docType={docType}
           />
         </div>
       </div>
@@ -831,6 +832,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
             value={data.referrers}
             onChange={(val) => onChange(prev => ({ ...prev, referrers: val }))}
             isEditMode={isEditMode}
+            docType={docType}
           />
         </div>
       </div>

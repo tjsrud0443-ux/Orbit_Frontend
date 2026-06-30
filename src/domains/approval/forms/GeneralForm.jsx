@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReferrerSelector from '../components/ReferrerSelector';
 import useAuthStore from '../../../store/authStore';
 
-const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveClicked }) => {
+const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveClicked, docType }) => {
 
   const isEditMode = mode === 'EDIT';
   const today = new Date().toLocaleDateString('sv-SE');
@@ -239,6 +239,7 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
             value={data?.referrers}
             onChange={(val) => onChange({ ...data, referrers: val })}
             isEditMode={isEditMode}
+            docType={docType}
           />
         </div>
       </div>
@@ -384,6 +385,7 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
             value={data?.referrers}
             onChange={(val) => onChange({ ...data, referrers: val })}
             isEditMode={isEditMode}
+            docType={docType}
           />
         </div>
       </div>

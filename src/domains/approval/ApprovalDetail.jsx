@@ -505,7 +505,8 @@ const ApprovalDetail = () => {
       mode: mode,
       user: user,
       isSubmitClicked: isSubmitClicked,
-      isTempSaveClicked: isTempSaveClicked
+      isTempSaveClicked: isTempSaveClicked,
+      docType: doc_type
     };
 
     switch (doc_type) {

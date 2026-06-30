@@ -5,7 +5,7 @@ import useUserStore from '../../../store/userStore';
 import { alertWarning } from "../../../utils/alert";
 import { getTopReferrers } from '../approvalApi';
 
-const ReferrerSelector = ({ value = [], onChange, isEditMode }) => {
+const ReferrerSelector = ({ value = [], onChange, isEditMode, docType }) => {
   const { allEmployees } = useEmployeeStore();
   const { user } = useUserStore();
   const [searchQuery, setSearchQuery] = useState('');
@@ -93,6 +93,13 @@ const ReferrerSelector = ({ value = [], onChange, isEditMode }) => {
     })
     : [];
 
+  const hrManager = useMemo(() => {
+    if (docType !== 'VACATION') return null;
+    if (!allEmployees || allEmployees.length === 0) return null;
+    const hr_manager = allEmployees.find(emp => emp.is_hr_manager === 'Y');
+    return hr_manager || null;
+  }, [allEmployees, docType]);
+
   const handleAddReferrer = (emp) => {
     if (value.some(r => r.users_seq === emp.users_seq)) {
       alertWarning('중복 입력', '이미 추가된 참조자입니다.');
@@ -147,6 +154,15 @@ const ReferrerSelector = ({ value = [], onChange, isEditMode }) => {
         ) : (
           /* 기본 상태 */
           <>
+            {docType === 'VACATION' && hrManager && (
+              <div className="bg-blue-50/40 border-b border-blue-100/50">
+                <div className="text-[10px] text-[#3530B8] font-bold px-3 pt-2 pb-1 flex items-center gap-1">
+                  📢 근태 담당자
+                </div>
+                {employeeItem(hrManager)}
+              </div>
+            )}
+
             {topReferrers.length > 0 && (
               <div className="bg-gray-50/50">
                 <div className="text-[10px] text-[#3530B8] font-bold px-3 pt-2 pb-1">⭐ 자주 찾는 참조자</div>
