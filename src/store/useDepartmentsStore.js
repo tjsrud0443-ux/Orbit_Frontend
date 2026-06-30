@@ -7,7 +7,7 @@ const useDepartmentsStore = create((set, get) => ({
     },
     employees: [],
     profileImageMap: {},
-    profileObjectUrls: [],
+    profileObjectUrls: {},
     loaded: false,
 
     setGroupData: ({ root, nodeMap, users }) => {
@@ -21,28 +21,36 @@ const useDepartmentsStore = create((set, get) => ({
         });
     },
 
-    setProfileImages: (imageMap) => {
-        const oldUrls = get().profileObjectUrls;
-        oldUrls.forEach(url => URL.revokeObjectURL(url));
+    setProfileImage: (sysname, imageUrl) => {
+        const oldUrls = get().profileObjectUrls[sysname];
+        if (oldUrls && oldUrls !== imageUrl) {
+            URL.revokeObjectURL(oldUrls);
+        }
 
-        set({
-            profileImageMap: imageMap,
-            profileObjectUrls: Object.values(imageMap)
-        });
+        set((state) => ({
+            profileImageMap: {
+                ...state.profileImageMap,
+                [sysname]: imageUrl
+            },
+            profileObjectUrls: {
+                ...state.profileObjectUrls,
+                [sysname]: imageUrl
+            }
+        }));
     },
 
     clearProfileImages: () => {
-        const urls = get().profileObjectUrls;
+        const urls = Object.values(get().profileObjectUrls);
         urls.forEach(url => URL.revokeObjectURL(url));
 
         set({
             profileImageMap: {},
-            profileObjectUrls: []
+            profileObjectUrls: {}
         });
     },
 
     clearAll: () => {
-        const urls = get().profileObjectUrls;
+        const urls = Object.values(get().profileObjectUrls);
         urls.forEach(url => URL.revokeObjectURL(url));
 
         set({
@@ -52,7 +60,7 @@ const useDepartmentsStore = create((set, get) => ({
             },
             employees: [],
             profileImageMap: {},
-            profileObjectUrls: [],
+            profileObjectUrls: {},
             loaded: false
         });
     }

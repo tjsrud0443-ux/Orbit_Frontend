@@ -17,8 +17,6 @@ import useAuthStore from '../../store/authStore';
 import useLoadingStore from '../../store/useLoadingStore';
 import useDepartmentsStore from '../../store/useDepartmentsStore';
 
-// // Position Rank for Sorting (Lower number = Higher rank)
-
 const POSITION_RANK = {
   '대표이사': 1, '본부장': 3, '부서장': 4, '차장': 5, '과장': 6, '대리': 7, '사원': 8
 };
@@ -54,30 +52,48 @@ const collectProfileSysnames = (users = [], root) => {
   return Array.from(set);
 };
 
-const fetchProfileImages = async (sysnames, token) => {
-  const entries = await Promise.all(
-    sysnames.map(async (sysname) => {
-      try {
-        const resp = await fetch(
-          `${PROFILE_API}?sysname=${encodeURIComponent(sysname)}&token=${encodeURIComponent(token)}`
-        );
+const fetchProfileImage = async (sysname, token) => {
+  try {
+    const resp = await fetch(
+      `${PROFILE_API}?sysname=${encodeURIComponent(sysname)}&token=${encodeURIComponent(token)}`
+    );
 
-        if (!resp.ok) {
-          throw new Error(`프로필 이미지 로딩 실패: ${sysname}`);
+    if (!resp.ok) {
+      throw new Error(`프로필 이미지 로딩 실패: ${sysname}`);
+    }
+
+    const blob = await resp.blob();
+    return URL.createObjectURL(blob);
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+};
+
+const loadProfileImages = async (sysnames, token) => {
+  const chunkSize = 5;
+
+  const profileImageMap = useDepartmentsStore.getState().profileImageMap;
+
+  const targets = sysnames.filter(sysname => !profileImageMap[sysname]);
+
+  for (let i = 0; i < targets.length; i += chunkSize) {
+    const chunk = targets.slice(i, i + chunkSize);
+
+    await Promise.all(
+      chunk.map(async (sysname) => {
+        const latestMap = useDepartmentsStore.getState().profileImageMap;
+
+        if (latestMap[sysname]) return;
+
+        const imageUrl = await fetchProfileImage(sysname, token);
+
+        if (imageUrl) {
+          useDepartmentsStore.getState().setProfileImage(sysname, imageUrl);
         }
-
-        const blob = await resp.blob();
-        const objectUrl = URL.createObjectURL(blob);
-
-        return [sysname, objectUrl];
-      } catch (error) {
-        console.log(error);
-        return [sysname, null];
-      }
-    })
-  );
-
-  return Object.fromEntries(entries.filter(([, url]) => url));
+      })
+    );
+  }
 };
 
 const getRank = (pos) => POSITION_RANK[pos] || 99;
@@ -281,7 +297,6 @@ const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptNa
       if (deptCode === "CEO") {
         list = list.filter(emp => emp.deptSeq === deptSeqs[0]);
       } else {
-        // 일반 부서들은 기존대로 하위 팀/부서원들까지 전부 묶어서 출력
         list = list.filter(emp => deptSeqs.includes(emp.deptSeq));
       }
     }
@@ -372,8 +387,6 @@ const Departments = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [headerSearch, setHeaderSearch] = useState('');
   const [isHeaderSearchOpen, setIsHeaderSearchOpen] = useState(false);
-  // const [profileImageMap, setProfileImageMap] = useState({});
-  // const profileObjectUrlsRef = useRef([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const token = useAuthStore(state => state.token);
   const sidebarRef = useRef(null);
@@ -392,20 +405,12 @@ const Departments = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isSidebarOpen]);
 
-  // // 1. Initial Static Data
-  // const [fullTree, setFullTree] = useState({
-  //   root: null,
-  //   nodeMap: {}
-  // })
-  // const [employees, setEmployees] = useState([]);
-
   const {
     fullTree,
     employees,
     profileImageMap,
     loaded,
-    setGroupData,
-    setProfileImages
+    setGroupData
   } = useDepartmentsStore();
 
   const allDeptSeq = (node) => {
@@ -420,41 +425,43 @@ const Departments = () => {
   }
 
   useEffect(() => {
-    const loadGroup = async () => {
-      // 이미 조직도 데이터를 불러온 적 있으면 다시 로딩하지 않음
-      if (loaded) return;
+  const loadGroup = async () => {
+    if (!token) return;
 
-      showLoading();
-
-      try {
-        const resp = await getGroup();
-
-        const root = resp.data.root;
-        const nodeMap = resp.data.nodeMap;
-        const users = resp.data.users || [];
-
-        setGroupData({
-          root,
-          nodeMap,
-          users
-        });
-
-        const sysnames = collectProfileSysnames(users, root);
-        const imageMap = await fetchProfileImages(sysnames, token);
-
-        setProfileImages(imageMap);
-
-      } catch (error) {
-        console.log("조직도 로딩 실패", error);
-      } finally {
-        hideLoading();
-      }
-    };
-
-    if (token) {
-      loadGroup();
+    if (loaded) {
+      const sysnames = collectProfileSysnames(employees, fullTree.root);
+      loadProfileImages(sysnames, token);
+      return;
     }
-  }, [token, loaded, setGroupData, setProfileImages]);
+
+    showLoading();
+
+    try {
+      const resp = await getGroup();
+
+      const root = resp.data.root;
+      const nodeMap = resp.data.nodeMap;
+      const users = resp.data.users || [];
+
+      setGroupData({
+        root,
+        nodeMap,
+        users
+      });
+
+      hideLoading();
+
+      const sysnames = collectProfileSysnames(users, root);
+      loadProfileImages(sysnames, token);
+
+    } catch (error) {
+      console.log("조직도 로딩 실패", error);
+      hideLoading();
+    }
+  };
+
+  loadGroup();
+}, [token, loaded]);
 
 
   // Selected department details
@@ -503,15 +510,12 @@ const Departments = () => {
         className={`
   bg-white border-r border-gray-200 flex flex-col shrink-0 transition-all duration-300 ease-in-out overflow-hidden
   
-  /* 💻 데스크톱: 유저님이 원래 만드신 완벽한 레이아웃 그대로 고정 */
   lg:relative lg:inset-auto lg:translate-x-0
   ${isSidebarOpen ? 'lg:w-64' : 'lg:w-0'}
   
-  /* 📱 모바일: 데스크톱에 절대 영향을 주지 않도록 fixed와 정렬 분리 */
   fixed inset-y-0 left-0 z-50
   ${isSidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full'}
 `}>
-        {/* 💡 [핵심 교정] lg:w-64로 데스크톱 크기를 꽉 잡아두고, 모바일(w-0)일 때만 내부 콘텐츠가 숨겨지도록 처리 */}
         <div className="w-full lg:w-64 flex flex-col h-full shrink-0">
           <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
             <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
