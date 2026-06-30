@@ -83,7 +83,8 @@ const adminMenuItems = [
     subItems: [
       { name: '직원 관리', path: '/adminUsers' },
       { name: '부서 관리', path: '/adminDepartments' },
-      { name: '회원가입 관리', path: '/adminSignup' }
+      { name: '회원가입 관리', path: '/adminSignup' },
+      { name: '근태 관리', path: '/adminAttendance'},
     ]
   },
   {
