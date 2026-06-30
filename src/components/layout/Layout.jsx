@@ -15,23 +15,27 @@ export default function Layout() {
     getUsersInfo().then(resp => {
       setUserInfo(resp.data)
     })
-    .catch(error => {
-      alertWarning('세션 만료', '로그인 세션이 만료되었습니다.<br> 다시 로그인해주세요.');
-      sessionStorage.removeItem("token");
-      navi("/");
-    })
+      .catch(error => {
+        alertWarning('세션 만료', '로그인 세션이 만료되었습니다.<br> 다시 로그인해주세요.');
+        sessionStorage.removeItem("token");
+        navi("/");
+      })
   }, []);
-  
+
   return (
-    <div className="w-screen h-screen flex items-center justify-center bg-slate-100">
+    <div id="layout-root" className="w-screen h-screen flex items-center justify-center bg-slate-100">
 
-      <div className="flex w-[90%] h-[90%] bg-white overflow-hidden rounded-xl shadow-md border border-slate-200">
+      <div id="layout-inner" className="flex w-[90%] h-[90%] bg-white overflow-hidden rounded-xl shadow-md border border-slate-200">
 
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <div className="no-print">
+          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        </div>
 
         <div className="flex flex-col min-h-0 flex-1 min-w-0">
-          <Header onMenuClick={() => setSidebarOpen(true)} />
-          <main className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50">
+          <div className="no-print">
+            <Header onMenuClick={() => setSidebarOpen(true)} />
+          </div>
+          <main id="main-content" className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50">
             <Outlet />
           </main>
         </div>

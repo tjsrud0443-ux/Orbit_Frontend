@@ -47,19 +47,19 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
       newErrors.pay_date = validateField('pay_date', data.pay_date);
       newErrors.pay_reason = validateField('pay_reason', data.pay_reason);
       newErrors.account_info = validateField('account_info', data.account_info);
-      
+
       const itemErrors = {};
       data.items?.forEach((item, index) => {
         if (!item.item_name?.trim()) itemErrors[`${index}-item_name`] = '항목명을 입력해주세요.';
         else if (item.item_name.length > 30) itemErrors[`${index}-item_name`] = '글자 수 초과 (30자 이하)';
-        
+
         if (!item.amount || item.amount <= 0) itemErrors[`${index}-amount`] = '금액을 입력해주세요.';
         if (!item.receipt && !item.oriname) itemErrors[`${index}-receipt`] = '영수증을 첨부해주세요.';
-        
+
         if (item.note && item.note.length > 50) itemErrors[`${index}-note`] = '글자 수 초과 (50자 이하)';
       });
       newErrors.items = itemErrors;
-      
+
       setErrors(newErrors);
     } else {
       setErrors({});
@@ -67,8 +67,8 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
   }, [isSubmitClicked]);
 
   useEffect(() => {
-    if (isTempSaveClicked){
-      const newErrors= {};
+    if (isTempSaveClicked) {
+      const newErrors = {};
       newErrors.title = validateField('title', data.title);
       setErrors(newErrors);
     }
@@ -171,7 +171,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
   const handleRemoveFile = (itemIndex) => {
     onChange(prev => ({
       ...prev,
-      items: (prev.items || []).map((it, i) => 
+      items: (prev.items || []).map((it, i) =>
         i === itemIndex ? { ...it, sysname: null, oriname: null, receipt: null } : it
       )
     }));
@@ -197,7 +197,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
           </div>
           {isEditMode ? (
             <div>
-              <input 
+              <input
                 type="text"
                 value={data.title || ''}
                 onChange={(e) => handleFieldChange('title', e.target.value)}
@@ -241,12 +241,12 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                   {isEditMode ? (
                     <div className="relative w-65" ref={calendarRef}>
                       <div className="relative h-[34px]">
-                        <input 
-                          type="text" 
-                          readOnly 
-                          value={data.pay_date || ''} 
-                          onClick={() => setIsCalendarOpen(!isCalendarOpen)} 
-                          placeholder="지출일 선택" 
+                        <input
+                          type="text"
+                          readOnly
+                          value={data.pay_date || ''}
+                          onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+                          placeholder="지출일 선택"
                           className={`w-full h-full p-2 border ${errors.pay_date ? 'border-red-500' : isCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-xl outline-none cursor-pointer text-xs transition-all pr-10`}
                         />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -256,11 +256,11 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                         </div>
                         {isCalendarOpen && (
                           <div className="absolute z-50 mt-1 w-full min-w-[260px]">
-                          <Calendar 
-                            value={data.pay_date} 
-                            onChange={(d) => { handleFieldChange('pay_date', d); setIsCalendarOpen(false); }} 
-                            onClose={() => setIsCalendarOpen(false)}
-                          />
+                            <Calendar
+                              value={data.pay_date}
+                              onChange={(d) => { handleFieldChange('pay_date', d); setIsCalendarOpen(false); }}
+                              onClose={() => setIsCalendarOpen(false)}
+                            />
                           </div>
                         )}
                       </div>
@@ -292,7 +292,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
             </div>
             {isEditMode ? (
               <div>
-                  <textarea 
+                <textarea
                   value={data.pay_reason || ''}
                   onChange={(e) => {
                     handleFieldChange('pay_reason', e.target.value);
@@ -322,7 +322,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
             </div>
             {isEditMode ? (
               <div>
-                <textarea 
+                <textarea
                   value={data.account_info || ''}
                   onChange={(e) => handleFieldChange('account_info', e.target.value)}
                   placeholder="은행명 / 계좌번호 / 예금주 (50자 이하)"
@@ -348,7 +348,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
             </div>
             {isEditMode && (
               <div className="flex flex-col items-end gap-1">
-                <button 
+                <button
                   onClick={handleAddRow}
                   className="px-3 py-1 bg-[#3530B8] text-white text-[10px] font-bold rounded-full hover:bg-[#2a2696] transition-colors"
                 >
@@ -358,7 +358,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
               </div>
             )}
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full border-collapse border border-gray-200 text-xs text-gray-700">
               <thead>
@@ -378,7 +378,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                     <td className="p-2 border-r border-gray-200">
                       {isEditMode ? (
                         <div>
-                          <input 
+                          <input
                             type="text"
                             value={item.item_name || ''}
                             onChange={(e) => handleItemChange(index, 'item_name', e.target.value)}
@@ -394,7 +394,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                     <td className="p-2 border-r border-gray-200">
                       {isEditMode ? (
                         <div>
-                          <input 
+                          <input
                             type="number"
                             min="0"
                             value={item.amount || ''}
@@ -417,9 +417,9 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                         <div className="flex flex-col items-center gap-1">
                           <label className={`cursor-pointer bg-white border ${errors.items?.[`${index}-receipt`] ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded text-[10px] hover:bg-gray-50`}>
                             파일 선택
-                            <input 
-                              type="file" 
-                              className="hidden" 
+                            <input
+                              type="file"
+                              className="hidden"
                               onChange={(e) => {
                                 handleItemChange(index, 'receipt', e.target.files[0]);
                                 e.target.value = '';
@@ -444,7 +444,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                     <td className="p-2 border-r border-gray-200">
                       {isEditMode ? (
                         <div>
-                          <input 
+                          <input
                             type="text"
                             value={item.note || ''}
                             onChange={(e) => handleItemChange(index, 'note', e.target.value)}
@@ -459,7 +459,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                     </td>
                     {isEditMode && (
                       <td className="p-2 text-center">
-                        <button 
+                        <button
                           onClick={() => handleRemoveRow(index)}
                           className="text-gray-400 hover:text-red-500 font-bold transition-colors"
                         >
@@ -492,16 +492,16 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
           <div className="p-4 border border-dashed border-gray-300 rounded-xl bg-gray-50/50 min-h-[60px] flex items-center">
             <div className="flex flex-wrap gap-4 w-full">
               {data.items?.map((item, originalIdx) => {
-                if(!(item.oriname || item.receipt instanceof File)) return null;
+                if (!(item.oriname || item.receipt instanceof File)) return null;
                 return (
                   <div key={item.sysname || item.receipt?.name || originalIdx} className="flex items-center gap-2 text-xs text-[#3530B8] group">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                     </svg>
                     {item.sysname ? (
-                      <a 
-                        href={`https://api.sukong.shop/file/download/${item.sysname}?token=${token}`} 
-                        download 
+                      <a
+                        href={`https://api.sukong.shop/file/download/${item.sysname}?token=${token}`}
+                        download
                         className="hover:underline"
                       >
                         {item.oriname}
@@ -510,7 +510,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                       <span className="text-gray-500">{item.receipt?.name}</span>
                     )}
                     {isEditMode && (
-                      <button 
+                      <button
                         onClick={() => handleRemoveFile(originalIdx)}
                         className="text-gray-400 hover:text-red-500 ml-1 font-bold"
                       >✕</button>
@@ -526,14 +526,16 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
         </div>
 
         {/* Referrer Selection Section */}
-        <ReferrerSelector 
-          value={data.referrers} 
-          onChange={(val) => onChange(prev => ({ ...prev, referrers: val }))} 
-          isEditMode={isEditMode} 
-        />
+        <div className="no-print">
+          <ReferrerSelector
+            value={data.referrers}
+            onChange={(val) => onChange(prev => ({ ...prev, referrers: val }))}
+            isEditMode={isEditMode}
+          />
+        </div>
       </div>
 
-      <div className="md:hidden space-y-6">
+      <div className="no-print md:hidden space-y-6">
         {/* 제목 (모바일) */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
@@ -542,7 +544,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
           </div>
           {isEditMode ? (
             <div className="space-y-1">
-              <input 
+              <input
                 type="text"
                 value={data.title || ''}
                 onChange={(e) => handleFieldChange('title', e.target.value)}
@@ -585,19 +587,19 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
               <div className="flex-grow p-2 overflow-visible">
                 {isEditMode ? (
                   <div className="relative">
-                    <input 
-                      type="text" 
-                      readOnly 
-                      value={data.pay_date || ''} 
-                      onClick={() => setIsCalendarOpen(!isCalendarOpen)} 
-                      placeholder="날짜 선택" 
+                    <input
+                      type="text"
+                      readOnly
+                      value={data.pay_date || ''}
+                      onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+                      placeholder="날짜 선택"
                       className="w-full p-1 border border-gray-200 rounded outline-none text-xs"
                     />
                     {isCalendarOpen && (
                       <div className="absolute z-50 left-0 w-full">
-                        <Calendar 
-                          value={data.pay_date} 
-                          onChange={(d) => { handleFieldChange('pay_date', d); setIsCalendarOpen(false); }} 
+                        <Calendar
+                          value={data.pay_date}
+                          onChange={(d) => { handleFieldChange('pay_date', d); setIsCalendarOpen(false); }}
                           onClose={() => setIsCalendarOpen(false)}
                         />
                       </div>
@@ -624,7 +626,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
             </div>
             {isEditMode ? (
               <div className="space-y-1">
-                <textarea 
+                <textarea
                   value={data.pay_reason || ''}
                   onChange={(e) => {
                     handleFieldChange('pay_reason', e.target.value);
@@ -650,7 +652,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
             </div>
             {isEditMode ? (
               <div className="space-y-1">
-                <textarea 
+                <textarea
                   value={data.account_info || ''}
                   onChange={(e) => {
                     handleFieldChange('account_info', e.target.value);
@@ -679,62 +681,62 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
               <h2 className="text-xs font-bold text-gray-800">지출 항목</h2>
             </div>
             {isEditMode && (
-              <button 
+              <button
                 onClick={handleAddRow}
                 className="px-3 py-1 bg-[#3530B8] text-white text-[10px] font-bold rounded-full"
               >+ 추가</button>
             )}
           </div>
-          
+
           <div className="space-y-4">
             {data.items?.map((item, index) => (
               <div key={index} className="border border-gray-200 rounded-lg p-3 space-y-3 bg-white relative shadow-sm">
                 {isEditMode && (
-                  <button 
+                  <button
                     onClick={() => handleRemoveRow(index)}
                     className="absolute top-2 right-2 text-gray-400 p-1"
                   >✕</button>
                 )}
                 <div className="grid grid-cols-1 gap-3">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">항목명</label>
-                  {isEditMode ? (
-                    <div>
-                      <input 
-                        type="text"
-                        value={item.item_name || ''}
-                        onChange={(e) => handleItemChange(index, 'item_name', e.target.value)}
-                        className={`w-full p-1.5 text-xs border ${errors.items?.[`${index}-item_name`] ? 'border-red-500' : 'border-gray-200'} rounded outline-none`}
-                      />
-                      {errors.items?.[`${index}-item_name`] && <p className="text-[10px] text-red-500">{errors.items[`${index}-item_name`]}</p>}
-                    </div>
-                  ) : (
-                    <div className="text-xs font-bold">{item.item_name || '-'}</div>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase">금액(원)</label>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase">항목명</label>
                     {isEditMode ? (
                       <div>
-                        <input 
-                          type="number"
-                          min="0"
-                          value={item.amount || ''}
-                          onKeyDown={(e) => {
-                            if (['e', 'E', '+', '-', '.'].includes(e.key)) {
-                              e.preventDefault();
-                            }
-                          }}
-                          onChange={(e) => handleItemChange(index, 'amount', Math.max(0, parseInt(e.target.value) || 0))}
-                          className={`w-full p-1.5 text-xs border ${errors.items?.[`${index}-amount`] ? 'border-red-500' : 'border-gray-200'} rounded text-right outline-none`}
+                        <input
+                          type="text"
+                          value={item.item_name || ''}
+                          onChange={(e) => handleItemChange(index, 'item_name', e.target.value)}
+                          className={`w-full p-1.5 text-xs border ${errors.items?.[`${index}-item_name`] ? 'border-red-500' : 'border-gray-200'} rounded outline-none`}
                         />
-                        {errors.items?.[`${index}-amount`] && <p className="text-[10px] text-red-500">{errors.items[`${index}-amount`]}</p>}
+                        {errors.items?.[`${index}-item_name`] && <p className="text-[10px] text-red-500">{errors.items[`${index}-item_name`]}</p>}
                       </div>
                     ) : (
-                      <div className="text-xs font-bold text-[#3530B8]">{(Number(item.amount) || 0).toLocaleString()}원</div>
+                      <div className="text-xs font-bold">{item.item_name || '-'}</div>
                     )}
                   </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase">금액(원)</label>
+                      {isEditMode ? (
+                        <div>
+                          <input
+                            type="number"
+                            min="0"
+                            value={item.amount || ''}
+                            onKeyDown={(e) => {
+                              if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                                e.preventDefault();
+                              }
+                            }}
+                            onChange={(e) => handleItemChange(index, 'amount', Math.max(0, parseInt(e.target.value) || 0))}
+                            className={`w-full p-1.5 text-xs border ${errors.items?.[`${index}-amount`] ? 'border-red-500' : 'border-gray-200'} rounded text-right outline-none`}
+                          />
+                          {errors.items?.[`${index}-amount`] && <p className="text-[10px] text-red-500">{errors.items[`${index}-amount`]}</p>}
+                        </div>
+                      ) : (
+                        <div className="text-xs font-bold text-[#3530B8]">{(Number(item.amount) || 0).toLocaleString()}원</div>
+                      )}
+                    </div>
                     <div className="space-y-1">
                       <label className="text-[10px] font-bold text-gray-400 uppercase text-right block">영수증</label>
                       <div className="flex justify-end flex-col items-end">
@@ -742,9 +744,9 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                           <div className="flex flex-col items-end gap-1">
                             <label className={`cursor-pointer bg-gray-100 px-2 py-1 rounded text-[10px] hover:bg-gray-200 ${errors.items?.[`${index}-receipt`] ? 'border border-red-500' : ''}`}>
                               파일 선택
-                              <input 
-                                type="file" 
-                                className="hidden" 
+                              <input
+                                type="file"
+                                className="hidden"
                                 onChange={(e) => {
                                   handleItemChange(index, 'receipt', e.target.files[0]);
                                   e.target.value = '';
@@ -752,7 +754,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                               />
                             </label>
                             {errors.items?.[`${index}-receipt`] && !item.receipt && !item.oriname && (
-                                <p className="text-[10px] text-red-500">{errors.items[`${index}-receipt`]}</p>
+                              <p className="text-[10px] text-red-500">{errors.items[`${index}-receipt`]}</p>
                             )}
                           </div>
                         ) : (
@@ -764,7 +766,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-gray-400 uppercase">비고</label>
                     {isEditMode ? (
-                      <input 
+                      <input
                         type="text"
                         value={item.note || ''}
                         onChange={(e) => handleItemChange(index, 'note', e.target.value)}
@@ -786,8 +788,8 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
 
         {/* 첨부파일 & Referrer (모바일) */}
         <div className="space-y-5">
-           {/* 첨부파일 (모바일) */}
-           <div className="space-y-2">
+          {/* 첨부파일 (모바일) */}
+          <div className="space-y-2">
             <div className="flex items-center gap-2">
               <div className="w-1 h-3.5 bg-[#3530B8] rounded-full"></div>
               <h2 className="text-xs font-bold text-gray-800">첨부파일</h2>
@@ -795,7 +797,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
             <div className="p-3 border border-dashed border-gray-200 rounded-lg bg-gray-50/50">
               <div className="flex flex-col gap-2">
                 {data.items?.map((item, idx) => {
-                  if(!(item.oriname || item.receipt instanceof File)) return null;
+                  if (!(item.oriname || item.receipt instanceof File)) return null;
                   return (
                     <div key={idx} className="flex items-center justify-between text-[11px] text-[#3530B8] bg-white p-2 rounded border border-gray-100">
                       <span className="truncate flex-grow">{item.oriname || item.receipt?.name}</span>
@@ -812,10 +814,10 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
             </div>
           </div>
 
-          <ReferrerSelector 
-            value={data.referrers} 
-            onChange={(val) => onChange(prev => ({ ...prev, referrers: val }))} 
-            isEditMode={isEditMode} 
+          <ReferrerSelector
+            value={data.referrers}
+            onChange={(val) => onChange(prev => ({ ...prev, referrers: val }))}
+            isEditMode={isEditMode}
           />
         </div>
       </div>

@@ -28,7 +28,7 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, onReorder, draft
   };
 
   return (
-    <div className="flex flex-col items-start md:items-end gap-1.5 w-full md:w-auto">
+    <div id="approval-line-container" className="flex flex-col items-start md:items-end gap-1.5 w-full md:w-auto">
       {isEditMode && (
         <button
           onClick={onAdd}
@@ -45,12 +45,15 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, onReorder, draft
           <div className="bg-white/10 text-[0.7rem] py-0.5 text-center font-bold border-b border-white/30">기안</div>
           <div className={`${isEditMode ? 'h-12' : 'h-14'} flex flex-col items-center justify-center text-[0.7rem] font-medium text-white/90 p-1`}>
             {!isEditMode && drafter?.stamp_sysname ? (
-              <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
-                <img
-                  src={`https://api.sukong.shop/file/profile/view?sysname=${drafter.stamp_sysname}&token=${token}`}
-                  alt={drafter?.name || '기안'}
-                  className="w-full h-full object-cover"
-                />
+              <div className="flex flex-col items-center">
+                <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
+                  <img
+                    src={`https://api.sukong.shop/file/profile/view?sysname=${drafter.stamp_sysname}&token=${token}`}
+                    alt={drafter?.name || '기안'}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <span className="text-[0.65rem] mt-0.5 truncate w-full text-center">{drafter?.name}</span>
               </div>
             ) : (
               <>
@@ -87,15 +90,17 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, onReorder, draft
                   </button>
                 )}
               </div>
-              <div className={`${isEditMode ? 'h-11' : 'h-14'} flex flex-col items-center justify-center text-[0.7rem] font-medium text-white/90 p-1 relative w-full`}>
+              <div className={`${isEditMode ? 'h-11' : 'h-14'} ${!showStamp ? 'approver-cell' : ''} flex flex-col items-center justify-center text-[0.7rem] font-medium text-white/90 p-1 relative w-full`}>
                 {showStamp ? (
-                  // 도장이 있을 때: 이미지 태그로 채우기
-                  <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
-                    <img
-                      src={`https://api.sukong.shop/file/profile/view?sysname=${approver.stamp_sysname}&token=${token}`}
-                      alt={approver.name}
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="flex flex-col items-center">
+                    <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
+                      <img
+                        src={`https://api.sukong.shop/file/profile/view?sysname=${approver.stamp_sysname}&token=${token}`}
+                        alt={approver.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <span className="text-[0.65rem] mt-0.5 truncate w-full text-center">{approver.name}</span>
                   </div>
                 ) : (
                   <>
@@ -120,7 +125,9 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, onReorder, draft
               </div>
               {!isEditMode && (
                 <div className="h-7 border-t border-white/30 flex items-center justify-center text-[9px] font-medium text-white/60 bg-white/5">
-                  {(showDetails && approver.handle_at) ? approver.handle_at.slice(0, 10) : '-'}
+                  <span className={!(showDetails && approver.handle_at) ? 'print-hide-dash' : ''}>
+                    {(showDetails && approver.handle_at) ? approver.handle_at.slice(0, 10) : '-'}
+                  </span>
                 </div>
               )}
             </div>
@@ -136,12 +143,15 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, onReorder, draft
           <div className="flex-grow flex items-center justify-between px-3 py-2 text-[0.75rem]">
             <div className="flex items-center gap-2 relative h-10 w-full justify-between">
               {!isEditMode && drafter?.stamp_sysname ? (
-                <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
-                  <img
-                    src={`https://api.sukong.shop/file/profile/view?sysname=${drafter.stamp_sysname}&token=${token}`}
-                    alt={drafter?.name || '기안'}
-                    className="w-full h-full object-cover"
-                  />
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
+                    <img
+                      src={`https://api.sukong.shop/file/profile/view?sysname=${drafter.stamp_sysname}&token=${token}`}
+                      alt={drafter?.name || '기안'}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className="font-bold">{drafter?.name}</span>
                 </div>
               ) : (
                 <span className="font-bold">{drafter?.name || '-'}</span>
@@ -171,12 +181,15 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, onReorder, draft
               </div>
               <div className="flex-grow flex items-center justify-between px-3 py-2 text-[0.75rem] h-12">
                 {showStamp ? (
-                  <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
-                    <img
-                      src={`https://api.sukong.shop/file/profile/view?sysname=${approver.stamp_sysname}&token=${token}`}
-                      alt={approver.name}
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
+                      <img
+                        src={`https://api.sukong.shop/file/profile/view?sysname=${approver.stamp_sysname}&token=${token}`}
+                        alt={approver.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <span className="font-bold">{approver.name}</span>
                   </div>
                 ) : (
                   <span className="font-bold">{showDetails ? (approver.name || '-') : '-'}</span>

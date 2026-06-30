@@ -1,18 +1,25 @@
 @import "tailwindcss";
+
 /* 역할: "SUIT라는 이름의 폰트 파일은 인터넷의 이 주소(url)에 있으니 준비해둬!"라고 브라우저에게 폰트를
 등록하는 과정 */
 @font-face {
-    font-family: 'SUIT-Regular';
-    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_suit@1.0/SUIT-Thin.woff2') format('woff2');
+  font-family: 'SUIT-Regular';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_suit@1.0/SUIT-Thin.woff2') format('woff2');
 }
 
-*, body, button, input, select, textarea {
-    font-family: 'SUIT', ui-sans-serif, system-ui, -apple-system, sans-serif !important;
+*,
+body,
+button,
+input,
+select,
+textarea {
+  font-family: 'SUIT', ui-sans-serif, system-ui, -apple-system, sans-serif !important;
 }
 
 /* FullCalendar Custom Overrides */
 .fc {
-  font-size: 0.75rem !important; /* Overall calendar font size reduced */
+  font-size: 0.75rem !important;
+  /* Overall calendar font size reduced */
 }
 
 /* Day headers (Sun, Mon, etc.) */
@@ -42,27 +49,32 @@
 .swal-custom-popup {
   padding: 0.8rem !important;
 }
+
 .swal-custom-icon {
   margin: 0.5rem auto !important;
   width: 4rem !important;
   height: 4rem !important;
   font-size: 0.8rem !important;
 }
+
 .swal-custom-title {
   font-size: 1.3rem !important;
   padding: 0 !important;
   margin: 0.3rem 0 !important;
 }
+
 .swal-custom-text {
   margin: 0.2rem 0 0.2rem !important;
   font-size: 0.9rem !important;
   padding: 0 !important;
 }
+
 .swal-custom-confirm {
   margin: 0.2rem 0 0.2rem !important;
   font-size: 0.9rem !important;
   padding: 0.4rem 1.2rem !important;
 }
+
 .swal-custom-cancel {
   color: #818181 !important;
   border: 1px solid #cacacc !important;
@@ -70,8 +82,9 @@
   font-size: 0.8rem !important;
   padding: 0.4rem 1.2rem !important;
 }
+
 .swal-custom-popup .swal2-actions {
-  gap: 0.5rem !important;  /* 원하는 간격으로 조절 */
+  gap: 0.5rem !important;
 }
 
 /* 모바일 크기 */
@@ -79,26 +92,31 @@
   .swal2-container .swal2-popup {
     width: 70vw !important;
   }
+
   .swal-custom-icon {
     margin: 0.5rem auto !important;
     width: 3.9rem !important;
     height: 3.9rem !important;
     font-size: 0.7rem !important;
   }
+
   .swal-custom-title {
     font-size: 1.1rem !important;
     padding: 0 !important;
     margin: 0.3rem 0 !important;
   }
+
   .swal-custom-text {
     font-size: 0.8rem !important;
     padding: 0 !important;
   }
+
   .swal-custom-confirm {
     margin: 0.0rem 0 0.1rem !important;
     font-size: 0.8rem !important;
     padding: 0.3rem 1.1rem !important;
   }
+
   .swal-custom-cancel {
     color: #818181 !important;
     border: 1px solid #cacacc !important;
@@ -106,7 +124,8 @@
     font-size: 0.8rem !important;
     padding: 0.3rem 1.1rem !important;
   }
+
   .swal-custom-popup .swal2-actions {
-    gap: 0.5rem !important;  /* 원하는 간격으로 조절 */
+    gap: 0.5rem !important;
   }
 }

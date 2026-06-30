@@ -343,10 +343,10 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
             {isEditMode && (
               <label className="cursor-pointer bg-[#3530B8] text-white px-3 py-1 rounded-full text-[10px] font-bold hover:bg-[#2a2696] transition-colors shadow-sm">
                 파일 선택
-                <input 
-                  type="file" 
+                <input
+                  type="file"
                   multiple
-                  className="hidden" 
+                  className="hidden"
                   onChange={(e) => {
                     const newFiles = Array.from(e.target.files);
                     onChange(prev => ({
@@ -368,9 +368,9 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                     </svg>
                     {file.sysname ? (
-                      <a 
-                        href={`https://api.sukong.shop/file/download/${file.sysname}?token=${token}`} 
-                        download 
+                      <a
+                        href={`https://api.sukong.shop/file/download/${file.sysname}?token=${token}`}
+                        download
                         className="hover:underline"
                       >
                         {file.oriname}
@@ -379,7 +379,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                       <span className="text-gray-500">{file.name}</span>
                     )}
                     {isEditMode && (
-                      <button 
+                      <button
                         onClick={() => handleRemoveAttachment(idx)}
                         className="text-gray-400 hover:text-red-500 ml-1 font-bold"
                       >✕</button>
@@ -394,15 +394,17 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
         </div>
 
         {/* Referrer Selection Section */}
-        <ReferrerSelector
-          value={data.referrers}
-          onChange={(val) => onChange({ ...data, referrers: val })}
-          isEditMode={isEditMode}
-        />
+        <div className="no-print">
+          <ReferrerSelector
+            value={data.referrers}
+            onChange={(val) => onChange({ ...data, referrers: val })}
+            isEditMode={isEditMode}
+          />
+        </div>
       </div>
 
       {/* [Mobile View] - 새로운 모바일용 레이아웃 */}
-      <div className="md:hidden space-y-6">
+      <div className="no-print md:hidden space-y-6">
         {/* 제목 (모바일) */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">

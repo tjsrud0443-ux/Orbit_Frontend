@@ -46,17 +46,17 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
       newErrors.purpose = validateField('purpose', data.purpose);
       newErrors.vendor = validateField('vendor', data.vendor);
       newErrors.attachments = (!data.attachments || data.attachments.length === 0) ? '파일을 첨부해주세요.' : '';
-      
+
       const itemErrors = {};
       data.items?.forEach((item, index) => {
         if (!item.item_name?.trim()) itemErrors[`${index}-item_name`] = '품목명을 입력해주세요.';
         else if (item.item_name.length > 30) itemErrors[`${index}-item_name`] = '글자 수 초과 (30자 이하)';
-        
+
         if (!item.ea || item.ea <= 0) itemErrors[`${index}-ea`] = '수량을 입력해주세요.';
         if (!item.unit_price || item.unit_price <= 0) itemErrors[`${index}-unit_price`] = '숫자로 단가를 입력해주세요.';
       });
       newErrors.items = itemErrors;
-      
+
       setErrors(newErrors);
     } else {
       setErrors({});
@@ -64,8 +64,8 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
   }, [isSubmitClicked]);
 
   useEffect(() => {
-    if (isTempSaveClicked){
-      const newErrors= {};
+    if (isTempSaveClicked) {
+      const newErrors = {};
       newErrors.title = validateField('title', data.title);
       setErrors(newErrors);
     }
@@ -127,7 +127,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
     onChange(prev => {
       const currentAttachments = prev.attachments || [];
       const filteredFiles = currentAttachments.filter((_, i) => i !== targetIdx);
-      
+
       if (filteredFiles.length === 0) {
         setErrors(err => ({ ...err, attachments: '파일을 첨부해주세요.' }));
       }
@@ -192,7 +192,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
           </div>
           {isEditMode ? (
             <div>
-              <input 
+              <input
                 type="text"
                 value={data.title || ''}
                 onChange={(e) => handleFieldChange('title', e.target.value)}
@@ -235,16 +235,16 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                   {isEditMode ? (
                     <div className="relative w-65" ref={containerRef}>
                       <div className="relative h-[34px]">
-                        <input 
-                        type="text" 
-                        readOnly 
-                        value={data.purchase_date || ''} 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsCalendarOpen(!isCalendarOpen);
-                        }} 
-                        placeholder="요청일 선택" 
-                        className={`w-full h-full p-2 border ${errors.purchase_date ? 'border-red-500' : isCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-lg outline-none transition-all`}
+                        <input
+                          type="text"
+                          readOnly
+                          value={data.purchase_date || ''}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsCalendarOpen(!isCalendarOpen);
+                          }}
+                          placeholder="요청일 선택"
+                          className={`w-full h-full p-2 border ${errors.purchase_date ? 'border-red-500' : isCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-lg outline-none transition-all`}
                         />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -253,9 +253,9 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                         </div>
                         {isCalendarOpen && (
                           <div ref={calendarRef} className="absolute z-50 mt-1 w-full min-w-[260px]">
-                            <Calendar 
-                              value={data.purchase_date} 
-                              onChange={(d) => { handleFieldChange('purchase_date', d); setIsCalendarOpen(false); }} 
+                            <Calendar
+                              value={data.purchase_date}
+                              onChange={(d) => { handleFieldChange('purchase_date', d); setIsCalendarOpen(false); }}
                               onClose={() => setIsCalendarOpen(false)}
                             />
                           </div>
@@ -288,7 +288,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
             </div>
             {isEditMode ? (
               <div>
-                <textarea 
+                <textarea
                   value={data.purpose || ''}
                   onChange={(e) => {
                     handleFieldChange('purpose', e.target.value);
@@ -318,7 +318,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
             </div>
             {isEditMode ? (
               <div>
-                <textarea 
+                <textarea
                   value={data.vendor || ''}
                   onChange={(e) => {
                     handleFieldChange('vendor', e.target.value);
@@ -352,7 +352,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
             </div>
             {isEditMode && (
               <div className="flex flex-col items-end gap-1">
-                <button 
+                <button
                   onClick={handleAddRow}
                   className="px-3 py-1 bg-[#3530B8] text-white text-[10px] font-bold rounded-full hover:bg-[#2a2696] transition-colors"
                 >
@@ -362,7 +362,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
               </div>
             )}
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full border-collapse border border-gray-200 text-xs text-gray-700">
               <thead>
@@ -385,7 +385,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                       <td className="p-2 border-r border-gray-200">
                         {isEditMode ? (
                           <div>
-                            <input 
+                            <input
                               type="text"
                               value={item.item_name || ''}
                               onChange={(e) => handleItemChange(index, 'item_name', e.target.value)}
@@ -401,7 +401,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                       <td className="p-2 border-r border-gray-200">
                         {isEditMode ? (
                           <div>
-                            <input 
+                            <input
                               type="number"
                               value={item.ea || ''}
                               min="0"
@@ -415,32 +415,32 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                         )}
                       </td>
                       <td className="p-2 border-r border-gray-200">
-                      {isEditMode ? (
-                        <div>
-                          <input 
-                            type="number"
-                            value={item.unit_price || ''}
-                            min="0"
-                            onKeyDown={(e) => {
-                              if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
-                                e.preventDefault();
-                              }
-                            }}
-                            onChange={(e) => handleItemChange(index, 'unit_price', Math.max(0, Number(e.target.value)))}
-                            className={`w-full p-1 bg-white border ${errors.items?.[`${index}-unit_price`] ? 'border-red-500' : 'border-gray-300'} rounded outline-none focus:border-[#3530B8] text-right`}
-                          />
-                          {errors.items?.[`${index}-unit_price`] && <p className="text-[9px] text-red-500 mt-0.5">{errors.items[`${index}-unit_price`]}</p>}
-                        </div>
-                      ) : (
-                        <div className="text-right">{(Number(item.unit_price) || 0).toLocaleString()}</div>
-                      )}
+                        {isEditMode ? (
+                          <div>
+                            <input
+                              type="number"
+                              value={item.unit_price || ''}
+                              min="0"
+                              onKeyDown={(e) => {
+                                if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
+                                  e.preventDefault();
+                                }
+                              }}
+                              onChange={(e) => handleItemChange(index, 'unit_price', Math.max(0, Number(e.target.value)))}
+                              className={`w-full p-1 bg-white border ${errors.items?.[`${index}-unit_price`] ? 'border-red-500' : 'border-gray-300'} rounded outline-none focus:border-[#3530B8] text-right`}
+                            />
+                            {errors.items?.[`${index}-unit_price`] && <p className="text-[9px] text-red-500 mt-0.5">{errors.items[`${index}-unit_price`]}</p>}
+                          </div>
+                        ) : (
+                          <div className="text-right">{(Number(item.unit_price) || 0).toLocaleString()}</div>
+                        )}
                       </td>
                       <td className="p-2 border-r border-gray-200 text-right bg-gray-50/30">
                         {itemTotal.toLocaleString()}
                       </td>
                       <td className="p-2 border-r border-gray-200">
                         {isEditMode ? (
-                          <input 
+                          <input
                             type="text"
                             value={item.note || ''}
                             onChange={(e) => handleItemChange(index, 'note', e.target.value)}
@@ -453,7 +453,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                       </td>
                       {isEditMode && (
                         <td className="p-2 text-center">
-                          <button 
+                          <button
                             onClick={() => handleRemoveRow(index)}
                             className="text-gray-400 hover:text-red-500 font-bold transition-colors"
                           >
@@ -491,10 +491,10 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
             {isEditMode && (
               <label className="cursor-pointer bg-[#3530B8] text-white px-3 py-1 rounded-full text-[10px] font-bold hover:bg-[#2a2696] transition-colors shadow-sm">
                 파일 선택
-                <input 
-                  type="file" 
+                <input
+                  type="file"
                   multiple
-                  className="hidden" 
+                  className="hidden"
                   onChange={(e) => {
                     const newFiles = Array.from(e.target.files);
                     onChange(prev => ({
@@ -517,9 +517,9 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                     </svg>
                     {file.sysname ? (
-                      <a 
-                        href={`https://api.sukong.shop/file/download/${file.sysname}?token=${token}`} 
-                        download 
+                      <a
+                        href={`https://api.sukong.shop/file/download/${file.sysname}?token=${token}`}
+                        download
                         className="hover:underline"
                       >
                         {file.oriname}
@@ -528,7 +528,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                       <span className="text-gray-500">{file.name}</span>
                     )}
                     {isEditMode && (
-                      <button 
+                      <button
                         onClick={() => handleRemoveAttachment(idx)}
                         className="text-gray-400 hover:text-red-500 ml-1 font-bold"
                       >✕</button>
@@ -543,15 +543,17 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
         </div>
 
         {/* Referrer Selection Section */}
-        <ReferrerSelector 
-          value={data.referrers} 
-          onChange={(val) => onChange(prev => ({ ...prev, referrers: val }))} 
-          isEditMode={isEditMode} 
-        />
+        <div className="no-print">
+          <ReferrerSelector
+            value={data.referrers}
+            onChange={(val) => onChange(prev => ({ ...prev, referrers: val }))}
+            isEditMode={isEditMode}
+          />
+        </div>
       </div>
 
       {/* [Mobile View] - 새로운 모바일용 레이아웃 */}
-      <div className="md:hidden space-y-6">
+      <div className="no-print md:hidden space-y-6">
         {/* 제목 (모바일) */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
@@ -560,7 +562,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
           </div>
           {isEditMode ? (
             <div className="space-y-1">
-              <input 
+              <input
                 type="text"
                 value={data.title || ''}
                 onChange={(e) => handleFieldChange('title', e.target.value)}
@@ -602,23 +604,23 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
               <div className="flex-grow p-2">
                 {isEditMode ? (
                   <div className="relative space-y-1">
-                    <input 
-                      type="text" 
-                      readOnly 
-                      value={data.purchase_date || ''} 
+                    <input
+                      type="text"
+                      readOnly
+                      value={data.purchase_date || ''}
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsCalendarOpen(!isCalendarOpen);
-                      }} 
-                      placeholder="날짜 선택" 
+                      }}
+                      placeholder="날짜 선택"
                       className={`w-full p-1 border ${errors.purchase_date ? 'border-red-500' : 'border-gray-200'} rounded outline-none text-xs`}
                     />
                     {errors.purchase_date && <p className="text-[10px] text-red-500">{errors.purchase_date}</p>}
                     {isCalendarOpen && (
                       <div ref={calendarRef} className="absolute z-50 left-0 w-full">
-                        <Calendar 
-                          value={data.purchase_date} 
-                          onChange={(d) => { handleFieldChange('purchase_date', d); setIsCalendarOpen(false); }} 
+                        <Calendar
+                          value={data.purchase_date}
+                          onChange={(d) => { handleFieldChange('purchase_date', d); setIsCalendarOpen(false); }}
                           onClose={() => setIsCalendarOpen(false)}
                         />
                       </div>
@@ -644,7 +646,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
               <h2 className="text-xs font-bold text-gray-800">구매 목적</h2>
             </div>
             {isEditMode ? (
-              <textarea 
+              <textarea
                 value={data.purpose || ''}
                 onChange={(e) => handleFieldChange('purpose', e.target.value)}
                 className="w-full h-20 p-2.5 text-xs border border-gray-200 rounded-lg outline-none custom-scrollbar"
@@ -659,7 +661,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
               <h2 className="text-xs font-bold text-gray-800">구매처</h2>
             </div>
             {isEditMode ? (
-              <textarea 
+              <textarea
                 value={data.vendor || ''}
                 onChange={(e) => handleFieldChange('vendor', e.target.value)}
                 className="w-full h-20 p-2.5 text-xs border border-gray-200 rounded-lg outline-none custom-scrollbar"
@@ -678,20 +680,20 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
               <h2 className="text-xs font-bold text-gray-800">구매 품목</h2>
             </div>
             {isEditMode && (
-              <button 
+              <button
                 onClick={handleAddRow}
                 className="px-3 py-1 bg-[#3530B8] text-white text-[10px] font-bold rounded-full"
               >+ 추가</button>
             )}
           </div>
-          
+
           <div className="space-y-4">
             {data.items?.map((item, index) => {
               const itemTotal = (Number(item.ea) || 0) * (Number(item.unit_price) || 0);
               return (
                 <div key={index} className="border border-gray-200 rounded-lg p-3 space-y-3 bg-white relative shadow-sm">
                   {isEditMode && (
-                    <button 
+                    <button
                       onClick={() => handleRemoveRow(index)}
                       className="absolute top-2 right-2 text-gray-400 p-1"
                     >✕</button>
@@ -701,7 +703,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                       <label className="text-[10px] font-bold text-gray-400 uppercase">품목명</label>
                       {isEditMode ? (
                         <div className="space-y-1">
-                          <input 
+                          <input
                             type="text"
                             value={item.item_name || ''}
                             onChange={(e) => handleItemChange(index, 'item_name', e.target.value)}
@@ -718,7 +720,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                         <label className="text-[10px] font-bold text-gray-400 uppercase">수량</label>
                         {isEditMode ? (
                           <div className="space-y-1">
-                            <input 
+                            <input
                               type="number"
                               value={item.ea || ''}
                               onChange={(e) => handleItemChange(index, 'ea', Number(e.target.value))}
@@ -734,7 +736,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                         <label className="text-[10px] font-bold text-gray-400 uppercase text-right block">단가(원)</label>
                         {isEditMode ? (
                           <div className="space-y-1">
-                            <input 
+                            <input
                               type="number"
                               value={item.unit_price || ''}
                               min="0"
@@ -760,7 +762,7 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                     <div className="space-y-1">
                       <label className="text-[10px] font-bold text-gray-400 uppercase">비고</label>
                       {isEditMode ? (
-                        <input 
+                        <input
                           type="text"
                           value={item.note || ''}
                           onChange={(e) => handleItemChange(index, 'note', e.target.value)}
@@ -783,8 +785,8 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
 
         {/* 첨부파일 & Referrer (모바일) */}
         <div className="space-y-5">
-           {/* 첨부파일 (모바일) */}
-           <div className="space-y-2">
+          {/* 첨부파일 (모바일) */}
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-1 h-3.5 bg-[#3530B8] rounded-full"></div>
@@ -819,16 +821,16 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                   <p className="text-[11px] text-gray-400 text-center">첨부된 파일이 없습니다.</p>
                 )}
                 {errors.attachments && (!data.attachments || data.attachments.length === 0) && (
-                    <p className="text-[10px] text-red-500 text-center">{errors.attachments}</p>
+                  <p className="text-[10px] text-red-500 text-center">{errors.attachments}</p>
                 )}
               </div>
             </div>
           </div>
 
-          <ReferrerSelector 
-            value={data.referrers} 
-            onChange={(val) => onChange(prev => ({ ...prev, referrers: val }))} 
-            isEditMode={isEditMode} 
+          <ReferrerSelector
+            value={data.referrers}
+            onChange={(val) => onChange(prev => ({ ...prev, referrers: val }))}
+            isEditMode={isEditMode}
           />
         </div>
       </div>
