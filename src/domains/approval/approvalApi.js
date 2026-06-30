@@ -1,6 +1,7 @@
 ﻿import { maxios } from "../../api/axiosConfig";
 
 export const getAllEmployees = () => maxios.get("/approval/all");
+export const getTopReferrers = () => maxios.get("/approval/topReferrers");
 export const submitVacation = (formData) => maxios.post("/approval/submit/vacation", formData, {
     headers: {
         "Content-Type": "multipart/form-data"
