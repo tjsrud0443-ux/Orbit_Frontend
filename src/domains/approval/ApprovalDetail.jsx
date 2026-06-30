@@ -545,6 +545,18 @@ const ApprovalDetail = () => {
   const rejectedApprover = approvers?.find(app => app.status === 'REJECTED');
   const showRejectReason = mode === 'VIEW' && rejectedApprover;
 
+  const getDocNo = () => {
+    if (!formData?.doc_seq) return '-';
+
+    const deptCode = drafter?.dept_name || formData?.dept_name || '';
+    const dateCode = drafter?.created_at
+      ? drafter.created_at.substring(2, 10).replaceAll('-', '') // 260101 형식
+      : '';
+    const seqCode = String(formData.doc_seq).padStart(3, '0');
+
+    return `${deptCode}-${dateCode}-${seqCode}`;
+  };
+
   return (
     <>
       <EmployeeSelectionModal
@@ -556,6 +568,7 @@ const ApprovalDetail = () => {
         title={getTitle()}
         user={user}
         drafter={drafter}
+        docNo={getDocNo()}
         userRole={userRole}
         mode={mode}
         documentStatus={formData.status}

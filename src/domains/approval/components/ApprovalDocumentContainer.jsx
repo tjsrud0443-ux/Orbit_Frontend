@@ -20,7 +20,10 @@ const ApprovalDocumentContainer = ({
   setRejectReason,
   rejectError,
   setRejectError,
-  children
+  children,
+  docNo,
+  formTitle,
+  attachments
 }) => {
   return (
     <div className="print-area flex justify-center py-4 md:py-10 font-sans print:block print:p-0">
@@ -103,6 +106,11 @@ const ApprovalDocumentContainer = ({
             setRejectReason={setRejectReason}
             rejectError={rejectError}
             setRejectError={setRejectError}
+            docNo={docNo}
+            drafter={drafter}
+            title={title}
+            formTitle={formTitle}
+            attachments={attachments}
           />
         </div>
       </div>

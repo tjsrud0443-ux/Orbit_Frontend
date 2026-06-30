@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import useAuthStore from '../../../store/authStore';
+import { getCompanyInfo } from '../../admin/adminApi';
 
 const ApprovalActionButtons = ({
   user,
@@ -13,9 +15,16 @@ const ApprovalActionButtons = ({
   rejectReason,
   setRejectReason,
   rejectError,
-  setRejectError
+  setRejectError,
+  title,
+  drafter,
+  docNo,
+  formTitle,
+  attachments
 }) => {
   const navigate = useNavigate();
+  const token = useAuthStore(state => state.token);
+  const [companyInfo, setCompanyInfo] = useState({});
 
   // 상태 판단 로직
   const firstApproverStatus = approvers?.[0]?.status;
@@ -28,6 +37,15 @@ const ApprovalActionButtons = ({
 
   // 결재자 (현재 결재 순서인 경우)
   const isCurrentApprover = userRole === 'APPROVER' && mode === 'VIEW' && myStatus === 'IN_PROGRESS';
+
+  useEffect(() => {
+    getCompanyInfo().then(resp => {
+      console.log(resp.data);
+      setCompanyInfo(resp.data);
+    }).catch(err => {
+      console.error('회사 정보 조회 실패', err);
+    });
+  }, []);
 
   const handleRejectConfirm = () => {
     if (!rejectReason.trim() || rejectReason.length > 100) {
@@ -56,16 +74,99 @@ const ApprovalActionButtons = ({
     const printArea = document.querySelector('.print-area');
     const content = printArea.innerHTML;
 
-    const printWindow = window.open('', '_blank', 'width=1200,height=800');
+    const finalApprover = approvers?.[approvers.length - 1];
+
+    const attachmentList = (attachments || [])
+      .map(a => `<div style="font-size: 12px; color: #475569;">${a.oriname}</div>`)
+      .join('');
 
     const coverPage = `
-      <div style="page-break-after: always; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;">
-        <h1 style="font-size: 2rem; font-weight: bold;">지출 결의서</h1>
-        <p style="margin-top: 20px;">작성일: 2026-06-30</p>
-        <p>작성자: ${user.name}</p>
+      <div style="page-break-after: always; padding: 70px 80px; font-family: sans-serif; height: 277mm; box-sizing: border-box;">
+        <div style="text-align: center; margin-bottom: 50px; position: relative;">
+          <div style="position: absolute; top: 0; left: 0; width: 60px; height: 4px; background: #3530B8;"></div>
+          <h1 style="font-size: 30px; font-weight: 800; letter-spacing: 8px; color: #1a1a1a; margin: 20px 0 0 0;">
+            기 안 문
+          </h1>
+        </div>
+
+        <!-- 문서번호 + 결재라인 -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px;">
+          <div style="font-size: 13px; color: #475569; padding-top: 8px;">
+            문서번호 : ${docNo || '-'}
+          </div>
+
+          <table style="border-collapse: collapse; font-size: 12px;">
+            <tr>
+              <th style="background: #3530B8; color: white; border: 1px solid #3530B8; padding: 6px 20px; font-weight: 700;">기안자</th>
+              <th style="background: #3530B8; color: white; border: 1px solid #3530B8; padding: 6px 20px; font-weight: 700;">결재자</th>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #DDE8FF; padding: 14px 20px; text-align: center; background: #F8FAFF;">
+                ${drafter?.stamp_sysname
+        ? `<img src="https://api.sukong.shop/file/profile/view?sysname=${drafter.stamp_sysname}&token=${token}" style="width: 36px; height: 36px; object-fit: cover; display: block; margin: 0 auto 4px;" />`
+        : ''
+      }
+                <div style="font-weight: 600; color: #1a1a1a;">${drafter?.name || '-'}</div>
+              </td>
+              <td style="border: 1px solid #DDE8FF; padding: 14px 20px; text-align: center; background: #F8FAFF;">
+                ${finalApprover?.stamp_sysname
+        ? `<img src="https://api.sukong.shop/file/profile/view?sysname=${finalApprover.stamp_sysname}&token=${token}" style="width: 36px; height: 36px; object-fit: cover; display: block; margin: 0 auto 4px;" />`
+        : ''
+      }
+                <div style="font-weight: 600; color: #1a1a1a;">${finalApprover?.name || '-'}</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #DDE8FF; padding: 6px 20px; text-align: center; font-size: 10px; color: #94a3b8;">
+                ${drafter?.created_at?.substring(0, 10) || '-'}
+              </td>
+              <td style="border: 1px solid #DDE8FF; padding: 6px 20px; text-align: center; font-size: 10px; color: #94a3b8;">
+                ${finalApprover?.handle_at?.substring(0, 10) || '-'}
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- 제목 -->
+        <div style="margin-bottom: 16px;">
+          <span style="font-size: 13px; color: #64748b; font-weight: 600;">제목 :</span>
+          <span style="font-size: 14px; color: #1a1a1a; margin-left: 8px;">${formTitle || title}</span>
+        </div>
+
+        <div style="border-top: 2px solid #1a1a1a; margin-bottom: 16px;"></div>
+
+        <!-- 첨부문서 -->
+        <div style="margin-bottom: 60px;">
+          <span style="font-size: 13px; color: #64748b; font-weight: 600;">첨부문서 :</span>
+          <div style="margin-top: 6px; margin-left: 4px;">
+            ${attachmentList || '<div style="font-size: 12px; color: #94a3b8;">없음</div>'}
+          </div>
+        </div>
+
+        <!-- 기안 날짜 -->
+        <div style="text-align: center; font-size: 14px; color: #1a1a1a; margin-bottom: 50px;">
+          ${drafter?.created_at?.substring(0, 10)?.replaceAll('-', '. ') || '-'}
+        </div>
+
+        <div style="border-top: 1px solid #cbd5e1; margin-bottom: 20px;"></div>
+
+        <!-- 회사명 + 주소/연락처 -->
+        <div style="text-align: center;">
+          <div style="font-size: 22px; font-weight: 800; color: #3530B8; margin-bottom: 8px;">
+            ${companyInfo?.company_name}
+          </div>
+          <div style="font-size: 11px; color: #64748b;">
+            ${companyInfo ? `(${companyInfo.company_zonecode}) ${companyInfo.company_address} ${companyInfo.company_detail_addr || ''}` : ''}
+          </div>
+          <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
+            ${companyInfo ? `Tel : ${companyInfo.company_tel}　Fax : ${companyInfo.company_fax}` : ''}
+          </div>
+        </div>
+
       </div>
     `;
 
+    const printWindow = window.open('', '_blank', 'width=1200,height=800');
     printWindow.document.write(`
     <html>
       <head>
@@ -91,6 +192,7 @@ const ApprovalActionButtons = ({
           .text-blue-300, .text-\\[\\#FF9800\\]\\/80 { display: none !important; }
           .approver-cell { justify-content: flex-start !important; padding-top: 6px !important; }
           .print-hide-dash { display: none !important; }
+          @page { margin: 0; }
         </style>
       </head>
       <body>
