@@ -159,7 +159,7 @@ const ApprovalDetail = () => {
       if (upperType === 'VACATION') {
         setFormData({ title: '', vac_type: '연차', start_date: '', end_date: '', days: 0, reason: '', attachments: [] });
       } else if (upperType === 'PAYMENT') {
-        setFormData({ title: '', pay_date: '', pay_reason: '', account_info: '', items: [{ item_order: 1, item_name: '', amount: 0, receipt: null, note: '' }] });
+        setFormData({ title: '', pay_date: '', pay_reason: '', bank_name: '', account_holder: '', account_number: '', items: [{ item_order: 1, item_name: '', amount: 0, receipt: null, note: '' }] });
       } else if (upperType === 'GENERAL') {
         setFormData({ title: '', purpose: '', content: '', attachments: [] });
       } else if (upperType === 'PURCHASE') {
@@ -269,7 +269,7 @@ const ApprovalDetail = () => {
           if (!formData.reason?.trim() || formData.reason.length > 300) return false;
         } else if (doc_type === 'PAYMENT') {
           if (isMobile) {
-            if (!formData.pay_date || !formData.pay_reason?.trim() || !formData.account_info?.trim()) {
+            if (!formData.pay_date || !formData.pay_reason?.trim() || !formData.bank_name?.trim() || !formData.account_holder?.trim() || !formData.account_number?.trim()) {
               alertWarning('정보 미입력', '필수 항목을 입력해주세요.');
               return false;
             }
@@ -290,7 +290,7 @@ const ApprovalDetail = () => {
             }
           }
 
-          if (!formData.pay_date || !formData.pay_reason?.trim() || !formData.account_info?.trim()) return false;
+          if (!formData.pay_date || !formData.pay_reason?.trim() || !formData.bank_name?.trim() || !formData.account_holder?.trim() || !formData.account_number?.trim()) return false;
           if (!formData.items || formData.items.length === 0) return false;
         } else if (doc_type === 'GENERAL') {
           if (!formData.purpose?.trim() || formData.purpose.length > 300) return false;
@@ -557,6 +557,7 @@ const ApprovalDetail = () => {
         drafter={drafter}
         userRole={userRole}
         mode={mode}
+        documentStatus={formData.status}
         approvers={approvers}
         referrers={formData.referrers}
         onAddApprover={handleAddApprover}

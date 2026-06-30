@@ -46,7 +46,9 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
       newErrors.title = validateField('title', data.title);
       newErrors.pay_date = validateField('pay_date', data.pay_date);
       newErrors.pay_reason = validateField('pay_reason', data.pay_reason);
-      newErrors.account_info = validateField('account_info', data.account_info);
+      newErrors.bank_name = validateField('bank_name', data.bank_name);
+      newErrors.account_holder = validateField('account_holder', data.account_holder);
+      newErrors.account_number = validateField('account_number', data.account_number);
 
       const itemErrors = {};
       data.items?.forEach((item, index) => {
@@ -80,13 +82,17 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
       if (field === 'title') error = '제목을 입력해주세요.';
       if (field === 'pay_date') error = '지출일을 선택해주세요.';
       if (field === 'pay_reason') error = '지출 목적을 입력해주세요.';
-      if (field === 'account_info') error = '계좌 정보를 입력해주세요.';
+      if (field === 'bank_name') error = '은행명을 입력해주세요.';
+      if (field === 'account_holder') error = '예금주를 입력해주세요.';
+      if (field === 'account_number') error = '계좌번호를 입력해주세요.';
     }
 
     if (value) {
       if (field === 'title' && value.length > 50) error = '글자 수 초과 (50자 이하)';
       if (field === 'pay_reason' && value.length > 300) error = '글자 수 초과 (300자 이하)';
-      if (field === 'account_info' && value.length > 50) error = '글자 수 초과 (50자 이하)';
+      if (field === 'bank_name' && value.length > 15) error = '글자 수 초과 (15자 이하)';
+      if (field === 'account_holder' && value.length > 15) error = '글자 수 초과 (15자 이하)';
+      if (field === 'account_number' && value.length > 20) error = '글자 수 초과 (20자 이하)';
     }
 
     return error;
@@ -146,7 +152,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
     if (currentItems.length <= 1) {
       setErrors(err => ({ ...err, itemMin: '최소 한 개의 항목은 있어야 합니다.' }));
       setTimeout(() => setErrors(err => ({ ...err, itemMin: '' })), 3000);
-      return prev;
+      return;
     }
     setErrors(err => {
       const itemErrors = { ...(err.items || {}) };
@@ -321,20 +327,58 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
               <h2 className="text-xs font-bold text-gray-800">계좌 정보</h2>
             </div>
             {isEditMode ? (
-              <div>
-                <textarea
-                  value={data.account_info || ''}
-                  onChange={(e) => handleFieldChange('account_info', e.target.value)}
-                  placeholder="은행명 / 계좌번호 / 예금주 (50자 이하)"
-                  maxLength={50}
-                  className={`w-full p-2 text-xs bg-white border ${errors.account_info ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] resize-none transition-all custom-scrollbar min-h-[80px]`}
-                ></textarea>
-                {errors.account_info && <p className="mt-1 text-[10px] text-red-500">{errors.account_info}</p>}
-              </div>
+              <table className="w-full border-collapse border border-gray-200 text-xs text-gray-700">
+                <tbody>
+                  <tr>
+                    <th className="w-16 bg-gray-50 p-2 border-r border-gray-200 text-center font-bold whitespace-nowrap">은행명</th>
+                    <td className="p-2 border-r border-gray-200 w-[28%]">
+                      <input
+                        type="text"
+                        value={data.bank_name || ''}
+                        onChange={(e) => handleFieldChange('bank_name', e.target.value)}
+                        maxLength={15}
+                        className={`w-full p-2 text-xs bg-white border ${errors.bank_name ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] transition-all`}
+                      />
+                      {errors.bank_name && <p className="mt-1 text-[10px] text-red-500">{errors.bank_name}</p>}
+                    </td>
+                    <th className="w-16 bg-gray-50 p-2 border-r border-gray-200 text-center font-bold whitespace-nowrap">예금주</th>
+                    <td className="p-2 border-r border-gray-200 w-[28%]">
+                      <input
+                        type="text"
+                        value={data.account_holder || ''}
+                        onChange={(e) => handleFieldChange('account_holder', e.target.value)}
+                        maxLength={15}
+                        className={`w-full p-2 text-xs bg-white border ${errors.account_holder ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] transition-all`}
+                      />
+                      {errors.account_holder && <p className="mt-1 text-[10px] text-red-500">{errors.account_holder}</p>}
+                    </td>
+                    <th className="w-16 bg-gray-50 p-2 border-r border-gray-200 text-center font-bold whitespace-nowrap">계좌번호</th>
+                    <td className="p-2 w-[44%]">
+                      <input
+                        type="text"
+                        value={data.account_number || ''}
+                        onChange={(e) => handleFieldChange('account_number', e.target.value)}
+                        maxLength={20}
+                        className={`w-full p-2 text-xs bg-white border ${errors.account_number ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none focus:border-[#3530B8] transition-all`}
+                      />
+                      {errors.account_number && <p className="mt-1 text-[10px] text-red-500">{errors.account_number}</p>}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             ) : (
-              <div className="w-full p-2 text-xs bg-gray-50 border border-gray-100 rounded-lg whitespace-pre-wrap">
-                {data.account_info || '-'}
-              </div>
+              <table className="w-full border-collapse border border-gray-200 text-xs text-gray-700">
+                <tbody>
+                  <tr>
+                    <th className="w-16 bg-gray-50 p-2 border-r border-gray-200 text-center font-bold whitespace-nowrap">은행명</th>
+                    <td className="p-2 border-r border-gray-200 w-[28%]">{data.bank_name || '-'}</td>
+                    <th className="w-16 bg-gray-50 p-2 border-r border-gray-200 text-center font-bold whitespace-nowrap">예금주</th>
+                    <td className="p-2 border-r border-gray-200 w-[28%]">{data.account_holder || '-'}</td>
+                    <th className="w-16 bg-gray-50 p-2 border-r border-gray-200 text-center font-bold whitespace-nowrap">계좌번호</th>
+                    <td className="p-2 w-[44%]">{data.account_number || '-'}</td>
+                  </tr>
+                </tbody>
+              </table>
             )}
           </div>
         </div>
@@ -651,25 +695,62 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
               <h2 className="text-xs font-bold text-gray-800">계좌 정보</h2>
             </div>
             {isEditMode ? (
-              <div className="space-y-1">
-                <textarea
-                  value={data.account_info || ''}
-                  onChange={(e) => {
-                    handleFieldChange('account_info', e.target.value);
-                    e.target.style.height = 'auto';
-                    e.target.style.height = e.target.scrollHeight + 'px';
-                  }}
-                  onInput={(e) => {
-                    e.target.style.height = 'auto';
-                    e.target.style.height = e.target.scrollHeight + 'px';
-                  }}
-                  className={`w-full p-2.5 text-xs border ${errors.account_info ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none overflow-hidden min-h-[80px]`}
-                  placeholder="은행명 / 계좌번호 / 예금주 (50자 이하)"
-                ></textarea>
-                {errors.account_info && <p className="text-[10px] text-red-500">{errors.account_info}</p>}
+              <div className="border border-gray-200 rounded-lg text-xs">
+                <div className="flex border-b border-gray-100">
+                  <div className="w-20 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100 flex items-center">은행명</div>
+                  <div className="flex-grow p-2">
+                    <input
+                      type="text"
+                      value={data.bank_name || ''}
+                      onChange={(e) => handleFieldChange('bank_name', e.target.value)}
+                      maxLength={15}
+                      className={`w-full p-2.5 text-xs bg-white border ${errors.bank_name ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none`}
+                    />
+                    {errors.bank_name && <p className="mt-1 text-[10px] text-red-500">{errors.bank_name}</p>}
+                  </div>
+                </div>
+                <div className="flex border-b border-gray-100">
+                  <div className="w-20 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100 flex items-center">예금주</div>
+                  <div className="flex-grow p-2">
+                    <input
+                      type="text"
+                      value={data.account_holder || ''}
+                      onChange={(e) => handleFieldChange('account_holder', e.target.value)}
+                      maxLength={15}
+                      className={`w-full p-2.5 text-xs bg-white border ${errors.account_holder ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none`}
+                    />
+                    {errors.account_holder && <p className="mt-1 text-[10px] text-red-500">{errors.account_holder}</p>}
+                  </div>
+                </div>
+                <div className="flex">
+                  <div className="w-20 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100 flex items-center">계좌번호</div>
+                  <div className="flex-grow p-2">
+                    <input
+                      type="text"
+                      value={data.account_number || ''}
+                      onChange={(e) => handleFieldChange('account_number', e.target.value)}
+                      maxLength={20}
+                      className={`w-full p-2.5 text-xs bg-white border ${errors.account_number ? 'border-red-500' : 'border-gray-200'} rounded-lg outline-none`}
+                    />
+                    {errors.account_number && <p className="mt-1 text-[10px] text-red-500">{errors.account_number}</p>}
+                  </div>
+                </div>
               </div>
             ) : (
-              <div className="p-2.5 bg-gray-50 rounded-lg text-xs border border-gray-100 min-h-[5rem] whitespace-pre-wrap">{data.account_info || '-'}</div>
+              <div className="border border-gray-200 rounded-lg text-xs">
+                <div className="flex border-b border-gray-100">
+                  <div className="w-20 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100 flex items-center">은행명</div>
+                  <div className="flex-grow p-2">{data.bank_name || '-'}</div>
+                </div>
+                <div className="flex border-b border-gray-100">
+                  <div className="w-20 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100 flex items-center">예금주</div>
+                  <div className="flex-grow p-2">{data.account_holder || '-'}</div>
+                </div>
+                <div className="flex">
+                  <div className="w-20 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100 flex items-center">계좌번호</div>
+                  <div className="flex-grow p-2">{data.account_number || '-'}</div>
+                </div>
+              </div>
             )}
           </div>
         </div>

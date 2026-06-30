@@ -8,6 +8,7 @@ const ApprovalDocumentContainer = ({
   drafter,
   userRole,
   mode,
+  documentStatus,
   approvers,
   onAddApprover,
   onRemoveApprover,
@@ -52,6 +53,7 @@ const ApprovalDocumentContainer = ({
               user={user}
               userRole={userRole}
               mode={mode}
+              documentStatus={documentStatus}
               onAction={onAction}
               approvers={approvers}
               isRejecting={isRejecting}
@@ -92,6 +94,7 @@ const ApprovalDocumentContainer = ({
             user={user}
             userRole={userRole}
             mode={mode}
+            documentStatus={documentStatus}
             onAction={onAction}
             approvers={approvers}
             isRejecting={isRejecting}

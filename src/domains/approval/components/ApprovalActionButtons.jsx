@@ -5,6 +5,7 @@ const ApprovalActionButtons = ({
   user,
   userRole,
   mode,
+  documentStatus,
   onAction,
   approvers,
   isRejecting,
@@ -23,7 +24,7 @@ const ApprovalActionButtons = ({
 
   // 수정 가능한 기안자 (첫 번째 결재자가 결재하기 전 상태)
   const isEditableDrafter = userRole === 'DRAFTER' && mode === 'VIEW' && firstApproverStatus === 'IN_PROGRESS';
-  const isEditingSubmitted = userRole === 'DRAFTER' && mode === 'EDIT' && firstApproverStatus === 'IN_PROGRESS';
+  const isEditingSubmitted = userRole === 'DRAFTER' && mode === 'EDIT' && documentStatus !== 'TEMP' && documentStatus !== undefined;
 
   // 결재자 (현재 결재 순서인 경우)
   const isCurrentApprover = userRole === 'APPROVER' && mode === 'VIEW' && myStatus === 'IN_PROGRESS';
