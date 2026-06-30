@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import ReferrerSelector from '../components/ReferrerSelector';
+import useAuthStore from '../../../store/authStore';
 
-const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveClicked }) => {
+const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveClicked, docType }) => {
 
   const isEditMode = mode === 'EDIT';
   const today = new Date().toLocaleDateString('sv-SE');
@@ -20,7 +21,7 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
   }, [isSubmitClicked]);
 
   useEffect(() => {
-    if (isTempSaveClicked){
+    if (isTempSaveClicked) {
       setErrors(prev => ({
         ...prev,
         title: validateField('title', data.title, data)
@@ -56,9 +57,17 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
   const purpose = data?.purpose || '';
   const content = data?.content || '';
 
+  const handleRemoveAttachment = (targetIdx) => {
+    const currentAttachments = data.attachments || [];
+    const filteredFiles = currentAttachments.filter((_, i) => i !== targetIdx);
+    onChange({ ...data, attachments: filteredFiles });
+  };
+
+  const token = useAuthStore(state => state.token);
+
   const applicant = isEditMode ? user : data;
   const displayDate = isEditMode ? today : (data?.created_at?.substring(0, 10) || '-');
-  
+
   return (
     <>
       {/* [Desktop View] - 기존 스타일 완벽 유지 */}
@@ -71,7 +80,7 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
           </div>
           {isEditMode ? (
             <div>
-              <input 
+              <input
                 type="text"
                 value={title}
                 onChange={(e) => handleFieldChange('title', e.target.value)}
@@ -124,7 +133,7 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
           </div>
           {isEditMode ? (
             <div>
-              <textarea 
+              <textarea
                 value={purpose}
                 onChange={(e) => handleFieldChange('purpose', e.target.value)}
                 placeholder="품의 목적을 간략하게 입력하세요 (300자 이하)"
@@ -148,7 +157,7 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
           </div>
           {isEditMode ? (
             <div>
-              <textarea 
+              <textarea
                 value={content}
                 onChange={(e) => handleFieldChange('content', e.target.value)}
                 placeholder="품의 내용을 자유롭게 입력하세요 (1000자 이하)"
@@ -164,16 +173,79 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
           )}
         </div>
 
+        {/* 첨부파일 Section */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-3.5 bg-[#3530B8] rounded-full"></div>
+              <h2 className="text-xs font-bold text-gray-800">첨부파일</h2>
+            </div>
+            {isEditMode && (
+              <label className="cursor-pointer bg-[#3530B8] text-white px-3 py-1 rounded-full text-[10px] font-bold hover:bg-[#2a2696] transition-colors shadow-sm">
+                파일 선택
+                <input
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    const newFiles = Array.from(e.target.files);
+                    onChange({
+                      ...data,
+                      attachments: [...(data.attachments || []), ...newFiles]
+                    });
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+            )}
+          </div>
+          <div className="p-4 border border-dashed border-gray-300 rounded-xl bg-gray-50/50 min-h-[60px] flex items-center">
+            <div className="flex flex-wrap gap-4 w-full">
+              {data.attachments && data.attachments.length > 0 ? (
+                data.attachments.map((file, idx) => (
+                  <div key={file.sysname || file.name || idx} className="flex items-center gap-2 text-xs text-[#3530B8] group">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                    </svg>
+                    {file.sysname ? (
+                      <a
+                        href={`https://api.sukong.shop/file/download/${file.sysname}?token=${token}`}
+                        download
+                        className="hover:underline"
+                      >
+                        {file.oriname}
+                      </a>
+                    ) : (
+                      <span className="text-gray-500">{file.name}</span>
+                    )}
+                    {isEditMode && (
+                      <button
+                        onClick={() => handleRemoveAttachment(idx)}
+                        className="text-gray-400 hover:text-red-500 ml-1 font-bold"
+                      >✕</button>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-gray-400">첨부된 파일이 없습니다.</p>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Referrer Selection Section */}
-        <ReferrerSelector 
-          value={data?.referrers} 
-          onChange={(val) => onChange({ ...data, referrers: val })} 
-          isEditMode={isEditMode} 
-        />
+        <div className="no-print">
+          <ReferrerSelector
+            value={data?.referrers}
+            onChange={(val) => onChange({ ...data, referrers: val })}
+            isEditMode={isEditMode}
+            docType={docType}
+          />
+        </div>
       </div>
 
       {/* [Mobile View] - 새로운 모바일용 레이아웃 */}
-      <div className="md:hidden space-y-5">
+      <div className="no-print md:hidden space-y-5">
         {/* 신청 정보 (모바일) */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
@@ -212,7 +284,7 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
           </div>
           {isEditMode ? (
             <div className="space-y-1">
-              <input 
+              <input
                 type="text"
                 value={title}
                 onChange={(e) => handleFieldChange('title', e.target.value)}
@@ -234,7 +306,7 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
           </div>
           {isEditMode ? (
             <div className="space-y-1">
-              <textarea 
+              <textarea
                 value={purpose}
                 onChange={(e) => handleFieldChange('purpose', e.target.value)}
                 placeholder="품의 목적을 입력하세요"
@@ -255,7 +327,7 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
           </div>
           {isEditMode ? (
             <div className="space-y-1">
-              <textarea 
+              <textarea
                 value={content}
                 onChange={(e) => handleFieldChange('content', e.target.value)}
                 placeholder="품의 내용을 입력하세요"
@@ -268,12 +340,54 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
           )}
         </div>
 
-        {/* Referrer (모바일) */}
-        <ReferrerSelector 
-          value={data?.referrers} 
-          onChange={(val) => onChange({ ...data, referrers: val })} 
-          isEditMode={isEditMode} 
-        />
+        {/* 첨부파일 & Referrer (모바일) */}
+        <div className="space-y-5">
+          {/* 첨부파일 (모바일) */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-3.5 bg-[#3530B8] rounded-full"></div>
+                <h2 className="text-xs font-bold text-gray-800">첨부파일</h2>
+              </div>
+              {isEditMode && (
+                <label className="cursor-pointer bg-gray-100 px-3 py-1 rounded-full text-[10px] font-bold">
+                  파일 추가
+                  <input type="file" multiple className="hidden" onChange={(e) => {
+                    const newFiles = Array.from(e.target.files);
+                    onChange({
+                      ...data,
+                      attachments: [...(data.attachments || []), ...newFiles]
+                    });
+                    e.target.value = '';
+                  }} />
+                </label>
+              )}
+            </div>
+            <div className="p-3 border border-dashed border-gray-200 rounded-lg bg-gray-50/50">
+              <div className="flex flex-col gap-2">
+                {data.attachments?.map((file, idx) => (
+                  <div key={idx} className="flex items-center justify-between text-[11px] text-[#3530B8] bg-white p-2 rounded border border-gray-100">
+                    <span className="truncate flex-grow">{file.oriname || file.name}</span>
+                    {isEditMode && (
+                      <button onClick={() => handleRemoveAttachment(idx)} className="ml-2 text-red-400">✕</button>
+                    )}
+                  </div>
+                ))}
+                {!data.attachments?.length && (
+                  <p className="text-[11px] text-gray-400 text-center">첨부된 파일이 없습니다.</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Referrer (모바일) */}
+          <ReferrerSelector
+            value={data?.referrers}
+            onChange={(val) => onChange({ ...data, referrers: val })}
+            isEditMode={isEditMode}
+            docType={docType}
+          />
+        </div>
       </div>
     </>
   );
