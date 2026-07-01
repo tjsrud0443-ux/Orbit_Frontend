@@ -184,7 +184,7 @@ const SupplyModal = ({ mode, supply, onClose, onSave }) => {
               type="text"
               value={form.code}
               onChange={e => handleChange('code', e.target.value)}
-              placeholder="예: EQP-0001"
+              placeholder="예: SUP-IT-001"
               readOnly={mode === 'edit'}
               maxLength={50}
               className={`px-4 py-2.5 border rounded-xl text-sm outline-none font-mono transition-all
