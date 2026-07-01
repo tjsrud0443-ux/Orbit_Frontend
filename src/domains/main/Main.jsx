@@ -124,11 +124,18 @@ const formatStampTime = (date) =>
 
   // 매 시간 달이 바뀌었는지 체크하여 캘린더 자동 업데이트
   useEffect(() => {
+    const toLocalDateStr = (date) => {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    };
+
     const checkMonth = () => {
       const now = new Date();
       if (!selectedDate || new Date(selectedDate).getMonth() !== now.getMonth() || new Date(selectedDate).getFullYear() !== now.getFullYear()) {
          const newDate = new Date(now.getFullYear(), now.getMonth(), 1);
-         setSelectedDate(newDate.toISOString().split('T')[0]);
+         setSelectedDate(toLocalDateStr(newDate));
       }
     };
     checkMonth();
@@ -299,6 +306,7 @@ const quickActions = [
     ) : (
       // 실제 캘린더
       <Calendar 
+        key={selectedDate?.slice(0, 7)}
         isStatic={true}
         value={selectedDate}
         events={calendarEvents}
@@ -359,7 +367,7 @@ const quickActions = [
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
               `}</style>
               {boardPosts.length > 0 ? (
-                boardPosts.map((post) => (
+                boardPosts.slice(0, 5).map((post) => (
                   <div 
                     key={post.post_seq} 
                     onClick={() => navigate(`/boardDetail/${post.post_seq}`)}
