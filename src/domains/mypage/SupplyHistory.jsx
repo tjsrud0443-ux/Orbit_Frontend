@@ -240,7 +240,7 @@ const SupplyHistory = () => {
               </div>
 
               {/* Action Buttons */}
-              {(selectedRequest.status === 'PENDING' || selectedRequest.status === 'REJECTED') && (
+              {selectedRequest.status === 'PENDING' && (
                 <div className="pt-1">
                   <button 
                     onClick={() => handleDeleteRequest(selectedRequest.req_seq)}

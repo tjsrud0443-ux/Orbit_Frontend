@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Pagination as MuiPagination, Stack } from '@mui/material';
 import { getSuppyReqList, updateSupplyReqStatus } from '../admin/adminApi';
 import { alertWarning, alertSuccess, alertConfirm } from '../../utils/alert';
@@ -33,10 +33,17 @@ const AdminSupplyReq = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedId, setSelectedId] = useState(null);
 
-const fetchList = useCallback(() => {
+  const requestIdRef = useRef(0); // ✅ 여기에 추가 (state 선언들 아래)
+
+  const fetchList = useCallback(() => {
+    const currentRequestId = ++requestIdRef.current;
+
     return getSuppyReqList({ page, keyword, status: activeTab === '전체' ? '' 
       : activeTab === '대기' ? 'PENDING' 
-      : activeTab === '승인' ? 'APPROVED' : 'REJECTED' }).then(resp => {
+      : activeTab === '승인' ? 'APPROVED' : 'REJECTED', _t: Date.now() }).then(resp => {
+
+      if (currentRequestId !== requestIdRef.current) return; // ✅ 낡은 응답 무시
+
       const { list, totalPages: newTotalPages, totalCount, pendingCount, approvedCount, rejectedCount } = resp.data;
 
       setTabCounts({

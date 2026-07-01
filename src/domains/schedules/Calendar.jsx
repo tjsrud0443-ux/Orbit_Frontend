@@ -273,7 +273,7 @@ const Calendar = () => {
         // allEvents에서 개인 카테고리인 것만 골라내기
         const pEvents = allEvents.filter(e => PERSONAL_FILTERS.some(f => f.key === e.category));
         // allEvents에서 회사 카테고리인 것만 골라내기
-        const cEvents = allEvents.filter(e => COMPANY_FILTERS.some(f => f.key === e.category));
+        const cEvents = allEvents.filter(e => COMPANY_CATEGORIES.includes(e.category));
         // 개인 일정 중 "공용 캘린더에도 표시" 체크된 것
         const sharedPersonalEvents = pEvents.filter(e => e.extendedProps.show_in_company === 1);
         setPersonalEvents(prev => {
