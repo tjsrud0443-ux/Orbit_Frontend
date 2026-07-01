@@ -16,6 +16,14 @@ const useNotificationStore = create((set) => ({
             notifications: [noti, ...state.notifications]
         })),
 
+    // websocket 데이터 delete
+    removeNotification: (notiSeq) =>
+        set((state) => ({
+            notifications: state.notifications.filter(
+                (noti) => noti.noti_seq !== notiSeq
+            )
+        })),
+
     // 알림 읽음 처리
     readNoti: (notiSeq) =>
         set((state) => ({

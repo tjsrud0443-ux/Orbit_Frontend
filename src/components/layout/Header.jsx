@@ -6,6 +6,7 @@ import useUserStore from '../../store/userStore';
 import useNotificationStore from '../../store/useNotificationStore';
 import { useEffect, useRef, useState } from 'react';
 import { getMyNotiList, getNotiDocType, getNotiProjectSeq, updateReadNoti } from '../../api/notificationApi';
+import { toast } from 'react-toastify';
 
 const Header = ({ onMenuClick }) => {
   const token = useAuthStore(state => state.token);
@@ -17,7 +18,7 @@ const Header = ({ onMenuClick }) => {
   const navi = useNavigate();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
-  
+
   const notiTypeLabel = {
     PROJECT: "[프로젝트]",
     TASK: "[업무]",
@@ -70,49 +71,65 @@ const Header = ({ onMenuClick }) => {
 
   const handleNotiClick = async (noti) => {
     setOpen(false); // 알림 클릭 시 드롭다운 닫기
-    if(noti.read_yn === "N") {
-      await updateReadNoti(noti.noti_seq);
-      readNoti(noti.noti_seq);
-    }
 
-    switch (noti.ref_type) {
+    try {
+      if (noti.read_yn === "N") {
+        await updateReadNoti(noti.noti_seq);
+        readNoti(noti.noti_seq);
+      }
 
-      // 프로젝트 알림
-      case "PROJECT":
-        navi(`/projects?projectSeq=${noti.ref_seq}`);
-        break;
+      switch (noti.ref_type) {
 
-      // 칸반 담당자 지정 알림
-      case "TASK":
-        const projectResp = await getNotiProjectSeq(noti.ref_seq);
-        const projectSeq = projectResp.data;
+        // 프로젝트 알림
+        case "PROJECT":
+          navi(`/projects?projectSeq=${noti.ref_seq}`);
+          break;
 
-        navi(`/kanban/${projectSeq}?taskSeq=${noti.ref_seq}`);
-        break;
+        // 칸반 담당자 지정 알림
+        case "TASK":
+          const projectResp = await getNotiProjectSeq(noti.ref_seq);
+          const projectSeq = projectResp.data;
 
-      // 결재 요청 알림
-      case "APPROVAL":
-      case "APPROVED":
-      case "REJECTED":
-        const DocTypeResp = await getNotiDocType(noti.ref_seq);
-        const docType = DocTypeResp.data;
+          if (!projectSeq) {
+            toast.warning("삭제되었거나 접근할 수 없는 업무입니다.");
+            return;
+          }
 
-        navi(`/approval/detail/${docType}/${noti.ref_seq}`);
-        break;
+          navi(`/kanban/${projectSeq}?taskSeq=${noti.ref_seq}`);
+          break;
 
-      // 미팅 참석 알림
-      case "MEETING":
-        navi(`/calendar`);
-        break;
+        // 결재 요청 알림
+        case "APPROVAL":
+        case "APPROVED":
+        case "REJECTED":
+          const DocTypeResp = await getNotiDocType(noti.ref_seq);
+          const docType = DocTypeResp.data;
 
-      default:
-        break;
+          if (!docType) {
+            toast.warning("삭제되었거나 접근할 수 없는 결재 문서입니다.");
+            return;
+          }
 
+          navi(`/approval/detail/${docType}/${noti.ref_seq}`);
+          break;
+
+        // 미팅 참석 알림
+        case "MEETING":
+          navi(`/calendar`);
+          break;
+
+        default:
+          break;
+
+      }
+    } catch (e) {
+      console.error(e);
+      toast.warning("삭제되었거나 접근할 수 없는 알림입니다.");
     }
   }
 
   const noReadCount = notifications.filter(
-        noti => noti.read_yn === "N").length;
+    noti => noti.read_yn === "N").length;
 
   return (
     <header className="h-14 bg-white border-b border-slate-200 flex items-center
@@ -209,10 +226,10 @@ const Header = ({ onMenuClick }) => {
             group-hover:ring-2 group-hover:ring-[#DDE8FF]">
             {
               user?.sysname && <img
-              src={`https://api.sukong.shop/file/profile/view?sysname=${user?.sysname}&token=${token}`}
-              alt={user?.name}
-              className="w-full h-full object-cover"
-            />
+                src={`https://api.sukong.shop/file/profile/view?sysname=${user?.sysname}&token=${token}`}
+                alt={user?.name}
+                className="w-full h-full object-cover"
+              />
             }
           </div>
           <div className="flex flex-col text-left">
