@@ -367,7 +367,7 @@ const quickActions = [
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
               `}</style>
               {boardPosts.length > 0 ? (
-                boardPosts.map((post) => (
+                boardPosts.slice(0, 5).map((post) => (
                   <div 
                     key={post.post_seq} 
                     onClick={() => navigate(`/boardDetail/${post.post_seq}`)}
