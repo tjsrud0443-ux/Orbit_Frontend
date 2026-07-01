@@ -24,6 +24,14 @@ export const connectSocket = (usersId) => {
 
                     const noti = JSON.parse(message.body);
 
+                    if(noti.eventType === "DELETE") {
+                        useNotificationStore
+                            .getState()
+                            .removeNotification(noti.noti_seq);
+
+                        return;
+                    }
+
                     useNotificationStore
                         .getState()
                         .addNotification(noti);
