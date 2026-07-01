@@ -231,7 +231,7 @@ return {
 
     if (isEdit) {
       updateBoard(editPost.post_seq, formData).then(() => {
-        navigate('/board', { state: { alert: { type: 'success', title: '수정 완료', text: '게시글이 수정되었습니다.' } } });
+        navigate(`/boardDetail/${editPost.post_seq}`, { state: { alert: { type: 'success', title: '수정 완료', text: '게시글이 수정되었습니다.' } } });
       }).catch(err => {
         console.error(err);
         alertError('오류 발생', '수정 중 오류가 발생했습니다.');
