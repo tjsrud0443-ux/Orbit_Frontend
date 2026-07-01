@@ -119,6 +119,10 @@ const BoardList = () => {
   const { showLoading, hideLoading } = useLoadingStore();
   const isFirstLoad = useRef(true);
     // API 호출
+    // page 바뀔 때만 posts 비우기
+useEffect(() => {
+  setPosts([]);
+}, [page]);
   useEffect(() => {
     if (isFirstLoad.current) {
       showLoading();
@@ -147,7 +151,8 @@ const BoardList = () => {
       });
     }, 300);
     
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);}
     }, [page, search]); // page나 search 바뀔 때마다 재호출
 
   // 검색어 바뀌면 1페이지로 초기화
@@ -235,7 +240,7 @@ const BoardList = () => {
             .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
           `}</style>
            {/* 공지 고정 영역 */}
-          {noticePosts.map((post, i) => (
+          {page === 1 && noticePosts.map((post, i) => (
             <PostRow
               key={`notice-${post.post_seq}`}
               post={post}
