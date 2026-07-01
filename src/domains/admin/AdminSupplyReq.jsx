@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Pagination as MuiPagination, Stack } from '@mui/material';
 import { getSuppyReqList, updateSupplyReqStatus } from '../admin/adminApi';
 import { alertWarning, alertSuccess, alertConfirm } from '../../utils/alert';
@@ -33,8 +33,8 @@ const AdminSupplyReq = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedId, setSelectedId] = useState(null);
 
-  useEffect(() => {
-    getSuppyReqList({ page, keyword, status: activeTab === '전체' ? '' 
+const fetchList = useCallback(() => {
+    return getSuppyReqList({ page, keyword, status: activeTab === '전체' ? '' 
       : activeTab === '대기' ? 'PENDING' 
       : activeTab === '승인' ? 'APPROVED' : 'REJECTED' }).then(resp => {
       const { list, totalPages: newTotalPages, totalCount, pendingCount, approvedCount, rejectedCount } = resp.data;
@@ -52,7 +52,7 @@ const AdminSupplyReq = () => {
         requestDate: item.req_date,
         applicantName: item.user_name,
         dept: item.dept_name,
-        items: item.items || [],  // 전체 비품 목록
+        items: item.items || [],
         supplyName: (() => {
           const names = (item.items || []).map(i => i.supplyName || i.supply_name).filter(Boolean);
           if (names.length === 0) return '';
@@ -70,6 +70,10 @@ const AdminSupplyReq = () => {
       setTotalPages(newTotalPages); 
     }).catch(err => console.error(err));
   }, [page, keyword, activeTab]);
+
+  useEffect(() => {
+    fetchList();
+  }, [fetchList]);
 
   const selectedItem = requests.find(r => r.id === selectedId) || null;
 
@@ -134,9 +138,8 @@ const AdminSupplyReq = () => {
         items: target.items
       });
       await alertSuccess('승인 완료', '승인 처리가 완료되었습니다.');
-      setRequests(prev =>
-        prev.map(r => r.id === id ? { ...r, status: '승인' } : r)
-      );
+      setSelectedId(null);
+      await fetchList();
     } catch (err) {
       await alertWarning('승인 불가', '재고가 부족하여 승인이 불가합니다.');
     }
@@ -154,9 +157,8 @@ const AdminSupplyReq = () => {
         items: target.items
       });
       await alertSuccess('반려 완료', '반려 처리가 완료되었습니다.');
-      setRequests(prev =>
-        prev.map(r => r.id === id ? { ...r, status: '반려' } : r)
-      );
+      setSelectedId(null);
+      await fetchList();
     } catch (err) {
       console.error(err);
     }
