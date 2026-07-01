@@ -381,6 +381,12 @@ const ProjectsList = () => {
 
     await alertSuccess('처리 완료', '프로젝트가 완료 처리되었습니다.');
     const resp = await getMyAllProject();
+
+    if (user?.role) {
+      const resp = await getProjectCount(user?.role);
+      setProjectCount(resp.data);
+    }
+    
     setProjects(resp.data);
     setIsModalOpen(false);
     handleCloseDetail();
