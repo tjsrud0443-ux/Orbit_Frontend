@@ -1,33 +1,43 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Calendar from '../../../components/common/Calendar';
 import ReferrerSelector from '../components/ReferrerSelector';
+import useAuthStore from '../../../store/authStore';
+import { getAllVacationTypes } from '../approvalApi';
 
-const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveClicked }) => {
+const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveClicked, docType }) => {
   const isEditMode = mode === 'EDIT';
   const today = new Date().toLocaleDateString('sv-SE');
-  
+
   const [isStartCalendarOpen, setIsStartCalendarOpen] = useState(false);
   const [isEndCalendarOpen, setIsEndCalendarOpen] = useState(false);
   const [isTypeOpen, setIsTypeOpen] = useState(false);
   const [errors, setErrors] = useState({});
+  const [vacationTypes, setVacationTypes] = useState([]);
 
   const startCalendarRef = useRef(null);
   const endCalendarRef = useRef(null);
   const mobileStartCalendarRef = useRef(null);
   const mobileEndCalendarRef = useRef(null);
+  const typeDropdownRef = useRef(null);
+  const mobileTypeDropdownRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      const isOutsideStart = 
+      const isOutsideStart =
         (!startCalendarRef.current || !startCalendarRef.current.contains(event.target)) &&
         (!mobileStartCalendarRef.current || !mobileStartCalendarRef.current.contains(event.target));
-      
-      const isOutsideEnd = 
+
+      const isOutsideEnd =
         (!endCalendarRef.current || !endCalendarRef.current.contains(event.target)) &&
         (!mobileEndCalendarRef.current || !mobileEndCalendarRef.current.contains(event.target));
 
+      const isOutsideType =
+        (!typeDropdownRef.current || !typeDropdownRef.current.contains(event.target)) &&
+        (!mobileTypeDropdownRef.current || !mobileTypeDropdownRef.current.contains(event.target));
+
       if (isOutsideStart) setIsStartCalendarOpen(false);
       if (isOutsideEnd) setIsEndCalendarOpen(false);
+      if (isOutsideType) setIsTypeOpen(false);
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -37,11 +47,29 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
   }, []);
 
   useEffect(() => {
+    const getVacationTypes = async () => {
+      try {
+        const resp = await getAllVacationTypes();
+        setVacationTypes(resp.data);
+      } catch (error) {
+        console.error("휴가 유형 조회 실패", error);
+      }
+    };
+    getVacationTypes();
+  }, []);
+
+  const periodVacations = [
+    '연차',
+    '병가',
+    '경조'
+  ];
+
+  useEffect(() => {
     if (isSubmitClicked) {
       const newErrors = {};
       newErrors.title = validateField('title', data.title, data);
       newErrors.start_date = validateField('start_date', data.start_date, data);
-      if (data.vac_type === '연차') {
+      if (periodVacations.includes(data.vac_type)) {
         newErrors.end_date = validateField('end_date', data.end_date, data);
       }
       newErrors.reason = validateField('reason', data.reason, data);
@@ -52,8 +80,8 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
   }, [isSubmitClicked]);
 
   useEffect(() => {
-    if (isTempSaveClicked){
-      const newErrors= {};
+    if (isTempSaveClicked) {
+      const newErrors = {};
       newErrors.title = validateField('title', data.title);
       setErrors(newErrors);
     }
@@ -77,7 +105,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
     }
 
     if (field === 'end_date') {
-      if (currentData.vac_type === '연차' && !value) {
+      if (periodVacations.includes(currentData.vac_type) && !value) {
         error = '종료 날짜를 선택해주세요.';
       } else if (value && currentData.start_date && value < currentData.start_date) {
         error = '종료 날짜는 시작 날짜 이후여야 합니다.';
@@ -94,8 +122,19 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
     const error = validateField(key, value, updatedData);
     setErrors(prev => ({ ...prev, [key]: error }));
 
-    if(key === 'vac_type' && value !== '연차'){
-      setErrors(prev => ({...prev, end_date: ''}));
+    if (key === 'vac_type') {
+      updatedData.start_date = '';
+      updatedData.end_date = '';
+      updatedData.days = 0;
+
+      setErrors(prev => ({
+        ...prev,
+        [key]: error,
+        start_date: isSubmitClicked ? validateField('start_date', '', updatedData) : '',
+        end_date: isSubmitClicked ? validateField('end_date', '', updatedData) : ''
+      }));
+    } else {
+      setErrors(prev => ({ ...prev, [key]: error }));
     }
 
     if (key === 'start_date') {
@@ -103,21 +142,23 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
         updatedData.end_date = '';
         setErrors(prev => ({ ...prev, end_date: '종료 날짜를 선택해주세요.' }));
       }
+
+      if (updatedData.vac_type === '조퇴') {
+        updatedData.end_date = value;
+      }
     }
 
-    // 2. 신청 일수 자동 계산
-    const calculateDays = (type, start, end) => {
-      if (type !== '연차') return 0.5;
+    const calculateDays = (start, end) => {
       if (!start || !end) return 0;
-      
+
       const s = new Date(start);
       const e = new Date(end);
       let count = 0;
       let current = new Date(s);
-      
+
       while (current <= e) {
-        const dayOfWeek = current.getDay();
-        if (dayOfWeek !== 0 && dayOfWeek !== 6) { // 0: Sunday, 6: Saturday
+        const day = current.getDay();
+        if (day !== 0 && day !== 6) { // 0: Sunday, 6: Saturday
           count++;
         }
         current.setDate(current.getDate() + 1);
@@ -125,14 +166,39 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
       return count;
     };
 
-    updatedData.days = Math.max(0, calculateDays(
-      updatedData.vac_type || '연차', 
-      updatedData.start_date, 
-      updatedData.end_date
-    ));
+    const selectedType =
+      vacationTypes.find(
+        item => item.vac_type === updatedData.vac_type
+      );
 
+    const selectDays =
+      calculateDays(
+        updatedData.start_date,
+        updatedData.end_date
+      );
+
+    if (selectedType) {
+      if (periodVacations.includes(updatedData.vac_type)) {
+        updatedData.days =
+          selectDays *
+          selectedType.deduct_days;
+      } else {
+        updatedData.days =
+          selectedType.deduct_days;
+      }
+    }
     onChange(updatedData);
   };
+
+  const handleRemoveAttachment = (targetIdx) => {
+    onChange(prev => {
+      const currentAttachments = prev.attachments || [];
+      const filteredFiles = currentAttachments.filter((_, i) => i !== targetIdx);
+      return { ...prev, attachments: filteredFiles };
+    });
+  };
+
+  const token = useAuthStore(state => state.token);
 
   const applicant = isEditMode ? user : data;
   const displayDate = isEditMode ? today : (data?.created_at?.substring(0, 10) || '-');
@@ -149,7 +215,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
           </div>
           {isEditMode ? (
             <div>
-              <input 
+              <input
                 type="text"
                 value={data.title || ''}
                 onChange={(e) => handleFieldChange('title', e.target.value)}
@@ -186,9 +252,11 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                 <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">직급</th>
                 <td className="p-2">{applicant?.rank_name || '-'}</td>
               </tr>
-              <tr>
+              <tr className="border-b border-gray-200">
                 <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">신청일</th>
-                <td colSpan="3" className="p-2">{displayDate}</td>
+                <td className="p-2 border-r border-gray-200">{displayDate}</td>
+                <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">잔여 연차</th>
+                <td className="p-2">{applicant?.remaining_days || '-'}</td>
               </tr>
             </tbody>
           </table>
@@ -203,11 +271,11 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
           <table className="w-full border-collapse border border-gray-200 text-xs text-gray-700">
             <tbody>
               <tr className="border-b border-gray-200">
-                <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">연차 종류</th>
+                <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">휴가 종류</th>
                 <td className="p-2">
                   {isEditMode ? (
-                    <div className="relative w-full">
-                      <div 
+                    <div className="relative w-full" ref={typeDropdownRef}>
+                      <div
                         onClick={() => setIsTypeOpen(!isTypeOpen)}
                         className={`w-full px-3 py-1.5 bg-white border ${isTypeOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-200'} rounded-lg text-xs font-medium transition-all cursor-pointer flex justify-between items-center`}
                       >
@@ -216,16 +284,16 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                       </div>
                       {isTypeOpen && (
                         <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-32 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-200">
-                          {['연차', '오전반차', '오후반차'].map((type) => (
-                            <div 
-                              key={type}
-                              onClick={() => { 
-                                handleFieldChange('vac_type', type); 
-                                setIsTypeOpen(false); 
+                          {vacationTypes.map((type) => (
+                            <div
+                              key={type.v_types_seq}
+                              onClick={() => {
+                                handleFieldChange('vac_type', type.vac_type);
+                                setIsTypeOpen(false);
                               }}
                               className="px-4 py-2.5 text-xs hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-medium border-b border-gray-50 last:border-0 transition-colors"
                             >
-                              {type}
+                              {type.vac_type}
                             </div>
                           ))}
                         </div>
@@ -243,38 +311,38 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
                         <div className="relative w-50" ref={startCalendarRef}>
-                          <input 
-                            type="text" 
-                            readOnly 
-                            value={data.start_date || ''} 
-                            onClick={() => { setIsStartCalendarOpen(!isStartCalendarOpen); setIsEndCalendarOpen(false); }} 
-                            placeholder="시작일" 
+                          <input
+                            type="text"
+                            readOnly
+                            value={data.start_date || ''}
+                            onClick={() => { setIsStartCalendarOpen(!isStartCalendarOpen); setIsEndCalendarOpen(false); }}
+                            placeholder="시작일"
                             className={`w-full p-2 border ${errors.start_date ? 'border-red-500' : isStartCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-xl outline-none cursor-pointer text-xs transition-all`}
                           />
                           {isStartCalendarOpen && (
-                            <Calendar 
-                              value={data.start_date} 
-                              onChange={(d) => { handleFieldChange('start_date', d); setIsStartCalendarOpen(false); }} 
+                            <Calendar
+                              value={data.start_date}
+                              onChange={(d) => { handleFieldChange('start_date', d); setIsStartCalendarOpen(false); }}
                               onClose={() => setIsStartCalendarOpen(false)}
                             />
                           )}
                         </div>
-                        {data.vac_type === '연차' && (
+                        {periodVacations.includes(data.vac_type) && (
                           <>
                             <span className="px-1">~</span>
                             <div className="relative w-50" ref={endCalendarRef}>
-                              <input 
-                                type="text" 
-                                readOnly 
-                                value={data.end_date || ''} 
-                                onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }} 
-                                placeholder="종료일" 
+                              <input
+                                type="text"
+                                readOnly
+                                value={data.end_date || ''}
+                                onClick={() => { setIsEndCalendarOpen(!isEndCalendarOpen); setIsStartCalendarOpen(false); }}
+                                placeholder="종료일"
                                 className={`w-full p-2 border ${errors.end_date ? 'border-red-500' : isEndCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-300'} rounded-xl outline-none cursor-pointer text-xs transition-all`}
                               />
                               {isEndCalendarOpen && (
-                                <Calendar 
-                                  value={data.end_date} 
-                                  onChange={(d) => { handleFieldChange('end_date', d); setIsEndCalendarOpen(false); }} 
+                                <Calendar
+                                  value={data.end_date}
+                                  onChange={(d) => { handleFieldChange('end_date', d); setIsEndCalendarOpen(false); }}
                                   onClose={() => setIsEndCalendarOpen(false)}
                                 />
                               )}
@@ -289,12 +357,12 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                       )}
                     </div>
                   ) : (
-                    <span>{data?.start_date?.substring(0, 10)} {data.vac_type === '연차' ? `~ ${data?.end_date?.substring(0, 10)}` : ''}</span>
+                    <span>{data?.start_date?.substring(0, 10)} {periodVacations.includes(data.vac_type) ? `~ ${data?.end_date?.substring(0, 10)}` : ''}</span>
                   )}
                 </td>
               </tr>
               <tr className="border-b border-gray-200">
-                <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">신청 일수</th>
+                <th className="w-24 bg-gray-50 p-2 border-r border-gray-200 text-left font-bold">차감 일수</th>
                 <td className="p-2 font-bold text-[#3530B8]">{data.days || 0}일</td>
               </tr>
               <tr>
@@ -302,7 +370,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                 <td className="p-2">
                   {isEditMode ? (
                     <div>
-                      <textarea 
+                      <textarea
                         value={data.reason || ''}
                         onChange={(e) => handleFieldChange('reason', e.target.value)}
                         placeholder="사유를 입력하세요 (100자 이하)"
@@ -320,16 +388,79 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
           </table>
         </div>
 
+        {/* 첨부파일 Section */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-3.5 bg-[#3530B8] rounded-full"></div>
+              <h2 className="text-xs font-bold text-gray-800">첨부파일</h2>
+            </div>
+            {isEditMode && (
+              <label className="cursor-pointer bg-[#3530B8] text-white px-3 py-1 rounded-full text-[10px] font-bold hover:bg-[#2a2696] transition-colors shadow-sm">
+                파일 선택
+                <input
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    const newFiles = Array.from(e.target.files);
+                    onChange(prev => ({
+                      ...prev,
+                      attachments: [...(prev.attachments || []), ...newFiles]
+                    }));
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+            )}
+          </div>
+          <div className="p-4 border border-dashed border-gray-300 rounded-xl bg-gray-50/50 min-h-[60px] flex items-center">
+            <div className="flex flex-wrap gap-4 w-full">
+              {data.attachments && data.attachments.length > 0 ? (
+                data.attachments.map((file, idx) => (
+                  <div key={file.sysname || file.name || idx} className="flex items-center gap-2 text-xs text-[#3530B8] group">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                    </svg>
+                    {file.sysname ? (
+                      <a
+                        href={`https://api.sukong.shop/file/download/${file.sysname}?token=${token}`}
+                        download
+                        className="hover:underline"
+                      >
+                        {file.oriname}
+                      </a>
+                    ) : (
+                      <span className="text-gray-500">{file.name}</span>
+                    )}
+                    {isEditMode && (
+                      <button
+                        onClick={() => handleRemoveAttachment(idx)}
+                        className="text-gray-400 hover:text-red-500 ml-1 font-bold"
+                      >✕</button>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-gray-400">첨부된 파일이 없습니다.</p>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Referrer Selection Section */}
-        <ReferrerSelector 
-          value={data.referrers} 
-          onChange={(val) => onChange({ ...data, referrers: val })} 
-          isEditMode={isEditMode} 
-        />
+        <div className="no-print">
+          <ReferrerSelector
+            value={data.referrers}
+            onChange={(val) => onChange({ ...data, referrers: val })}
+            isEditMode={isEditMode}
+            docType={docType}
+          />
+        </div>
       </div>
 
       {/* [Mobile View] - 새로운 모바일용 레이아웃 */}
-      <div className="md:hidden space-y-6">
+      <div className="no-print md:hidden space-y-6">
         {/* 제목 (모바일) */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
@@ -338,7 +469,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
           </div>
           {isEditMode ? (
             <div className="space-y-1">
-              <input 
+              <input
                 type="text"
                 value={data.title || ''}
                 onChange={(e) => handleFieldChange('title', e.target.value)}
@@ -375,9 +506,13 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
               <div className="w-20 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100">직급</div>
               <div className="flex-grow p-2">{applicant?.rank_name || '-'}</div>
             </div>
-            <div className="flex">
+            <div className="flex border-b border-gray-100">
               <div className="w-20 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100">신청일</div>
               <div className="flex-grow p-2">{displayDate}</div>
+            </div>
+            <div className="flex border-b border-gray-100">
+              <div className="w-20 bg-gray-50 p-2 font-bold text-gray-500 border-r border-gray-100">잔여 연차</div>
+              <div className="flex-grow p-2">{applicant?.remaining_days || '-'}</div>
             </div>
           </div>
         </div>
@@ -388,14 +523,14 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
             <div className="w-1 h-3.5 bg-[#3530B8] rounded-full"></div>
             <h2 className="text-xs font-bold text-gray-800">휴가 신청 내용</h2>
           </div>
-          
+
           <div className="space-y-4 border border-gray-200 rounded-lg p-3 bg-white">
-            {/* 연차 종류 */}
+            {/* 휴가 종류 */}
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-400">연차 종류</label>
+              <label className="text-[10px] font-bold text-gray-400">휴가 종류</label>
               {isEditMode ? (
-                <div className="relative">
-                   <div 
+                <div className="relative" ref={mobileTypeDropdownRef}>
+                  <div
                     onClick={() => setIsTypeOpen(!isTypeOpen)}
                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded text-xs flex justify-between items-center"
                   >
@@ -404,13 +539,13 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                   </div>
                   {isTypeOpen && (
                     <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg overflow-hidden">
-                      {['연차', '오전반차', '오후반차'].map((type) => (
-                        <div 
-                          key={type}
-                          onClick={() => { handleFieldChange('vac_type', type); setIsTypeOpen(false); }}
+                      {vacationTypes.map((type) => (
+                        <div
+                          key={type.v_types_seq}
+                          onClick={() => { handleFieldChange('vac_type', type.vac_type); setIsTypeOpen(false); }}
                           className="px-3 py-2 text-xs hover:bg-gray-50"
                         >
-                          {type}
+                          {type.vac_type}
                         </div>
                       ))}
                     </div>
@@ -427,9 +562,9 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
               {isEditMode ? (
                 <div className="flex flex-col gap-2">
                   <div className="relative space-y-1" ref={mobileStartCalendarRef}>
-                    <input 
-                      type="text" readOnly value={data.start_date || ''} 
-                      onClick={() => setIsStartCalendarOpen(!isStartCalendarOpen)} 
+                    <input
+                      type="text" readOnly value={data.start_date || ''}
+                      onClick={() => setIsStartCalendarOpen(!isStartCalendarOpen)}
                       placeholder="시작일"
                       className={`w-full p-2 text-xs border ${errors.start_date ? 'border-red-500' : 'border-gray-200'} rounded bg-gray-50 outline-none`}
                     />
@@ -440,11 +575,11 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                       </div>
                     )}
                   </div>
-                  {data.vac_type === '연차' && (
+                  {periodVacations.includes(data.vac_type) && (
                     <div className="relative space-y-1" ref={mobileEndCalendarRef}>
-                      <input 
-                        type="text" readOnly value={data.end_date || ''} 
-                        onClick={() => setIsEndCalendarOpen(!isEndCalendarOpen)} 
+                      <input
+                        type="text" readOnly value={data.end_date || ''}
+                        onClick={() => setIsEndCalendarOpen(!isEndCalendarOpen)}
                         placeholder="종료일"
                         className={`w-full p-2 text-xs border ${errors.end_date ? 'border-red-500' : 'border-gray-200'} rounded bg-gray-50 outline-none`}
                       />
@@ -458,13 +593,13 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
                   )}
                 </div>
               ) : (
-                <div className="text-xs font-bold">{data?.start_date?.substring(0,10)} {data.vac_type === '연차' ? `~ ${data?.end_date?.substring(0,10)}` : ''}</div>
+                <div className="text-xs font-bold">{data?.start_date?.substring(0, 10)} {periodVacations.includes(data.vac_type) ? `~ ${data?.end_date?.substring(0, 10)}` : ''}</div>
               )}
             </div>
 
-            {/* 신청 일수 */}
+            {/* 차감 일수 */}
             <div className="flex justify-between items-center bg-[#F0F4FF] p-2 rounded">
-              <span className="text-[10px] font-bold text-gray-500">총 신청 일수</span>
+              <span className="text-[10px] font-bold text-gray-500">차감 일수</span>
               <span className="text-xs font-black text-[#3530B8]">{data.days || 0}일</span>
             </div>
 
@@ -473,7 +608,7 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
               <label className="text-[10px] font-bold text-gray-400">신청 사유</label>
               {isEditMode ? (
                 <div className="space-y-1">
-                  <textarea 
+                  <textarea
                     value={data.reason || ''}
                     onChange={(e) => handleFieldChange('reason', e.target.value)}
                     className={`w-full h-24 p-2 text-xs border ${errors.reason ? 'border-red-500' : 'border-gray-200'} rounded bg-gray-50 resize-none outline-none custom-scrollbar`}
@@ -487,12 +622,54 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
           </div>
         </div>
 
-        {/* Referrer (모바일) */}
-        <ReferrerSelector 
-          value={data.referrers} 
-          onChange={(val) => onChange({ ...data, referrers: val })} 
-          isEditMode={isEditMode} 
-        />
+        {/* 첨부파일 & Referrer (모바일) */}
+        <div className="space-y-5">
+          {/* 첨부파일 (모바일) */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-3.5 bg-[#3530B8] rounded-full"></div>
+                <h2 className="text-xs font-bold text-gray-800">첨부파일</h2>
+              </div>
+              {isEditMode && (
+                <label className="cursor-pointer bg-gray-100 px-3 py-1 rounded-full text-[10px] font-bold">
+                  파일 추가
+                  <input type="file" multiple className="hidden" onChange={(e) => {
+                    const newFiles = Array.from(e.target.files);
+                    onChange(prev => ({
+                      ...prev,
+                      attachments: [...(prev.attachments || []), ...newFiles]
+                    }));
+                    e.target.value = '';
+                  }} />
+                </label>
+              )}
+            </div>
+            <div className="p-3 border border-dashed border-gray-200 rounded-lg bg-gray-50/50">
+              <div className="flex flex-col gap-2">
+                {data.attachments?.map((file, idx) => (
+                  <div key={idx} className="flex items-center justify-between text-[11px] text-[#3530B8] bg-white p-2 rounded border border-gray-100">
+                    <span className="truncate flex-grow">{file.oriname || file.name}</span>
+                    {isEditMode && (
+                      <button onClick={() => handleRemoveAttachment(idx)} className="ml-2 text-red-400">✕</button>
+                    )}
+                  </div>
+                ))}
+                {!data.attachments?.length && (
+                  <p className="text-[11px] text-gray-400 text-center">첨부된 파일이 없습니다.</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Referrer (모바일) */}
+          <ReferrerSelector
+            value={data.referrers}
+            onChange={(val) => onChange({ ...data, referrers: val })}
+            isEditMode={isEditMode}
+            docType={docType}
+          />
+        </div>
       </div>
     </>
   );

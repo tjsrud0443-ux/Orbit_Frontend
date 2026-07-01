@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Pagination from '../../components/common/Pagination';
 import MobilePagination from '../../components/common/MobilePagination';
 import { approveUserSignup, getAllRequest, getDeptList, getHrInfo, getRankList, getUserInfo, rejectUserSignup } from './adminApi';
@@ -29,6 +29,8 @@ const AdminSignup = () => {
   const [isRejectSuccess, setIsRejectSuccess] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const calendarRef = useRef(null);
+  const deptRef = useRef(null);
+  const rankRef = useRef(null);
 
   const token = useAuthStore(state => state.token);
   const showLoading = useLoadingStore(state => state.showLoading);
@@ -88,9 +90,15 @@ const AdminSignup = () => {
       if (calendarRef.current && !calendarRef.current.contains(event.target)) {
         setIsCalendarOpen(false);
       }
+      if (deptRef.current && !deptRef.current.contains(event.target)) {
+        setIsDeptOpen(false);
+      }
+      if (rankRef.current && !rankRef.current.contains(event.target)) {
+        setIsRankOpen(false);
+      }
     };
 
-    if (isCalendarOpen) {
+    if (isCalendarOpen || isDeptOpen || isRankOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     } else {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -99,7 +107,7 @@ const AdminSignup = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isCalendarOpen]);
+  }, [isCalendarOpen, isDeptOpen, isRankOpen]);
 
   const handleUserClick = (info) => {
     setSelectedUser(info.signup_seq);
@@ -135,6 +143,22 @@ const AdminSignup = () => {
     if (!hireDate) {
       newErrors.hireDate = '입사일자를 선택해 주세요.';
       isValid = false;
+    }
+
+    if (selectedDept.dept_seq !== null && selectedRank.rank_seq !== null) {
+      if (selectedDept.dept_seq === 2 && selectedRank.rank_seq !== 1) {
+        newErrors.rank = '대표이사실은 대표 직급만 선택 가능합니다.';
+        isValid = false;
+      } else if (selectedDept.dept_seq !== 2 && selectedRank.rank_seq === 1) {
+        newErrors.rank = '대표 직급은 대표이사실에서만 선택 가능합니다.';
+        isValid = false;
+      } else if (selectedDept.dept_name.includes('본부') && selectedRank.rank_name !== '본부장') {
+        newErrors.rank = '본부는 본부장 직급만 선택 가능합니다.';
+        isValid = false;
+      } else if (!selectedDept.dept_name.includes('본부') && selectedRank.rank_name === '본부장') {
+        newErrors.rank = '본부장 직급은 본부에서만 선택 가능합니다.';
+        isValid = false;
+      }
     }
 
     if (!isValid) {
@@ -426,7 +450,7 @@ const AdminSignup = () => {
                         </div>
                       ) : (
                         <>
-                          <div className="relative">
+                          <div className="relative" ref={deptRef}>
                             <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1 ml-1">부서 배정</label>
                             <div 
                               onClick={() => { setIsDeptOpen(!isDeptOpen); setIsRankOpen(false); }}
@@ -456,7 +480,7 @@ const AdminSignup = () => {
                             )}
                           </div>
 
-                          <div className="relative">
+                          <div className="relative" ref={rankRef}>
                             <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1 ml-1">직급 설정</label>
                             <div 
                               onClick={() => { setIsRankOpen(!isRankOpen); setIsDeptOpen(false); }}
@@ -469,7 +493,11 @@ const AdminSignup = () => {
                             {isRankOpen && (
                               <div className="absolute z-10 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-32 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
                                 {rankList
-                                  .filter(rank => selectedDept.dept_name.includes('본부') ? rank.rank_name === '본부장' : rank.rank_name !== '본부장')
+                                  .filter(rank => {
+                                    if (selectedDept.dept_seq === null) return true;
+                                    if (selectedDept.dept_seq === 2) return rank.rank_seq === 1;
+                                    return selectedDept.dept_name.includes('본부') ? rank.rank_name === '본부장' : (rank.rank_name !== '본부장' && rank.rank_seq !== 1);
+                                  })
                                   .map((rank) => (
                                   <div 
                                     key={rank.rank_seq}

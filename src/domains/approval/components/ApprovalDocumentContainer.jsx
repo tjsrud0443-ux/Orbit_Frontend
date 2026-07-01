@@ -2,15 +2,16 @@ import React from 'react';
 import ApprovalLine from './ApprovalLine';
 import ApprovalActionButtons from './ApprovalActionButtons';
 
-const ApprovalDocumentContainer = ({ 
-  title, 
-  user, 
+const ApprovalDocumentContainer = ({
+  title,
+  user,
   drafter,
-  userRole, 
-  mode, 
-  approvers, 
-  onAddApprover, 
-  onRemoveApprover, 
+  userRole,
+  mode,
+  documentStatus,
+  approvers,
+  onAddApprover,
+  onRemoveApprover,
   onReorderApprover,
   onAction,
   isRejecting,
@@ -19,12 +20,15 @@ const ApprovalDocumentContainer = ({
   setRejectReason,
   rejectError,
   setRejectError,
-  children 
+  children,
+  docNo,
+  formTitle,
+  attachments
 }) => {
   return (
-    <div className="flex justify-center py-4 md:py-10 font-sans">
+    <div className="print-area flex justify-center py-4 md:py-10 font-sans print:block print:p-0">
       {/* [Desktop View] - 기존 스타일 완벽 유지 */}
-      <div className="hidden md:flex flex-col w-[85%] min-w-[800px] bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 h-fit mb-10">
+      <div className="hidden md:flex print:flex flex-col w-[85%] min-w-[800px] bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 h-fit mb-10 print:min-w-0 print:w-full print:shadow-none print:rounded-none print:overflow-visible">
         {/* Header Section */}
         <div className="bg-[#3530B8] px-8 py-4 text-white flex justify-between items-center flex-shrink-0">
           <div className="flex flex-col">
@@ -32,9 +36,9 @@ const ApprovalDocumentContainer = ({
             <h1 className="text-xl font-extrabold tracking-tight">{title}</h1>
           </div>
 
-          <ApprovalLine 
-            approvers={approvers} 
-            isEditMode={mode === 'EDIT' && userRole === 'DRAFTER'} 
+          <ApprovalLine
+            approvers={approvers}
+            isEditMode={mode === 'EDIT' && userRole === 'DRAFTER'}
             onAdd={onAddApprover}
             onRemove={onRemoveApprover}
             onReorder={onReorderApprover}
@@ -45,26 +49,34 @@ const ApprovalDocumentContainer = ({
         {/* Content Section */}
         <div className="px-10 py-8 space-y-8">
           {children}
-          
+
           {/* Action Buttons */}
-          <ApprovalActionButtons 
-            user={user}
-            userRole={userRole} 
-            mode={mode} 
-            onAction={onAction} 
-            approvers={approvers}
-            isRejecting={isRejecting}
-            setIsRejecting={setIsRejecting}
-            rejectReason={rejectReason}
-            setRejectReason={setRejectReason}
-            rejectError={rejectError}
-            setRejectError={setRejectError}
-          />
+          <div className="no-print">
+            <ApprovalActionButtons
+              user={user}
+              userRole={userRole}
+              mode={mode}
+              documentStatus={documentStatus}
+              onAction={onAction}
+              approvers={approvers}
+              isRejecting={isRejecting}
+              setIsRejecting={setIsRejecting}
+              rejectReason={rejectReason}
+              setRejectReason={setRejectReason}
+              rejectError={rejectError}
+              setRejectError={setRejectError}
+              docNo={docNo}
+              drafter={drafter}
+              title={title}
+              formTitle={formTitle}
+              attachments={attachments}
+            />
+          </div>
         </div>
       </div>
 
       {/* [Mobile View] - 새로운 모바일용 레이아웃 */}
-      <div className="md:hidden flex flex-col w-[95%] bg-white shadow-lg rounded-xl overflow-hidden border border-gray-100 h-fit mb-10">
+      <div className="no-print md:hidden flex flex-col w-[95%] bg-white shadow-lg rounded-xl overflow-hidden border border-gray-100 h-fit mb-10">
         {/* Mobile Header Section */}
         <div className="bg-[#3530B8] px-4 py-4 text-white flex flex-col gap-4">
           <div className="flex flex-col">
@@ -72,9 +84,9 @@ const ApprovalDocumentContainer = ({
             <h1 className="text-lg font-extrabold tracking-tight">{title}</h1>
           </div>
 
-          <ApprovalLine 
-            approvers={approvers} 
-            isEditMode={mode === 'EDIT' && userRole === 'DRAFTER'} 
+          <ApprovalLine
+            approvers={approvers}
+            isEditMode={mode === 'EDIT' && userRole === 'DRAFTER'}
             onAdd={onAddApprover}
             onRemove={onRemoveApprover}
             onReorder={onReorderApprover}
@@ -85,12 +97,12 @@ const ApprovalDocumentContainer = ({
         {/* Mobile Content Section */}
         <div className="px-4 py-6 space-y-6">
           {children}
-          
-          <ApprovalActionButtons 
+          <ApprovalActionButtons
             user={user}
-            userRole={userRole} 
-            mode={mode} 
-            onAction={onAction} 
+            userRole={userRole}
+            mode={mode}
+            documentStatus={documentStatus}
+            onAction={onAction}
             approvers={approvers}
             isRejecting={isRejecting}
             setIsRejecting={setIsRejecting}
@@ -98,11 +110,17 @@ const ApprovalDocumentContainer = ({
             setRejectReason={setRejectReason}
             rejectError={rejectError}
             setRejectError={setRejectError}
+            docNo={docNo}
+            drafter={drafter}
+            title={title}
+            formTitle={formTitle}
+            attachments={attachments}
           />
         </div>
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }

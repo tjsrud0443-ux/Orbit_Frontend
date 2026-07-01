@@ -278,14 +278,12 @@ const RoomHistory = () => {
     }
   }, [showSearchResults, showRoomDropdown, showStartTimeDropdown, showEndTimeDropdown, updateDropdownPos]);
 
-  const filteredEmployees = searchQuery 
-    ? allEmployees.filter(emp => {
-        if (emp.users_seq === user?.users_seq) return false;
-        const name = emp?.name || '';
-        const deptName = emp?.dept_name || '';
-        return name.includes(searchQuery) || deptName.includes(searchQuery);
-      }) 
-    : [];
+  const filteredEmployees = allEmployees.filter(emp => {
+    if (emp.users_seq === user?.users_seq) return false;
+    const name = emp?.name || '';
+    const deptName = emp?.dept_name || '';
+    return !searchQuery || name.includes(searchQuery) || deptName.includes(searchQuery);
+  });
 
   const handleAddAttendee = (emp) => {
     if (editForm.attendees.some(a => a.users_seq === emp.users_seq)) {
@@ -306,35 +304,38 @@ const RoomHistory = () => {
   };
 
   const renderDropdown = () => {
-    if (!showSearchResults || !searchQuery) return null;
+    if (!showSearchResults) return null;
 
     return createPortal(
-      <div 
-        className="fixed z-[9999] bg-white border border-gray-100 rounded-xl shadow-2xl max-h-48 overflow-y-auto"
-        style={{ 
-          top: `${dropdownPos.top + 4}px`, 
-          left: `${dropdownPos.left}px`, 
-          width: `${dropdownPos.width}px` 
-        }}
-      >
-        {filteredEmployees.length > 0 ? (
-          filteredEmployees.map(emp => (
-            <div 
-              key={emp.users_seq} 
-              onClick={() => handleAddAttendee(emp)}
-              className="p-3 hover:bg-[#F0F4FF] cursor-pointer flex justify-between items-center border-b border-gray-50 last:border-0"
-            >
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-gray-700">{emp.name}</span>
-                <span className="text-[10px] text-gray-400">{emp.dept_name}</span>
+      <>
+        <div className="fixed inset-0 z-[9998]" onClick={() => setShowSearchResults(false)} />
+        <div 
+          className="fixed z-[9999] bg-white border border-gray-100 rounded-xl shadow-2xl max-h-[10.55rem] overflow-y-auto custom-scrollbar"
+          style={{ 
+            top: `${dropdownPos.top + 1}px`, 
+            left: `${dropdownPos.left}px`, 
+            width: `${dropdownPos.width}px` 
+          }}
+        >
+          {filteredEmployees.length > 0 ? (
+            filteredEmployees.map(emp => (
+              <div 
+                key={emp.users_seq} 
+                onClick={() => handleAddAttendee(emp)}
+                className="p-3 hover:bg-[#F0F4FF] cursor-pointer flex justify-between items-center border-b border-gray-50 last:border-0"
+              >
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-gray-700">{emp.name}</span>
+                  <span className="text-[10px] text-gray-400">{emp.dept_name}</span>
+                </div>
+                <span className="text-[10px] font-bold text-[#3530B8] bg-[#F0F4FF] px-2 py-0.5 rounded-full">{emp.rank_name}</span>
               </div>
-              <span className="text-[10px] font-bold text-[#3530B8] bg-[#F0F4FF] px-2 py-0.5 rounded-full">{emp.rank_name}</span>
-            </div>
-          ))
-        ) : (
-          <div className="p-4 text-center text-xs text-gray-400">검색 결과가 없습니다.</div>
-        )}
-      </div>,
+            ))
+          ) : (
+            <div className="p-4 text-center text-xs text-gray-400">검색 결과가 없습니다.</div>
+          )}
+        </div>
+      </>,
       document.body
     );
   };
