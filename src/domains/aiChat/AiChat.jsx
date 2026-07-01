@@ -433,7 +433,7 @@ const AiChat = () => {
               }}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
               className="flex-1 bg-transparent py-2 text-sm outline-none"
-              placeholder="문서나 회의록에 대해 궁금한 내용을 질문해 보세요..."
+              placeholder="사내 문서, 회의록, 연차, 결재, 일정 등 궁금한 내용을 입력해 주세요."
             />
             <button onClick={handleSend} className="bg-[#3530B8] text-white w-10 h-10 rounded-lg flex items-center justify-center hover:bg-[#2a2594] transition-all">
               <FontAwesomeIcon icon={faPaperPlane} />
