@@ -78,7 +78,12 @@ export const connectSocket = (usersId) => {
                         case "TASK":
                             showToast(noti.content, "📌");
                             break;
-                            
+                        
+                        // 칸반 삭제 알림
+                        case "TASK_DELETE":
+                            showToast(noti.content, "🗑️");
+                            break;
+
                         default:
                             showToast(noti.content);
                     }
