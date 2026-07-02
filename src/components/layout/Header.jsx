@@ -22,6 +22,7 @@ const Header = ({ onMenuClick }) => {
   const notiTypeLabel = {
     PROJECT: "[프로젝트]",
     TASK: "[업무]",
+    TASK_DELETE: "[업무 삭제]",
     MEETING: "[회의]",
     APPROVAL: "[결재 요청]",
     APPROVED: "[결재 승인]",
@@ -32,6 +33,7 @@ const Header = ({ onMenuClick }) => {
   const notiTypeColor = {
     PROJECT: "text-blue-600",
     TASK: "text-amber-600",
+    TASK_DELETE: "text-slate-500",
     MEETING: "text-purple-600",
     APPROVAL: "text-slate-600",
     APPROVED: "text-green-600",
@@ -42,6 +44,7 @@ const Header = ({ onMenuClick }) => {
   const notiDotColor = {
     PROJECT: "bg-blue-500",
     TASK: "bg-amber-500",
+    TASK_DELETE: "bg-slate-400",
     MEETING: "bg-purple-500",
     APPROVAL: "bg-slate-400",
     APPROVED: "bg-green-500",
@@ -96,6 +99,10 @@ const Header = ({ onMenuClick }) => {
           }
 
           navi(`/kanban/${projectSeq}?taskSeq=${noti.ref_seq}`);
+          break;
+
+        case "TASK_DELETE":
+          toast.warning("삭제된 업무입니다.");
           break;
 
         // 결재 요청 알림
