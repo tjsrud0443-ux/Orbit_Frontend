@@ -100,16 +100,16 @@ const ApprovalActionButtons = ({
               <th style="background: #3530B8; color: white; border: 1px solid #3530B8; padding: 6px 20px; font-weight: 700;">결재자</th>
             </tr>
             <tr>
-              <td style="border: 1px solid #DDE8FF; padding: 14px 20px; text-align: center; background: #F8FAFF;">
+              <td style="border: 1px solid #DDE8FF; padding: 10px 16px; text-align: center; background: #F8FAFF;">
                 ${drafter?.stamp_sysname
-        ? `<img src="https://api.sukong.shop/file/profile/view?sysname=${drafter.stamp_sysname}&token=${token}" style="width: 36px; height: 36px; object-fit: cover; display: block; margin: 0 auto 4px;" />`
+        ? `<img src="https://api.sukong.shop/file/profile/view?sysname=${drafter.stamp_sysname}&token=${token}" style="width: 50px; height: 50px; object-fit: cover; display: block; margin: 0 auto 4px;" />`
         : ''
       }
                 <div style="font-weight: 600; color: #1a1a1a;">${drafter?.name || '-'}</div>
               </td>
-              <td style="border: 1px solid #DDE8FF; padding: 14px 20px; text-align: center; background: #F8FAFF;">
+              <td style="border: 1px solid #DDE8FF; padding: 10px 16px; text-align: center; background: #F8FAFF;">
                 ${finalApprover?.stamp_sysname
-        ? `<img src="https://api.sukong.shop/file/profile/view?sysname=${finalApprover.stamp_sysname}&token=${token}" style="width: 36px; height: 36px; object-fit: cover; display: block; margin: 0 auto 4px;" />`
+        ? `<img src="https://api.sukong.shop/file/profile/view?sysname=${finalApprover.stamp_sysname}&token=${token}" style="width: 50px; height: 50px; object-fit: cover; display: block; margin: 0 auto 4px;" />`
         : ''
       }
                 <div style="font-weight: 600; color: #1a1a1a;">${finalApprover?.name || '-'}</div>
@@ -144,7 +144,7 @@ const ApprovalActionButtons = ({
 
         <!-- 기안 날짜 -->
         <div style="text-align: center; font-size: 14px; color: #1a1a1a; margin-bottom: 50px;">
-          ${drafter?.created_at?.substring(0, 10)?.replaceAll('-', '. ') || '-'}
+          ${new Date().toLocaleDateString('sv-SE').replaceAll('-', '. ')}
         </div>
 
         <div style="border-top: 1px solid #cbd5e1; margin-bottom: 20px;"></div>
