@@ -102,7 +102,6 @@ const Header = ({ onMenuClick }) => {
           break;
 
         case "TASK_DELETE":
-          toast.warning("삭제된 업무입니다.");
           break;
 
         // 결재 요청 알림
