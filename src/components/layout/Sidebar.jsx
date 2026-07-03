@@ -3,13 +3,16 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faHouse, faFolderOpen, faCalendar,
-  faFileLines, faComments, faBuilding
+  faFileLines, faComments, faBuilding,
+  faFilePdf,
+  faIdCard,
+  faIdBadge
 } from '@fortawesome/free-regular-svg-icons';
 import {
   faSitemap, faFileSignature, faDiagramProject,
   faDoorOpen, faRobot, faBox, faChevronDown, faChevronUp,
   faSliders, faUserShield, faAddressCard, faDesktop,
-  faFileShield, faCommentDots
+  faFileShield, faCommentDots, faFileArrowDown
 } from '@fortawesome/free-solid-svg-icons';
 import useAuthStore from '../../store/authStore';
 import { IMAGES } from '../../images/images';
@@ -38,7 +41,7 @@ const generalMenuItems = [
       { name: '직원 관리', path: '/adminUsers' },
       { name: '부서 관리', path: '/adminDepartments' },
       { name: '회원가입 관리', path: '/adminSignup' },
-      { name: '근태 관리', path: '/adminAttendance'},
+      { name: '근태 관리', path: '/adminAttendance' },
     ]
   },
   {
@@ -71,6 +74,7 @@ const generalMenuItems = [
   { name: '비품 신청', path: '/supply', icon: faBox },
   { name: '사내 게시판', path: '/board', icon: faComments },
   { name: 'AI 챗봇', path: '/aiChat', icon: faRobot },
+  { name: '증명서 발급', path: '/certificate', icon: faFileArrowDown },
 ];
 
 // 관리자 사이드바
@@ -84,7 +88,7 @@ const adminMenuItems = [
       { name: '직원 관리', path: '/adminUsers' },
       { name: '부서 관리', path: '/adminDepartments' },
       { name: '회원가입 관리', path: '/adminSignup' },
-      { name: '근태 관리', path: '/adminAttendance'},
+      { name: '근태 관리', path: '/adminAttendance' },
     ]
   },
   {
@@ -278,7 +282,8 @@ const Sidebar = ({ isOpen, onClose }) => {
             </button>
           </div>
         </div>
-        <style dangerouslySetInnerHTML={{ __html: `
+        <style dangerouslySetInnerHTML={{
+          __html: `
           .custom-scrollbar::-webkit-scrollbar { width: 4px; }
           .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
           .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
