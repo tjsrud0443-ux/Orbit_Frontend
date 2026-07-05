@@ -86,6 +86,7 @@ const Kanban = () => {
       x: e.clientX,
       y: e.clientY,
       width: e.currentTarget.offsetWidth,
+      height: e.currentTarget.offsetHeight,
     });
 
     const transparentImage = new Image();
@@ -404,7 +405,8 @@ const Kanban = () => {
                           draggingTaskSeqRef.current = null;
                         }}
                         onClick={() => setDetailModalTask(task)}
-                        className="group bg-white rounded-2xl p-5 shadow-sm border border-slate-100/80 hover:shadow-xl hover:shadow-indigo-50/50 hover:border-indigo-100 transition-all cursor-pointer relative"
+                        className={`group bg-white rounded-2xl p-5 shadow-sm border border-slate-100/80 hover:shadow-xl hover:shadow-indigo-50/50 hover:border-indigo-100 transition-all cursor-pointer relative ${draggingTask?.task.task_seq === task.task_seq ? 'opacity-0 shadow-none [&+*]:!mt-0' : ''}`}
+                        style={draggingTask?.task.task_seq === task.task_seq ? { marginBottom: -draggingTask.height } : undefined}
                       >
                         <div className="flex justify-between items-center mb-4 gap-2">
                           <h3 className="font-bold text-base text-[#1a1c3d] leading-relaxed group-hover:text-[#3530B8] transition-colors flex-1">{task.title}</h3>
@@ -1308,7 +1310,7 @@ const Kanban = () => {
 
       {draggingTask && (
         <div
-          className="pointer-events-none fixed z-[200] rotate-[3deg] rounded-2xl border border-slate-100/80 bg-white p-5 opacity-[0.9] shadow-2xl shadow-indigo-300/60"
+          className="pointer-events-none fixed z-[200] rotate-[3deg] rounded-2xl border border-slate-100/80 bg-white p-5 opacity-70 shadow-2xl shadow-indigo-300/60"
           style={{
             left: draggingTask.x + 14,
             top: draggingTask.y + 14,
