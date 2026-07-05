@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Bell, Check } from 'lucide-react';
-import { getCompanyInfo, insertCompanyInfo, updateCompanyInfo } from './adminApi';
+import { maxios } from '../../api/axiosConfig';
+import { getCompanyInfo, insertCompanyInfo, updateCompanyInfo, updateCompanyStamp, updateCompanyWatermark } from './adminApi';
 
 const companyFields = [
     {
@@ -10,6 +11,7 @@ const companyFields = [
             { label: '대표자명', value: '', required: true },
             { label: '사업자등록번호', value: '', required: true },
             { label: '대표번호', value: '', required: true },
+            { label: '팩스번호', value: '' },
             { label: '이메일', value: '', required: true },
         ],
     },
@@ -23,7 +25,6 @@ const companyFields = [
                 wide: true,
             },
             { label: '상세주소', value: '' },
-            { label: '팩스번호', value: '' },
         ],
     },
 ];
@@ -44,6 +45,40 @@ const toFormValues = (data) => ({
     상세주소: data.companyDetailAddr || '',
     팩스번호: data.companyFax || '',
 });
+
+const getCompanyStampSysname = (data) => (
+    data?.officialsealSysname || ''
+);
+
+const getCompanyWatermarkSysname = (data) => (
+    data?.officialmarkSysname || ''
+);
+
+const getCompanyStampUrl = (sysname) => {
+    if (!sysname) return null;
+
+    const token = sessionStorage.getItem('token');
+    return `https://api.sukong.shop/file/profile/view?sysname=${sysname}&token=${token}`;
+};
+
+const uploadCompanyImageFile = (endpoint, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return maxios.put(endpoint, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
+
+const uploadCompanyStampFile = (file) => {
+    return updateCompanyStamp(file);
+};
+
+const uploadCompanyWatermarkFile = (file) => {
+    return updateCompanyWatermark(file);
+};
 
 const toPayload = (values, companySeq) => ({
     companySeq,
@@ -140,6 +175,53 @@ const Field = ({ label, value, required, readOnly, onChange, error, action }) =>
     </label>
 );
 
+const CompanyImageBox = ({ title, image, tempImage, isEditing, inputRef, onChange, emptyText, altText }) => (
+    <div className="flex min-w-0 flex-none flex-col items-center justify-center">
+        <span className="mb-3 text-sm font-bold text-slate-700">{title}</span>
+        <button
+            type="button"
+            onClick={() => {
+                if (isEditing) inputRef.current?.click();
+            }}
+            className={`flex h-50 w-50 items-center justify-center overflow-hidden rounded-lg bg-slate-50 transition-colors ${isEditing
+                ? 'cursor-pointer border-2 border-dashed border-slate-300 hover:bg-[#F0F4FF]'
+                : 'cursor-default border border-slate-200'
+                }`}
+        >
+            {isEditing ? (
+                tempImage ? (
+                    <img src={tempImage} alt={`${title} 임시 이미지`} className="h-46 w-46 object-contain" />
+                ) : (
+                    <span className="flex flex-col items-center text-xs font-bold text-slate-400">
+                        <span className="text-2xl leading-none">+</span>
+                        <span className="mt-1">{emptyText}</span>
+                    </span>
+                )
+            ) : image ? (
+                <img src={image} alt={altText} className="h-56 w-56 object-contain" />
+            ) : (
+                <span className="text-xs font-semibold text-slate-400">미등록</span>
+            )}
+        </button>
+        {isEditing && (
+            <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                className="mt-3 rounded-md bg-[#F0F4FF] px-3 py-1.5 text-xs font-extrabold text-[#3530B8] transition-colors hover:bg-[#E3E8FF]"
+            >
+                변경
+            </button>
+        )}
+        <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            onChange={onChange}
+            className="hidden"
+        />
+    </div>
+);
+
 
 const AdminCompanyInfo = () => {
     const [formValues, setFormValues] = useState(initialFormValues);
@@ -147,8 +229,16 @@ const AdminCompanyInfo = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({});
     const [companySeq, setCompanySeq] = useState(null);
+    const [companyStamp, setCompanyStamp] = useState(null);
+    const [tempCompanyStamp, setTempCompanyStamp] = useState(null);
+    const [companyStampFile, setCompanyStampFile] = useState(null);
+    const [companyWatermark, setCompanyWatermark] = useState(null);
+    const [tempCompanyWatermark, setTempCompanyWatermark] = useState(null);
+    const [companyWatermarkFile, setCompanyWatermarkFile] = useState(null);
     const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
     const postcodeRef = useRef(null);
+    const companyStampInputRef = useRef(null);
+    const companyWatermarkInputRef = useRef(null);
 
     useEffect(() => {
         const loadCompanyInfo = async () => {
@@ -167,6 +257,12 @@ const AdminCompanyInfo = () => {
 
                 setFormValues(nextFormValues);
                 setSavedValues(nextFormValues);
+                const stampUrl = getCompanyStampUrl(getCompanyStampSysname(data));
+                const watermarkUrl = getCompanyStampUrl(getCompanyWatermarkSysname(data));
+                setCompanyStamp(stampUrl);
+                setTempCompanyStamp(stampUrl);
+                setCompanyWatermark(watermarkUrl);
+                setTempCompanyWatermark(watermarkUrl);
             } catch (error) {
                 console.log('회사 정보 조회 실패', error);
             }
@@ -207,6 +303,15 @@ const AdminCompanyInfo = () => {
         }).embed(postcodeRef.current);
     }, [isPostcodeOpen]);
 
+    useEffect(() => {
+        if (isEditing) {
+            setTempCompanyStamp(companyStamp);
+            setCompanyStampFile(null);
+            setTempCompanyWatermark(companyWatermark);
+            setCompanyWatermarkFile(null);
+        }
+    }, [isEditing, companyStamp, companyWatermark]);
+
     const handleChange = (label, value) => {
         setFormValues((prev) => ({ ...prev, [label]: value }));
         setFieldErrors((prev) => {
@@ -229,8 +334,40 @@ const AdminCompanyInfo = () => {
 
     const handleCancel = () => {
         setFormValues(savedValues);
+        setTempCompanyStamp(companyStamp);
+        setCompanyStampFile(null);
+        setTempCompanyWatermark(companyWatermark);
+        setCompanyWatermarkFile(null);
         setFieldErrors({});
         setIsEditing(false);
+    };
+
+    const handleCompanyImageChange = (event, setFile, setTempImage) => {
+        const file = event.target.files?.[0];
+
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            alert('이미지 파일만 등록할 수 있습니다.');
+            event.target.value = '';
+            return;
+        }
+
+        setFile(file);
+
+        const reader = new FileReader();
+        reader.onload = (readerEvent) => {
+            setTempImage(readerEvent.target.result);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleCompanyStampChange = (event) => {
+        handleCompanyImageChange(event, setCompanyStampFile, setTempCompanyStamp);
+    };
+
+    const handleCompanyWatermarkChange = (event) => {
+        handleCompanyImageChange(event, setCompanyWatermarkFile, setTempCompanyWatermark);
     };
 
     const handleSave = async () => {
@@ -260,19 +397,37 @@ const AdminCompanyInfo = () => {
                 await insertCompanyInfo(payload);
             }
 
+            if (companyStampFile) {
+                await uploadCompanyStampFile(companyStampFile);
+            }
+
+            if (companyWatermarkFile) {
+                await uploadCompanyWatermarkFile(companyWatermarkFile);
+            }
+
             const resp = await getCompanyInfo();
 
             if (resp.data) {
                 const data = resp.data;
                 const nextFormValues = toFormValues(data);
+                const stampUrl = getCompanyStampUrl(getCompanyStampSysname(data));
+                const watermarkUrl = getCompanyStampUrl(getCompanyWatermarkSysname(data));
 
                 setCompanySeq(data.companySeq);
                 setFormValues(nextFormValues);
                 setSavedValues(nextFormValues);
+                setCompanyStamp(stampUrl);
+                setTempCompanyStamp(stampUrl);
+                setCompanyWatermark(watermarkUrl);
+                setTempCompanyWatermark(watermarkUrl);
             } else {
                 setSavedValues(formValues);
+                setCompanyStamp(tempCompanyStamp);
+                setCompanyWatermark(tempCompanyWatermark);
             }
 
+            setCompanyStampFile(null);
+            setCompanyWatermarkFile(null);
             setFieldErrors({});
             setIsEditing(false);
         } catch (error) {
@@ -306,11 +461,17 @@ const AdminCompanyInfo = () => {
                 <section className="space-y-6" aria-label="회사 정보 입력 폼">
                     <article className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
                         <h2 className="mb-6 text-lg font-extrabold text-slate-900">기본 정보</h2>
-                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-6">
-                            {companyFields[0].fields.map((field, index) => (
+                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-12">
+                            {companyFields[0].fields.map((field) => (
                                 <div
                                     key={field.label}
-                                    className={index < 3 ? 'xl:col-span-2' : 'xl:col-span-3'}
+                                    className={
+                                        ['회사명', '대표자명', '사업자등록번호'].includes(field.label)
+                                            ? 'xl:col-span-4'
+                                            : ['대표번호', '팩스번호'].includes(field.label)
+                                                ? 'xl:col-span-3'
+                                                : 'xl:col-span-6'
+                                    }
                                 >
                                     <Field
                                         {...field}
@@ -325,48 +486,67 @@ const AdminCompanyInfo = () => {
                     </article>
 
                     <article className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-                        <h2 className="mb-6 text-lg font-extrabold text-slate-900">주소 정보</h2>
-                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                            {companyFields[1].fields.map((field) => (
-                                <div key={field.label} className={field.wide ? 'md:col-span-2' : ''}>
-                                    {field.label === '대표주소' ? (
-                                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[10rem_1fr]">
-                                            <Field
-                                                label="우편번호"
-                                                value={formValues['우편번호']}
-                                                readOnly
-                                                onChange={handleChange}
-                                            />
-                                            <Field
-                                                {...field}
-                                                value={formValues[field.label]}
-                                                readOnly
-                                                onChange={handleChange}
-                                                error={fieldErrors[field.label]}
-                                                action={
-                                                    isEditing ? (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setIsPostcodeOpen(true)}
-                                                            className="h-12 shrink-0 rounded-xl border border-[#3530B8] bg-white px-5 text-sm font-extrabold text-[#3530B8] transition-colors hover:bg-[#F0F4FF]"
-                                                        >
-                                                            주소 검색
-                                                        </button>
-                                                    ) : null
-                                                }
-                                            />
+                        <h2 className="mb-6 text-lg font-extrabold text-slate-900">사업장 및 서식 정보</h2>
+                        <div className="grid grid-cols-1 gap-8 xl:grid-cols-2 xl:gap-0">
+                            <div className="flex max-w-2xl flex-col gap-5 xl:pr-8">
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-[9rem_5.4rem]">
+                                    <Field
+                                        label="우편번호"
+                                        value={formValues['우편번호']}
+                                        readOnly
+                                        onChange={handleChange}
+                                    />
+                                    {isEditing && (
+                                        <div className="flex items-end">
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsPostcodeOpen(true)}
+                                                className="h-12 w-full rounded-xl border border-[#3530B8] bg-white px-4 text-sm font-extrabold text-[#3530B8] transition-colors hover:bg-[#F0F4FF]"
+                                            >
+                                                주소 검색
+                                            </button>
                                         </div>
-                                    ) : (
-                                        <Field
-                                            {...field}
-                                            value={formValues[field.label]}
-                                            readOnly={!isEditing}
-                                            onChange={handleChange}
-                                            error={fieldErrors[field.label]}
-                                        />
                                     )}
                                 </div>
-                            ))}
+                                <Field
+                                    label="대표주소"
+                                    value={formValues['대표주소']}
+                                    required
+                                    readOnly
+                                    onChange={handleChange}
+                                    error={fieldErrors['대표주소']}
+                                />
+                                <Field
+                                    label="상세주소"
+                                    value={formValues['상세주소']}
+                                    readOnly={!isEditing}
+                                    onChange={handleChange}
+                                    error={fieldErrors['상세주소']}
+                                />
+                            </div>
+
+                            <div className="flex flex-col items-center justify-center gap-20 border-t border-slate-200 pt-6 sm:flex-row xl:border-l xl:border-t-0 xl:pl-8 xl:pt-0">
+                                <CompanyImageBox
+                                    title="워터마크"
+                                    image={companyWatermark}
+                                    tempImage={tempCompanyWatermark}
+                                    isEditing={isEditing}
+                                    inputRef={companyWatermarkInputRef}
+                                    onChange={handleCompanyWatermarkChange}
+                                    emptyText="워터마크 등록"
+                                    altText="회사 워터마크"
+                                />
+                                <CompanyImageBox
+                                    title="회사 직인"
+                                    image={companyStamp}
+                                    tempImage={tempCompanyStamp}
+                                    isEditing={isEditing}
+                                    inputRef={companyStampInputRef}
+                                    onChange={handleCompanyStampChange}
+                                    emptyText="직인 등록"
+                                    altText="회사 직인"
+                                />
+                            </div>
                         </div>
                         <div className="mt-6 flex flex-wrap justify-end gap-3">
                             {isEditing && (

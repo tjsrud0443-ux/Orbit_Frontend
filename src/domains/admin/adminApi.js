@@ -79,3 +79,24 @@ export const adminAiQuestionsData = (dept_seq, auth_group) => maxios.get("/admin
 export const getCompanyInfo = () => maxios.get("/admin/company/getCompanyInfo");
 export const insertCompanyInfo = (data) => maxios.post("/admin/company/insertCompanyInfo", data);
 export const updateCompanyInfo = (data) => maxios.put("/admin/company/updateCompanyInfo", data);
+export const updateCompanyStamp = (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return maxios.put('/admin/company/updateCompanyStamp', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
+
+export const updateCompanyWatermark = (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return maxios.put('/admin/company/updateCompanyWatermark', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
