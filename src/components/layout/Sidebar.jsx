@@ -2,14 +2,13 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faHouse, faFolderOpen, faCalendar,
-  faFileLines, faComments, faBuilding
+  faHouse, faFolderOpen, faCalendar, faComments, faBuilding
 } from '@fortawesome/free-regular-svg-icons';
 import {
   faSitemap, faFileSignature, faDiagramProject,
-  faDoorOpen, faRobot, faBox, faChevronDown, faChevronUp,
+  faRobot, faChevronDown, faChevronUp,
   faSliders, faUserShield, faAddressCard, faDesktop,
-  faFileShield, faCommentDots
+  faFileShield
 } from '@fortawesome/free-solid-svg-icons';
 import useAuthStore from '../../store/authStore';
 import { IMAGES } from '../../images/images';
@@ -32,18 +31,29 @@ const generalMenuItems = [
     ]
   },
   {
+    name: '문서 · AI 관리',
+    icon: faFileShield,
+    rank: ['부서장', '본부장'],
+    subItems: [
+      { name: '문서 관리', path: '/adminDocument' },
+      { name: 'AI 미답변 질문 관리', path: '/adminQna' }
+    ]
+  },
+  {
     name: '인사 관리',
     icon: faAddressCard,
+    authGroups: ['ROLE_HR_ADMIN'],
     subItems: [
       { name: '직원 관리', path: '/adminUsers' },
       { name: '부서 관리', path: '/adminDepartments' },
       { name: '회원가입 관리', path: '/adminSignup' },
-      { name: '근태 관리', path: '/adminAttendance'},
+      { name: '근태 관리', path: '/adminAttendance' },
     ]
   },
   {
     name: '자산 관리',
     icon: faDesktop,
+    authGroups: ['ROLE_GA_ADMIN'],
     subItems: [
       { name: '비품 관리', path: '/adminSupply' },
       { name: '비품 신청 관리', path: '/adminSupplyRequest' },
@@ -52,23 +62,24 @@ const generalMenuItems = [
     ]
   },
   {
-    name: '문서 관리',
-    icon: faFileShield,
-    rank: ['부서장', '본부장'],
-    path: '/adminDocument'
+    name: '일정 · 회의',
+    icon: faCalendar,
+    subItems: [
+      { name: '캘린더', path: '/calendar' },
+      { name: '회의록', path: '/meetingMinutes' },
+      { name: '회의실 예약', path: '/meetingRooms' },
+    ]
   },
   {
-    name: 'AI 미답변 질문 관리',
-    icon: faCommentDots,
-    rank: ['부서장', '본부장'],
-    path: '/adminQna'
+    name: '신청 · 자료',
+    icon: faFolderOpen,
+    subItems: [
+      { name: '비품 신청', path: '/supply' },
+      { name: '증명서 발급', path: '/certificate' },
+      { name: '자료실', path: '/documents' }
+    ]
   },
   { name: '프로젝트 관리', path: '/projects', icon: faDiagramProject },
-  { name: '자료실', path: '/documents', icon: faFolderOpen },
-  { name: '캘린더', path: '/calendar', icon: faCalendar },
-  { name: '회의록', path: '/meetingMinutes', icon: faFileLines },
-  { name: '회의실 예약', path: '/meetingRooms', icon: faDoorOpen },
-  { name: '비품 신청', path: '/supply', icon: faBox },
   { name: '사내 게시판', path: '/board', icon: faComments },
   { name: 'AI 챗봇', path: '/aiChat', icon: faRobot },
 ];
@@ -84,7 +95,7 @@ const adminMenuItems = [
       { name: '직원 관리', path: '/adminUsers' },
       { name: '부서 관리', path: '/adminDepartments' },
       { name: '회원가입 관리', path: '/adminSignup' },
-      { name: '근태 관리', path: '/adminAttendance'},
+      { name: '근태 관리', path: '/adminAttendance' },
     ]
   },
   {
@@ -98,14 +109,12 @@ const adminMenuItems = [
     ]
   },
   {
-    name: '문서 관리',
+    name: '문서 · AI 관리',
     icon: faFileShield,
-    path: '/adminDocument'
-  },
-  {
-    name: 'AI 미답변 질문 관리',
-    icon: faCommentDots,
-    path: '/adminQna'
+    subItems: [
+      { name: '문서 관리', path: '/adminDocument' },
+      { name: 'AI 미답변 질문 관리', path: '/adminQna' },
+    ]
   },
 ];
 
@@ -120,15 +129,6 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const currentMenuPool = isAdminMode ? adminMenuItems : generalMenuItems;
 
-  useEffect(() => {
-    const currentActiveMenu = currentMenuPool.find(item =>
-      item.subItems && item.subItems.some(sub => location.pathname === sub.path)
-    );
-    if (currentActiveMenu) {
-      setOpenMenuName(currentActiveMenu.name);
-    }
-  }, [location.pathname, isAdminMode]);
-
   const handleLogout = () => {
     clearDepartments();
     logout();
@@ -139,34 +139,53 @@ const Sidebar = ({ isOpen, onClose }) => {
     setOpenMenuName(prev => prev === menuName ? null : menuName);
   };
 
-  const filteredMenuItems = currentMenuPool.filter(item => {
+  const isAdminUser = user?.role === 'ADMIN' || user?.auth_group === 'ROLE_SUPER_ADMIN';
+
+  const hasMenuAccess = (item) => {
     if (isAdminMode) {
-      if (user?.auth_group === 'ROLE_SUPER_ADMIN') {
-        return true;
-      }
-      return false;
+      return isAdminUser;
     }
 
-    if (!item.rank && item.name !== '인사 관리' && item.name !== '자산 관리') {
-      return true; // 직원 사이드바 조건 없음 무조건 표시
-    }
-
-    if (item.name === '인사 관리') {
-      if (user?.auth_group === 'ROLE_HR_ADMIN') return true;
-      return false;
-    }
-
-    if (item.name === '자산 관리') {
-      if (user?.auth_group === 'ROLE_GA_ADMIN') return true;
-      return false;
+    if (item.authGroups) {
+      return item.authGroups.includes(user?.auth_group);
     }
 
     if (item.rank) {
-      if (user?.auth_group === 'ROLE_SUPER_ADMIN' && user?.rank_name === '부서장' && user?.rank_name === '본부장') return true;
-      if (item.rank && item.rank.includes(user?.rank_name)) return true; // 직급 권한 메뉴 표시
+      return item.rank.includes(user?.rank_name);
     }
-    return false;
-  });
+
+    return true;
+  };
+
+  const filteredMenuItems = currentMenuPool.filter(hasMenuAccess);
+
+  const isPathActive = (path) => {
+    if (!path) return false;
+
+    if (path === '/projects') {
+      return location.pathname === '/projects' || location.pathname.startsWith('/kanban/');
+    }
+
+    if (path === '/approval') {
+      return location.pathname === '/approval'
+        || location.pathname.startsWith('/approval/write/')
+        || location.pathname.startsWith('/approval/detail/');
+    }
+
+    return location.pathname === path;
+  };
+
+  useEffect(() => {
+    const currentActiveMenu = filteredMenuItems.find(item =>
+      item.subItems && item.subItems.some(sub => isPathActive(sub.path))
+    );
+
+    if (currentActiveMenu) {
+      setOpenMenuName(currentActiveMenu.name);
+    } else {
+      setOpenMenuName(null);
+    }
+  }, [location.pathname, isAdminMode, user?.auth_group, user?.rank_name, user?.role]);
 
   return (
     <>
@@ -194,7 +213,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           <nav className="space-y-1 flex-1 overflow-y-auto pr-1 custom-scrollbar">
             {filteredMenuItems.map((item, idx) => {
               if (item.subItems) {
-                const isSubItemActive = item.subItems.some(sub => location.pathname === sub.path);
+                const isSubItemActive = item.subItems.some(sub => isPathActive(sub.path));
                 const isCurrentMenuOpen = openMenuName === item.name;
 
                 return (
@@ -215,7 +234,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                     {isCurrentMenuOpen && (
                       <div className="mt-1 ml-4 border-l-2 border-slate-100 pl-4 space-y-1">
                         {item.subItems.map((sub, subIdx) => {
-                          const isCurrent = location.pathname === sub.path;
+                          const isCurrent = isPathActive(sub.path);
                           return (
                             <Link
                               key={subIdx}
@@ -236,7 +255,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                 );
               }
 
-              const isCurrent = location.pathname === item.path;
+              const isCurrent = isPathActive(item.path);
               return (
                 <Link
                   key={idx}
@@ -278,7 +297,8 @@ const Sidebar = ({ isOpen, onClose }) => {
             </button>
           </div>
         </div>
-        <style dangerouslySetInnerHTML={{ __html: `
+        <style dangerouslySetInnerHTML={{
+          __html: `
           .custom-scrollbar::-webkit-scrollbar { width: 4px; }
           .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
           .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
