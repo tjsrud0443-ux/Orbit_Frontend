@@ -43,17 +43,20 @@ const EmploymentCertificate = ({ purpose, onBack }) => {
     const firstPart = dateStr.split(' ')[0];
     const parts = firstPart.split(/[/-]/);
     if (parts.length === 3) {
-      let yy = parts[0];
-      if (yy.length === 2) yy = (parseInt(yy, 10) > 30 ? '19' : '20') + yy;
-      const mm = parts[2]; // YY/DD/MM
-      const dd = parts[1]; // YY/DD/MM
-      return `${yy}년 ${mm}월 ${dd}일`;
+      let yyyy = parts[0];
+      if (yyyy.length === 2) yyyy = (parseInt(yyyy, 10) > 30 ? '19' : '20') + yyyy;
+      const mm = String(parts[1]).padStart(2, '0');
+      const dd = String(parts[2]).padStart(2, '0');
+      return `${yyyy}년 ${mm}월 ${dd}일`;
     }
     return firstPart;
   };
 
   const today = new Date();
-  const todayStr = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${yyyy}년 ${mm}월 ${dd}일`;
 
   const companyNameFormatted = company?.companyName && company.companyName.length > 4
     ? company.companyName.substring(4)
