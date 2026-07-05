@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Bell, Check } from 'lucide-react';
 import { maxios } from '../../api/axiosConfig';
-import { getCompanyInfo, insertCompanyInfo, updateCompanyInfo } from './adminApi';
+import { getCompanyInfo, insertCompanyInfo, updateCompanyInfo, updateCompanyStamp, updateCompanyWatermark } from './adminApi';
 
 const companyFields = [
     {
@@ -47,19 +47,11 @@ const toFormValues = (data) => ({
 });
 
 const getCompanyStampSysname = (data) => (
-    data?.companyStampSysname
-    || data?.company_stamp_sysname
-    || data?.companySealSysname
-    || data?.company_seal_sysname
-    || ''
+    data?.officialsealSysname || ''
 );
 
 const getCompanyWatermarkSysname = (data) => (
-    data?.companyWatermarkSysname
-    || data?.company_watermark_sysname
-    || data?.watermarkSysname
-    || data?.watermark_sysname
-    || ''
+    data?.officialmarkSysname || ''
 );
 
 const getCompanyStampUrl = (sysname) => {
@@ -81,11 +73,11 @@ const uploadCompanyImageFile = (endpoint, file) => {
 };
 
 const uploadCompanyStampFile = (file) => {
-    return uploadCompanyImageFile('/admin/company/stamp', file);
+    return updateCompanyStamp(file);
 };
 
 const uploadCompanyWatermarkFile = (file) => {
-    return uploadCompanyImageFile('/admin/company/watermark', file);
+    return updateCompanyWatermark(file);
 };
 
 const toPayload = (values, companySeq) => ({
