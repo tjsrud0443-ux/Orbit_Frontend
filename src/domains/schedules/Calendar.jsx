@@ -199,6 +199,7 @@ const Calendar = () => {
 
 
   useEffect(() => {
+    if (!user?.id) return; //user 정보 불러올때까지 대기
     showLoading();
     //일정 출력
     Promise.all([getSchedules(),getApprovedVacations()]).then(([schedResp, vacResp]) => {
@@ -233,6 +234,7 @@ const Calendar = () => {
             description: item.sked_reason,
             is_public: item.is_public,
             show_in_company: item.show_in_company,
+            owner_id: item.users_id,  //공유시 소유자 식별
             actualEnd: endDate, // 화면 표시용 실제 종료일
             actualEndTime: endTime,
           },
@@ -269,13 +271,24 @@ const Calendar = () => {
           color: filter?.color ?? '#10B981',
         };
       });
+      const myId = user?.id;
         //.some()은 배열에서 조건에 맞는 게 하나라도 있으면 true를 반환
         // allEvents에서 개인 카테고리인 것만 골라내기
-        const pEvents = allEvents.filter(e => PERSONAL_FILTERS.some(f => f.key === e.category));
-        // allEvents에서 회사 카테고리인 것만 골라내기
-        const cEvents = allEvents.filter(e => COMPANY_CATEGORIES.includes(e.category));
-        // 개인 일정 중 "공용 캘린더에도 표시" 체크된 것
-        const sharedPersonalEvents = pEvents.filter(e => e.extendedProps.show_in_company === 1);
+        // 개인 탭: 내 소유의 개인류 일정만
+        const pEvents = allEvents.filter(e => {
+          const isPersonalGroup = PERSONAL_FILTERS.some(f => f.key === e.category);
+          if (!isPersonalGroup) return false;
+          if (e.category === 'PERSONAL') {
+            return String(e.extendedProps.owner_id) === String(myId);
+          }
+          return true; // ANNUAL, PROJECT, MEETING, holiday는 소유자 체크 없이 통과
+        });
+
+      const cEvents = allEvents.filter(e => COMPANY_CATEGORIES.includes(e.category));
+
+      const sharedPersonalEvents = allEvents.filter(e =>
+        e.category === 'PERSONAL' && e.extendedProps.show_in_company === 1
+      );
         setPersonalEvents(prev => {
           // 기존 Mock 데이터(ID가 숫자가 아닌 것)와 공휴일은 유지하고, 서버 데이터만 교체
           const persistentEvents = prev.filter(e => 
@@ -292,7 +305,7 @@ const Calendar = () => {
       })
       .catch(err => console.error('일정 로드 실패:', err))
       .finally(() => hideLoading());
-  }, []);
+  }, [user?.id]);
 
 
   useEffect(() => {
@@ -350,6 +363,8 @@ const Calendar = () => {
       return companyChecked[e.category] ?? true;
     });
 
+    const isOwner = String(detailModal.event?.extendedProps?.owner_id) === String(user?.id);
+
   // 날짜 클릭 → 추가 모달 열기
   const handleDateClick = (info) => {
     if (activeTab === 'company') return;
@@ -403,7 +418,9 @@ const Calendar = () => {
       start_dt: form.start_dt ? `${form.start_dt} 00:00:00` : null,
       end_dt: form.end_dt ? `${form.end_dt} 00:00:00` : null,
       sked_reason: form.sked_reason || '',
-      is_public: isPersonalCategory ? 0 : 1,
+      is_public: isPersonalCategory
+        ? (form.show_in_company === 1 ? 1 : 0)
+        : 1,
       show_in_company: isPersonalCategory ? form.show_in_company : 0,
     };
 
@@ -427,6 +444,7 @@ const Calendar = () => {
         description: form.sked_reason,
         is_public: form.is_public,
         show_in_company: form.show_in_company,
+        owner_id: user?.id, 
         actualEnd: form.end_dt
       },
       category: form.schedule_type,
@@ -1038,10 +1056,12 @@ if (isEditing) {
             detailModal.event.extendedProps?.category !== 'PROJECT' &&
             detailModal.event.extendedProps?.category !== 'MEETING' &&
             detailModal.event.extendedProps?.category !== 'holiday' &&
-            !(activeTab === 'company' &&                              // ✅ 공용 탭에서
-              detailModal.event.extendedProps?.category === 'PERSONAL' &&  // ✅ 개인 일정이고
-              detailModal.event.extendedProps?.show_in_company === 1) &&   // ✅ 공유된 것이면 수정 불가
-              
+            !(activeTab === 'company' &&
+              detailModal.event.extendedProps?.category === 'PERSONAL' &&
+              !isOwner) &&                                   // 👈 본인이어도 공용탭에서는 여전히 "개인탭에서 수정" 유도
+            !(activeTab === 'company' &&
+              detailModal.event.extendedProps?.category === 'PERSONAL' &&
+              !isOwner) &&   // 👈 본인이 아니면 아예 수정 버튼 숨김
             (!COMPANY_CATEGORIES.includes(detailModal.event.extendedProps?.category) || isHrAdmin) && (
               <button onClick={handleEditStart} className="px-4 py-1.5 text-xs bg-[#3530B8] text-white rounded-lg font-semibold">수정</button>
             )}
@@ -1049,9 +1069,10 @@ if (isEditing) {
           {/* 공용일정에서 수정 불가 */}
             {activeTab === 'company' &&
             detailModal.event.extendedProps?.category === 'PERSONAL' &&
-            detailModal.event.extendedProps?.show_in_company === 1 && (
+            detailModal.event.extendedProps?.show_in_company === 1 && 
+            !isOwner && (
               <p className="mt-2 text-[0.625rem] text-slate-400 text-right">
-                * 공유된 개인 일정은 개인 캘린더에서 수정할 수 있습니다.
+                * 다른 사람이 공유한 일정은 수정할 수 없습니다.
               </p>
             )}
           {detailModal.event.extendedProps?.category === 'ANNUAL' && (
