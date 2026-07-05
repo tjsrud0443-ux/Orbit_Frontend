@@ -85,6 +85,8 @@ const Kanban = () => {
       task,
       x: e.clientX,
       y: e.clientY,
+      offsetX: e.nativeEvent.offsetX,
+      offsetY: e.nativeEvent.offsetY,
       width: e.currentTarget.offsetWidth,
       height: e.currentTarget.offsetHeight,
     });
@@ -1312,8 +1314,8 @@ const Kanban = () => {
         <div
           className="pointer-events-none fixed z-[200] rotate-[3deg] rounded-2xl border border-slate-100/80 bg-white p-5 opacity-70 shadow-2xl shadow-indigo-300/60"
           style={{
-            left: draggingTask.x + 14,
-            top: draggingTask.y + 14,
+            left: draggingTask.x - draggingTask.offsetX,
+            top: draggingTask.y - draggingTask.offsetY,
             width: draggingTask.width,
           }}
         >
