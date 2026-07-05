@@ -489,7 +489,7 @@ const AdminCompanyInfo = () => {
                         <h2 className="mb-6 text-lg font-extrabold text-slate-900">사업장 및 서식 정보</h2>
                         <div className="grid grid-cols-1 gap-8 xl:grid-cols-2 xl:gap-0">
                             <div className="flex max-w-2xl flex-col gap-5 xl:pr-8">
-                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-[9rem_8rem]">
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-[9rem_5.4rem]">
                                     <Field
                                         label="우편번호"
                                         value={formValues['우편번호']}
