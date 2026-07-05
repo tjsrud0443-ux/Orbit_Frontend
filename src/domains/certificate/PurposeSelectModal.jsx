@@ -15,15 +15,22 @@ const options = [
 const PurposeSelectModal = ({ onClose, onConfirm }) => {
   const [selected, setSelected] = useState('');
   const [etcText, setEtcText] = useState('');
+  const [etcError, setEtcError] = useState('');
 
   const handleConfirm = () => {
     if (!selected) {
       alertWarning('정보 미입력', '용도를 선택해주세요.');
       return;
     }
-    if (selected === 'ETC' && !etcText.trim()) {
-      alertWarning('정보 미입력', '기타 용도를 입력해주세요.');
-      return;
+    if (selected === 'ETC') {
+      if (!etcText.trim()) {
+        alertWarning('정보 미입력', '기타 용도를 입력해주세요.');
+        return;
+      }
+      if (etcText.length > 20) {
+        setEtcError('20자까지만 입력 가능합니다.');
+        return;
+      }
     }
     const finalPurpose = selected === 'ETC' ? etcText.trim() : options.find(o => o.value === selected)?.label;
     onConfirm(finalPurpose);
@@ -74,10 +81,20 @@ const PurposeSelectModal = ({ onClose, onConfirm }) => {
               <input
                 type="text"
                 placeholder="직접 용도를 입력해주세요"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+                className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:border-transparent transition-shadow ${
+                  etcError 
+                    ? 'border-red-500 focus:ring-red-500' 
+                    : 'border-gray-300 focus:ring-[#3530B8]'
+                }`}
                 value={etcText}
-                onChange={(e) => setEtcText(e.target.value)}
+                onChange={(e) => {
+                  setEtcText(e.target.value);
+                  if (etcError && e.target.value.length <= 20) setEtcError('');
+                }}
               />
+              {etcError && (
+                <p className="mt-2 text-sm text-red-500 pl-1">{etcError}</p>
+              )}
             </div>
           )}
         </div>
