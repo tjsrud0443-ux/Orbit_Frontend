@@ -4,6 +4,7 @@ import { getApprovedVacations, getSchedules } from './schedulesApi';
 import { fetchHolidays } from '../../api/holidayApi';
 import useLoadingStore from '../../store/useLoadingStore';
 import { alertConfirm } from '../../utils/alert';
+import useUserStore from '../../store/userStore';
 
 const CATEGORY_COLORS = {
   PERSONAL: '#3530B8',
@@ -21,13 +22,21 @@ const useCalendar = (setDayModal) => {
   const [calendarEvents, setCalendarEvents] = useState([]);
   const showLoading = useLoadingStore(state => state.showLoading);
   const hideLoading = useLoadingStore(state => state.hideLoading);
+  const user = useUserStore(state => state.user);   // 👈 추가
+  const myId = user?.id;    
 
   useEffect(() => {
+    if (!myId) return; 
     const year = new Date().getFullYear();
     showLoading();
     Promise.all([getSchedules(), getApprovedVacations(), fetchHolidays(year)])
       .then(([scheduleResp,vacResp, holidays]) => {
-        const scheduleEvents = scheduleResp.data.map(item => {
+        const scheduleEvents = scheduleResp.data
+        // 마이페이지는 개인 성격의 카테고리만 (회사 전체/부서/기념일 제외)
+        .filter(item => ['PERSONAL', 'ANNUAL', 'PROJECT', 'MEETING'].includes(item.schedule_type))
+        // PERSONAL 카테고리는 내 소유 일정만 (공유된 남의 일정 제외)
+        .filter(item => item.schedule_type !== 'PERSONAL' || String(item.users_id) === String(myId))
+        .map(item => {
           // 'T'를 공백으로 치환하여 통일 (DB 데이터가 ISO나 YYYY-MM-DD HH:mm:ss 혼용일 경우 대비)
           const fullStart = item.start_dt?.replace('T', ' ');
           const fullEnd = item.end_dt?.replace('T', ' ');
@@ -79,7 +88,7 @@ const useCalendar = (setDayModal) => {
         setCalendarEvents(allEvents);
       }).catch(err => console.error('로드 실패:', err))
         .finally(() => hideLoading());;
-  }, []);
+  }, [myId]);
 
   const handleDateClick = async (info) => {
     const clickedDate = new Date(info.dateStr);
