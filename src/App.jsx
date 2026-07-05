@@ -31,6 +31,7 @@ import BoardList from './domains/board/BoardList';
 import BoardWrite from './domains/board/BoardWrite';
 import BoardDetail from './domains/board/BoardDetail';
 import AiChat from './domains/aiChat/AiChat';
+import CertificationList from './domains/certificate/CertificationList';
 import MyPage from './domains/mypage/MyPage';
 import MyPageEdit from './domains/mypage/MyPageEdit';
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -124,6 +125,8 @@ function App() {
               <Route path="/boardDetail/:seq" element={<BoardDetail />} />
 
               <Route path="/aiChat" element={<AiChat />} />
+
+              <Route path="/certificate" element={<CertificationList />} />
 
               <Route element={<ProtectedRoute
                 allow={[{ type: "group", value: "ROLE_SUPER_ADMIN" }]} />}>
