@@ -30,21 +30,24 @@ const PurposeSelectModal = ({ onClose, onConfirm }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-0">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div className="flex justify-between items-center p-5 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-gray-800">증명서에 표시할 용도를 선택해주세요</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-gray-800">
+            <span className="inline sm:hidden">용도를 선택해주세요</span>
+            <span className="hidden sm:inline">증명서에 표시할 용도를 선택해주세요</span>
+          </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
             <X size={24} />
           </button>
         </div>
 
-        <div className="p-6">
-          <div className="grid grid-cols-2 gap-2">
+        <div className="p-4 sm:p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {options.map((opt) => (
               <label
                 key={opt.value}
-                className={`cursor-pointer px-4 py-3 rounded-lg border-2 transition-all flex items-center justify-start text-sm font-semibold ${opt.value === 'ETC' ? 'col-span-2' : ''
+                className={`cursor-pointer px-4 py-3 rounded-lg border-2 transition-all flex items-center justify-start text-sm font-semibold ${opt.value === 'ETC' ? 'sm:col-span-2' : ''
                   } ${selected === opt.value
                     ? 'border-[#3530B8] bg-[#F0F4FF] text-[#3530B8]'
                     : 'border-gray-200 bg-white text-gray-600 hover:border-[#3530B8] hover:bg-[#F0F4FF] hover:text-[#3530B8]'
