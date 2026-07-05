@@ -27,6 +27,7 @@ const Kanban = () => {
   const inlineFormRef = useRef(null);
   const detailTitleRef = useRef(null);
   const lastFocusedTaskId = useRef(null);
+  const draggingTaskSeqRef = useRef(null);
 
   // 캘린더 및 드롭다운 오픈 상태
   const [openCalendar, setOpenCalendar] = useState(null); // 'start' | 'end' | 'detailEnd' | 'inlineStart-...' | 'inlineEnd-...'
@@ -41,6 +42,7 @@ const Kanban = () => {
   const [inlineForm, setInlineForm] = useState({ status: null, title: '', users_pic_id: user?.id, name: user?.name, sysname: user?.sysname, priority: 'medium', start_date: '', due_date: '' });
   const [errors, setErrors] = useState({});
   const [activeMenuId, setActiveMenuId] = useState(null);
+  const [draggingTask, setDraggingTask] = useState(null);
 
   // 상세 모달 오픈 시 제목 포커스 (최초 1회만)
   useEffect(() => {
@@ -77,11 +79,41 @@ const Kanban = () => {
   // 드래그 앤 드롭 로직
   const onDragStart = (e, task) => {
     e.dataTransfer.setData('taskSeq', task.task_seq);
+    e.dataTransfer.effectAllowed = 'move';
+    draggingTaskSeqRef.current = task.task_seq;
+    setDraggingTask({
+      task,
+      x: e.clientX,
+      y: e.clientY,
+      width: e.currentTarget.offsetWidth,
+    });
+
+    const transparentImage = new Image();
+    transparentImage.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+    e.dataTransfer.setDragImage(transparentImage, 0, 0);
+  };
+
+  const onDrag = (e) => {
+    if (e.clientX === 0 && e.clientY === 0) return;
+
+    setDraggingTask(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : prev);
   };
 
   const onDrop = (e, status) => {
-    const taskSeq = parseInt(e.dataTransfer.getData('taskSeq'));
+    e.preventDefault();
+    e.stopPropagation();
+
+    const taskSeq = parseInt(e.dataTransfer.getData('taskSeq') || draggingTaskSeqRef.current, 10);
+
+    if (!taskSeq) {
+      setDraggingTask(null);
+      draggingTaskSeqRef.current = null;
+      return;
+    }
+
     setTasks(prev => prev.map(t => t.task_seq === taskSeq ? { ...t, status } : t));
+    setDraggingTask(null);
+    draggingTaskSeqRef.current = null;
 
     updateTaskStatus({
       task_seq: taskSeq,
@@ -344,7 +376,10 @@ const Kanban = () => {
                 <div
                   key={status}
                   className={`flex-1 max-w-[440px] min-w-[280px] xl:min-w-[320px] 2xl:min-w-[380px] rounded-none p-6 flex flex-col ${columnBg} border border-slate-200/60 transition-all duration-300`}
-                  onDragOver={(e) => e.preventDefault()}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                  }}
                   onDrop={(e) => onDrop(e, status)}
                 >
                   <div className="flex items-center justify-between mb-6 px-2">
@@ -363,6 +398,11 @@ const Kanban = () => {
                         key={task.task_seq}
                         draggable
                         onDragStart={(e) => onDragStart(e, task)}
+                        onDrag={onDrag}
+                        onDragEnd={() => {
+                          setDraggingTask(null);
+                          draggingTaskSeqRef.current = null;
+                        }}
                         onClick={() => setDetailModalTask(task)}
                         className="group bg-white rounded-2xl p-5 shadow-sm border border-slate-100/80 hover:shadow-xl hover:shadow-indigo-50/50 hover:border-indigo-100 transition-all cursor-pointer relative"
                       >
@@ -1261,6 +1301,42 @@ const Kanban = () => {
                   <button onClick={handleUpdateTask} className="flex-1 bg-[#3530B8] text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-indigo-100">저장</button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {draggingTask && (
+        <div
+          className="pointer-events-none fixed z-[200] rotate-[3deg] rounded-2xl border border-slate-100/80 bg-white p-5 opacity-[0.9] shadow-2xl shadow-indigo-300/60"
+          style={{
+            left: draggingTask.x + 14,
+            top: draggingTask.y + 14,
+            width: draggingTask.width,
+          }}
+        >
+          <div className="flex justify-between items-center mb-4 gap-2">
+            <h3 className="font-bold text-base text-[#1a1c3d] leading-relaxed flex-1">{draggingTask.task.title}</h3>
+          </div>
+          <div className="flex items-end justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
+                {
+                  draggingTask.task?.sysname &&
+                    <img
+                      src={`https://api.sukong.shop/file/profile/view?sysname=${draggingTask.task?.sysname}&token=${token}`}
+                      alt={draggingTask.task?.name}
+                      className="w-full h-full object-cover"
+                    />
+                }
+              </div>
+              <span className="text-sm font-bold text-slate-500 leading-none">{draggingTask.task.name}</span>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <span className={`text-sm font-black px-2 py-0.5 rounded-full ${getPriorityStyle(draggingTask.task.priority)} leading-none`}>
+                {draggingTask.task.priority}
+              </span>
+              <span className="text-xs font-medium text-slate-400 font-mono tracking-tight leading-none">{formatDate(draggingTask.task.due_date)}</span>
             </div>
           </div>
         </div>
