@@ -60,19 +60,19 @@ const EmploymentCertificate = ({ purpose, onBack }) => {
     : (company?.companyName || '-');
 
   return (
-    <div className="min-h-screen bg-gray-100 py-10 flex flex-col items-center">
+    <div className="min-h-screen bg-gray-100 py-6 sm:py-10 flex flex-col items-center">
       {/* Action Buttons - Hidden on Print */}
-      <div className="w-[210mm] mb-4 flex justify-between items-center no-print">
+      <div className="w-full max-w-[210mm] px-4 sm:px-0 mb-4 flex justify-between items-center no-print mx-auto">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg shadow hover:bg-gray-50 transition"
+          className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white text-gray-700 rounded-lg shadow hover:bg-gray-50 transition text-sm sm:text-base"
         >
           <ArrowLeft size={18} />
           뒤로가기
         </button>
         <button
           onClick={handlePrint}
-          className="flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition"
+          className="flex items-center gap-2 px-4 sm:px-5 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition text-sm sm:text-base"
         >
           <Printer size={18} />
           인쇄
@@ -80,15 +80,17 @@ const EmploymentCertificate = ({ purpose, onBack }) => {
       </div>
 
       {/* A4 Paper */}
-      <div
-        className="relative bg-white shadow-xl overflow-hidden print-page"
-        style={{
-          width: '210mm',
-          height: '297mm',
-          padding: '25mm 20mm',
-          boxSizing: 'border-box'
-        }}
-      >
+      <div className="w-full overflow-x-auto pb-4 px-4 sm:px-0">
+        <div className="mx-auto" style={{ width: '210mm', minWidth: '210mm' }}>
+          <div
+            className="relative bg-white shadow-xl overflow-hidden print-page"
+            style={{
+              width: '210mm',
+              height: '297mm',
+              padding: '25mm 20mm',
+              boxSizing: 'border-box',
+            }}
+          >
         {/* Watermark */}
         {company?.officialmarkSysname && (
           <div className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none watermark-container">
@@ -171,8 +173,10 @@ const EmploymentCertificate = ({ purpose, onBack }) => {
             </div>
           </div>
 
+          </div>
         </div>
       </div>
+    </div>
 
       <style dangerouslySetInnerHTML={{
         __html: `
