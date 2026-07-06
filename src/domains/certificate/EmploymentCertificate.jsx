@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
 import { getCompanyInfo } from '../admin/adminApi';
+import { getCertInfo } from './certificateApi';
 import { Printer, ArrowLeft } from 'lucide-react';
 
 const EmploymentCertificate = ({ purpose, onBack }) => {
   const { user } = useUserStore();
   const { token } = useAuthStore();
   const [company, setCompany] = useState(null);
+  const [certInfo, setCertInfo] = useState(null);
 
   useEffect(() => {
     const fetchCompany = async () => {
@@ -18,7 +20,22 @@ const EmploymentCertificate = ({ purpose, onBack }) => {
         console.error("Failed to fetch company info", err);
       }
     };
+
+    const fetchCertData = async () => {
+      try {
+        const res = await getCertInfo();
+        const certList = res.data;
+        const cert = certList.find(item => item.cert_type_name === "재직증명서");
+        if (cert) {
+          setCertInfo(cert);
+        }
+      } catch (err) {
+        console.error("Failed to fetch cert info", err);
+      }
+    };
+
     fetchCompany();
+    fetchCertData();
   }, []);
 
   const handlePrint = () => {
@@ -58,6 +75,13 @@ const EmploymentCertificate = ({ purpose, onBack }) => {
   const dd = String(today.getDate()).padStart(2, '0');
   const todayStr = `${yyyy}년 ${mm}월 ${dd}일`;
 
+  let docNumber = '';
+  if (certInfo) {
+    const yy = String(yyyy).slice(-2);
+    const seq = String(certInfo.cert_type_seq).padStart(3, '0');
+    docNumber = `${certInfo.manage_dept_code}-${yy}${mm}${dd}-${seq}`;
+  }
+
   const companyNameFormatted = company?.companyName && company.companyName.length > 4
     ? company.companyName.substring(4)
     : (company?.companyName || '-');
@@ -94,92 +118,94 @@ const EmploymentCertificate = ({ purpose, onBack }) => {
               boxSizing: 'border-box',
             }}
           >
-        {/* Watermark */}
-        {company?.officialmarkSysname && (
-          <div className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none watermark-container">
-            <img
-              src={`https://api.sukong.shop/file/profile/view?sysname=${company.officialmarkSysname}&token=${token}`}
-              alt="watermark"
-              className="w-[80%] h-[80%] object-contain"
-              style={{ opacity: 0.6, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
-            />
-          </div>
-        )}
-
-        {/* Content Container (z-index relative to watermark) */}
-        <div className="relative z-10 h-full flex flex-col font-serif">
-
-          <h1 className="text-4xl font-bold text-center tracking-[1em] mt-10 mb-20 text-black">재직증명서</h1>
-
-          <table className="w-full border-collapse border-2 border-black mb-16 text-black">
-            <tbody>
-              <tr>
-                <td className="border border-black bg-gray-50/50 font-bold p-3 w-[15%] text-center text-lg">소속</td>
-                <td className="border border-black p-3 w-[35%] text-lg">{user?.dept_name || '-'}</td>
-                <td className="border border-black bg-gray-50/50 font-bold p-3 w-[15%] text-center text-lg">직급</td>
-                <td className="border border-black p-3 w-[35%] text-lg">{user?.rank_name || '-'}</td>
-              </tr>
-              <tr>
-                <td className="border border-black bg-gray-50/50 font-bold p-3 text-center text-lg">성명</td>
-                <td className="border border-black p-3 text-lg">{user?.name || '-'}</td>
-                <td className="border border-black bg-gray-50/50 font-bold p-3 text-center text-lg">생년월일</td>
-                <td className="border border-black p-3 text-lg">{formatSsn(user?.ssn_masked)}</td>
-              </tr>
-              <tr>
-                <td className="border border-black bg-gray-50/50 font-bold p-3 text-center text-lg">주소</td>
-                <td colSpan="3" className="border border-black p-3 text-lg">
-                  {user?.address1 || '-'} {user?.address2 || ''}
-                </td>
-              </tr>
-              <tr>
-                <td className="border border-black bg-gray-50/50 font-bold p-3 text-center text-lg">재직기간</td>
-                <td colSpan="3" className="border border-black p-3 text-lg">
-                  {formatHireDate(user?.hire_date)} ~ {todayStr} 현재 재직 중
-                </td>
-              </tr>
-              <tr>
-                <td className="border border-black bg-gray-50/50 font-bold p-3 text-center text-lg">용도</td>
-                <td colSpan="3" className="border border-black p-3 text-lg">{purpose || '-'}</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <div className="text-center text-2xl font-bold tracking-widest mt-10 mb-16 text-black">
-            위와 같이 재직하고 있음을 증명합니다.
-          </div>
-
-          <div className="text-center text-xl mb-auto text-black">
-            {todayStr}
-          </div>
-
-          {/* Footer Info */}
-          <div className="text-center pb-10 relative flex flex-col items-center justify-center text-black mt-8">
-            <div className="flex items-center justify-center relative mb-4">
-              <span className="text-[40px] font-bold tracking-[0.3em]">
-                {companyNameFormatted}
-              </span>
-              <div className="w-[110px] h-[110px] flex items-center justify-center absolute right-[-130px]">
-                {company?.officialsealSysname ? (
-                  <img
-                    src={`https://api.sukong.shop/file/profile/view?sysname=${company.officialsealSysname}&token=${token}`}
-                    style={{ width: "110px", height: "110px", objectFit: "contain", WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
-                    alt="직인"
-                  />
-                ) : (
-                  <div className="w-[110px] h-[110px] rounded-full border-2 border-red-500/50 flex items-center justify-center text-red-500/50 text-sm">직인</div>
-                )}
+            {company?.officialmarkSysname && (
+              <div className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none watermark-container">
+                <img
+                  src={`https://api.sukong.shop/file/profile/view?sysname=${company.officialmarkSysname}&token=${token}`}
+                  alt="watermark"
+                  className="w-[80%] h-[80%] object-contain"
+                  style={{ opacity: 0.6, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
+                />
               </div>
-            </div>
-            <div className="text-lg font-medium opacity-90 leading-relaxed mt-2">
-              {company?.companyAddress || '-'} <br />
-              Tel: {company?.companyTel || '-'} &nbsp;&nbsp; Fax: {company?.companyFax || '-'}
-            </div>
-          </div>
+            )}
 
+            <div className="relative z-10 h-full flex flex-col font-serif">
+
+              <div className="absolute -top-6 left-0 text-sm text-black">
+                {docNumber && `${docNumber}`}
+              </div>
+
+              <h1 className="text-4xl font-bold text-center tracking-[1em] mt-10 mb-20 text-black">재직증명서</h1>
+
+              <table className="w-full border-collapse border-2 border-black mb-16 text-black">
+                <tbody>
+                  <tr>
+                    <td className="border border-black bg-gray-50/50 font-bold p-3 w-[15%] text-center text-lg">소속</td>
+                    <td className="border border-black p-3 w-[35%] text-lg">{user?.dept_name || '-'}</td>
+                    <td className="border border-black bg-gray-50/50 font-bold p-3 w-[15%] text-center text-lg">직급</td>
+                    <td className="border border-black p-3 w-[35%] text-lg">{user?.rank_name || '-'}</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-black bg-gray-50/50 font-bold p-3 text-center text-lg">성명</td>
+                    <td className="border border-black p-3 text-lg">{user?.name || '-'}</td>
+                    <td className="border border-black bg-gray-50/50 font-bold p-3 text-center text-lg">생년월일</td>
+                    <td className="border border-black p-3 text-lg">{formatSsn(user?.ssn_masked)}</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-black bg-gray-50/50 font-bold p-3 text-center text-lg">주소</td>
+                    <td colSpan="3" className="border border-black p-3 text-lg">
+                      {user?.address1 || '-'} {user?.address2 || ''}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="border border-black bg-gray-50/50 font-bold p-3 text-center text-lg">재직기간</td>
+                    <td colSpan="3" className="border border-black p-3 text-lg">
+                      {formatHireDate(user?.hire_date)} ~ {todayStr} 현재 재직 중
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="border border-black bg-gray-50/50 font-bold p-3 text-center text-lg">용도</td>
+                    <td colSpan="3" className="border border-black p-3 text-lg">{purpose || '-'}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div className="text-center text-2xl font-bold tracking-widest mt-10 mb-16 text-black">
+                위와 같이 재직하고 있음을 증명합니다.
+              </div>
+
+              <div className="text-center text-xl mb-auto text-black">
+                {todayStr}
+              </div>
+
+              {/* Footer Info */}
+              <div className="text-center pb-10 relative flex flex-col items-center justify-center text-black mt-8">
+                <div className="flex items-center justify-center relative mb-4">
+                  <span className="text-[40px] font-bold tracking-[0.3em]">
+                    {companyNameFormatted}
+                  </span>
+                  <div className="w-[110px] h-[110px] flex items-center justify-center absolute right-[-130px]">
+                    {company?.officialsealSysname ? (
+                      <img
+                        src={`https://api.sukong.shop/file/profile/view?sysname=${company.officialsealSysname}&token=${token}`}
+                        style={{ width: "110px", height: "110px", objectFit: "contain", WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
+                        alt="직인"
+                      />
+                    ) : (
+                      <div className="w-[110px] h-[110px] rounded-full border-2 border-red-500/50 flex items-center justify-center text-red-500/50 text-sm">직인</div>
+                    )}
+                  </div>
+                </div>
+                <div className="text-lg font-medium opacity-90 leading-relaxed mt-2">
+                  {company?.companyAddress || '-'} <br />
+                  Tel: {company?.companyTel || '-'} &nbsp;&nbsp; Fax: {company?.companyFax || '-'}
+                </div>
+              </div>
+
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
       <style dangerouslySetInnerHTML={{
         __html: `
