@@ -21,7 +21,7 @@ const POSITION_RANK = {
   '대표이사': 1, '본부장': 3, '부서장': 4, '차장': 5, '과장': 6, '대리': 7, '사원': 8
 };
 
-const PROFILE_API = 'import.meta.env.VITE_API_BASE_URL/file/profile/view';
+const PROFILE_API = `${import.meta.env.VITE_API_BASE_URL}/file/profile/view`;
 
 const getProfileName = (obj) => obj?.sysname || obj?.sysName;
 

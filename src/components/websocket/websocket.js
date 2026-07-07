@@ -12,7 +12,7 @@ export const connectSocket = (usersId) => {
     }
 
     socket = new Client({
-        brokerURL: "wss://api.sukong.shop/web",
+        brokerURL: import.meta.env.VITE_WS_BASE_URL,
         connectHeaders: {
             Authorization: `Bearer ${token}`
         },
@@ -24,7 +24,7 @@ export const connectSocket = (usersId) => {
 
                     const noti = JSON.parse(message.body);
 
-                    if(noti.eventType === "DELETE") {
+                    if (noti.eventType === "DELETE") {
                         useNotificationStore
                             .getState()
                             .removeNotification(noti.noti_seq);
@@ -38,8 +38,8 @@ export const connectSocket = (usersId) => {
 
                     const showToast = (content, icon) => {
                         const isMobile = window.matchMedia("(max-width:768px)").matches;
-                        
-                        if(isMobile){
+
+                        if (isMobile) {
                             toast.dismiss();
                         }
 
@@ -58,7 +58,7 @@ export const connectSocket = (usersId) => {
                         case "APPROVAL":
                             showToast(noti.content, "🔔");
                             break;
-                        
+
                         // 결재 승인 알림
                         case "APPROVED":
                             showToast(noti.content, "✅");
@@ -73,12 +73,12 @@ export const connectSocket = (usersId) => {
                         case "MEETING":
                             showToast(noti.content, "📅");
                             break;
-                        
+
                         // 칸반 담당자 지정 알림
                         case "TASK":
                             showToast(noti.content, "📌");
                             break;
-                        
+
                         // 칸반 삭제 알림
                         case "TASK_DELETE":
                             showToast(noti.content, "🗑️");
@@ -91,7 +91,7 @@ export const connectSocket = (usersId) => {
                 }
             );
         },
-        onDisconnect: () => {}
+        onDisconnect: () => { }
     });
     socket.activate();
 };
