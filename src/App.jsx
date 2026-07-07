@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './domains/auth/Login';
 import Signup from './domains/auth/Signup';
 import Calendar from './domains/schedules/Calendar';
-import Departments from './domains/departments/Departments';
+import Departments from './domains/departments/departments';
 import Layout from './components/layout/Layout';
 import Main from './domains/main/Main';
 import AdminAttendance from './domains/admin/AdminAttendance';
@@ -22,7 +22,7 @@ import ApprovalInbox from './domains/approval/ApprovalInbox';
 import ApprovalCc from './domains/approval/ApprovalCc';
 import ApprovalTemp from './domains/approval/ApprovalTemp';
 import ProjectsList from './domains/projects/ProjectsList';
-import Kanban from './domains/projects/kanban';
+import Kanban from './domains/projects/Kanban';
 import DocumentsList from './domains/documents/DocumentsList';
 import MinutesList from './domains/meetingMinutes/MinutesList';
 import MeetingRooms from './domains/meetingRooms/MeetingRooms';
