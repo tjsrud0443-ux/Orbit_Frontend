@@ -74,7 +74,7 @@ const AdminMeetingRooms = () => {
     setIsAddMode(true);
     setSelectedRoom(room);
     setUploadedFiles([]);
-    setPreviewImage(room.sysname ? `https://api.sukong.shop/file/profile/view?sysname=${room.sysname}&token=${token}` : null);
+    setPreviewImage(room.sysname ? `${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${room.sysname}&token=${token}` : null);
     setErrors({});
     setFormData({
       room_seq: room.room_seq,
@@ -106,9 +106,9 @@ const AdminMeetingRooms = () => {
   };
 
   const handleChange = (e) => {
-    const {name, value} = e.target;
-    setFormData(prev => ({...prev, [name]:value}));
-    
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+
     if (name === 'room_name') {
       if (value.length > 10) {
         setErrors(prev => ({ ...prev, room_name: "10자까지만 입력이 가능합니다." }));
@@ -189,7 +189,7 @@ const AdminMeetingRooms = () => {
         selectedRoom ? '정보 수정에 실패했습니다.' : '회의실 등록에 실패했습니다.'
       );
     }
-    
+
   }
 
   return (
@@ -202,7 +202,7 @@ const AdminMeetingRooms = () => {
               회의실 정보를 확인하고 관리할 수 있습니다.
             </p>
           </div>
-          <button 
+          <button
             onClick={handleAddClick}
             className="px-3 md:px-4 py-2 bg-[#3530B8] text-white text-sm font-bold rounded-xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all flex items-center gap-2 cursor-pointer"
           >
@@ -225,7 +225,7 @@ const AdminMeetingRooms = () => {
 
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             {rooms.map((room) => (
-              <div 
+              <div
                 key={room.room_seq}
                 className="flex md:grid md:grid-cols-[1.2fr_1fr_1fr_0.5fr_1fr] px-4 md:px-6 py-6 items-center border-b border-gray-50/50 overflow-x-auto no-scrollbar"
               >
@@ -233,7 +233,7 @@ const AdminMeetingRooms = () => {
                 <div className="flex flex-col items-center mr-4 md:hidden w-24 flex-shrink-0">
                   <div className="w-24 h-16 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shadow-sm">
                     {room.sysname ? (
-                      <img src={`https://api.sukong.shop/file/profile/view?sysname=${room.sysname}&token=${token}`} 
+                      <img src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${room.sysname}&token=${token}`}
                         alt={room.room_name} className="w-full h-full object-cover" />
                     ) : (
                       <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -259,7 +259,7 @@ const AdminMeetingRooms = () => {
                 <div className="hidden md:flex md:justify-center">
                   <div className="md:w-32 md:h-20 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shadow-sm">
                     {room.sysname ? (
-                      <img src={`https://api.sukong.shop/file/profile/view?sysname=${room.sysname}&token=${token}`} 
+                      <img src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${room.sysname}&token=${token}`}
                         alt={room.room_name} className="w-full h-full object-cover" />
                     ) : (
                       <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -282,14 +282,14 @@ const AdminMeetingRooms = () => {
                 </div>
 
                 <div className="flex-shrink-0 ml-auto md:ml-0 flex justify-center gap-1.5">
-                  <button 
+                  <button
                     onClick={() => handleEditClick(room)}
                     className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-[#3530B8] transition-all flex items-center justify-center cursor-pointer"
                     title="수정"
                   >
                     <FontAwesomeIcon icon={faEdit} className="text-[0.65rem] md:text-xs" />
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleDelete(room.room_seq)}
                     className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center cursor-pointer"
                     title="삭제"
@@ -315,8 +315,8 @@ const AdminMeetingRooms = () => {
             <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-6">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-400 uppercase ml-1">회의실 사진</label>
-                <div 
-                  {...getRootProps()} 
+                <div
+                  {...getRootProps()}
                   className={`border-2 border-dashed rounded-2xl p-4 transition-all flex flex-col items-center justify-center gap-3 cursor-pointer h-52 overflow-hidden
                     ${errors.image ? 'border-rose-500 bg-rose-50' : isDragActive ? 'border-[#3530B8] bg-[#3530B8]/5' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
                 >
@@ -341,7 +341,7 @@ const AdminMeetingRooms = () => {
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-400 uppercase ml-1">회의실명</label>
-                  <input 
+                  <input
                     type="text"
                     value={formData.room_name}
                     onChange={handleChange}
@@ -354,7 +354,7 @@ const AdminMeetingRooms = () => {
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-400 uppercase ml-1">허용 인원수</label>
-                  <input 
+                  <input
                     type="number"
                     value={formData.max_people}
                     onChange={handleChange}
@@ -367,7 +367,7 @@ const AdminMeetingRooms = () => {
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-400 uppercase ml-1">위치</label>
-                  <input 
+                  <input
                     type="text"
                     value={formData.room_floor}
                     onChange={handleChange}
@@ -381,13 +381,13 @@ const AdminMeetingRooms = () => {
             </div>
 
             <div className="p-6 border-t border-gray-50 flex gap-3 flex-shrink-0 bg-white">
-              <button 
+              <button
                 onClick={handleClosePanel}
                 className="flex-1 py-4 border-2 border-gray-100 text-gray-500 text-sm font-bold rounded-2xl hover:bg-gray-50 transition-all cursor-pointer"
               >
                 취소
               </button>
-              <button 
+              <button
                 onClick={handleComplete}
                 className="flex-[2] py-4 bg-[#3530B8] text-white text-sm font-bold rounded-2xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all cursor-pointer"
               >
@@ -398,7 +398,8 @@ const AdminMeetingRooms = () => {
         )}
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }

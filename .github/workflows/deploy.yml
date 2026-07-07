@@ -1,0 +1,106 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy-production:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create env file
+        run: |
+          echo "VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}" >> .env.production
+          echo "VITE_GCS_BASE_URL=${{ secrets.VITE_GCS_BASE_URL }}" >> .env.production
+
+      - name: Clean dist
+        shell: pwsh
+        run: Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
+
+      - name: Build
+        run: npm run build -- --mode production
+
+      - name: Verify build (localhost 없어야 함, sukong.shop 있어야 함)
+        shell: pwsh
+        run: |
+          $localhostFound = Get-ChildItem dist -Recurse | Select-String "localhost:8080"
+          if ($localhostFound) {
+            Write-Host "❌ localhost:8080 이 빌드에 남아있음:"
+            $localhostFound
+            exit 1
+          }
+          $domainFound = Get-ChildItem dist -Recurse | Select-String "api.sukong.shop"
+          if (-not $domainFound) {
+            Write-Host "❌ api.sukong.shop 이 빌드에 없음 (env 미반영 가능성)"
+            exit 1
+          }
+          Write-Host "✅ 검증 통과: localhost 없음, sukong.shop 정상 포함"
+
+      - name: Set up Firebase service account
+        shell: pwsh
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$env:RUNNER_TEMP/firebase-key.json"
+
+      - name: Deploy to Firebase (production)
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-key.json
+        run: npx firebase-tools deploy --project ${{ secrets.FIREBASE_PROJECT_ID }} --only hosting --non-interactive
+
+  deploy-demo:
+    runs-on: ubuntu-latest
+    environment: demo
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create env file
+        run: |
+          echo "VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}" >> .env.demo
+          echo "VITE_GCS_BASE_URL=${{ secrets.VITE_GCS_BASE_URL }}" >> .env.demo
+
+      - name: Clean dist
+        shell: pwsh
+        run: Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
+
+      - name: Build
+        run: npm run build -- --mode demo
+
+      - name: Verify build (localhost 없어야 함, apato.shop 있어야 함)
+        shell: pwsh
+        run: |
+          $localhostFound = Get-ChildItem dist -Recurse | Select-String "localhost:8080"
+          if ($localhostFound) {
+            Write-Host "❌ localhost:8080 이 빌드에 남아있음:"
+            $localhostFound
+            exit 1
+          }
+          $domainFound = Get-ChildItem dist -Recurse | Select-String "api.apato.shop"
+          if (-not $domainFound) {
+            Write-Host "❌ api.apato.shop 이 빌드에 없음 (env 미반영 가능성)"
+            exit 1
+          }
+          Write-Host "✅ 검증 통과: localhost 없음, apato.shop 정상 포함"
+
+      - name: Set up Firebase service account
+        shell: pwsh
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$env:RUNNER_TEMP/firebase-key.json"
+
+      - name: Deploy to Firebase (demo)
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-key.json
+        run: npx firebase-tools deploy --project ${{ secrets.FIREBASE_PROJECT_ID }} --only hosting --non-interactive

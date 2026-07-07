@@ -361,7 +361,7 @@ const ProjectsList = () => {
       const resp = await getProjectCount(user?.role);
       setProjectCount(resp.data);
     }
-    
+
     setProjects(resp.data);
     setIsModalOpen(false);
     handleCloseDetail();
@@ -386,7 +386,7 @@ const ProjectsList = () => {
       const resp = await getProjectCount(user?.role);
       setProjectCount(resp.data);
     }
-    
+
     setProjects(resp.data);
     setIsModalOpen(false);
     handleCloseDetail();
@@ -644,7 +644,7 @@ const ProjectsList = () => {
                   {
                     member?.sysname &&
                     <img
-                      src={`https://api.sukong.shop/file/profile/view?sysname=${member?.sysname}&token=${token}`}
+                      src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${member?.sysname}&token=${token}`}
                       alt={member?.name}
                       className="w-full h-full object-cover" />
                   }
@@ -784,7 +784,7 @@ const ProjectsList = () => {
                                     {
                                       member?.sysname &&
                                       <img
-                                        src={`https://api.sukong.shop/file/profile/view?sysname=${member?.sysname}&token=${token}`}
+                                        src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${member?.sysname}&token=${token}`}
                                         alt={member?.name}
                                         className="w-full h-full object-cover"
                                       />
@@ -815,7 +815,7 @@ const ProjectsList = () => {
                                   {
                                     member?.sysname &&
                                     <img
-                                      src={`https://api.sukong.shop/file/profile/view?sysname=${member?.sysname}&token=${token}`}
+                                      src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${member?.sysname}&token=${token}`}
                                       alt={member?.name}
                                       className="w-full h-full object-cover"
                                     />

@@ -79,11 +79,11 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, coun
                     <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 rounded-full bg-slate-200 flex items-center justify-center text-[9px] md:text-[10px] overflow-hidden aspect-square">
                       {
                         doc?.sysname &&
-                          <img
-                            src={`https://api.sukong.shop/file/profile/view?sysname=${doc?.sysname}&token=${token}`}
-                            alt={doc.name}
-                            className="w-full h-full object-cover"
-                          />
+                        <img
+                          src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${doc?.sysname}&token=${token}`}
+                          alt={doc.name}
+                          className="w-full h-full object-cover"
+                        />
                       }
                     </div>
                     <span className="text-xs font-bold text-gray-600 truncate">{doc.name}</span>
@@ -252,7 +252,7 @@ const ApprovalInbox = () => {
                       key={type}
                       onClick={() => {
                         setSelectedType(type);
-                        setDoneDocumentPage(1); 
+                        setDoneDocumentPage(1);
                         setIsTypeOpen(false);
                       }}
                       className="px-3 py-1.5 text-xs text-slate-400 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
@@ -295,7 +295,8 @@ const ApprovalInbox = () => {
           />
         </div>
       </div>
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }

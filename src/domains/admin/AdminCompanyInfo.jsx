@@ -58,7 +58,7 @@ const getCompanyStampUrl = (sysname) => {
     if (!sysname) return null;
 
     const token = sessionStorage.getItem('token');
-    return `https://api.sukong.shop/file/profile/view?sysname=${sysname}&token=${token}`;
+    return `${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${sysname}&token=${token}`;
 };
 
 const uploadCompanyImageFile = (endpoint, file) => {

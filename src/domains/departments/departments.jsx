@@ -21,7 +21,7 @@ const POSITION_RANK = {
   '대표이사': 1, '본부장': 3, '부서장': 4, '차장': 5, '과장': 6, '대리': 7, '사원': 8
 };
 
-const PROFILE_API = 'https://api.sukong.shop/file/profile/view';
+const PROFILE_API = 'import.meta.env.VITE_API_BASE_URL/file/profile/view';
 
 const getProfileName = (obj) => obj?.sysname || obj?.sysName;
 
@@ -425,43 +425,43 @@ const Departments = () => {
   }
 
   useEffect(() => {
-  const loadGroup = async () => {
-    if (!token) return;
+    const loadGroup = async () => {
+      if (!token) return;
 
-    if (loaded) {
-      const sysnames = collectProfileSysnames(employees, fullTree.root);
-      loadProfileImages(sysnames, token);
-      return;
-    }
+      if (loaded) {
+        const sysnames = collectProfileSysnames(employees, fullTree.root);
+        loadProfileImages(sysnames, token);
+        return;
+      }
 
-    showLoading();
+      showLoading();
 
-    try {
-      const resp = await getGroup();
+      try {
+        const resp = await getGroup();
 
-      const root = resp.data.root;
-      const nodeMap = resp.data.nodeMap;
-      const users = resp.data.users || [];
+        const root = resp.data.root;
+        const nodeMap = resp.data.nodeMap;
+        const users = resp.data.users || [];
 
-      setGroupData({
-        root,
-        nodeMap,
-        users
-      });
+        setGroupData({
+          root,
+          nodeMap,
+          users
+        });
 
-      hideLoading();
+        hideLoading();
 
-      const sysnames = collectProfileSysnames(users, root);
-      loadProfileImages(sysnames, token);
+        const sysnames = collectProfileSysnames(users, root);
+        loadProfileImages(sysnames, token);
 
-    } catch (error) {
-      console.log("조직도 로딩 실패", error);
-      hideLoading();
-    }
-  };
+      } catch (error) {
+        console.log("조직도 로딩 실패", error);
+        hideLoading();
+      }
+    };
 
-  loadGroup();
-}, [token, loaded]);
+    loadGroup();
+  }, [token, loaded]);
 
 
   // Selected department details
