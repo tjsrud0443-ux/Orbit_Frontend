@@ -50,6 +50,13 @@ jobs:
         shell: pwsh
         run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$env:RUNNER_TEMP/firebase-key.json"
 
+      - name: Debug service account file
+        shell: pwsh
+        run: |
+          $json = Get-Content "$env:RUNNER_TEMP/firebase-key.json" -Raw | ConvertFrom-Json
+          Write-Host "서비스 계정 파일 안의 project_id: $($json.project_id)"
+          Write-Host "서비스 계정 이메일: $($json.client_email)"
+
       - name: Deploy to Firebase (production)
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-key.json
