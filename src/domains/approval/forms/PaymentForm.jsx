@@ -544,7 +544,7 @@ const PaymentForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                     </svg>
                     {item.sysname ? (
                       <a
-                        href={`https://api.sukong.shop/file/download/${item.sysname}?token=${token}`}
+                        href={`${import.meta.env.VITE_API_BASE_URL}/file/download/${item.sysname}?token=${token}`}
                         download
                         className="hover:underline"
                       >

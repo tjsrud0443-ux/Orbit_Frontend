@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { checkMyPageEmail, getProfileInfo, updateUserInfo, uploadStampFile } from '../mypage/mypageApi'; 
+import { checkMyPageEmail, getProfileInfo, updateUserInfo, uploadStampFile } from '../mypage/mypageApi';
 import { emailDuplCheck } from '../auth/authApi';
 import { useNavigate } from 'react-router-dom';
 import useUserStore from '../../store/userStore';
@@ -8,18 +8,18 @@ import { alertSuccess, alertError } from '../../utils/alert';
 const MyPageEdit = () => {
   const navigate = useNavigate();
   const { user, setUser } = useUserStore();
-  const postcodeRef = useRef(null); 
+  const postcodeRef = useRef(null);
   const fileInputRef = useRef(null);
   const [profileData, setProfileData] = useState(null);
   const [stamp, setStamp] = useState(null);
   const [tempStamp, setTempStamp] = useState(null);
   const [stampFile, setStampFile] = useState(null);
-  const [isEditing, setIsEditing] = useState(false); 
-  
+  const [isEditing, setIsEditing] = useState(false);
+
   useEffect(() => {
     if (profileData?.stamp_sysname) {
       const token = sessionStorage.getItem("token");
-      const imageUrl = `https://api.sukong.shop/file/profile/view?sysname=${profileData.stamp_sysname}&token=${token}`;
+      const imageUrl = `${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${profileData.stamp_sysname}&token=${token}`;
       setStamp(imageUrl);
       setTempStamp(imageUrl);
     } else {
@@ -63,20 +63,20 @@ const MyPageEdit = () => {
   const phoneRegex = /^010-\d{4}-\d{4}$/;
   const emailRegex = /^[A-Za-z0-9._%+-]{1,20}@[a-z]+\.[a-z]{3}$/;
 
-useEffect(() => {
-  getProfileInfo()
-    .then(resp => {
-      setProfileData(resp.data);
-      setFormData({
-        email: resp.data.email || '',
-        phone: resp.data.phone || '',
-        zonecode: resp.data.zonecode || '',
-        address1: resp.data.address1 || '',
-        address2: resp.data.address2 || '',
-      });
-      setIsEmailChecked(true);
-    }).catch(err => console.log("내정보 불러오기 실패", err));
-}, []);
+  useEffect(() => {
+    getProfileInfo()
+      .then(resp => {
+        setProfileData(resp.data);
+        setFormData({
+          email: resp.data.email || '',
+          phone: resp.data.phone || '',
+          zonecode: resp.data.zonecode || '',
+          address1: resp.data.address1 || '',
+          address2: resp.data.address2 || '',
+        });
+        setIsEmailChecked(true);
+      }).catch(err => console.log("내정보 불러오기 실패", err));
+  }, []);
 
   useEffect(() => {
     if (isPostcodeOpen && postcodeRef.current) {
@@ -104,7 +104,7 @@ useEffect(() => {
       ...prev,
       [name]: value
     }));
-    setErrors(prev => ({ ...prev, [name]: '' })); 
+    setErrors(prev => ({ ...prev, [name]: '' }));
 
     if (name === 'email') {
       if (value === profileData?.email) {
@@ -170,7 +170,7 @@ useEffect(() => {
     try {
       await updateUserInfo(formData);
 
-      let newSysname = profileData?.stamp_sysname  || '';
+      let newSysname = profileData?.stamp_sysname || '';
 
       if (stampFile) {
         const uploadResp = await uploadStampFile(stampFile);
@@ -209,7 +209,7 @@ useEffect(() => {
     display: 'grid',
     gridTemplateColumns: '5.5rem 1fr',
     alignItems: 'center',
-    minHeight: '3.5rem', 
+    minHeight: '3.5rem',
     borderBottom: '1px solid #F1F5F9',
     boxSizing: 'border-box'
   };
@@ -313,7 +313,7 @@ useEffect(() => {
       </div>
 
       <div style={{ maxWidth: '800px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1, minHeight: 0 }}>
-        
+
         {/* 기본 인사 정보 (수정 불가) */}
         <div style={{ background: 'white', border: '1px solid #E2E8F0', borderRadius: '1.25rem', padding: '1.25rem', boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
           <h3 style={{ fontSize: '0.9rem', fontWeight: '800', color: '#0F172A', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -321,26 +321,26 @@ useEffect(() => {
           </h3>
           <div className="mypage-info-container" style={{ display: 'flex', gap: '1.5rem', alignItems: 'stretch' }}>
             <div style={{ flex: 1 }} className="info-grid">
-              <div style={{...infoRowStyle, height: '2.8rem'}} className="info-row"><span style={labelStyle} className="info-label">이름</span><span style={valueStyle} className="info-value">{profileData?.name}</span></div>
-              <div style={{...infoRowStyle, height: '2.8rem'}} className="info-row"><span style={labelStyle} className="info-label">아이디</span><span style={valueStyle} className="info-value">{profileData?.id}</span></div>
-              <div style={{...infoRowStyle, height: '2.8rem'}} className="info-row"><span style={labelStyle} className="info-label">사번</span><span style={valueStyle} className="info-value">{profileData?.users_seq}</span></div>
-              <div style={{...infoRowStyle, height: '2.8rem'}} className="info-row"><span style={labelStyle} className="info-label">부서</span><span style={valueStyle} className="info-value">{profileData?.dept_name}</span></div>
-              <div style={{...infoRowStyle, height: '2.8rem',border:'none'}} className="info-row"><span style={labelStyle} className="info-label">직급</span><span style={valueStyle} className="info-value">{profileData?.rank_name}</span></div>
-              <div style={{...infoRowStyle, height: '2.8rem',border:'none'}} className="info-row"><span style={labelStyle} className="info-label">입사일</span><span style={valueStyle} className="info-value">{profileData?.hire_date?.split(' ')[0]}</span></div>
+              <div style={{ ...infoRowStyle, height: '2.8rem' }} className="info-row"><span style={labelStyle} className="info-label">이름</span><span style={valueStyle} className="info-value">{profileData?.name}</span></div>
+              <div style={{ ...infoRowStyle, height: '2.8rem' }} className="info-row"><span style={labelStyle} className="info-label">아이디</span><span style={valueStyle} className="info-value">{profileData?.id}</span></div>
+              <div style={{ ...infoRowStyle, height: '2.8rem' }} className="info-row"><span style={labelStyle} className="info-label">사번</span><span style={valueStyle} className="info-value">{profileData?.users_seq}</span></div>
+              <div style={{ ...infoRowStyle, height: '2.8rem' }} className="info-row"><span style={labelStyle} className="info-label">부서</span><span style={valueStyle} className="info-value">{profileData?.dept_name}</span></div>
+              <div style={{ ...infoRowStyle, height: '2.8rem', border: 'none' }} className="info-row"><span style={labelStyle} className="info-label">직급</span><span style={valueStyle} className="info-value">{profileData?.rank_name}</span></div>
+              <div style={{ ...infoRowStyle, height: '2.8rem', border: 'none' }} className="info-row"><span style={labelStyle} className="info-label">입사일</span><span style={valueStyle} className="info-value">{profileData?.hire_date?.split(' ')[0]}</span></div>
             </div>
 
             {/* 결제용 도장 이미지 영역 */}
             <div className="stamp-container" style={{ width: '150px', borderLeft: '1px solid #F1F5F9', paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748B', marginBottom: '0.5rem' }}>결재용 도장</span>
-              <div 
-                style={{ 
-                  width: '90px', 
-                  height: '90px', 
-                  border: isEditing ? '2px dashed #CBD5E1' : '1px solid #E2E8F0', 
-                  borderRadius: '0.5rem', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
+              <div
+                style={{
+                  width: '90px',
+                  height: '90px',
+                  border: isEditing ? '2px dashed #CBD5E1' : '1px solid #E2E8F0',
+                  borderRadius: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   position: 'relative',
                   cursor: isEditing ? 'pointer' : 'default',
                   overflow: 'hidden',
@@ -365,24 +365,24 @@ useEffect(() => {
                   )
                 )}
               </div>
-              
+
               {isEditing && (
                 <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem' }}>
-                  <button 
-                    type="button" 
-                    onClick={() => fileInputRef.current.click()} 
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current.click()}
                     style={{ padding: '0.2rem 0.5rem', fontSize: '0.65rem', fontWeight: '700', color: '#3530B8', background: '#F0F4FF', border: 'none', borderRadius: '0.25rem', cursor: 'pointer' }}
                   >
                     변경
                   </button>
                 </div>
               )}
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleStampChange} 
-                accept="image/*" 
-                style={{ display: 'none' }} 
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleStampChange}
+                accept="image/*"
+                style={{ display: 'none' }}
               />
             </div>
           </div>
@@ -397,21 +397,21 @@ useEffect(() => {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-            <div style={{...infoRowStyle, minHeight: '2.8rem'}} className="info-row">
+            <div style={{ ...infoRowStyle, minHeight: '2.8rem' }} className="info-row">
               <label style={labelStyle} className="info-label">이메일</label>
               {isEditing ? (
-                 <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '0.25rem', padding: '0.5rem 0' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '0.25rem', padding: '0.5rem 0' }}>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <input 
-                      type="email" 
-                      name="email" 
-                      value={formData.email} 
-                      onChange={handleChange} 
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
                       placeholder="example@email.com"
-                      style={{...inputStyle, height: '2.2rem', flex: 1, border: (errors.email || errors.emailCheck) ? '1px solid #EF4444' : '1px solid #3530B8'}} 
+                      style={{ ...inputStyle, height: '2.2rem', flex: 1, border: (errors.email || errors.emailCheck) ? '1px solid #EF4444' : '1px solid #3530B8' }}
                     />
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={handleEmailDuplCheck}
                       style={{ padding: '0 0.8rem', background: '#3530B8', color: 'white', border: 'none', borderRadius: '0.4rem', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer', whiteSpace: 'nowrap' }}
                     >
@@ -428,20 +428,20 @@ useEffect(() => {
                 <span style={valueStyle} className="info-value">{profileData?.email || '-'}</span>
               )}
             </div>
-            <div style={{...infoRowStyle, minHeight: '2.8rem'}} className="info-row">
+            <div style={{ ...infoRowStyle, minHeight: '2.8rem' }} className="info-row">
               <label style={labelStyle} className="info-label">휴대전화</label>
               {isEditing ? (
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <input type="text" name="phone" value={formData.phone} onChange={handleChange} style={{...inputStyle, height: '2.2rem', border: errors.phone ? '1px solid #EF4444' : '1px solid #3530B8'}} />
-                    {errors.phone && <span style={{ fontSize: '0.7rem', color: '#EF4444', marginTop: '2px' }}>{errors.phone}</span>}
-                  </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <input type="text" name="phone" value={formData.phone} onChange={handleChange} style={{ ...inputStyle, height: '2.2rem', border: errors.phone ? '1px solid #EF4444' : '1px solid #3530B8' }} />
+                  {errors.phone && <span style={{ fontSize: '0.7rem', color: '#EF4444', marginTop: '2px' }}>{errors.phone}</span>}
+                </div>
               ) : (
                 <span style={valueStyle} className="info-value">{profileData?.phone || '-'}</span>
               )}
             </div>
 
             {/* 우편번호 */}
-            <div style={{...infoRowStyle, height: '2.8rem'}} className="info-row">
+            <div style={{ ...infoRowStyle, height: '2.8rem' }} className="info-row">
               <label style={labelStyle} className="info-label">우편번호</label>
               {isEditing ? (
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -454,7 +454,7 @@ useEffect(() => {
             </div>
 
             {/* 기본주소 */}
-            <div style={{...infoRowStyle, height: '2.8rem'}} className="info-row">
+            <div style={{ ...infoRowStyle, height: '2.8rem' }} className="info-row">
               <label style={labelStyle} className="info-label">기본주소</label>
               {isEditing ? (
                 <input type="text" name="address1" value={formData.address1} readOnly style={{ ...inputStyle, height: '2.2rem', background: '#F8FAFC', border: '1px solid #E2E8F0' }} />
@@ -464,17 +464,17 @@ useEffect(() => {
             </div>
 
             {/* 상세주소 */}
-            <div style={{...infoRowStyle, minHeight: '2.8rem'}} className="info-row">
+            <div style={{ ...infoRowStyle, minHeight: '2.8rem' }} className="info-row">
               <label style={labelStyle} className="info-label">상세주소</label>
               {isEditing ? (
                 <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-                  <input 
-                    type="text" 
-                    name="address2" 
-                    value={formData.address2} 
-                    onChange={handleChange} 
-                    style={{...inputStyle, height: '2.2rem', border: errors.address2 ? '1px solid #EF4444' : '1px solid #3530B8'}} 
-                    maxLength={20} 
+                  <input
+                    type="text"
+                    name="address2"
+                    value={formData.address2}
+                    onChange={handleChange}
+                    style={{ ...inputStyle, height: '2.2rem', border: errors.address2 ? '1px solid #EF4444' : '1px solid #3530B8' }}
+                    maxLength={20}
                   />
                   {errors.address2 && <span style={{ fontSize: '0.7rem', color: '#EF4444', marginTop: '2px' }}>{errors.address2}</span>}
                 </div>
@@ -483,8 +483,8 @@ useEffect(() => {
               )}
             </div>
           </div>
-            
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.25rem', paddingTop: '1rem',  }}>
+
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.25rem', paddingTop: '1rem', }}>
             {isEditing ? (
               <>
                 <button

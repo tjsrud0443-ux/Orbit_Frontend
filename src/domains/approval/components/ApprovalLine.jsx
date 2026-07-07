@@ -48,7 +48,7 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, onReorder, draft
               <div className="flex flex-col items-center">
                 <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
                   <img
-                    src={`https://api.sukong.shop/file/profile/view?sysname=${drafter.stamp_sysname}&token=${token}`}
+                    src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${drafter.stamp_sysname}&token=${token}`}
                     alt={drafter?.name || '기안'}
                     className="w-full h-full object-cover"
                   />
@@ -95,7 +95,7 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, onReorder, draft
                   <div className="flex flex-col items-center">
                     <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
                       <img
-                        src={`https://api.sukong.shop/file/profile/view?sysname=${approver.stamp_sysname}&token=${token}`}
+                        src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${approver.stamp_sysname}&token=${token}`}
                         alt={approver.name}
                         className="w-full h-full object-cover"
                       />
@@ -146,7 +146,7 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, onReorder, draft
                 <div className="flex items-center gap-2">
                   <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
                     <img
-                      src={`https://api.sukong.shop/file/profile/view?sysname=${drafter.stamp_sysname}&token=${token}`}
+                      src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${drafter.stamp_sysname}&token=${token}`}
                       alt={drafter?.name || '기안'}
                       className="w-full h-full object-cover"
                     />
@@ -184,7 +184,7 @@ const ApprovalLine = ({ approvers, isEditMode, onAdd, onRemove, onReorder, draft
                   <div className="flex items-center gap-2">
                     <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
                       <img
-                        src={`https://api.sukong.shop/file/profile/view?sysname=${approver.stamp_sysname}&token=${token}`}
+                        src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${approver.stamp_sysname}&token=${token}`}
                         alt={approver.name}
                         className="w-full h-full object-cover"
                       />

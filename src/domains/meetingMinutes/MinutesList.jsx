@@ -28,20 +28,20 @@ const ParticipantStack = ({ attendees = [] }) => {
             className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center shadow-sm overflow-hidden relative group"
             title={user.name}
           >
-          {user?.sysname && token ? (
-            <img
-              src={`https://api.sukong.shop/file/profile/view?sysname=${user.sysname}&token=${token}`}
-              alt={user?.name || "프로필"}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div
-              className="w-full h-full flex items-center justify-center text-[10px] md:text-[11px] font-bold text-white uppercase"
-              style={{ backgroundColor: user?.color || '#6366F1' }}
-            >
-              {user?.name ? user.name.slice(0, 1) : '?'}
-            </div>
-          )}
+            {user?.sysname && token ? (
+              <img
+                src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${user.sysname}&token=${token}`}
+                alt={user?.name || "프로필"}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div
+                className="w-full h-full flex items-center justify-center text-[10px] md:text-[11px] font-bold text-white uppercase"
+                style={{ backgroundColor: user?.color || '#6366F1' }}
+              >
+                {user?.name ? user.name.slice(0, 1) : '?'}
+              </div>
+            )}
           </div>
         ))}
         {remainingCount > 0 && (
@@ -78,7 +78,7 @@ const MinutesList = () => {
   const hostDropdownRef = useRef(null);
   const [hostDropdownPos, setHostDropdownPos] = useState({ top: 0, left: 0, width: 0 });
   const { allEmployees, fetchEmployees } = useEmployeeStore();
-  
+
   const updateHostDropdownPos = useCallback(() => {
     if (hostInputRef.current) {
       const rect = hostInputRef.current.getBoundingClientRect();
@@ -113,12 +113,12 @@ const MinutesList = () => {
 
   const filteredHostEmployees = (allEmployees || []).filter(emp => {
     if (!hostQuery.trim()) return true;
-        const name = emp?.name || '';
-        const deptName = emp?.deptName || emp?.dept_name || '';
-        const rankName = emp?.rankName || emp?.rank_name || '';
-        const q = hostQuery.toLowerCase();
-        return name.toLowerCase().includes(q) || deptName.toLowerCase().includes(q) || rankName.toLowerCase().includes(q);
-      });
+    const name = emp?.name || '';
+    const deptName = emp?.deptName || emp?.dept_name || '';
+    const rankName = emp?.rankName || emp?.rank_name || '';
+    const q = hostQuery.toLowerCase();
+    return name.toLowerCase().includes(q) || deptName.toLowerCase().includes(q) || rankName.toLowerCase().includes(q);
+  });
 
   // 주최자 드롭다운 렌더 (작성용)
   const renderHostDropdown = (onSelect) => {
@@ -185,14 +185,14 @@ const MinutesList = () => {
   // 수정 핸들러
   const handleToggleEdit = () => {
     setIsEditing(true);
-    setErrors(prev => ({...prev, time_order: false}));
-  
+    setErrors(prev => ({ ...prev, time_order: false }));
+
     setEditMinutes({
       ...activeDetail,
       start_time: formatTime(activeDetail.start_time),
       end_time: formatTime(activeDetail.end_time),
       // host 객체: attendees에서 host_users_id 매칭해서 세팅
-      hostObj: 
+      hostObj:
         (activeDetail.attendees || []).find(a => a.users_id === activeDetail.host_users_id) ||
         (allEmployees || []).find(emp => emp.id === activeDetail.host_users_id) ||
         null,
@@ -229,8 +229,8 @@ const MinutesList = () => {
       todos: editMinutes.todos,
       host_users_id: editMinutes.hostObj?.id,
       attendees: editMinutes.attendees
-      .filter(emp => (emp.users_id || emp.id) !== (editMinutes.hostObj?.id || editMinutes.hostObj?.users_id))
-      .map(emp => ({ users_id: emp.users_id || emp.id }))
+        .filter(emp => (emp.users_id || emp.id) !== (editMinutes.hostObj?.id || editMinutes.hostObj?.users_id))
+        .map(emp => ({ users_id: emp.users_id || emp.id }))
     };
 
     showLoading();
@@ -288,8 +288,8 @@ const MinutesList = () => {
   const fetchMinutesList = () => {
     showLoading();
     getMinutesList().then((resp) => {
-    setMinutesList(resp.data);
-    hideLoading();
+      setMinutesList(resp.data);
+      hideLoading();
     }).catch((error) => {
       hideLoading();
       console.error('회의록 목록 조회 실패:', error);
@@ -343,15 +343,15 @@ const MinutesList = () => {
       });
       setNewMinutes(prev => ({
         ...prev,
-      main_content: prev.main_content 
-        ? prev.main_content + '\n\n' + (res.data.transcript || '')
-        : res.data.transcript || '',
-      decisions: prev.decisions
-        ? prev.decisions + '\n\n' + (res.data.decisions || '')
-        : res.data.decisions || '',
-      todos: prev.todos
-        ? prev.todos + '\n\n' + (res.data.todos || '')
-        : res.data.todos || '',
+        main_content: prev.main_content
+          ? prev.main_content + '\n\n' + (res.data.transcript || '')
+          : res.data.transcript || '',
+        decisions: prev.decisions
+          ? prev.decisions + '\n\n' + (res.data.decisions || '')
+          : res.data.decisions || '',
+        todos: prev.todos
+          ? prev.todos + '\n\n' + (res.data.todos || '')
+          : res.data.todos || '',
         // main_content: res.data.transcript || '',
         // decisions: res.data.decisions || '',   
         // todos: res.data.todos || '',          
@@ -392,7 +392,7 @@ const MinutesList = () => {
       main_content: newMinutes.main_content,
       decisions: newMinutes.decisions,
       todos: newMinutes.todos,
-      host_users_id: newMinutes.hostObj?.id, 
+      host_users_id: newMinutes.hostObj?.id,
       attendees: newMinutes.attendees
         .filter(emp => (emp.users_id || emp.id) !== newMinutes.hostObj?.id)
         .map(emp => ({ users_id: emp.id }))
@@ -436,7 +436,7 @@ const MinutesList = () => {
     const authorId = newMinutes.users_id || editMinutes?.users_id || user?.id;
     if (emp.id === hostId) return false;
     if (emp.id === authorId) return false;
-    if (emp.id === user?.id) return false; 
+    if (emp.id === user?.id) return false;
 
     if (!searchQuery.trim()) return true;
 
@@ -504,12 +504,12 @@ const MinutesList = () => {
             <div key={emp.users_seq || emp.id}
               onClick={() => {
                 const empId = emp.users_id || emp.id;
-                const isDuplicate = editMinutes.attendees.some(a => 
+                const isDuplicate = editMinutes.attendees.some(a =>
                   (a.users_id || a.id) === empId || (a.id || a.users_id) === empId
                 );
                 if (!isDuplicate) {
-                  setEditMinutes({...editMinutes, attendees: [...editMinutes.attendees, emp]});
-                  setErrors(prev => ({...prev, attendees: false}));
+                  setEditMinutes({ ...editMinutes, attendees: [...editMinutes.attendees, emp] });
+                  setErrors(prev => ({ ...prev, attendees: false }));
                 } else { alertWarning('중복 입력', '이미 추가된 참석자입니다.'); }
                 setSearchQuery('');
                 setShowResults(false);
@@ -562,9 +562,9 @@ const MinutesList = () => {
   };
 
   const handleClosePanel = () => {
-    setActiveId(null); 
-    setActiveDetail(null); 
-    setIsCreating(false); 
+    setActiveId(null);
+    setActiveDetail(null);
+    setIsCreating(false);
     setIsEditing(false);
     setEditMinutes(null);
     setHostInAttendeesWarning(false);
@@ -664,7 +664,7 @@ const MinutesList = () => {
                       <div className="md:col-span-5 flex items-center gap-2 min-w-0">
                         <span className={`text-sm font-bold group-hover:text-indigo-600 transition-colors ${activeId === item.minute_seq ? 'text-indigo-600' : 'text-gray-700'} truncate`}>{item.title}</span>
                         {item.badgeType === 'author_host' && (
-                        <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">주최자</span>
+                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">주최자</span>
                         )}
                         {item.badgeType === 'host' && (
                           <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">주최자</span>
@@ -687,7 +687,7 @@ const MinutesList = () => {
                   <div className="py-20 text-center text-gray-400 text-sm font-bold">회의록이 없습니다.</div>
                 )}
               </div>
-            </div>       
+            </div>
           </div>
 
           <div className="border-t border-gray-50 bg-white py-2 shrink-0">
@@ -711,7 +711,7 @@ const MinutesList = () => {
                     <div className="space-y-1">
                       <input type="text" value={editMinutes.title}
                         maxLength={60}
-                        onChange={(e) => setEditMinutes({...editMinutes, title: e.target.value})}
+                        onChange={(e) => setEditMinutes({ ...editMinutes, title: e.target.value })}
                         className="w-full text-xl md:text-2xl font-bold text-indigo-950 border border-gray-300 rounded-xl p-3 focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-300 transition-all" />
                       <div className="flex justify-end px-1">
                         <span className={`text-[10px] font-bold ${editMinutes.title.length >= 60 ? 'text-red-400' : 'text-gray-300'}`}>{editMinutes.title.length}/60</span>
@@ -719,7 +719,7 @@ const MinutesList = () => {
                     </div>
                     <div className="flex flex-col md:flex-row gap-2">
                       <div className="relative flex-1 md:w-auto">
-                        <button 
+                        <button
                           onClick={() => setIsEditCalendarOpen(!isEditCalendarOpen)}
                           className={`w-full border rounded-xl p-2.5 text-sm text-left font-bold transition-all flex justify-between items-center ${errors.meeting_dt ? 'border-red-400 ring-4 ring-red-100 text-red-400' : 'border-gray-300 text-gray-700 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-300'}`}
                         >
@@ -727,32 +727,32 @@ const MinutesList = () => {
                         </button>
                         {isEditCalendarOpen && (
                           <div ref={editCalendarRef} className="absolute top-full left-0 w-full z-40 [&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-1 [&>div]:mb-0">
-                            <Calendar 
+                            <Calendar
                               value={editMinutes.meeting_dt}
-                              onChange={(date) => { setEditMinutes({...editMinutes, meeting_dt: date}); setErrors(prev => ({...prev, meeting_dt: false})); }}
-                              onClose={() => setIsEditCalendarOpen(false)} 
+                              onChange={(date) => { setEditMinutes({ ...editMinutes, meeting_dt: date }); setErrors(prev => ({ ...prev, meeting_dt: false })); }}
+                              onClose={() => setIsEditCalendarOpen(false)}
                             />
                           </div>
                         )}
                       </div>
                       <div className="flex flex-col gap-1">
                         <div className="flex gap-2">
-                           <TimePicker
-                              value={editMinutes.start_time}
-                              hasError={errors.time_order}
-                              onChange={(val) => {
-                                setEditMinutes({...editMinutes, start_time: val});
-                                setErrors(prev => ({...prev, time_order: false}));
-                              }}
-                            />
-                            <TimePicker
-                              value={editMinutes.end_time}
-                              hasError={errors.time_order}
-                              onChange={(val) => {
-                                setEditMinutes({...editMinutes, end_time: val});
-                                setErrors(prev => ({...prev, time_order: false}));
-                              }}
-                            />
+                          <TimePicker
+                            value={editMinutes.start_time}
+                            hasError={errors.time_order}
+                            onChange={(val) => {
+                              setEditMinutes({ ...editMinutes, start_time: val });
+                              setErrors(prev => ({ ...prev, time_order: false }));
+                            }}
+                          />
+                          <TimePicker
+                            value={editMinutes.end_time}
+                            hasError={errors.time_order}
+                            onChange={(val) => {
+                              setEditMinutes({ ...editMinutes, end_time: val });
+                              setErrors(prev => ({ ...prev, time_order: false }));
+                            }}
+                          />
                         </div>
                       </div>
                     </div>
@@ -796,7 +796,7 @@ const MinutesList = () => {
                             <div className="flex flex-col items-center gap-1.5">
                               <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm border-2 border-white overflow-hidden bg-slate-100">
                                 {author.sysname && author.sysname !== 'system' && token ? (
-                                  <img src={`https://api.sukong.shop/file/profile/view?sysname=${author.sysname}&token=${token}`} alt={author.name} className="w-full h-full object-cover" />
+                                  <img src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${author.sysname}&token=${token}`} alt={author.name} className="w-full h-full object-cover" />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: author.color || '#6366F1' }}>
                                     {author.name ? author.name.slice(0, 1) : '?'}
@@ -821,7 +821,7 @@ const MinutesList = () => {
                               {editMinutes.hostObj ? (
                                 <div className="flex items-center gap-1.5 bg-white border border-indigo-100 px-2.5 py-1 rounded-full text-[11px] font-bold text-indigo-700 shadow-sm">
                                   <span>{editMinutes.hostObj.name}</span>
-                                  <button onClick={() => {setEditMinutes({...editMinutes, hostObj: null}); setHostInAttendeesWarning(false);}} className="text-indigo-300 hover:text-indigo-500 transition-colors">✕</button>
+                                  <button onClick={() => { setEditMinutes({ ...editMinutes, hostObj: null }); setHostInAttendeesWarning(false); }} className="text-indigo-300 hover:text-indigo-500 transition-colors">✕</button>
                                 </div>
                               ) : (
                                 <input
@@ -844,8 +844,8 @@ const MinutesList = () => {
                               a => (a.users_id || a.id) === empId
                             );
                             setHostInAttendeesWarning(isAlreadyAttendee);
-                            setEditMinutes({...editMinutes, hostObj: emp});
-                            setErrors(prev => ({...prev, host: false}));
+                            setEditMinutes({ ...editMinutes, hostObj: emp });
+                            setErrors(prev => ({ ...prev, host: false }));
                             setHostQuery('');
                             setShowHostResults(false);
                           })}
@@ -853,13 +853,13 @@ const MinutesList = () => {
                       ) : (
                         <div className="flex items-center gap-3">
                           {activeDetail.host_users_id ? (() => {
-                            const hostPerson =  (activeDetail.attendees || []).find(a => a.users_id === activeDetail.host_users_id) ||
-                                                (allEmployees || []).find(emp => emp.id === activeDetail.host_users_id);
+                            const hostPerson = (activeDetail.attendees || []).find(a => a.users_id === activeDetail.host_users_id) ||
+                              (allEmployees || []).find(emp => emp.id === activeDetail.host_users_id);
                             return hostPerson ? (
                               <div className="flex flex-col items-center gap-1.5">
                                 <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm border-2 border-white overflow-hidden bg-slate-100">
-                                  {hostPerson.sysname  && hostPerson.sysname !== 'system' && token ? (
-                                     <img src={`https://api.sukong.shop/file/profile/view?sysname=${hostPerson.sysname}&token=${token}`} alt={hostPerson.name} className="w-full h-full object-cover" />
+                                  {hostPerson.sysname && hostPerson.sysname !== 'system' && token ? (
+                                    <img src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${hostPerson.sysname}&token=${token}`} alt={hostPerson.name} className="w-full h-full object-cover" />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: hostPerson.color || '#6366F1' }}>
                                       {hostPerson.name ? hostPerson.name.slice(0, 1) : '?'}
@@ -885,7 +885,7 @@ const MinutesList = () => {
                             {editMinutes.attendees.map((emp, idx) => (
                               <div key={idx} className="flex items-center gap-1.5 bg-white border border-indigo-100 px-2.5 py-1 rounded-full text-[11px] font-bold text-indigo-700 shadow-sm">
                                 <span>{emp.name}</span>
-                                <button onClick={() => setEditMinutes({...editMinutes, attendees: editMinutes.attendees.filter((_, i) => i !== idx)})} className="text-indigo-300 hover:text-indigo-500 transition-colors">✕</button>
+                                <button onClick={() => setEditMinutes({ ...editMinutes, attendees: editMinutes.attendees.filter((_, i) => i !== idx) })} className="text-indigo-300 hover:text-indigo-500 transition-colors">✕</button>
                               </div>
                             ))}
                             <input ref={attendeeInputRef} type="text" placeholder={editMinutes.attendees.length === 0 ? "검색" : ""}
@@ -905,7 +905,7 @@ const MinutesList = () => {
                           <div key={i} className="flex flex-col items-center gap-1.5">
                             <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm border-2 border-white overflow-hidden bg-slate-100">
                               {a.sysname && token ? (
-                                <img src={`https://api.sukong.shop/file/profile/view?sysname=${a.sysname}&token=${token}`} alt={a.name} className="w-full h-full object-cover" />
+                                <img src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${a.sysname}&token=${token}`} alt={a.name} className="w-full h-full object-cover" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: a.color || '#6366F1' }}>
                                   {a.name ? a.name.slice(0, 1) : '?'}
@@ -931,7 +931,7 @@ const MinutesList = () => {
                       <>
                         <textarea rows="5" value={editMinutes.main_content}
                           maxLength={2000}
-                          onChange={(e) => { setEditMinutes({...editMinutes, main_content: e.target.value}); if(e.target.value) setErrors(prev => ({...prev, main_content: false})); }}
+                          onChange={(e) => { setEditMinutes({ ...editMinutes, main_content: e.target.value }); if (e.target.value) setErrors(prev => ({ ...prev, main_content: false })); }}
                           className={`w-full px-4 py-3 bg-white border rounded-2xl text-sm text-gray-900 resize-none focus:outline-none focus:ring-4 transition-all custom-scrollbar ${errors.main_content ? 'border-red-400 ring-4 ring-red-100' : 'border-gray-300 focus:ring-indigo-100 focus:border-indigo-300'}`} />
                         <div className="flex justify-end mt-1">
                           <span className={`text-[10px] font-bold ${editMinutes.main_content.length >= 2000 ? 'text-red-400' : 'text-gray-300'}`}>{editMinutes.main_content.length}/2000</span>
@@ -948,9 +948,9 @@ const MinutesList = () => {
                     <h4 className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-4">결정 사항</h4>
                     {isEditing ? (
                       <>
-                        <textarea rows="3" value={editMinutes.decisions} 
+                        <textarea rows="3" value={editMinutes.decisions}
                           maxLength={1000}
-                          onChange={(e) => setEditMinutes({...editMinutes, decisions: e.target.value})}
+                          onChange={(e) => setEditMinutes({ ...editMinutes, decisions: e.target.value })}
                           className="w-full px-4 py-3 bg-white border border-gray-300 rounded-2xl text-sm text-gray-900 resize-none focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-300 transition-all custom-scrollbar" />
                         <div className="flex justify-end mt-1">
                           <span className={`text-[10px] font-bold ${(editMinutes.decisions?.length || 0) >= 1000 ? 'text-red-400' : 'text-gray-300'}`}>{editMinutes.decisions?.length || 0}/1000</span>
@@ -966,9 +966,9 @@ const MinutesList = () => {
                     <h4 className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-4">할 일</h4>
                     {isEditing ? (
                       <>
-                        <textarea rows="3" value={editMinutes.todos} 
+                        <textarea rows="3" value={editMinutes.todos}
                           maxLength={300}
-                          onChange={(e) => setEditMinutes({...editMinutes, todos: e.target.value})}
+                          onChange={(e) => setEditMinutes({ ...editMinutes, todos: e.target.value })}
                           className="w-full px-4 py-3 bg-white border border-gray-300 rounded-2xl text-sm text-gray-900 resize-none focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-300 transition-all custom-scrollbar" />
                         <div className="flex justify-end mt-1">
                           <span className={`text-[10px] font-bold ${(editMinutes.todos?.length || 0) >= 300 ? 'text-red-400' : 'text-gray-300'}`}>{editMinutes.todos?.length || 0}/300</span>
@@ -1037,7 +1037,7 @@ const MinutesList = () => {
                     <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">회의 제목</label>
                     <input type="text" placeholder="회의 제목을 입력하세요" value={newMinutes.title}
                       maxLength={60}
-                      onChange={(e) => { setNewMinutes({...newMinutes, title: e.target.value}); if(e.target.value) setErrors(prev => ({...prev, title: false})); }}
+                      onChange={(e) => { setNewMinutes({ ...newMinutes, title: e.target.value }); if (e.target.value) setErrors(prev => ({ ...prev, title: false })); }}
                       className={`w-full px-4 py-3 bg-white border rounded-2xl text-sm focus:outline-none focus:ring-4 transition-all font-bold text-gray-700 ${errors.title ? 'border-red-400 ring-4 ring-red-100' : 'border-gray-300 focus:ring-indigo-100'}`} />
                     <div className="flex justify-end mt-1">
                       <span className={`text-[10px] font-bold ${newMinutes.title.length >= 60 ? 'text-red-400' : 'text-gray-300'}`}>{newMinutes.title.length}/60</span>
@@ -1057,33 +1057,33 @@ const MinutesList = () => {
                       {isCalendarOpen && (
                         <div ref={calendarRef} className="absolute top-full left-0 w-full z-40 [&>div]:top-0 [&>div]:bottom-auto [&>div]:mt-1 [&>div]:mb-0">
                           <Calendar value={newMinutes.meeting_dt}
-                            onChange={(date) => { setNewMinutes({...newMinutes, meeting_dt: date}); setErrors(prev => ({...prev, meeting_dt: false})); }}
+                            onChange={(date) => { setNewMinutes({ ...newMinutes, meeting_dt: date }); setErrors(prev => ({ ...prev, meeting_dt: false })); }}
                             onClose={() => setIsCalendarOpen(false)} />
                         </div>
                       )}
                     </div>
                     <div>
-                      <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">시작 시간</label> 
+                      <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">시작 시간</label>
                       <TimePicker
                         value={newMinutes.start_time}
                         hasError={errors.start_time || errors.time_order}
                         onChange={(val) => {
-                          setNewMinutes({...newMinutes, start_time: val});
-                          setErrors(prev => ({...prev, start_time: false, time_order: false}));
+                          setNewMinutes({ ...newMinutes, start_time: val });
+                          setErrors(prev => ({ ...prev, start_time: false, time_order: false }));
                         }}
                       />
                       {errors.start_time && <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">시작 시간을 입력해주세요.</p>}
                     </div>
                     <div>
                       <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">종료 시간</label>
-                        <TimePicker
-                          value={newMinutes.end_time}
-                          hasError={errors.end_time || errors.time_order}
-                          onChange={(val) => {
-                            setNewMinutes({...newMinutes, end_time: val});
-                            setErrors(prev => ({...prev, end_time: false, time_order: false}));
-                          }}
-                        />
+                      <TimePicker
+                        value={newMinutes.end_time}
+                        hasError={errors.end_time || errors.time_order}
+                        onChange={(val) => {
+                          setNewMinutes({ ...newMinutes, end_time: val });
+                          setErrors(prev => ({ ...prev, end_time: false, time_order: false }));
+                        }}
+                      />
                       {errors.end_time && <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">종료 시간을 입력해주세요.</p>}
                       {errors.time_order && <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1 whitespace-pre-wrap">{"종료 시간은 시작 시간보다 \n이후여야 합니다."}</p>}
                     </div>
@@ -1099,7 +1099,7 @@ const MinutesList = () => {
                           {newMinutes.hostObj ? (
                             <div className="flex items-center gap-1.5 bg-white border border-indigo-100 px-2.5 py-1 rounded-full text-[11px] font-bold text-indigo-700 shadow-sm">
                               <span>{newMinutes.hostObj.name}</span>
-                              <button onClick={() => setNewMinutes({...newMinutes, hostObj: null, host_users_id: ''})} className="text-indigo-300 hover:text-indigo-500 transition-colors">✕</button>
+                              <button onClick={() => setNewMinutes({ ...newMinutes, hostObj: null, host_users_id: '' })} className="text-indigo-300 hover:text-indigo-500 transition-colors">✕</button>
                             </div>
                           ) : (
                             <input
@@ -1117,8 +1117,8 @@ const MinutesList = () => {
                       </div>
                       {errors.host && <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">필수 선택</p>}
                       {renderHostDropdown((emp) => {
-                        setNewMinutes({...newMinutes, hostObj: emp, host_users_id: emp.id});
-                        setErrors(prev => ({...prev, host: false}));
+                        setNewMinutes({ ...newMinutes, hostObj: emp, host_users_id: emp.id });
+                        setErrors(prev => ({ ...prev, host: false }));
                         setHostQuery('');
                         setShowHostResults(false);
                       })}
@@ -1202,7 +1202,7 @@ const MinutesList = () => {
                     <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">주요 내용</label>
                     <textarea rows="5" placeholder="회의 내용을 상세히 입력하세요" value={newMinutes.main_content}
                       maxLength={2000}
-                      onChange={(e) => { setNewMinutes({...newMinutes, main_content: e.target.value}); if(e.target.value) setErrors(prev => ({...prev, main_content: false})); }}
+                      onChange={(e) => { setNewMinutes({ ...newMinutes, main_content: e.target.value }); if (e.target.value) setErrors(prev => ({ ...prev, main_content: false })); }}
                       className={`w-full px-4 py-3 bg-white border rounded-2xl text-sm focus:outline-none focus:ring-4 transition-all font-medium text-gray-700 resize-none custom-scrollbar ${errors.main_content ? 'border-red-400 ring-4 ring-red-100' : 'border-gray-300 focus:ring-indigo-100'}`} />
                     <div className="flex justify-end mt-1">
                       <span className={`text-[10px] font-bold ${newMinutes.main_content.length >= 2000 ? 'text-red-400' : 'text-gray-300'}`}>{newMinutes.main_content.length}/2000</span>
@@ -1215,7 +1215,7 @@ const MinutesList = () => {
                     <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">결정 사항</label>
                     <textarea rows="3" placeholder="주요 결정 사항을 입력하세요" value={newMinutes.decisions}
                       maxLength={1000}
-                      onChange={(e) => setNewMinutes({...newMinutes, decisions: e.target.value})}
+                      onChange={(e) => setNewMinutes({ ...newMinutes, decisions: e.target.value })}
                       className="w-full px-4 py-3 bg-white border border-gray-300 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all font-bold text-gray-600 resize-none custom-scrollbar" />
                     <div className="flex justify-end mt-1">
                       <span className={`text-[10px] font-bold ${(newMinutes.decisions?.length || 0) >= 1000 ? 'text-red-400' : 'text-gray-300'}`}>{newMinutes.decisions?.length || 0}/1000</span>
@@ -1227,7 +1227,7 @@ const MinutesList = () => {
                     <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">할 일</label>
                     <textarea rows="3" placeholder="후속 조치 사항을 입력하세요" value={newMinutes.todos}
                       maxLength={300}
-                      onChange={(e) => setNewMinutes({...newMinutes, todos: e.target.value})}
+                      onChange={(e) => setNewMinutes({ ...newMinutes, todos: e.target.value })}
                       className="w-full px-4 py-3 bg-white border border-gray-300 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all font-medium text-gray-600 resize-none custom-scrollbar" />
                     <div className="flex justify-end mt-1">
                       <span className={`text-[10px] font-bold ${(newMinutes.todos?.length || 0) >= 300 ? 'text-red-400' : 'text-gray-300'}`}>{newMinutes.todos?.length || 0}/300</span>

@@ -65,7 +65,7 @@ const DocumentsList = () => {
   const toggleFavorite = async (document_seq) => {
     const isFavorite = favorites.has(document_seq);
 
-    try{
+    try {
       if (isFavorite) {
         await removeFavorite(document_seq);
 
@@ -83,7 +83,7 @@ const DocumentsList = () => {
           return newFavorites;
         });
       }
-    } catch (err){
+    } catch (err) {
       console.error("즐겨찾기 실패:", err);
       await alertError('오류 발생', '즐겨찾기 중 오류가 발생했습니다.');
     }
@@ -107,11 +107,10 @@ const DocumentsList = () => {
                 setActiveTab(tab);
                 setCurrentPage(1);
               }}
-              className={`px-6 py-2 text-[0.6875rem] md:text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${
-                activeTab === tab 
-                  ? 'bg-[#3530B8] text-white shadow-md' 
+              className={`px-6 py-2 text-[0.6875rem] md:text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${activeTab === tab
+                  ? 'bg-[#3530B8] text-white shadow-md'
                   : 'text-gray-500 hover:text-[#3530B8] hover:bg-[#F0F4FF]'
-              }`}
+                }`}
             >
               {tab}
             </button>
@@ -119,13 +118,13 @@ const DocumentsList = () => {
         </div>
 
         <div className="relative group w-full md:w-72 flex-shrink-0">
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="문서 제목으로 검색"
             value={searchKeyword}
             onChange={(e) => {
-                setSearchKeyword(e.target.value);
-                setCurrentPage(1);
+              setSearchKeyword(e.target.value);
+              setCurrentPage(1);
             }}
             className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl 
             focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-sm text-gray-700 shadow-sm"/>
@@ -161,9 +160,9 @@ const DocumentsList = () => {
                 displayedDocs.map((doc) => (
                   <tr key={doc.document_seq}>
                     <td className="py-4 text-center">
-                      <a 
-                        href={`https://api.sukong.shop/file/download/${doc.file_sysname}?token=${token}`} 
-                        download 
+                      <a
+                        href={`${import.meta.env.VITE_API_BASE_URL}/file/download/${doc.file_sysname}?token=${token}`}
+                        download
                         className="inline-block p-2 border border-[#3530B8]/30 rounded-lg hover:bg-[#F0F4FF] transition-all group"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#3530B8]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -180,10 +179,10 @@ const DocumentsList = () => {
                       {doc.name}
                     </td>
                     <td className="py-4 text-[0.6875rem] text-slate-400 font-mono whitespace-nowrap">
-                      {doc.created_at?.substring(0,10)}
+                      {doc.created_at?.substring(0, 10)}
                     </td>
                     <td className="py-4 text-center whitespace-nowrap">
-                      <button 
+                      <button
                         onClick={() => toggleFavorite(doc.document_seq)}
                         className="p-1 hover:scale-110 transition-transform"
                       >
@@ -212,10 +211,10 @@ const DocumentsList = () => {
             onChange={handlePageChange}
           />
           <div className="hidden md:block">
-            <Pagination 
-              count={totalPages} 
-              page={currentPage} 
-              onChange={handlePageChange} 
+            <Pagination
+              count={totalPages}
+              page={currentPage}
+              onChange={handlePageChange}
             />
           </div>
         </div>
@@ -230,8 +229,9 @@ const DocumentsList = () => {
           />
         )}
       </div>
-      
-      <style dangerouslySetInnerHTML={{ __html: `
+
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }

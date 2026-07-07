@@ -29,11 +29,11 @@ const ApprovalLineStack = ({ line }) => {
           >
             <div className="w-full h-full bg-indigo-50 flex items-center justify-center text-[10px] md:text-[11px] font-bold text-indigo-600 uppercase">
               {
-                lineUser?.sysname && 
-                  <img src={`https://api.sukong.shop/file/profile/view?sysname=${lineUser?.sysname}&token=${token}`}
-                    alt={lineUser?.name}
-                    className="w-full h-full object-cover"
-                  />
+                lineUser?.sysname &&
+                <img src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${lineUser?.sysname}&token=${token}`}
+                  alt={lineUser?.name}
+                  className="w-full h-full object-cover"
+                />
               }
             </div>
           </div>
@@ -316,8 +316,8 @@ const ApprovalCc = () => {
                       key={type}
                       onClick={() => {
                         setSelectedType(type);
-                        setApprovedPage(1); 
-                        setRejectedPage(1); 
+                        setApprovedPage(1);
+                        setRejectedPage(1);
                         setIsTypeOpen(false);
                       }}
                       className="px-3 py-1.5 text-xs text-slate-400 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
@@ -336,7 +336,7 @@ const ApprovalCc = () => {
                 type="text"
                 placeholder="문서 제목 검색..."
                 value={searchTerm}
-                onChange={(e) => {setSearchTerm(e.target.value); setApprovedPage(1); setRejectedPage(1); }}
+                onChange={(e) => { setSearchTerm(e.target.value); setApprovedPage(1); setRejectedPage(1); }}
                 className="w-full pl-9 pr-3 py-1.5 text-xs border-none focus:ring-0 placeholder:text-slate-400 outline-none bg-transparent"
               />
             </div>
@@ -379,7 +379,8 @@ const ApprovalCc = () => {
           />
         </div>
       </div>
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }

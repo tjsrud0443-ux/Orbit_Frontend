@@ -13,32 +13,32 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 
 const MyPage = () => {
-  const token = useAuthStore(state=>state.token);
+  const token = useAuthStore(state => state.token);
   const user = useUserStore(state => state.user);
 
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [activeTab, setActiveTab] = useState('비품');
   const [dayModal, setDayModal] = useState({ open: false, date: '', schedules: [] });
-  const [profileData,setProfileData]=useState();
+  const [profileData, setProfileData] = useState();
   const [supplyRequests, setSupplyRequests] = useState([]);
   const [roomReservations, setRoomReservations] = useState([]);
   const [adminInquiries, setAdminInquiries] = useState([]);
 
   const tabs = ['비품', '회의실', '관리자 문의'];
   const { calendarEvents, loading, handleDateClick, handleEventClick } = usePersonalCalendar(setDayModal);
-  
+
   const requestData = {
     '비품': supplyRequests.slice(0, 4).map(req => ({
       title: req.items?.[0]?.supply_name
-               ? req.items[0].supply_name.length > 14
-                 ? req.items[0].supply_name.slice(0, 14) + '…'
-                 : req.items[0].supply_name
-               : '품목 없음',
+        ? req.items[0].supply_name.length > 14
+          ? req.items[0].supply_name.slice(0, 14) + '…'
+          : req.items[0].supply_name
+        : '품목 없음',
       date: req.req_date,
       status: req.status === 'APPROVED' ? '승인'
-            : req.status === 'PENDING'  ? '대기'
-            : '반려',
+        : req.status === 'PENDING' ? '대기'
+          : '반려',
     })),
     '회의실': roomReservations.slice(0, 4).map(res => ({
       title: res.title,
@@ -58,9 +58,9 @@ const MyPage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(()=>{
-    getProfileInfo().then(resp=> setProfileData(resp.data))
-    .catch(err=>console.log("내정보 불러오기 실패",err));
+  useEffect(() => {
+    getProfileInfo().then(resp => setProfileData(resp.data))
+      .catch(err => console.log("내정보 불러오기 실패", err));
 
     getMySupplyRequest()
       .then(resp => setSupplyRequests(resp.data))
@@ -73,7 +73,7 @@ const MyPage = () => {
     getMyQuestions()
       .then(resp => setAdminInquiries(resp.data))
       .catch(err => console.log("관리자 문의 내역 불러오기 실패", err));
-  },[]);
+  }, []);
 
 
   const statusStyle = (status) => {
@@ -91,16 +91,16 @@ const MyPage = () => {
   });
 
   useEffect(() => {
-  getCntMonth()
-    .then(resp => setMonthSummary(prev => ({
-       ...prev, 
-          lateCnt: resp.data.late_cnt ?? 0,
-          workDays: resp.data.work_days ?? 0,
-          totalHours: resp.data.total_hours ?? 0,
-          usedLeave: resp.data.vac_cnt ?? 0
+    getCntMonth()
+      .then(resp => setMonthSummary(prev => ({
+        ...prev,
+        lateCnt: resp.data.late_cnt ?? 0,
+        workDays: resp.data.work_days ?? 0,
+        totalHours: resp.data.total_hours ?? 0,
+        usedLeave: resp.data.vac_cnt ?? 0
       })))
-    .catch(err => console.log(err));
-}, []);
+      .catch(err => console.log(err));
+  }, []);
 
   const attendanceSummary = [
     { label: '근무일수', value: `${monthSummary.workDays}일` },
@@ -113,42 +113,43 @@ const MyPage = () => {
     workDays: 0,
     lateCnt: 0,
     usedLeave: 0,
-    overtimeHours:0
+    overtimeHours: 0
   });
 
   useEffect(() => {
-  getCntWeek().then(resp =>{ 
-      setWeekSummary(prev => ({       
-       ...prev, 
-      lateCnt: resp.data.late_cnt ?? 0,
-      workDays: resp.data.work_days ?? 0,
-      overtimeHours: resp.data.overtime_hours ?? 0,
-      usedLeave: resp.data.vac_cnt ?? 0
-      }))})
-    .catch(err => console.log(err));
-}, []);
+    getCntWeek().then(resp => {
+      setWeekSummary(prev => ({
+        ...prev,
+        lateCnt: resp.data.late_cnt ?? 0,
+        workDays: resp.data.work_days ?? 0,
+        overtimeHours: resp.data.overtime_hours ?? 0,
+        usedLeave: resp.data.vac_cnt ?? 0
+      }))
+    })
+      .catch(err => console.log(err));
+  }, []);
 
-const weeklyAttendance = [
-  { label: '근무일수', value: `${weekSummary.workDays}일`, text: '#0bbf4d', bg: '#f0fdf4', border: '#c9fcda' },
-  { label: '지각', value: `${weekSummary.lateCnt}회`, text: '#ef4444', bg: '#fef2f2', border: '#fee2e2' },
-  { label: '연차', value: `${weekSummary.usedLeave}일`, text: '#f59e0b', bg: '#fffbeb', border: '#fef3c7' },
-  { label: '연장근무', value: `${weekSummary.overtimeHours}시간`, text: '#3b82f6', bg: '#eff6ff', border: '#dbeafe' },
-];
-  const [leaveData, setLeaveData] = useState({total_days: 0, used_days: 0, remaining_days: 0 });
+  const weeklyAttendance = [
+    { label: '근무일수', value: `${weekSummary.workDays}일`, text: '#0bbf4d', bg: '#f0fdf4', border: '#c9fcda' },
+    { label: '지각', value: `${weekSummary.lateCnt}회`, text: '#ef4444', bg: '#fef2f2', border: '#fee2e2' },
+    { label: '연차', value: `${weekSummary.usedLeave}일`, text: '#f59e0b', bg: '#fffbeb', border: '#fef3c7' },
+    { label: '연장근무', value: `${weekSummary.overtimeHours}시간`, text: '#3b82f6', bg: '#eff6ff', border: '#dbeafe' },
+  ];
+  const [leaveData, setLeaveData] = useState({ total_days: 0, used_days: 0, remaining_days: 0 });
 
-  useEffect(()=>{
-    getAnuualSummary().then(resp=>{
+  useEffect(() => {
+    getAnuualSummary().then(resp => {
       setLeaveData(resp.data)
-    }).catch(err=>console.log("연차 불러오기 실패",err));
-  },[]);
-  
+    }).catch(err => console.log("연차 불러오기 실패", err));
+  }, []);
+
   const donutData = {
     labels: ['잔여', '사용'],
     datasets: [{
       data: [leaveData.remaining_days, leaveData.used_days],
       backgroundColor: ['#d9d9fe', '#3F51B5'],
       borderWidth: 1,
-      borderColor: [ '#d9d9fe','#3F51B5',],
+      borderColor: ['#d9d9fe', '#3F51B5',],
     }]// '#757de8', leaveData.total_days,
   };
 
@@ -177,10 +178,10 @@ const weeklyAttendance = [
 
       {/* 메인 2열 그리드 레이아웃 */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-        
+
         {/* 왼쪽 컬럼: (내 정보 + 연차 현황) + 개인 캘린더 */}
         <div className="lg:col-span-7 flex flex-col gap-4">
-          
+
           {/* 상단: 내 정보와 연차 현황 가로 배치 (모바일 세로) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* 내 정보 */}
@@ -189,12 +190,12 @@ const weeklyAttendance = [
               <div className="flex items-center gap-4 mb-4 flex-1">
                 <div className="w-14 h-14 rounded-full bg-slate-50 border-2 border-slate-100 overflow-hidden shrink-0">
                   {user?.sysname && token ? (
-                  <img
-                    src={`https://api.sukong.shop/file/profile/view?sysname=${user?.sysname}&token=${token}`}
-                    alt={profileData?.name}
-                    className="w-full h-full object-cover"
-                  />
-                  ):(
+                    <img
+                      src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${user?.sysname}&token=${token}`}
+                      alt={profileData?.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
                     <div className="w-full h-full flex items-center justify-center text-xl font-bold text-[#3530B8]">${profileData?.name?.charAt(0)}</div>
                   )}
                 </div>
@@ -225,7 +226,7 @@ const weeklyAttendance = [
             <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm flex flex-col min-h-[12rem]">
               <h3 className="text-[0.8rem] font-extrabold text-slate-900 mb-3">연차 현황</h3>
               <div className="flex flex-col sm:flex-row items-center gap-4 flex-1">
-               <div className="relative w-32 h-32 shrink-0">
+                <div className="relative w-32 h-32 shrink-0">
                   <Doughnut
                     data={donutData}
                     options={{
@@ -241,11 +242,11 @@ const weeklyAttendance = [
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 w-full sm:w-auto">
-                  {[  
+                  {[
                     // { label: '연차', value: `${leaveData.total_days}일`, color:  '#7b83ee'},
-                    { label: '잔여', value: `${leaveData.remaining_days}일`, color:'#d9d9fe'},
-                    { label: '사용', value: `${leaveData.used_days}일`, color: '#3F51B5'},
-                    
+                    { label: '잔여', value: `${leaveData.remaining_days}일`, color: '#d9d9fe' },
+                    { label: '사용', value: `${leaveData.used_days}일`, color: '#3F51B5' },
+
                   ].map(({ label, value, color }) => (
                     <div key={label} className="flex items-center justify-between sm:justify-start gap-2">
                       <div className="flex items-center gap-2">
@@ -265,8 +266,8 @@ const weeklyAttendance = [
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-[0.8rem] font-extrabold text-slate-900">개인 캘린더</h3>
               <button onClick={() => navigate('/calendar')} className="text-[0.65rem] text-slate-400 font-bold hover:text-[#3530B8]">상세보기 →</button>
-            </div>          
-             <style>{`
+            </div>
+            <style>{`
                   .main-calendar .fc-theme-standard td,
                   .main-calendar .fc-theme-standard th { border-color: #F1F5F9 !important; }
                   .main-calendar .fc-theme-standard .fc-scrollgrid { border-color: #F1F5F9 !important; }
@@ -298,22 +299,22 @@ const weeklyAttendance = [
                     white-space: nowrap !important;
                   }
                 `}</style>
-                <div className="h-[27rem] overflow-hidden main-calendar">          
-                  <FullCalendar
-                    plugins={[dayGridPlugin, interactionPlugin]}
-                    initialView="dayGridMonth"
-                    locale="ko"
-                    headerToolbar={{ left: '', center: 'title', right: '' }}
-                    height="100%"      
-                    moreLinkContent={(args) => isMobile ? `+${args.num}` : `+${args.num} more`}     
-                    dayMaxEvents={1}
-                    fixedWeekCount={false}//당 월 만큼 줄 조절
-                    moreLinkClick="day" 
-                    events={calendarEvents}
-                    dateClick={handleDateClick}
-                    eventClick={handleEventClick}
-                  />
-                </div>
+            <div className="h-[27rem] overflow-hidden main-calendar">
+              <FullCalendar
+                plugins={[dayGridPlugin, interactionPlugin]}
+                initialView="dayGridMonth"
+                locale="ko"
+                headerToolbar={{ left: '', center: 'title', right: '' }}
+                height="100%"
+                moreLinkContent={(args) => isMobile ? `+${args.num}` : `+${args.num} more`}
+                dayMaxEvents={1}
+                fixedWeekCount={false}//당 월 만큼 줄 조절
+                moreLinkClick="day"
+                events={calendarEvents}
+                dateClick={handleDateClick}
+                eventClick={handleEventClick}
+              />
+            </div>
           </div>
         </div>
 
@@ -336,7 +337,7 @@ const weeklyAttendance = [
           <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm flex-1 min-h-[20rem]">
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-[0.8rem] font-extrabold text-slate-900">신청 내역</h3>
-              <button 
+              <button
                 onClick={() => {
                   if (activeTab === '관리자 문의') navigate('/qnaHistory');
                   if (activeTab === '회의실') navigate('/roomHistory');
@@ -368,8 +369,8 @@ const weeklyAttendance = [
                     <p className="text-[0.65rem] text-slate-400 font-semibold">{item.date}</p>
                   </div>
                   {item.status && (
-                    <span 
-                      className="text-[0.65rem] font-extrabold px-2.5 py-1 rounded-lg shrink-0" 
+                    <span
+                      className="text-[0.65rem] font-extrabold px-2.5 py-1 rounded-lg shrink-0"
                       style={activeTab === '회의실' ? { background: '#F0F4FF', color: '#3530B8', border: '1px solid #DDE8FF' } : statusStyle(item.status)}
                     >
                       {item.status}
@@ -395,7 +396,7 @@ const weeklyAttendance = [
           </div>
         </div>
       </div>
-       {dayModal.open && (
+      {dayModal.open && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}
           onClick={() => setDayModal({ open: false, date: '', schedules: [] })}>
           <div style={{ background: 'white', borderRadius: '1.25rem', padding: '1.25rem', width: '20rem', boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }}
@@ -405,23 +406,23 @@ const weeklyAttendance = [
               <button onClick={() => setDayModal({ open: false, date: '', schedules: [] })} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}>✕</button>
             </div>
             <div style={{ maxHeight: '40vh', overflowY: 'auto', paddingRight: '0.25rem' }} className="custom-scrollbar">
-            {dayModal.schedules.length > 0 ? dayModal.schedules.map((s, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem', background: '#F8FAFC', borderRadius: '0.75rem', marginBottom: '0.4rem' }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: s.color || '#3530B8', flexShrink: 0 }} />
-                <div>
-                  <span style={{ fontSize: '0.78rem', fontWeight: '600', color: '#1E293B' }}>{s.title}</span>
-                  {/* 시간 정보가 포함되어 있다면(HH:mm:ss 등) 모두 표시 */}
-                  {s.schedule_type === 'MEETING' && s.start?.includes(':') && (
-                    <p style={{ fontSize: '0.65rem', color: '#94A3B8', marginTop: '2px' }}>
-                      {(s.start.includes(' ') ? s.start.split(' ')[1] : s.start.split('T')[1])?.slice(0, 5)} ~ 
-                      {(s.originalEnd?.includes(' ') ? s.originalEnd.split(' ')[1] : s.originalEnd?.split('T')[1])?.slice(0, 5)}
-                    </p>
-                  )}
+              {dayModal.schedules.length > 0 ? dayModal.schedules.map((s, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem', background: '#F8FAFC', borderRadius: '0.75rem', marginBottom: '0.4rem' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: s.color || '#3530B8', flexShrink: 0 }} />
+                  <div>
+                    <span style={{ fontSize: '0.78rem', fontWeight: '600', color: '#1E293B' }}>{s.title}</span>
+                    {/* 시간 정보가 포함되어 있다면(HH:mm:ss 등) 모두 표시 */}
+                    {s.schedule_type === 'MEETING' && s.start?.includes(':') && (
+                      <p style={{ fontSize: '0.65rem', color: '#94A3B8', marginTop: '2px' }}>
+                        {(s.start.includes(' ') ? s.start.split(' ')[1] : s.start.split('T')[1])?.slice(0, 5)} ~
+                        {(s.originalEnd?.includes(' ') ? s.originalEnd.split(' ')[1] : s.originalEnd?.split('T')[1])?.slice(0, 5)}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )) : (
-              <p style={{ fontSize: '0.75rem', color: '#94A3B8', textAlign: 'center', padding: '1rem 0' }}>일정이 없습니다.</p>
-            )}
+              )) : (
+                <p style={{ fontSize: '0.75rem', color: '#94A3B8', textAlign: 'center', padding: '1rem 0' }}>일정이 없습니다.</p>
+              )}
             </div>
             {/* 스크롤바 스타일 정의 */}
             <style>{`

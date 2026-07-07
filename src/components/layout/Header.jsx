@@ -232,7 +232,7 @@ const Header = ({ onMenuClick }) => {
             group-hover:ring-2 group-hover:ring-[#DDE8FF]">
             {
               user?.sysname && <img
-                src={`https://api.sukong.shop/file/profile/view?sysname=${user?.sysname}&token=${token}`}
+                src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${user?.sysname}&token=${token}`}
                 alt={user?.name}
                 className="w-full h-full object-cover"
               />

@@ -82,9 +82,9 @@ const RoomHistory = () => {
     getAllMyMeetRsvn().then(resp => {
       setReservations(resp.data);
     }).catch(err => console.error("목록 로드 실패:", err))
-    .finally(() => {
-      hideLoading();
-    })
+      .finally(() => {
+        hideLoading();
+      })
   };
 
   useEffect(() => {
@@ -98,7 +98,7 @@ const RoomHistory = () => {
   }, []);
 
   useEffect(() => {
-    if(!editForm.room_seq || !editForm.date) return;
+    if (!editForm.room_seq || !editForm.date) return;
 
     getOccupiedTimes(editForm.room_seq, editForm.date, editingReservation?.rsvn_seq).then(resp => {
       setOccupiedTimes(resp.data);
@@ -252,11 +252,11 @@ const RoomHistory = () => {
 
   useEffect(() => {
     if (showSearchResults || showRoomDropdown || showStartTimeDropdown || showEndTimeDropdown) {
-      const currentRef = showSearchResults ? inputRef : 
-                         showRoomDropdown ? roomRef : 
-                         showStartTimeDropdown ? startTimeRef : 
-                         endTimeRef;
-      
+      const currentRef = showSearchResults ? inputRef :
+        showRoomDropdown ? roomRef :
+          showStartTimeDropdown ? startTimeRef :
+            endTimeRef;
+
       const update = () => {
         if (currentRef.current) {
           const rect = currentRef.current.getBoundingClientRect();
@@ -309,18 +309,18 @@ const RoomHistory = () => {
     return createPortal(
       <>
         <div className="fixed inset-0 z-[9998]" onClick={() => setShowSearchResults(false)} />
-        <div 
+        <div
           className="fixed z-[9999] bg-white border border-gray-100 rounded-xl shadow-2xl max-h-[10.55rem] overflow-y-auto custom-scrollbar"
-          style={{ 
-            top: `${dropdownPos.top + 1}px`, 
-            left: `${dropdownPos.left}px`, 
-            width: `${dropdownPos.width}px` 
+          style={{
+            top: `${dropdownPos.top + 1}px`,
+            left: `${dropdownPos.left}px`,
+            width: `${dropdownPos.width}px`
           }}
         >
           {filteredEmployees.length > 0 ? (
             filteredEmployees.map(emp => (
-              <div 
-                key={emp.users_seq} 
+              <div
+                key={emp.users_seq}
                 onClick={() => handleAddAttendee(emp)}
                 className="p-3 hover:bg-[#F0F4FF] cursor-pointer flex justify-between items-center border-b border-gray-50 last:border-0"
               >
@@ -362,9 +362,9 @@ const RoomHistory = () => {
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             {reservations.length > 0 ? (
               reservations.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((res) => (
-                <div 
+                <div
                   key={res.rsvn_seq}
-                  onClick={() => {handleSelectReservation(res); setSelectedReservation(res);}}
+                  onClick={() => { handleSelectReservation(res); setSelectedReservation(res); }}
                   className={`flex md:grid md:grid-cols-[1fr_1.8fr_1.2fr_1.2fr_0.8fr] px-4 md:px-6 py-4 items-center border-b border-gray-50/50 hover:bg-[#F8FAFF] transition-colors cursor-pointer ${editingReservation?.rsvn_seq === res.rsvn_seq || selectedReservation?.rsvn_seq === res.rsvn_seq ? 'bg-[#F0F4FF]' : ''}`}
                 >
                   {/* Mobile & PC Info */}
@@ -382,13 +382,13 @@ const RoomHistory = () => {
                   <div className="flex-shrink-0 flex justify-center gap-2">
                     {new Date(res.start_dt) > new Date() ? (
                       <>
-                        <button 
+                        <button
                           onClick={(e) => { e.stopPropagation(); handleEditClick(res); }}
                           className="px-2.5 py-1.5 text-[0.625rem] md:text-xs font-bold text-[#3530B8] bg-[#F0F4FF] rounded-lg hover:bg-[#3530B8] hover:text-white transition-all"
                         >
                           수정
                         </button>
-                        <button 
+                        <button
                           onClick={(e) => { e.stopPropagation(); handleCancelReservation(res.rsvn_seq); }}
                           className="px-2.5 py-1.5 text-[0.625rem] md:text-xs font-bold text-red-500 bg-red-50 rounded-lg hover:bg-red-500 hover:text-white transition-all"
                         >
@@ -432,7 +432,7 @@ const RoomHistory = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1.5 ml-1">회의실 선택</label>
-                  <div 
+                  <div
                     ref={roomRef}
                     onClick={() => setShowRoomDropdown(!showRoomDropdown)}
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-medium cursor-pointer flex justify-between items-center"
@@ -443,12 +443,12 @@ const RoomHistory = () => {
                   {showRoomDropdown && createPortal(
                     <>
                       <div className="fixed inset-0 z-[9998]" onClick={() => setShowRoomDropdown(false)} />
-                      <div 
+                      <div
                         className="fixed z-[9999] bg-white border border-gray-100 rounded-xl shadow-2xl max-h-48 overflow-y-auto custom-scrollbar"
                         style={{ top: `${dropdownPos.top + 4}px`, left: `${dropdownPos.left}px`, width: `${dropdownPos.width}px` }}
                       >
                         {meetingRooms.map(room => (
-                          <div 
+                          <div
                             key={room.room_seq}
                             onClick={() => {
                               setEditForm({ ...editForm, room_seq: room.room_seq, room_name: room.room_name });
@@ -467,8 +467,8 @@ const RoomHistory = () => {
 
                 <div>
                   <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1.5 ml-1">회의명</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     className={`w-full px-4 py-2.5 bg-gray-50 border ${titleError || editForm.title.length > 20 ? 'border-red-500' : 'border-gray-100'} rounded-xl text-xs font-medium focus:outline-none focus:border-[#3530B8] transition-all`}
                     value={editForm.title}
                     onChange={(e) => {
@@ -487,7 +487,7 @@ const RoomHistory = () => {
               <div className="space-y-4">
                 <div className="relative" ref={calendarRef}>
                   <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1.5 ml-1">예약일</label>
-                  <div 
+                  <div
                     ref={calendarTriggerRef}
                     onClick={() => {
                       if (!showCalendar && calendarTriggerRef.current) {
@@ -505,10 +505,10 @@ const RoomHistory = () => {
                     <div
                       ref={calendarRef}
                       className="fixed z-[9999]"
-                      style={{ top: `${calendarPos.top}px`, left: `${calendarPos.left}px`, width:`${calendarPos.width}px`}}
+                      style={{ top: `${calendarPos.top}px`, left: `${calendarPos.left}px`, width: `${calendarPos.width}px` }}
                     >
-                      <Calendar 
-                        value={editForm.date} 
+                      <Calendar
+                        value={editForm.date}
                         onChange={(date) => {
                           if (isBefore(parse(date, 'yyyy-MM-dd', new Date()), startOfDay(new Date()))) {
                             alertWarning('예약 불가', '오늘 이전 날짜는 선택할 수 없습니다.');
@@ -516,8 +516,8 @@ const RoomHistory = () => {
                           }
                           setEditForm({ ...editForm, date });
                           setShowCalendar(false);
-                        }} 
-                        onClose={() => setShowCalendar(false)} 
+                        }}
+                        onClose={() => setShowCalendar(false)}
                       />
                     </div>,
                     document.body
@@ -527,7 +527,7 @@ const RoomHistory = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1.5 ml-1">시작 시간</label>
-                    <div 
+                    <div
                       ref={startTimeRef}
                       onClick={() => setShowStartTimeDropdown(!showStartTimeDropdown)}
                       className={`w-full px-4 py-2.5 bg-gray-50 border ${isTimeInvalid || (timeError && (isStartOccupied(editForm.startTime) || isPastTime(editForm.startTime, editForm.date))) ? 'border-red-500' : 'border-gray-100'} rounded-xl text-xs font-medium cursor-pointer flex justify-between items-center`}
@@ -538,7 +538,7 @@ const RoomHistory = () => {
                     {showStartTimeDropdown && createPortal(
                       <>
                         <div className="fixed inset-0 z-[9998]" onClick={() => setShowStartTimeDropdown(false)} />
-                        <div 
+                        <div
                           className="fixed z-[9999] bg-white border border-gray-100 rounded-xl shadow-2xl max-h-48 overflow-y-auto custom-scrollbar"
                           style={{ top: `${dropdownPos.top + 4}px`, left: `${dropdownPos.left}px`, width: `${dropdownPos.width}px` }}
                         >
@@ -547,8 +547,8 @@ const RoomHistory = () => {
                             const isPast = isPastTime(time, editForm.date);
                             const isDisabled = isOccupied || isPast;
                             return (
-                              <div 
-                                key={time} 
+                              <div
+                                key={time}
                                 onClick={() => {
                                   if (isDisabled) return;
                                   setEditForm({ ...editForm, startTime: time });
@@ -572,7 +572,7 @@ const RoomHistory = () => {
                   </div>
                   <div>
                     <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1.5 ml-1">종료 시간</label>
-                    <div 
+                    <div
                       ref={endTimeRef}
                       onClick={() => setShowEndTimeDropdown(!showEndTimeDropdown)}
                       className={`w-full px-4 py-2.5 bg-gray-50 border ${isTimeInvalid || (timeError && (isEndOccupied(editForm.endTime) || isPastTime(editForm.endTime, editForm.date))) ? 'border-red-500' : 'border-gray-100'} rounded-xl text-xs font-medium cursor-pointer flex justify-between items-center`}
@@ -583,7 +583,7 @@ const RoomHistory = () => {
                     {showEndTimeDropdown && createPortal(
                       <>
                         <div className="fixed inset-0 z-[9998]" onClick={() => setShowEndTimeDropdown(false)} />
-                        <div 
+                        <div
                           className="fixed z-[9999] bg-white border border-gray-100 rounded-xl shadow-2xl max-h-48 overflow-y-auto custom-scrollbar"
                           style={{ top: `${dropdownPos.top + 4}px`, left: `${dropdownPos.left}px`, width: `${dropdownPos.width}px` }}
                         >
@@ -592,8 +592,8 @@ const RoomHistory = () => {
                             const isPast = isPastTime(time, editForm.date);
                             const isDisabled = isOccupied || isPast;
                             return (
-                              <div 
-                                key={time} 
+                              <div
+                                key={time}
                                 onClick={() => {
                                   if (isDisabled) return;
                                   setEditForm({ ...editForm, endTime: time });
@@ -624,9 +624,9 @@ const RoomHistory = () => {
               <div className="space-y-4">
                 <h3 className="text-xs font-bold text-gray-400 uppercase ml-1">참석자 설정</h3>
                 <div className="relative">
-                  <input 
+                  <input
                     ref={inputRef}
-                    type="text" 
+                    type="text"
                     placeholder="이름/부서로 검색"
                     className={`w-full px-4 py-2.5 bg-white border ${editForm.attendees.length > (meetingRooms.find(r => r.room_seq === editForm.room_seq)?.max_people || 0) ? 'border-red-500' : 'border-gray-200'} rounded-xl text-xs font-medium outline-none focus:border-[#3530B8] transition-all`}
                     value={searchQuery}
@@ -653,13 +653,13 @@ const RoomHistory = () => {
             </div>
 
             <div className="p-6 border-t border-gray-50 flex gap-3 flex-shrink-0 bg-white">
-              <button 
+              <button
                 onClick={() => { setEditingReservation(null); setTitleError(false); }}
                 className="flex-1 py-4 border-2 border-gray-100 text-gray-400 text-sm font-bold rounded-2xl hover:bg-gray-50 transition-all text-center"
               >
                 취소
               </button>
-              <button 
+              <button
                 onClick={handleUpdateSubmit}
                 className="flex-[2] py-4 bg-[#3530B8] text-white text-sm font-bold rounded-2xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all text-center"
               >
@@ -703,9 +703,9 @@ const RoomHistory = () => {
                     <div key={idx} className="flex flex-col items-center gap-1">
                       <div className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white border-2 border-gray-50 shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0">
                         {attendee.sysname ? (
-                          <img 
-                            src={`https://api.sukong.shop/file/profile/view?sysname=${attendee.sysname}&token=${token}`} 
-                            className="w-full h-full object-cover" 
+                          <img
+                            src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${attendee.sysname}&token=${token}`}
+                            className="w-full h-full object-cover"
                             alt="Profile"
                           />
                         ) : (
@@ -722,7 +722,8 @@ const RoomHistory = () => {
         )}
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .custom-scrollbar::-webkit-scrollbar { width: 0.25rem; }

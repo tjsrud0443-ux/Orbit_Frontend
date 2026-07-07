@@ -209,7 +209,7 @@ const GeneralForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveCl
                     </svg>
                     {file.sysname ? (
                       <a
-                        href={`https://api.sukong.shop/file/download/${file.sysname}?token=${token}`}
+                        href={`${import.meta.env.VITE_API_BASE_URL}/file/download/${file.sysname}?token=${token}`}
                         download
                         className="hover:underline"
                       >

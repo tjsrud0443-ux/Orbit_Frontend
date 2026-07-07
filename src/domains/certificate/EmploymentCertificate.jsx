@@ -121,7 +121,7 @@ const EmploymentCertificate = ({ purpose, onBack }) => {
             {company?.officialmarkSysname && (
               <div className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none watermark-container">
                 <img
-                  src={`https://api.sukong.shop/file/profile/view?sysname=${company.officialmarkSysname}&token=${token}`}
+                  src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${company.officialmarkSysname}&token=${token}`}
                   alt="watermark"
                   className="w-[80%] h-[80%] object-contain"
                   style={{ opacity: 0.6, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
@@ -187,7 +187,7 @@ const EmploymentCertificate = ({ purpose, onBack }) => {
                   <div className="w-[110px] h-[110px] flex items-center justify-center absolute right-[-130px]">
                     {company?.officialsealSysname ? (
                       <img
-                        src={`https://api.sukong.shop/file/profile/view?sysname=${company.officialsealSysname}&token=${token}`}
+                        src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${company.officialsealSysname}&token=${token}`}
                         style={{ width: "110px", height: "110px", objectFit: "contain", WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
                         alt="직인"
                       />

@@ -17,7 +17,7 @@ const BoardDetail = () => {
   const { user } = useUserStore();
 
   const { showLoading, hideLoading } = useLoadingStore();
-  
+
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [commentInput, setCommentInput] = useState("");
@@ -38,7 +38,7 @@ const BoardDetail = () => {
     }
   };
 
-  useEffect(() => {        
+  useEffect(() => {
     if (hasFetched.current) return;
     hasFetched.current = true;
 
@@ -49,19 +49,19 @@ const BoardDetail = () => {
         setComments(resp.data.comments);
       }
     })
-    .catch(err => {
-      console.error('게시글 상세 조회 실패:', err);
-      alertError('오류 발생', '게시글 로드 중 오류가 발생했습니다.');
-      navigate('/board');
-    })
-    .finally(() => {
-      hideLoading();
-    });
+      .catch(err => {
+        console.error('게시글 상세 조회 실패:', err);
+        alertError('오류 발생', '게시글 로드 중 오류가 발생했습니다.');
+        navigate('/board');
+      })
+      .finally(() => {
+        hideLoading();
+      });
   }, [seq, navigate, showLoading, hideLoading]);
 
   const handleCommentSubmit = () => {
     if (!commentInput.trim()) return;
-    
+
     insertComment(seq, commentInput).then(() => {
       setCommentInput('');
       getPostDetail(seq).then(resp => {
@@ -122,14 +122,14 @@ const BoardDetail = () => {
 
   const handleDownload = (fileSeq, fileName) => {
     downFiles(fileSeq).then(response => {
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', fileName);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-      })
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    })
       .catch(err => {
         console.error('파일 다운로드 실패:', err);
         alertError('오류 발생', '다운로드 중 오류가 발생했습니다.');
@@ -138,7 +138,7 @@ const BoardDetail = () => {
 
   if (!post) return null;
 
-  const isAuthor = 
+  const isAuthor =
     (!!user?.id && !!post?.users_id && String(user.id) === String(post.users_id)) ||
     (!!user?.users_seq && !!post?.users_seq && String(user.users_seq) === String(post.users_seq)) ||
     (!!user?.emp_seq && !!post?.emp_seq && String(user.emp_seq) === String(post.emp_seq));
@@ -146,7 +146,7 @@ const BoardDetail = () => {
   return (
     <div className="w-full h-auto lg:h-full flex flex-col p-6 md:p-8 lg:px-10 bg-white font-sans items-center">
       <div className="w-full h-[90vh] max-w-7xl bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
-        
+
         {/* 카드 헤더 */}
         <div className="flex items-center justify-between px-6 md:px-8 py-5 border-b border-gray-50 bg-gray-50/30">
           <div className="flex items-center gap-3">
@@ -180,7 +180,7 @@ const BoardDetail = () => {
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-indigo-100 overflow-hidden flex items-center justify-center text-indigo-600 font-bold text-xs">
                     {post.author_sysname ? (
-                      <img src={`https://api.sukong.shop/file/profile/view?sysname=${post.author_sysname}&token=${token}`} alt={post.author_name} className="w-full h-full object-cover" />
+                      <img src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${post.author_sysname}&token=${token}`} alt={post.author_name} className="w-full h-full object-cover" />
                     ) : (
                       post.author_name?.charAt(0)
                     )}
@@ -196,10 +196,12 @@ const BoardDetail = () => {
             </div>
 
             {/* 본문 */}
-            <div className="post-content min-h-[300px] text-sm md:text-base" 
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(
-                post.content.replace(/http:\/\/localhost/g, 'https://api.sukong.shop')
-              )}} />
+            <div className="post-content min-h-[300px] text-sm md:text-base"
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(
+                  post.content.replace(/http:\/\/localhost/g, 'import.meta.env.VITE_API_BASE_URL')
+                )
+              }} />
 
             {/* 첨부파일 */}
             {post.files && post.files.length > 0 && (
@@ -231,7 +233,7 @@ const BoardDetail = () => {
                     <div key={comment.comment_seq} className="flex gap-4">
                       <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden shrink-0 border border-gray-100">
                         {comment.author_sysname ? (
-                          <img src={`https://api.sukong.shop/file/profile/view?sysname=${comment.author_sysname}&token=${token}`} alt={comment.author_name} className="w-full h-full object-cover" />
+                          <img src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${comment.author_sysname}&token=${token}`} alt={comment.author_name} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold text-sm bg-gray-50">{comment.author_name?.charAt(0)}</div>
                         )}
@@ -246,10 +248,10 @@ const BoardDetail = () => {
                         <div className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
                           {editingCommentSeq === comment.comment_seq ? (
                             <div className="flex flex-col gap-2">
-                              <textarea 
-                                value={editingContent} 
-                                onChange={(e) => { if ([...e.target.value].length <= 900) setEditingContent(e.target.value); }} 
-                                className="w-full border border-indigo-200 rounded-xl p-3 text-sm text-gray-700 resize-none focus:outline-none outline-none focus:ring-2 focus:ring-indigo-200 min-h-[80px]" 
+                              <textarea
+                                value={editingContent}
+                                onChange={(e) => { if ([...e.target.value].length <= 900) setEditingContent(e.target.value); }}
+                                className="w-full border border-indigo-200 rounded-xl p-3 text-sm text-gray-700 resize-none focus:outline-none outline-none focus:ring-2 focus:ring-indigo-200 min-h-[80px]"
                               />
                               <div className="flex items-center justify-between">
                                 <span className="text-[11px] text-gray-400">{[...editingContent].length} / 900</span>
@@ -284,7 +286,7 @@ const BoardDetail = () => {
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-8 h-8 rounded-full bg-white overflow-hidden shrink-0 border border-slate-200 shadow-sm">
                     {user?.sysname ? (
-                      <img src={`https://api.sukong.shop/file/profile/view?sysname=${user.sysname}&token=${token}`} alt={user.name} className="w-full h-full object-cover" />
+                      <img src={`${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${user.sysname}&token=${token}`} alt={user.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-indigo-600 font-bold text-sm bg-indigo-50">{user?.name?.charAt(0)}</div>
                     )}
@@ -292,13 +294,13 @@ const BoardDetail = () => {
                   <span className="text-xs font-bold text-gray-700">{user?.name}</span>
                 </div>
                 <div className="bg-white rounded-2xl border transition-all overflow-hidden border-slate-200">
-                  <textarea 
-                    onFocus={() => setIsFocused(true)} 
-                    onBlur={() => setIsFocused(false)} 
-                    placeholder="댓글을 남겨주세요." 
-                    className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-sm text-gray-700 p-4 min-h-[120px] resize-none" 
-                    value={commentInput} 
-                    onChange={(e) => { if ([...e.target.value].length <= 900) setCommentInput(e.target.value); }} 
+                  <textarea
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                    placeholder="댓글을 남겨주세요."
+                    className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-sm text-gray-700 p-4 min-h-[120px] resize-none"
+                    value={commentInput}
+                    onChange={(e) => { if ([...e.target.value].length <= 900) setCommentInput(e.target.value); }}
                   />
                 </div>
                 <div className="flex justify-between items-center mt-3">
@@ -308,16 +310,16 @@ const BoardDetail = () => {
               </div>
             </div>
           </div>
-          
+
           {/* 맨 위로 버튼 */}
           <button onClick={() => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })} className="absolute bottom-6 right-6 md:bottom-8 md:right-8 w-10 h-10 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition-all flex items-center justify-center z-50">
-            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7"/></svg>
+            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>
           </button>
         </div>
 
         {/* 하단 버튼 */}
         <div className="px-4 md:px-8 py-4 md:py-5 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between gap-2 md:gap-3">
-          <button onClick={() => navigate('/board',{ state: { page: location.state?.page } })} className="px-4 md:px-8 py-2.5 md:py-3 bg-white border border-gray-200 text-gray-500 text-xs md:text-sm font-bold rounded-xl md:rounded-2xl hover:bg-[#F0F4FF] hover:text-indigo-600 transition-all shadow-sm">목록</button>
+          <button onClick={() => navigate('/board', { state: { page: location.state?.page } })} className="px-4 md:px-8 py-2.5 md:py-3 bg-white border border-gray-200 text-gray-500 text-xs md:text-sm font-bold rounded-xl md:rounded-2xl hover:bg-[#F0F4FF] hover:text-indigo-600 transition-all shadow-sm">목록</button>
           <div className="flex items-center gap-2 md:gap-3">
             {isAuthor && (
               <>
