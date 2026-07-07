@@ -50,12 +50,22 @@ jobs:
         shell: pwsh
         run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$env:RUNNER_TEMP/firebase-key.json"
 
-      - name: Debug service account file
+      - name: Compare project id
         shell: pwsh
+        env:
+          EXPECTED_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
         run: |
           $json = Get-Content "$env:RUNNER_TEMP/firebase-key.json" -Raw | ConvertFrom-Json
-          Write-Host "서비스 계정 파일 안의 project_id: $($json.project_id)"
-          Write-Host "서비스 계정 이메일: $($json.client_email)"
+          $actual = $json.project_id
+
+          Write-Host "서비스 계정 파일 project_id 길이: $($actual.Length)"
+          Write-Host "secret으로 등록된 project_id 길이: $($env:EXPECTED_PROJECT_ID.Length)"
+
+          if ($actual -eq $env:EXPECTED_PROJECT_ID) {
+            Write-Host "✅ 일치합니다"
+          } else {
+            Write-Host "❌ 불일치합니다 - 서비스 계정 키와 FIREBASE_PROJECT_ID secret이 다른 프로젝트를 가리키고 있어요"
+          }
 
       - name: Deploy to Firebase (production)
         env:
