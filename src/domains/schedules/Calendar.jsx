@@ -118,7 +118,7 @@ const COMPANY_CATEGORIES = ['COMPANY', 'TEAM', 'holiday', 'ANNIVERSARY'];
 const Calendar = () => {
   const calendarStore = useCalendarStore();
   const user = useUserStore(state => state.user);
-  const isHrAdmin = user?.auth_group === 'ROLE_HR_ADMIN';
+  const isHrAdmin = user?.auth_group === 'ROLE_HR_ADMIN' || user?.auth_group === 'ROLE_SUPER_ADMIN';
 
   const calendarRef = useRef(null);
   // 화면이 모바일인지 여부 (캘린더 height 분기용)
@@ -901,7 +901,7 @@ if (isEditing) {
               {form.title.length}/66
             </p>
           </div>
-          {activeTab === 'company' && isHrAdmin ? (
+          {activeTab === 'company' && isHrAdmin && form.schedule_type !== 'PERSONAL' ? (
             <div className="relative mb-3 z-20">
               <div
                 onClick={() => setIsPermissionOpen(!isPermissionOpen)}
@@ -914,7 +914,7 @@ if (isEditing) {
               </div>
               {isPermissionOpen && (
                 <div className="absolute top-full left-0 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                  {COMPANY_FILTERS.filter(f => f.key !== 'holiday').map(f => (
+                  {COMPANY_FILTERS.filter(f => f.key !== 'holiday' && f.key !== 'PERSONAL').map(f => (
                     <div
                       key={f.key}
                       onClick={() => { setForm(prev => ({ ...prev, schedule_type: f.key })); setIsPermissionOpen(false); }}
