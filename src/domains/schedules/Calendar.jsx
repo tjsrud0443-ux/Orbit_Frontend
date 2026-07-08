@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -110,7 +110,7 @@ const COMPANY_FILTERS = [
   { key: 'TEAM', label: '부서/팀 일정', color: '#0EA5E9' },
   { key: 'holiday', label: '공휴일', color: '#EF4444' },
   { key: 'ANNIVERSARY', label: '기념일', color: '#EC4899' },
-  { key: 'PERSONAL',  label: '내 일정', color: '#3530B8' },
+  { key: 'PERSONAL',  label: '공유된 개인 일정', color: '#3530B8' },
 ];
 
 const COMPANY_CATEGORIES = ['COMPANY', 'TEAM', 'holiday', 'ANNIVERSARY'];
@@ -748,7 +748,9 @@ if (isEditing) {
                   });
                   setIsEditing(false);
                   setModal({ open: true, date: t });
-                }} className="px-3 py-1.5 bg-[#3530B8] text-white rounded-lg text-[0.6875rem] font-semibold">+ 일정 추가</button>
+                }} className="px-3 py-1.5 bg-[#3530B8] text-white rounded-lg text-[0.6875rem] font-semibold">
+                  {activeTab === 'company' ? '+ 공용 일정 추가' : '+ 일정 추가'}
+                </button>
               )}
             </div>
 
@@ -886,7 +888,9 @@ if (isEditing) {
           onClose={() => setModal({ open: false, date: '' })}
           overflow="overflow-visible"
         >
-          <h3 className="text-sm font-bold text-slate-800 mb-4">{isEditing ? '일정 수정' : '새 일정 추가'}</h3>
+          <h3 className="text-sm font-bold text-slate-800 mb-4">
+            {isEditing ? '일정 수정' : (activeTab === 'company' ? '공용 일정 추가' : '새 일정 추가')}
+          </h3>
           {/* 제목 */}
           <div className="mb-3">
             <input
