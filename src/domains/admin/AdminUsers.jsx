@@ -7,6 +7,9 @@ import useUserStore from '../../store/userStore';
 const OPS_TEAM = '운영총괄'; 
 
 const AdminUsers = () => {
+  const mode = import.meta.env.VITE_APP_MODE;
+  const isDemoMode = mode === 'demo';
+  
   const user = useUserStore(state => state.user);
   const isOpsManager = user?.dept_name?.includes(OPS_TEAM);
   const [employees, setEmployees] = useState([]);
@@ -56,7 +59,6 @@ const AdminUsers = () => {
     };
     return map[status] || status;
   };
-
   // 외부 클릭 시 수정 모드 및 드롭다운 해제
  useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -132,16 +134,35 @@ const AdminUsers = () => {
 
   // 상세 정보 수정 시작
   const handleDetailEdit = () => {
+    const isCEOOffice = selectedUser.dept_name === '대표이사실';
+    const isHeadquarters = selectedUser.dept_name.includes('본부');
+    const ceoRank = rankList.find(r => r.rank_name === '대표');
+    const headRank = rankList.find(r => r.rank_name === '본부장');
+    const defaultTeamRank = rankList.find(r => r.rank_name === '부서장') || rankList[0];
+
+    let forcedRank = null;
+    if (isCEOOffice && ceoRank) {
+      forcedRank = ceoRank;               // 대표이사실 → demo/production 공통 고정
+    } else if (isHeadquarters && headRank) {
+      forcedRank = headRank;              // 본부 → demo/production 공통 고정
+    } else if (selectedUser.rank_name === '대표') {
+      forcedRank = defaultTeamRank;       // 대표이사실이 아닌데 '대표'로 잘못 저장된 경우 리셋
+    } else if (!isDemoMode && selectedUser.rank_name === '본부장') {
+      forcedRank = defaultTeamRank;       // 본부가 아닌데 '본부장'으로 잘못 저장된 경우 리셋 (production만)
+    }
+
     setEditForm({
       name: selectedUser.name,
       dept_name: selectedUser.dept_name,
-      rank_name: selectedUser.rank_name,
+      rank_name: forcedRank ? forcedRank.rank_name : selectedUser.rank_name,
       dept_seq: selectedUser.dept_seq, 
-      rank_seq: selectedUser.rank_seq ,
-      role: selectedUser.role,
+      rank_seq: forcedRank ? forcedRank.rank_seq : selectedUser.rank_seq,
       is_hr_manager: selectedUser.is_hr_manager || 'N', // ✅ 추가
     });
+    
     setNameError(false); // 수정 시작 시 에러 초기화
+    setIsDeptOpen(false);   // ← 추가
+    setIsRankOpen(false);
     setIsDetailEditing(true);
   };
 
@@ -301,7 +322,7 @@ const AdminUsers = () => {
                   filteredEmployees.map((emp) => (
                     <tr 
                       key={emp.users_seq} 
-                      onClick={() => { setSelectedUser(emp); setIsDetailEditing(false); console.log('선택된 직원:', emp.dept_name, emp.status);}}
+                      onClick={() => { setSelectedUser(emp); setIsDetailEditing(false);  setIsDeptOpen(false); setIsRankOpen(false);}}
                       className={`hover:bg-[#F5F8FF] transition-colors block sm:table-row py-4 sm:py-0 border-b border-slate-50 sm:border-none
                          relative cursor-pointer ${selectedUser?.users_seq === emp.users_seq ? 'bg-[#F0F4FF] hover:bg-[#F0F4FF]' : ''}`}>
                       
@@ -493,19 +514,25 @@ const AdminUsers = () => {
                                   onClick={() => { 
                                     const isHeadquarters = dept.dept_name.includes('본부');
                                     const isTeam = dept.dept_name.includes('팀');
+                                    const isCEOOffice = dept.dept_name === '대표이사실';
+                                    const ceoRank = rankList.find(r => r.rank_name === '대표');
                                     const headRank = rankList.find(r => r.rank_name === '본부장');
                                     // ✨ 안전하게 기본값을 지정하기 위해 부서장(또는 사원) 직급을 찾아둡니다.
                                     const defaultTeamRank = rankList.find(r => r.rank_name === '부서장') || rankList[0];
                                     
-                                // ⭕ 기존 setEditForm을 지우고 이 안전한 코드를 넣으세요!
                                   setEditForm(prev => {
                                     let updatedRank = {};
-                                    
-                                    if (isHeadquarters && headRank) {
-                                      // 1. '본부'를 선택하면 직급을 '본부장'으로 매핑
+                                                                       
+                                   if (isCEOOffice) {
+                                      // 대표이사실이면 무조건 '대표'로 고정 (demo/production 공통)
+                                      updatedRank = { rank_name: '대표', rank_seq: ceoRank ? ceoRank.rank_seq : prev.rank_seq };
+                                    } else if (isHeadquarters && headRank) {
+                                      // 본부면 무조건 '본부장'으로 고정 (demo/production 공통)
                                       updatedRank = { rank_name: headRank.rank_name, rank_seq: headRank.rank_seq };
-                                    } else if (isTeam && prev.rank_name === '본부장') {
-                                      // 2. '팀'을 선택했는데 기존 직급이 '본부장'이었다면 '부서장'으로 리셋
+                                    } else if (prev.rank_name === '대표') {
+                                      // 대표이사실에서 다른 부서로 옮길 때 '대표' 직급 리셋
+                                      updatedRank = { rank_name: defaultTeamRank.rank_name, rank_seq: defaultTeamRank.rank_seq };
+                                    }else if (!isDemoMode && isTeam && prev.rank_name === '본부장') {
                                       updatedRank = { rank_name: defaultTeamRank.rank_name, rank_seq: defaultTeamRank.rank_seq };
                                     }
 
@@ -517,6 +544,7 @@ const AdminUsers = () => {
                                     };
                                   });
                                     setIsDeptOpen(false); 
+                                    setIsRankOpen(false); 
                                   }}
                                   className="px-3 py-2 text-[0.625rem] hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-bold border-b border-gray-50 last:border-0"
                                 >
@@ -532,17 +560,17 @@ const AdminUsers = () => {
                     </div>
                     <div className="flex justify-between items-center">
                     <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">직급</span>
-                    {isDetailEditing && selectedUser.rank_name !== '대표' && selectedUser.dept_name !== '대표이사실' ? (
+                    {isDetailEditing && editForm.dept_name !== '대표이사실' ? (
                       <div className="relative custom-dropdown w-full">
                         <div 
                           onClick={() => { 
-                            if (editForm.dept_name.includes('본부')) return;
+                            if (!isDemoMode && editForm.dept_name.includes('본부')) return;
                             setIsRankOpen(!isRankOpen); 
                             setIsDeptOpen(false); 
                             setIsPermissionOpen(false); 
                             setIsHrManagerOpen(false);
                           }}
-                          className={`w-full px-3 py-1.5 bg-white border ${isRankOpen ? 'border-[#3530B8] ring-2 ring-[#3530B8]/5' : 'border-gray-200'} rounded-lg text-[0.6875rem] font-bold transition-all ${editForm.dept_name.includes('본부') ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} flex justify-between items-center text-slate-700`}
+                          className={`w-full px-3 py-1.5 bg-white border ${isRankOpen ? 'border-[#3530B8] ring-2 ring-[#3530B8]/5' : 'border-gray-200'} rounded-lg text-[0.6875rem] font-bold transition-all ${!isDemoMode && editForm.dept_name.includes('본부') ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} flex justify-between items-center text-slate-700`}
                         >
                           <span>{editForm.rank_name}</span>
                           <svg className={`w-3 h-3 text-gray-400 transition-transform ${isRankOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -553,6 +581,7 @@ const AdminUsers = () => {
                           <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
                             {rankList
                               .filter(rank => {
+                                if (rank.rank_name === '대표') return false; // 대표이사실 외에는 '대표' 선택 불가
                                 if (editForm.dept_name.includes('팀')) {
                                   return rank.rank_name !== '본부장';
                                 }
@@ -574,7 +603,7 @@ const AdminUsers = () => {
                         )}
                       </div>
                     ) : (
-                      <span className="text-xs font-bold text-slate-700">{selectedUser.rank_name}</span>
+                      <span className="text-xs font-bold text-slate-700">{isDetailEditing ? editForm.rank_name : selectedUser.rank_name}</span>
                     )}
                     </div>
                     {/* ✅ 근태 담당자 — 인사팀 직원에게만 표시 */}
