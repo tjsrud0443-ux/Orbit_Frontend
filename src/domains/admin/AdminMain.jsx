@@ -184,15 +184,12 @@ const AdminMain = () => {
 
   useEffect(() => {
     getDeptLeave().then(resp => {
-      const deptList = isDemo
-      ? resp.data.filter(item => DEMO_CHART_DEPARTMENTS.includes(item.deptName))
-      : resp.data;
-
+      console.log('연차 차트 응답:', resp.data);
       setDeptsLeave({
-        labels: deptList.map(item => item.deptName),
+        labels: resp.data.map(item => item.deptName),
         datasets: [
           {
-            data: deptList.map(item => item.leave),
+            data: resp.data.map(item => item.leave),
             backgroundColor: BRAND_COLORS.donut,
             borderWidth: 0,
             hoverOffset: 4,
