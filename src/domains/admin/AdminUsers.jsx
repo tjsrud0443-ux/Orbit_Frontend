@@ -138,7 +138,10 @@ const AdminUsers = () => {
     const isHeadquarters = selectedUser.dept_name.includes('본부');
     const ceoRank = rankList.find(r => r.rank_name === '대표');
     const headRank = rankList.find(r => r.rank_name === '본부장');
-    const defaultTeamRank = rankList.find(r => r.rank_name === '부서장') || rankList[0];
+    const defaultTeamRank = 
+      rankList.find(r => r.rank_name === '부서장') 
+      || rankList.find(r => r.rank_name !== '대표' && r.rank_name !== '본부장') 
+      || rankList[0];
 
     let forcedRank = null;
     if (isCEOOffice && ceoRank) {
@@ -518,7 +521,10 @@ const AdminUsers = () => {
                                     const ceoRank = rankList.find(r => r.rank_name === '대표');
                                     const headRank = rankList.find(r => r.rank_name === '본부장');
                                     // ✨ 안전하게 기본값을 지정하기 위해 부서장(또는 사원) 직급을 찾아둡니다.
-                                    const defaultTeamRank = rankList.find(r => r.rank_name === '부서장') || rankList[0];
+                                    const defaultTeamRank = 
+                                      rankList.find(r => r.rank_name === '부서장') 
+                                      || rankList.find(r => r.rank_name !== '대표' && r.rank_name !== '본부장') 
+                                      || rankList[0];
                                     
                                   setEditForm(prev => {
                                     let updatedRank = {};
