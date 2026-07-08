@@ -578,7 +578,7 @@ const AdminUsers = () => {
                     )}
                     </div>
                     {/* ✅ 근태 담당자 — 인사팀 직원에게만 표시 */}
-                    {selectedUser.dept_name?.includes('인사') && (
+                    {selectedUser.auth_group === 'ROLE_HR_ADMIN' && (
                       <div className="flex justify-between items-center">
                         <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">근태 담당자</span>
                         {isDetailEditing ? (

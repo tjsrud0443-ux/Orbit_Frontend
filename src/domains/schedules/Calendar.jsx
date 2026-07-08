@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -110,7 +110,7 @@ const COMPANY_FILTERS = [
   { key: 'TEAM', label: '부서/팀 일정', color: '#0EA5E9' },
   { key: 'holiday', label: '공휴일', color: '#EF4444' },
   { key: 'ANNIVERSARY', label: '기념일', color: '#EC4899' },
-  { key: 'PERSONAL',  label: '내 일정', color: '#3530B8' },
+  { key: 'PERSONAL',  label: '공유된 개인 일정', color: '#3530B8' },
 ];
 
 const COMPANY_CATEGORIES = ['COMPANY', 'TEAM', 'holiday', 'ANNIVERSARY'];
@@ -118,7 +118,7 @@ const COMPANY_CATEGORIES = ['COMPANY', 'TEAM', 'holiday', 'ANNIVERSARY'];
 const Calendar = () => {
   const calendarStore = useCalendarStore();
   const user = useUserStore(state => state.user);
-  const isHrAdmin = user?.auth_group === 'ROLE_HR_ADMIN';
+  const isHrAdmin = user?.auth_group === 'ROLE_HR_ADMIN' || user?.auth_group === 'ROLE_SUPER_ADMIN';
 
   const calendarRef = useRef(null);
   // 화면이 모바일인지 여부 (캘린더 height 분기용)
@@ -748,7 +748,9 @@ if (isEditing) {
                   });
                   setIsEditing(false);
                   setModal({ open: true, date: t });
-                }} className="px-3 py-1.5 bg-[#3530B8] text-white rounded-lg text-[0.6875rem] font-semibold">+ 일정 추가</button>
+                }} className="px-3 py-1.5 bg-[#3530B8] text-white rounded-lg text-[0.6875rem] font-semibold">
+                  {activeTab === 'company' ? '+ 공용 일정 추가' : '+ 일정 추가'}
+                </button>
               )}
             </div>
 
@@ -886,7 +888,9 @@ if (isEditing) {
           onClose={() => setModal({ open: false, date: '' })}
           overflow="overflow-visible"
         >
-          <h3 className="text-sm font-bold text-slate-800 mb-4">{isEditing ? '일정 수정' : '새 일정 추가'}</h3>
+          <h3 className="text-sm font-bold text-slate-800 mb-4">
+            {isEditing ? '일정 수정' : (activeTab === 'company' ? '공용 일정 추가' : '새 일정 추가')}
+          </h3>
           {/* 제목 */}
           <div className="mb-3">
             <input
@@ -901,7 +905,7 @@ if (isEditing) {
               {form.title.length}/66
             </p>
           </div>
-          {activeTab === 'company' && isHrAdmin ? (
+          {activeTab === 'company' && isHrAdmin && form.schedule_type !== 'PERSONAL' ? (
             <div className="relative mb-3 z-20">
               <div
                 onClick={() => setIsPermissionOpen(!isPermissionOpen)}
@@ -914,7 +918,7 @@ if (isEditing) {
               </div>
               {isPermissionOpen && (
                 <div className="absolute top-full left-0 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                  {COMPANY_FILTERS.filter(f => f.key !== 'holiday').map(f => (
+                  {COMPANY_FILTERS.filter(f => f.key !== 'holiday' && f.key !== 'PERSONAL').map(f => (
                     <div
                       key={f.key}
                       onClick={() => { setForm(prev => ({ ...prev, schedule_type: f.key })); setIsPermissionOpen(false); }}
