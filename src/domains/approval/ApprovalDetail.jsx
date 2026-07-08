@@ -17,6 +17,58 @@ import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../util
 const getDefaultApprovers = (docType, user, allEmployees) => {
   if (!user || !allEmployees?.length) return [];
 
+  const mode = import.meta.env.VITE_APP_MODE;
+
+  if (mode === 'demo') {
+    return getDemoApprovers(docType, user, allEmployees);
+  } else {
+    return getProductionApprovers(docType, user, allEmployees);
+  }
+};
+
+const getDemoApprovers = (docType, user, allEmployees) => {
+  const isStaff = !['팀장', '원장', '대표'].includes(user.rank_name);
+  const isManager = user.rank_name === '팀장';
+  const isDirector = user.rank_name === '원장';
+
+  const myManager = allEmployees.find(e => e.rank_name === '팀장' && e.dept_seq === user.dept_seq && e.users_seq !== user.users_seq) || null;
+  const director = allEmployees.find(e => e.rank_name === '원장') || null;
+  const ceo = allEmployees.find(e => e.rank_name === '대표') || null;
+
+  const fnManager = allEmployees
+    .filter(e => e.auth_group === 'ROLE_FN_ADMIN' && e.users_seq !== user.users_seq)
+    .sort((a, b) => a.rank_order - b.rank_order)[0] || null;
+
+  const lines = {
+    VACATION: {
+      staff: [myManager ?? director],
+      manager: [director ?? ceo],
+      director: [ceo],
+    },
+    PURCHASE: {
+      staff: [myManager, director, ceo],
+      manager: [director, ceo],
+      director: [ceo],
+    },
+    PAYMENT: {
+      staff: [myManager, fnManager, director, ceo],
+      manager: [fnManager, director, ceo],
+      director: [ceo],
+    },
+    GENERAL: {
+      staff: [myManager, director, ceo],
+      manager: [director, ceo],
+      director: [ceo],
+    },
+  };
+
+  const role = isStaff ? 'staff' : isManager ? 'manager' : isDirector ? 'director' : null;
+  if (!role) return [];
+
+  return dedup(lines[docType]?.[role] ?? [], user);
+};
+
+const getProductionApprovers = (docType, user, allEmployees) => {
   const isStaff = !['부서장', '본부장', '대표'].includes(user.rank_name);
   const isManager = user.rank_name === '부서장';
   const isDirector = user.rank_name === '본부장';
@@ -28,8 +80,8 @@ const getDefaultApprovers = (docType, user, allEmployees) => {
 
   const lines = {
     VACATION: {
-      staff: [myManager],
-      manager: [myDirector],
+      staff: [myManager ?? myDirector],
+      manager: [myDirector ?? ceo],
       director: [ceo],
     },
     PURCHASE: {
@@ -50,14 +102,23 @@ const getDefaultApprovers = (docType, user, allEmployees) => {
   };
 
   const role = isStaff ? 'staff' : isManager ? 'manager' : isDirector ? 'director' : null;
+  if (!role) return [];
 
-  const candidates = (lines[docType]?.[role] ?? []).filter(Boolean);
-  const unique = candidates.filter(
-    (e, idx, arr) => arr.findIndex(i => i.users_seq === e.users_seq) === idx
-      && e.users_seq !== user.users_seq
-  );
-  return unique.map(e => ({ ...e, status: 'WAITING' }));
+  return dedup(lines[docType]?.[role] ?? [], user);
 };
+
+const dedup = (candidates, user) => {
+  const seen = new Set();
+  return candidates
+    .filter(Boolean)
+    .filter(emp => {
+      if (emp.users_seq === user.users_seq) return false;
+      if (seen.has(emp.users_seq)) return false;
+      seen.add(emp.users_seq);
+      return true;
+    })
+    .map(e => ({ ...e, status: 'WAITING' }));
+}
 
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
   const { allEmployees } = useEmployeeStore();
@@ -65,9 +126,8 @@ const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
   const [searchQuery, setSearchQuery] = useState('');
   if (!isOpen) return null;
 
-  const allowedRanks = ['부서장', '본부장', '대표'];
   const baseFiltered = allEmployees.filter(emp =>
-    allowedRanks.includes(emp.rank_name) && emp.users_seq !== user?.users_seq
+    emp.users_seq !== user?.users_seq
   );
 
   const filtered = searchQuery
