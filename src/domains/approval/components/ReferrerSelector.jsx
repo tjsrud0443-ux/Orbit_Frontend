@@ -51,32 +51,28 @@ const ReferrerSelector = ({ value = [], onChange, isEditMode, docType }) => {
     return [...allEmployees]
       .filter(emp => emp.users_seq !== user?.users_seq)
       .sort((a, b) => {
-        const rankNameA = a.rank_name || '';
-        const rankNameB = b.rank_name || '';
+        const rankOrderA = Number(a.rank_order) || 999;
+        const rankOrderB = Number(b.rank_order) || 999;
 
-        const getSpecialWeight = (rankName) => {
-          if (rankName === '대표') return 2;
-          if (rankName === '본부장') return 1;
-          return 0;
-        };
+        const top_rank_holder = 3;
+        const isTopA = rankOrderA <= top_rank_holder;
+        const isTopB = rankOrderB <= top_rank_holder;
 
-        const highA = getSpecialWeight(rankNameA);
-        const highB = getSpecialWeight(rankNameB);
+        if (isTopA !== isTopB) {
+          return isTopA ? -1 : 1;
+        }
 
-        if (highA !== highB) {
-          return highB - highA;
+        if (isTopA && isTopB) {
+          return rankOrderA - rankOrderB;
         }
 
         const deptA = a.dept_name || '';
         const deptB = b.dept_name || '';
-
         if (deptA < deptB) return -1;
         if (deptA > deptB) return 1;
 
-        const rankA = Number(a.rank_seq) || 999;
-        const rankB = Number(b.rank_seq) || 999;
-        if (rankA !== rankB) {
-          return rankA - rankB;
+        if (rankOrderA !== rankOrderB) {
+          return rankOrderA - rankOrderB;
         }
         return (a.name || '').localeCompare(b.name || '');
       });
