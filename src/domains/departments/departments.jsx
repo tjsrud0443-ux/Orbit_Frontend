@@ -17,6 +17,12 @@ import useAuthStore from '../../store/authStore';
 import useLoadingStore from '../../store/useLoadingStore';
 import useDepartmentsStore from '../../store/useDepartmentsStore';
 
+// 분기 처리할 때 mode 불러오는 방법
+// if (mode === 'production' ) -> 포폴용
+// if (mode === 'demo') -> 학원용
+
+const mode = import.meta.env.VITE_APP_MODE;
+
 const POSITION_RANK = {
   '대표이사': 1, '본부장': 3, '부서장': 4, '차장': 5, '과장': 6, '대리': 7, '사원': 8
 };
