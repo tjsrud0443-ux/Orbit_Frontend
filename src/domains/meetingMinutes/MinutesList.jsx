@@ -930,11 +930,11 @@ const MinutesList = () => {
                     {isEditing ? (
                       <>
                         <textarea rows="5" value={editMinutes.main_content}
-                          maxLength={2000}
+                          maxLength={4000}
                           onChange={(e) => { setEditMinutes({ ...editMinutes, main_content: e.target.value }); if (e.target.value) setErrors(prev => ({ ...prev, main_content: false })); }}
                           className={`w-full px-4 py-3 bg-white border rounded-2xl text-sm text-gray-900 resize-none focus:outline-none focus:ring-4 transition-all custom-scrollbar ${errors.main_content ? 'border-red-400 ring-4 ring-red-100' : 'border-gray-300 focus:ring-indigo-100 focus:border-indigo-300'}`} />
                         <div className="flex justify-end mt-1">
-                          <span className={`text-[10px] font-bold ${editMinutes.main_content.length >= 2000 ? 'text-red-400' : 'text-gray-300'}`}>{editMinutes.main_content.length}/2000</span>
+                          <span className={`text-[10px] font-bold ${editMinutes.main_content.length >= 4000 ? 'text-red-400' : 'text-gray-300'}`}>{editMinutes.main_content.length}/4000</span>
                         </div>
                       </>
                     ) : (
@@ -1201,11 +1201,11 @@ const MinutesList = () => {
                   <div>
                     <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">주요 내용</label>
                     <textarea rows="5" placeholder="회의 내용을 상세히 입력하세요" value={newMinutes.main_content}
-                      maxLength={2000}
+                      maxLength={4000}
                       onChange={(e) => { setNewMinutes({ ...newMinutes, main_content: e.target.value }); if (e.target.value) setErrors(prev => ({ ...prev, main_content: false })); }}
                       className={`w-full px-4 py-3 bg-white border rounded-2xl text-sm focus:outline-none focus:ring-4 transition-all font-medium text-gray-700 resize-none custom-scrollbar ${errors.main_content ? 'border-red-400 ring-4 ring-red-100' : 'border-gray-300 focus:ring-indigo-100'}`} />
                     <div className="flex justify-end mt-1">
-                      <span className={`text-[10px] font-bold ${newMinutes.main_content.length >= 2000 ? 'text-red-400' : 'text-gray-300'}`}>{newMinutes.main_content.length}/2000</span>
+                      <span className={`text-[10px] font-bold ${newMinutes.main_content.length >= 4000 ? 'text-red-400' : 'text-gray-300'}`}>{newMinutes.main_content.length}/4000</span>
                     </div>
                     {errors.main_content && <p className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">회의 내용을 입력해주세요.</p>}
                   </div>

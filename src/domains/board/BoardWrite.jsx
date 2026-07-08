@@ -19,7 +19,7 @@ const BoardWrite = () => {
   const fileInputRef = useRef(null);
   const categoryRef = useRef(null);
 
-  const isHR = user?.dept_name === '인사팀' || user?.dept_name === '운영총괄본부' || user?.dept_name === '운영총괄팀';
+  const isHR = user?.auth_group === 'ROLE_HR_ADMIN' || user?.auth_group === 'ROLE_SUPER_ADMIN';
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
 
   useEffect(() => {
@@ -90,7 +90,7 @@ const BoardWrite = () => {
         insertEditorImage(formData).then((resp) => {
           let imageUrl = resp.data.url.replace(
             /^http:\/\/localhost/,
-            'import.meta.env.VITE_API_BASE_URL'
+            import.meta.env.VITE_API_BASE_URL
           );
           const quill = quillRef.current.getEditor();
           const range = quill.getSelection();
