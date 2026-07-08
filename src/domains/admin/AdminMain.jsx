@@ -53,8 +53,17 @@ const BRAND_COLORS = {
   lineExit: '#fc0000',
 };
 
-// --- [Sub Components] ---
+const mode = import.meta.env.VITE_APP_MODE || 'production';
+const isDemo = mode === 'demo';
 
+const DEMO_CHART_DEPARTMENTS = [
+  '행정관리팀',
+  '교무팀'
+];
+
+
+
+// --- [Sub Components] ---
 const KpiCard = ({ title, value, icon, iconColor, bgColor }) => (
   <div className="bg-white p-6 rounded-2xl border border-[#edf2f9] shadow-sm flex items-center gap-5">
     <div className={`w-14 h-14 rounded-xl flex items-center opacity-80 justify-center flex-shrink-0 ${bgColor} ${iconColor}`}>
@@ -151,14 +160,16 @@ const AdminMain = () => {
 
   useEffect(() => {
     getDeptEmployeeCount().then(resp => {
-      const teamList = resp.data.filter(item => item.deptName.endsWith("팀"))
+      const deptList = isDemo
+      ? resp.data.filter(item => DEMO_CHART_DEPARTMENTS.includes(item.deptName))
+      : resp.data.filter(item => item.deptName.endsWith("팀"));
 
       setDeptEmployeeData({
-        labels: teamList.map(item => item.deptName),
+        labels: deptList.map(item => item.deptName),
         datasets: [
           {
             label: '직원 수',
-            data: teamList.map(item => item.employeeCount),
+            data: deptList.map(item => item.employeeCount),
             backgroundColor: BRAND_COLORS.main,
             barThickness: 36,
             borderRadius: (context) => {
@@ -173,11 +184,15 @@ const AdminMain = () => {
 
   useEffect(() => {
     getDeptLeave().then(resp => {
+      const deptList = isDemo
+      ? resp.data.filter(item => DEMO_CHART_DEPARTMENTS.includes(item.deptName))
+      : resp.data;
+
       setDeptsLeave({
-        labels: resp.data.map(item => item.deptName),
+        labels: deptList.map(item => item.deptName),
         datasets: [
           {
-            data: resp.data.map(item => item.leave),
+            data: deptList.map(item => item.leave),
             backgroundColor: BRAND_COLORS.donut,
             borderWidth: 0,
             hoverOffset: 4,
