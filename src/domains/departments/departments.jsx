@@ -17,9 +17,20 @@ import useAuthStore from '../../store/authStore';
 import useLoadingStore from '../../store/useLoadingStore';
 import useDepartmentsStore from '../../store/useDepartmentsStore';
 
-const POSITION_RANK = {
+const mode = import.meta.env.VITE_APP_MODE || 'production';
+
+const PRODUCTION_POSITION_RANK = {
   '대표이사': 1, '본부장': 3, '부서장': 4, '차장': 5, '과장': 6, '대리': 7, '사원': 8
 };
+
+const DEMO_POSITION_RANK = {
+  '대표': 1, '원장': 3, '팀장': 4, '과장': 5, '대리': 6, '주임': 7, '사원': 8
+};
+
+const POSITION_RANK =
+  mode === 'demo'
+    ? DEMO_POSITION_RANK
+    : PRODUCTION_POSITION_RANK;
 
 const PROFILE_API = `${import.meta.env.VITE_API_BASE_URL}/file/profile/view`;
 

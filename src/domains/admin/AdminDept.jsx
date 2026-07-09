@@ -42,6 +42,39 @@ const AdminDept = () => {
     auth_group: ""
   });
   const [errors, setErrors] = useState({});
+  const isDemo = import.meta.env.VITE_APP_MODE === 'demo';
+
+  const deptConfig = isDemo
+    ? {
+      companyName: '한국정보교육원',
+      hqParentDeptCode: 'CEO',
+      fixedDeptCodes: [
+        'CEO',
+        'EXECUTIVE_HQ',
+        'OPS'
+      ]
+    }
+    : {
+      companyName: '(주)Lunex Soft (본사)',
+      hqParentDeptSeq: 2
+    };
+
+  const hqParentDeptSeq = useMemo(() => {
+    if (!isDemo) {
+      return deptConfig.hqParentDeptSeq;
+    }
+
+    const rootDept = Object.values(fullTree.nodeMap).find(
+      node => node.deptCode === deptConfig.hqParentDeptCode
+    );
+
+    return rootDept?.deptSeq ?? null;
+  }, [
+    isDemo,
+    fullTree.nodeMap,
+    deptConfig.hqParentDeptCode,
+    deptConfig.hqParentDeptSeq
+  ]);
 
   useEffect(() => {
     showLoading();
@@ -154,7 +187,7 @@ const AdminDept = () => {
     } else if (!/^[A-Z]+$/.test(formData.dept_code)) {
       newErrors.dept_code = "영문(대문자)만 입력 가능합니다.";
     } else {
-      const isDuplicateCode = Object.values(fullTree.nodeMap).some(node => 
+      const isDuplicateCode = Object.values(fullTree.nodeMap).some(node =>
         node.deptCode === formData.dept_code && node.deptSeq !== formData.dept_seq
       );
       if (isDuplicateCode) {
@@ -174,10 +207,18 @@ const AdminDept = () => {
     let payload = { ...formData };
 
     if (formMode === 'CREATE_HQ') {
-      payload.parent_dept_seq = 2;
+      if (!hqParentDeptSeq) {
+        await alertWarning(
+          '생성 불가',
+          '최상위 조직 정보를 찾을 수 없습니다.'
+        );
+        return;
+      }
+
+      payload.parent_dept_seq = hqParentDeptSeq;
       payload.dept_type = 'HQ';
     } else if (formMode === 'CREATE_SUB') {
-      payload.dept_type = "SUB";
+      payload.dept_type = 'SUB';
     }
 
     if (formMode === 'EDIT') {
@@ -232,7 +273,7 @@ const AdminDept = () => {
       await alertWarning('삭제 불가', '본부 또는 부서 내에 소속된 직원이 존재하여<br>삭제할 수 없습니다.');
       return;
     }
-    
+
     const result = await alertConfirm(
       `[ ${node.deptName} ] 을(를)<br>정말 삭제하시겠습니까?`,
       '삭제 후 복구는 불가합니다.'
@@ -243,7 +284,7 @@ const AdminDept = () => {
       await delDept(node.deptSeq);
       hideLoading();
       await alertSuccess('삭제 완료', '삭제가 완료되었습니다.');
-      
+
       const resp = await getGroup();
       setFullTree({
         root: resp.data.root,
@@ -255,13 +296,27 @@ const AdminDept = () => {
       }
     }
   };
+  const canManageDept = (node, level) => {
+    if (level === 0) {
+      return false;
+    }
+
+    if (isDemo) {
+      return !deptConfig.fixedDeptCodes.includes(node.deptCode);
+    }
+
+    return (
+      node.auth_group === 'ROLE_USER' &&
+      node.deptSeq !== 4
+    );
+  };
 
   const renderRows = (node, level = 0) => {
     if (!node) return null;
     const isExpanded = expandedNodes.has(node.deptSeq);
     const hasChildren = node.children && node.children.length > 0;
     const memberCount = getDeptMemberCount(node);
-    const displayName = level === 0 ? '(주)Lunex Soft (본사)' : node.deptName;
+    const displayName = level === 0 ? deptConfig.companyName : node.deptName;
 
     return (
       <React.Fragment key={node.deptSeq}>
@@ -295,7 +350,7 @@ const AdminDept = () => {
           </td>
           <td className="py-4 pl-4 pr-18 md:pr-20 text-right">
             <div className="flex justify-end gap-2">
-              {(level !== 0 && node.auth_group === 'ROLE_USER' && node.deptSeq !== 4) && (
+              {canManageDept(node, level) && (
                 <>
                   <button onClick={() => openEdit(node)} className="action-trigger w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-[#3530B8] transition-all flex items-center justify-center cursor-pointer" title="수정"><FontAwesomeIcon icon={faEdit} className="text-xs" /></button>
                   <button onClick={() => handleDelete(node)} className="action-trigger w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center cursor-pointer" title="삭제"><FontAwesomeIcon icon={faTrashAlt} className="text-xs" /></button>
@@ -366,7 +421,7 @@ const AdminDept = () => {
                 {errors.parent_dept_seq && <p className="text-[9px] text-red-500 font-medium ml-1">{errors.parent_dept_seq}</p>}
                 {isDropdownOpen && (
                   <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.15)] z-50 overflow-hidden border border-slate-100">
-                    {Object.values(fullTree.nodeMap).filter(node => node.parentDeptSeq === 2).map(dept => (
+                    {Object.values(fullTree.nodeMap).filter(node => node.parentDeptSeq === hqParentDeptSeq).map(dept => (
                       <div
                         key={dept.deptSeq}
                         className="px-4 py-3 text-xs text-slate-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
