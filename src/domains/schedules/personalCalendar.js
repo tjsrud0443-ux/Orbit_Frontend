@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getApprovedVacations, getSchedules } from './schedulesApi';
 import { fetchHolidays } from '../../api/holidayApi';
-import useLoadingStore from '../../store/useLoadingStore';
 import { alertConfirm } from '../../utils/alert';
 import useUserStore from '../../store/userStore';
 
@@ -20,15 +19,14 @@ const useCalendar = (setDayModal) => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedSchedules, setSelectedSchedules] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
-  const showLoading = useLoadingStore(state => state.showLoading);
-  const hideLoading = useLoadingStore(state => state.hideLoading);
-  const user = useUserStore(state => state.user);   // 👈 추가
+  const [loading, setLoading] = useState(true);
+  const user = useUserStore(state => state.user); 
   const myId = user?.id;    
 
   useEffect(() => {
     if (!myId) return; 
     const year = new Date().getFullYear();
-    showLoading();
+    setLoading(true);
     Promise.all([getSchedules(), getApprovedVacations(), fetchHolidays(year)])
       .then(([scheduleResp,vacResp, holidays]) => {
         const scheduleEvents = scheduleResp.data
@@ -87,7 +85,7 @@ const useCalendar = (setDayModal) => {
         calendarEventsRef.current = allEvents;
         setCalendarEvents(allEvents);
       }).catch(err => console.error('로드 실패:', err))
-        .finally(() => hideLoading());;
+        .finally(() => setLoading(false));
   }, [myId]);
 
   const handleDateClick = async (info) => {
@@ -146,6 +144,7 @@ const useCalendar = (setDayModal) => {
     selectedDate,
     selectedSchedules,
     calendarEvents,
+    loading,
     handleDateClick,
     handleEventClick,
   };
