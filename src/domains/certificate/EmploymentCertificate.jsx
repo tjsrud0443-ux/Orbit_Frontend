@@ -82,9 +82,9 @@ const EmploymentCertificate = ({ purpose, onBack }) => {
     docNumber = `${certInfo.manage_dept_code}-${yy}${mm}${dd}-${seq}`;
   }
 
-  const companyNameFormatted = company?.companyName && company.companyName.length > 4
-    ? company.companyName.substring(4)
-    : (company?.companyName || '-');
+  const companyNameFormatted = company?.companyName
+    ? company?.companyName
+    : '-';
 
   return (
     <div className="min-h-screen bg-gray-100 py-6 sm:py-10 flex flex-col items-center">

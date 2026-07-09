@@ -70,6 +70,7 @@ const ApprovalActionButtons = ({
   );
 
   const handlePrint = () => {
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
     const printArea = document.querySelector('.print-area');
     const content = printArea.innerHTML;
 
@@ -102,14 +103,14 @@ const ApprovalActionButtons = ({
             <tr>
               <td style="border: 1px solid #DDE8FF; padding: 10px 16px; text-align: center; background: #F8FAFF;">
                 ${drafter?.stamp_sysname
-        ? `<img src="import.meta.env.VITE_API_BASE_URL/file/profile/view?sysname=${drafter.stamp_sysname}&token=${token}" style="width: 50px; height: 50px; object-fit: cover; display: block; margin: 0 auto 4px;" />`
+        ? `<img src="${apiBaseUrl}/file/profile/view?sysname=${drafter.stamp_sysname}&token=${token}" style="width: 50px; height: 50px; object-fit: cover; display: block; margin: 0 auto 4px;" />`
         : ''
       }
                 <div style="font-weight: 600; color: #1a1a1a;">${drafter?.name || '-'}</div>
               </td>
               <td style="border: 1px solid #DDE8FF; padding: 10px 16px; text-align: center; background: #F8FAFF;">
                 ${finalApprover?.stamp_sysname
-        ? `<img src="import.meta.env.VITE_API_BASE_URL/file/profile/view?sysname=${finalApprover.stamp_sysname}&token=${token}" style="width: 50px; height: 50px; object-fit: cover; display: block; margin: 0 auto 4px;" />`
+        ? `<img src="${apiBaseUrl}/file/profile/view?sysname=${finalApprover.stamp_sysname}&token=${token}" style="width: 50px; height: 50px; object-fit: cover; display: block; margin: 0 auto 4px;" />`
         : ''
       }
                 <div style="font-weight: 600; color: #1a1a1a;">${finalApprover?.name || '-'}</div>
