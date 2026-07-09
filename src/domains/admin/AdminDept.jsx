@@ -131,9 +131,8 @@ const AdminDept = () => {
   };
 
   const getDeptMemberCount = (node) => {
-    if (node.deptName === '대표이사실') return 1;
     const allSeqs = getAllChildDeptSeqs(node);
-    return employees.filter(emp => allSeqs.includes(emp.deptSeq)).length;
+    return employees.filter(emp => emp.id !== 'kedu_admin' && allSeqs.includes(emp.deptSeq)).length;
   };
 
   const toggleNode = (deptSeq) => {
