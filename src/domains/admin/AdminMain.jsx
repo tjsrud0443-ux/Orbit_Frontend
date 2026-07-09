@@ -184,7 +184,6 @@ const AdminMain = () => {
 
   useEffect(() => {
     getDeptLeave().then(resp => {
-      console.log('연차 차트 응답:', resp.data);
       setDeptsLeave({
         labels: resp.data.map(item => item.deptName),
         datasets: [
