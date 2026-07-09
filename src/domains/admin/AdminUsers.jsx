@@ -160,6 +160,7 @@ const AdminUsers = () => {
       rank_name: forcedRank ? forcedRank.rank_name : selectedUser.rank_name,
       dept_seq: selectedUser.dept_seq, 
       rank_seq: forcedRank ? forcedRank.rank_seq : selectedUser.rank_seq,
+      role: selectedUser.role,  
       is_hr_manager: selectedUser.is_hr_manager || 'N', // ✅ 추가
     });
     
