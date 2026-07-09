@@ -115,7 +115,7 @@ const OrgNode = ({ node, isChild = false, profileImageMap = {}, onEmployeeClick 
   const isRoot = node.parentDeptSeq === null && !isMember;
 
   let displayNode = node;
-  let subMembers = [...(node.members || [])].sort((a, b) => getRank(a.position) - getRank(b.position));
+  let subMembers = [(node.members || [])].filter(member => member.id !== 'kedu_admin').sort((a, b) => getRank(a.position) - getRank(b.position));
   let subDepts = [...(node.children || [])].sort((a, b) => (a.deptSeq - b.deptSeq));
 
   if (!isMember && subMembers.length > 0) {
@@ -301,7 +301,7 @@ const SidebarItem = ({ node, level = 0, selectedDept, onSelect, nodeMap }) => {
 // 3. Employee List Component (Table View)
 const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptName, searchTerm = "", profileImageMap = {} }) => {
   const filteredEmployees = useMemo(() => {
-    let list = [...employees];
+    let list = employees.filter(emp => emp.id !== 'kedu_admin');
 
     // 1. Filter by Dept if specified
     if (deptCode !== 'ROOT' && deptSeqs.length > 0) {
