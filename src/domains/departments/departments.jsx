@@ -110,20 +110,39 @@ const loadProfileImages = async (sysnames, token) => {
 const getRank = (pos) => POSITION_RANK[pos] || 99;
 
 const OrgNode = ({ node, isChild = false, profileImageMap = {}, onEmployeeClick }) => {
+  if (!isChild){
+    console.log("root node", node);
+    console.log("root members", node?.members);
+  }
 
-  const isMember = !!node.id;
-  const isRoot = node.parentDeptSeq === null && !isMember;
+  const firstMemberIsAdmin = node?.members?.some(m => m.id === 'kedu_admin');
+  const isHiddenAdmin = mode === 'demo' && (node?.id === 'kedu_admin' || firstMemberIsAdmin);
 
-  let displayNode = node;
-  let subMembers = [(node.members || [])].filter(member => member.id !== 'kedu_admin').sort((a, b) => getRank(a.position) - getRank(b.position));
-  let subDepts = [...(node.children || [])].sort((a, b) => (a.deptSeq - b.deptSeq));
+  const safeNode = isHiddenAdmin
+    ? {
+      ...node,
+      id: null,
+      name: null,
+      position: null,
+      phone: null,
+      email: null,
+      sysname: null,
+      sysName: null
+    }
+    : node;
+
+  const isMember = !!safeNode.id;
+  const isRoot = safeNode.parentDeptSeq === null && !isMember;
+  let displayNode = safeNode;
+  let subMembers = [...(safeNode.members || [])].filter(member => !(mode === 'demo' && member.id === 'kedu_admin')).sort((a, b) => getRank(a.position) - getRank(b.position));
+  let subDepts = [...(safeNode.children || [])].sort((a, b) => (a.deptSeq - b.deptSeq));
 
   if (!isMember && subMembers.length > 0) {
     const [first, ...rest] = subMembers;
     displayNode = {
       ...first,
-      deptName: node.deptName,
-      parentDeptSeq: node.parentDeptSeq,
+      deptName: safeNode.deptName,
+      parentDeptSeq: safeNode.parentDeptSeq,
     };
     subMembers = rest;
   }
@@ -301,7 +320,7 @@ const SidebarItem = ({ node, level = 0, selectedDept, onSelect, nodeMap }) => {
 // 3. Employee List Component (Table View)
 const EmployeeList = ({ employees = [], deptSeqs = [], deptSeq, deptCode, deptName, searchTerm = "", profileImageMap = {} }) => {
   const filteredEmployees = useMemo(() => {
-    let list = employees.filter(emp => emp.id !== 'kedu_admin');
+    let list = employees.filter(emp => mode !== 'demo' || emp.id !== 'kedu_admin');
 
     // 1. Filter by Dept if specified
     if (deptCode !== 'ROOT' && deptSeqs.length > 0) {
@@ -492,7 +511,9 @@ const Departments = () => {
     if (!headerSearch.trim()) return { employees: [], depts: [] };
     const lower = headerSearch.toLowerCase();
 
-    const matchedEmployees = employees.filter(emp =>
+    const matchedEmployees = employees
+    .filter(emp => mode !== 'demo' || emp.id !== 'kedu_admin')
+    .filter(emp =>
       emp.name.toLowerCase().includes(lower) ||
       emp.position.toLowerCase().includes(lower)
     );
