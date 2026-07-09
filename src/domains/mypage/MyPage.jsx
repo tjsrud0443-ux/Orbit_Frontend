@@ -300,20 +300,28 @@ const MyPage = () => {
                   }
                 `}</style>
             <div className="h-[27rem] overflow-hidden main-calendar">
-              <FullCalendar
-                plugins={[dayGridPlugin, interactionPlugin]}
-                initialView="dayGridMonth"
-                locale="ko"
-                headerToolbar={{ left: '', center: 'title', right: '' }}
-                height="100%"
-                moreLinkContent={(args) => isMobile ? `+${args.num}` : `+${args.num} more`}
-                dayMaxEvents={1}
-                fixedWeekCount={false}//당 월 만큼 줄 조절
-                moreLinkClick="day"
-                events={calendarEvents}
-                dateClick={handleDateClick}
-                eventClick={handleEventClick}
-              />
+              {loading ? (
+                <div className="grid grid-cols-7 gap-1 h-full animate-pulse">
+                  {Array.from({ length: 35 }).map((_, i) => (
+                    <div key={i} className="bg-slate-100 rounded-lg" />
+                  ))}
+                </div>
+              ) : (
+                <FullCalendar
+                  plugins={[dayGridPlugin, interactionPlugin]}
+                  initialView="dayGridMonth"
+                  locale="ko"
+                  headerToolbar={{ left: '', center: 'title', right: '' }}
+                  height="100%"
+                  moreLinkContent={(args) => isMobile ? `+${args.num}` : `+${args.num} more`}
+                  dayMaxEvents={1}
+                  fixedWeekCount={false}
+                  moreLinkClick="day"
+                  events={calendarEvents}
+                  dateClick={handleDateClick}
+                  eventClick={handleEventClick}
+                />
+              )}
             </div>
           </div>
         </div>
