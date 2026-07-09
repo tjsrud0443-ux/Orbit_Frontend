@@ -153,7 +153,9 @@ function App() {
               <Route element={<ProtectedRoute
                 allow={[
                   { type: "rank", value: "부서장" },
-                  { type: "rank", value: "본부장" }
+                  { type: "rank", value: "본부장" },
+                  { type: "rank", value: "팀장" },
+                  { type: "rank", value: "원장" }
                 ]} />}>
                 <Route path="/adminDocument" element={<AdminDocuments />} />
                 <Route path="/adminQna" element={<AdminQna />} />
