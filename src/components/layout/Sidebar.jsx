@@ -33,7 +33,7 @@ const generalMenuItems = [
   {
     name: '문서 · AI 관리',
     icon: faFileShield,
-    rank: ['부서장', '본부장'],
+    rank: ['부서장', '본부장', '팀장', '원장'],
     subItems: [
       { name: '문서 관리', path: '/adminDocument' },
       { name: 'AI 미답변 질문 관리', path: '/adminQna' }
