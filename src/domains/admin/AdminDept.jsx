@@ -44,15 +44,17 @@ const AdminDept = () => {
   const [errors, setErrors] = useState({});
   const isDemo = import.meta.env.VITE_APP_MODE === 'demo';
 
+  const FIXED_AUTH_GROUPS = [
+    'ROLE_SUPER_ADMIN',
+    'ROLE_HR_ADMIN',
+    'ROLE_GA_ADMIN',
+    'ROLE_FN_ADMIN'
+  ];
+
   const deptConfig = isDemo
     ? {
       companyName: '한국정보교육원',
-      hqParentDeptCode: 'CEO',
-      fixedDeptCodes: [
-        'CEO',
-        'EXECUTIVE_HQ',
-        'OPS'
-      ]
+      hqParentDeptCode: 'CEO'
     }
     : {
       companyName: '(주)Lunex Soft (본사)',
@@ -301,14 +303,7 @@ const AdminDept = () => {
       return false;
     }
 
-    if (isDemo) {
-      return !deptConfig.fixedDeptCodes.includes(node.deptCode);
-    }
-
-    return (
-      node.auth_group === 'ROLE_USER' &&
-      node.deptSeq !== 4
-    );
+    return !FIXED_AUTH_GROUPS.includes(node.auth_group);
   };
 
   const renderRows = (node, level = 0) => {

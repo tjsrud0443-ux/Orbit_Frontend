@@ -95,8 +95,8 @@ const toPayload = (values, companySeq) => ({
 
 const validationRules = {
     회사명: {
-        maxLength: 30,
-        message: '회사명은 30자 이하로 입력해 주세요.',
+        maxLength: 15,
+        message: '회사명은 15자 이하로 입력해 주세요.',
     },
     대표자명: {
         maxLength: 20,
