@@ -7,7 +7,7 @@ const companyFields = [
     {
         title: '기본 정보',
         fields: [
-            { label: '회사명', value: '', required: true },
+            { label: '회사명', value: '', required: true, multiline: true },
             { label: '대표자명', value: '', required: true },
             { label: '사업자등록번호', value: '', required: true },
             { label: '대표번호', value: '', required: true },
@@ -149,26 +149,41 @@ const validateField = (label, value, required = false) => {
     return '';
 };
 
-const Field = ({ label, value, required, readOnly, onChange, error, action }) => (
+const Field = ({ label, value, required, readOnly, onChange, error, action, multiline }) => (
     <label className="flex flex-col gap-2">
         <span className="text-sm font-bold text-slate-700">
             {label}
             {required && <span className="ml-1 text-red-500">*</span>}
         </span>
         <div className="flex flex-col gap-2 sm:flex-row">
-            <input
-                type="text"
-                value={value}
-                readOnly={readOnly}
-                maxLength={validationRules[label]?.maxLength}
-                onChange={(event) => onChange(label, event.target.value)}
-                className={`h-12 w-full rounded-xl border px-4 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-300 ${error
-                    ? 'border-red-500 bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
-                    : readOnly
-                        ? 'border-slate-200 bg-slate-50 cursor-default'
-                        : 'border-slate-200 bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/10'
-                    }`}
-            />
+            {multiline ? (
+                <textarea
+                    value={value}
+                    readOnly={readOnly}
+                    maxLength={validationRules[label]?.maxLength}
+                    onChange={(event) => onChange(label, event.target.value)}
+                    className={`min-h-24 w-full resize-y rounded-xl border px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-300 ${error
+                        ? 'border-red-500 bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
+                        : readOnly
+                            ? 'border-slate-200 bg-slate-50 cursor-default'
+                            : 'border-slate-200 bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/10'
+                        }`}
+                />
+            ) : (
+                <input
+                    type="text"
+                    value={value}
+                    readOnly={readOnly}
+                    maxLength={validationRules[label]?.maxLength}
+                    onChange={(event) => onChange(label, event.target.value)}
+                    className={`h-12 w-full rounded-xl border px-4 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-300 ${error
+                        ? 'border-red-500 bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
+                        : readOnly
+                            ? 'border-slate-200 bg-slate-50 cursor-default'
+                            : 'border-slate-200 bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/10'
+                        }`}
+                />
+            )}
             {action}
         </div>
         {error && <span className="text-xs font-semibold text-red-500">{error}</span>}
