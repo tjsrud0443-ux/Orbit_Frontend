@@ -167,7 +167,7 @@ const Field = ({ label, value, required, readOnly, onChange, error, action, mult
                         event.currentTarget.style.height = `${Math.min(event.currentTarget.scrollHeight, 96)}px`;
                     }}
                     onChange={(event) => onChange(label, event.target.value)}
-                    className={`h-12 max-h-24 w-full resize-none overflow-y-auto rounded-xl border px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-300 ${error
+                    className={`h-12 max-h-24 w-full resize-none overflow-y-auto rounded-xl border px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all [scrollbar-color:#CBD5E1_transparent] [scrollbar-width:thin] placeholder:text-slate-300 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 ${error
                         ? 'border-red-500 bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
                         : readOnly
                             ? 'border-slate-200 bg-slate-50 cursor-default'
