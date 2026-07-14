@@ -110,10 +110,6 @@ const loadProfileImages = async (sysnames, token) => {
 const getRank = (pos) => POSITION_RANK[pos] || 99;
 
 const OrgNode = ({ node, isChild = false, profileImageMap = {}, onEmployeeClick }) => {
-  if (!isChild){
-    console.log("root node", node);
-    console.log("root members", node?.members);
-  }
 
   const firstMemberIsAdmin = node?.members?.some(m => m.id === 'kedu_admin');
   const isHiddenAdmin = mode === 'demo' && (node?.id === 'kedu_admin' || firstMemberIsAdmin);

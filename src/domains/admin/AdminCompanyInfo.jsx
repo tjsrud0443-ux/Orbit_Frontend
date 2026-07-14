@@ -153,6 +153,11 @@ const Field = ({ label, value, required, readOnly, onChange, error, action, mult
     <label className="flex flex-col gap-2">
         <span className="text-sm font-bold text-slate-700">
             {label}
+            {label === '회사명' && (
+                <span className="ml-2 text-xs font-medium text-slate-400">
+                    증명서에 출력될 형식 그대로 입력해 주세요. (Enter 포함)
+                </span>
+            )}
             {required && <span className="ml-1 text-red-500">*</span>}
         </span>
         <div className="flex flex-col gap-2 sm:flex-row">
