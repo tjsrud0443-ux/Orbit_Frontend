@@ -135,7 +135,7 @@ const EmploymentCertificate = ({ purpose, onBack }) => {
                 {docNumber && `${docNumber}`}
               </div>
 
-              <h1 className="text-4xl font-bold text-center tracking-[1em] mt-10 mb-20 text-black">재직증명서</h1>
+              <h1 className="text-4xl font-bold text-center tracking-[1em] mt-10 mb-20 ml-5 text-black">재직증명서</h1>
 
               <table className="w-full border-collapse border-2 border-black mb-16 text-black">
                 <tbody>
@@ -181,7 +181,7 @@ const EmploymentCertificate = ({ purpose, onBack }) => {
               {/* Footer Info */}
               <div className="text-center pb-10 relative flex flex-col items-center justify-center text-black mt-8">
                 <div className="flex items-center justify-center relative mb-4">
-                  <span className="text-[40px] font-bold tracking-[0.3em]">
+                  <span className="text-[30px] font-bold tracking-[0.3em] whitespace-pre-wrap">
                     {companyNameFormatted}
                   </span>
                   <div className="w-[110px] h-[110px] flex items-center justify-center absolute right-[-130px]">
