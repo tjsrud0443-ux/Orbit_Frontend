@@ -7,7 +7,7 @@ const companyFields = [
     {
         title: '기본 정보',
         fields: [
-            { label: '회사명', value: '', required: true },
+            { label: '회사명', value: '', required: true, multiline: true },
             { label: '대표자명', value: '', required: true },
             { label: '사업자등록번호', value: '', required: true },
             { label: '대표번호', value: '', required: true },
@@ -95,8 +95,8 @@ const toPayload = (values, companySeq) => ({
 
 const validationRules = {
     회사명: {
-        maxLength: 15,
-        message: '회사명은 15자 이하로 입력해 주세요.',
+        maxLength: 40,
+        message: '회사명은 40자 이하로 입력해 주세요.',
     },
     대표자명: {
         maxLength: 20,
@@ -149,26 +149,46 @@ const validateField = (label, value, required = false) => {
     return '';
 };
 
-const Field = ({ label, value, required, readOnly, onChange, error, action }) => (
+const Field = ({ label, value, required, readOnly, onChange, error, action, multiline }) => (
     <label className="flex flex-col gap-2">
         <span className="text-sm font-bold text-slate-700">
             {label}
             {required && <span className="ml-1 text-red-500">*</span>}
         </span>
         <div className="flex flex-col gap-2 sm:flex-row">
-            <input
-                type="text"
-                value={value}
-                readOnly={readOnly}
-                maxLength={validationRules[label]?.maxLength}
-                onChange={(event) => onChange(label, event.target.value)}
-                className={`h-12 w-full rounded-xl border px-4 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-300 ${error
-                    ? 'border-red-500 bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
-                    : readOnly
-                        ? 'border-slate-200 bg-slate-50 cursor-default'
-                        : 'border-slate-200 bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/10'
-                    }`}
-            />
+            {multiline ? (
+                <textarea
+                    value={value}
+                    readOnly={readOnly}
+                    rows={1}
+                    maxLength={validationRules[label]?.maxLength}
+                    onInput={(event) => {
+                        event.currentTarget.style.height = '3rem';
+                        event.currentTarget.style.height = `${Math.min(event.currentTarget.scrollHeight, 96)}px`;
+                    }}
+                    onChange={(event) => onChange(label, event.target.value)}
+                    className={`h-12 max-h-24 w-full resize-none overflow-y-auto rounded-xl border px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all [scrollbar-color:#CBD5E1_transparent] [scrollbar-width:thin] placeholder:text-slate-300 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 ${error
+                        ? 'border-red-500 bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
+                        : readOnly
+                            ? 'border-slate-200 bg-slate-50 cursor-default'
+                            : 'border-slate-200 bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/10'
+                        }`}
+                />
+            ) : (
+                <input
+                    type="text"
+                    value={value}
+                    readOnly={readOnly}
+                    maxLength={validationRules[label]?.maxLength}
+                    onChange={(event) => onChange(label, event.target.value)}
+                    className={`h-12 w-full rounded-xl border px-4 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-300 ${error
+                        ? 'border-red-500 bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
+                        : readOnly
+                            ? 'border-slate-200 bg-slate-50 cursor-default'
+                            : 'border-slate-200 bg-white focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/10'
+                        }`}
+                />
+            )}
             {action}
         </div>
         {error && <span className="text-xs font-semibold text-red-500">{error}</span>}
