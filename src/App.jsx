@@ -49,6 +49,7 @@ import "react-toastify/dist/ReactToastify.css";
 import './App.css';
 import { useEffect, useState } from 'react';
 import AdminCompanyInfo from './domains/admin/AdminCompanyInfo';
+import AdminLeave from './domains/admin/AdminLeave';
 
 function App() {
   const loading = useLoadingStore(state => state.loading);
@@ -140,6 +141,7 @@ function App() {
                 <Route path="/adminDepartments" element={<AdminDept />} />
                 <Route path="/adminSignup" element={<AdminSignup />} />
                 <Route path="/adminAttendance" element={<AdminAttendance />} />
+                <Route path="/adminLeave" element={<AdminLeave />} />
               </Route>
 
               <Route element={<ProtectedRoute

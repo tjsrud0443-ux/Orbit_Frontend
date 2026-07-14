@@ -48,6 +48,7 @@ const generalMenuItems = [
       { name: '부서 관리', path: '/adminDepartments' },
       { name: '회원가입 관리', path: '/adminSignup' },
       { name: '근태 관리', path: '/adminAttendance' },
+      { name: '연차 관리', path: '/adminLeave' }
     ]
   },
   {
@@ -96,6 +97,7 @@ const adminMenuItems = [
       { name: '부서 관리', path: '/adminDepartments' },
       { name: '회원가입 관리', path: '/adminSignup' },
       { name: '근태 관리', path: '/adminAttendance' },
+      { name: '연차 관리', path: '/adminLeave' }
     ]
   },
   {
