@@ -62,7 +62,18 @@ const AdminDocuments = () => {
 
       // MS Word
       'application/msword': ['.doc'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+
+      // TXT
+      'text/plain': ['.txt'],
+
+      // HWP
+      'application/haansofthwp': ['.hwp'],
+      'application/x-hwp': ['.hwp'],
+
+      // Excel
+      'application/vnd.ms-excel': ['.xls'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
     },
     maxFiles: 1,
     multiple: false
@@ -194,6 +205,17 @@ const AdminDocuments = () => {
     return user.auth_group === 'ROLE_SUPER_ADMIN' || user.id === users_id;
   };
 
+  const handlePreview = (doc) => {
+    const unsupported = ['.hwp', '.xls', '.xlsx'];
+    const isUnsupported = unsupported.some(ext => doc.file_sysname?.toLowerCase().endsWith(ext));
+
+    if (isUnsupported) {
+      alertWarning('미리보기가 불가한 파일 형식입니다.', '파일을 다운로드하여 확인해주세요.');
+      return;
+    }
+    setPreviewDoc({ sysname: doc.file_sysname, mimeType: doc.mime_type, title: doc.title });
+  };
+
   return (
     <div className="h-full flex flex-col bg-white font-sans p-3 md:p-8">
       {/* 헤더 및 검색/버튼 영역 */}
@@ -256,7 +278,7 @@ const AdminDocuments = () => {
                 displayedDocs.map((doc) => (
                   <tr key={doc.document_seq}>
                     <td className="py-4 text-sm font-semibold text-slate-800 whitespace-nowrap">
-                      <button onClick={() => setPreviewDoc({ sysname: doc.file_sysname, mimeType: doc.mime_type, title: doc.title })} className="hover:text-[#3530B8] hover:underline cursor-pointer">
+                      <button onClick={() => handlePreview(doc)} className="hover:text-[#3530B8] hover:underline cursor-pointer">
                         {doc.title}
                       </button>
                     </td>
