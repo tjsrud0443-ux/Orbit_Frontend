@@ -8,7 +8,7 @@ import {
   faSitemap, faFileSignature, faDiagramProject,
   faRobot, faChevronDown, faChevronUp,
   faSliders, faUserShield, faAddressCard, faDesktop,
-  faFileShield
+  faFileShield, faUserCheck, faFilePen
 } from '@fortawesome/free-solid-svg-icons';
 import useAuthStore from '../../store/authStore';
 import { IMAGES } from '../../images/images';
@@ -21,22 +21,14 @@ const generalMenuItems = [
   { name: '조직도', path: '/departments', icon: faSitemap },
   {
     name: '전자 결재',
+    path: '/approval',
+    navigateOnClick: true,
     icon: faFileSignature,
     subItems: [
-      { name: '전자결재 홈', path: '/approval' },
-      { name: '나의 전자결재', path: '/approvalMypage' },
-      { name: '결재할 문서함', path: '/approvalInbox' },
+      { name: '내가 올린 기안', path: '/approvalMypage' },
+      { name: '내가 결재할 기안', path: '/approvalInbox' },
       { name: '참조 문서함', path: '/approvalCc' },
       { name: '임시 문서함', path: '/approvalTemp' },
-    ]
-  },
-  {
-    name: '문서 · AI 관리',
-    icon: faFileShield,
-    rank: ['부서장', '본부장', '팀장', '원장'],
-    subItems: [
-      { name: '문서 관리', path: '/adminDocument' },
-      { name: 'AI 미답변 질문 관리', path: '/adminQna' }
     ]
   },
   {
@@ -46,6 +38,7 @@ const generalMenuItems = [
     subItems: [
       { name: '직원 관리', path: '/adminUsers' },
       { name: '부서 관리', path: '/adminDepartments' },
+      { name: '직급 관리', path: '/adminRank' },
       { name: '회원가입 관리', path: '/adminSignup' },
       { name: '근태 관리', path: '/adminAttendance' },
       { name: '연차 관리', path: '/adminLeave' }
@@ -83,6 +76,15 @@ const generalMenuItems = [
   { name: '프로젝트 관리', path: '/projects', icon: faDiagramProject },
   { name: '사내 게시판', path: '/board', icon: faComments },
   { name: 'AI 챗봇', path: '/aiChat', icon: faRobot },
+  {
+    name: '문서 · AI 관리',
+    icon: faFileShield,
+    rank: ['부서장', '본부장', '팀장', '원장'],
+    subItems: [
+      { name: '문서 관리', path: '/adminDocument' },
+      { name: 'AI 미답변 질문 관리', path: '/adminQna' }
+    ]
+  }
 ];
 
 // 관리자 사이드바
@@ -95,6 +97,7 @@ const adminMenuItems = [
     subItems: [
       { name: '직원 관리', path: '/adminUsers' },
       { name: '부서 관리', path: '/adminDepartments' },
+      { name: '직급 관리', path: '/adminRank' },
       { name: '회원가입 관리', path: '/adminSignup' },
       { name: '근태 관리', path: '/adminAttendance' },
       { name: '연차 관리', path: '/adminLeave' }
@@ -118,6 +121,8 @@ const adminMenuItems = [
       { name: 'AI 미답변 질문 관리', path: '/adminQna' },
     ]
   },
+  { name: '결재선 관리', path: '/adminApprovalLine', icon: faUserCheck },
+  { name: '페이지 안내 문구 관리', path: '/adminPageInfo', icon: faFilePen }
 ];
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -178,16 +183,34 @@ const Sidebar = ({ isOpen, onClose }) => {
   };
 
   useEffect(() => {
-    const currentActiveMenu = filteredMenuItems.find(item =>
-      item.subItems && item.subItems.some(sub => isPathActive(sub.path))
-    );
+    const currentActiveMenu = filteredMenuItems.find(item => {
+      if (!item.subItems) {
+        return false;
+      }
+
+      const isParentActive =
+        item.navigateOnClick &&
+        item.path &&
+        isPathActive(item.path);
+
+      const isChildActive =
+        item.subItems.some(sub => isPathActive(sub.path));
+
+      return isParentActive || isChildActive;
+    });
 
     if (currentActiveMenu) {
       setOpenMenuName(currentActiveMenu.name);
     } else {
       setOpenMenuName(null);
     }
-  }, [location.pathname, isAdminMode, user?.auth_group, user?.rank_name, user?.role]);
+  }, [
+    location.pathname,
+    isAdminMode,
+    user?.auth_group,
+    user?.rank_name,
+    user?.role
+  ]);
 
   return (
     <>
@@ -221,7 +244,17 @@ const Sidebar = ({ isOpen, onClose }) => {
                 return (
                   <div key={idx} className="flex flex-col">
                     <button
-                      onClick={() => handleToggleMenu(item.name)}
+                      onClick={() => {
+                        if (item.navigateOnClick && item.path) {
+                          setOpenMenuName(item.name);
+                          if (location.pathname !== item.path) {
+                            navi(item.path);
+                          }
+                          onClose?.();
+                          return;
+                        }
+                        handleToggleMenu(item.name);
+                      }}
                       className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm transition-all w-full cursor-pointer
                         ${isSubItemActive
                           ? 'bg-[#DDE8FF] text-[#3530B8] font-bold'
