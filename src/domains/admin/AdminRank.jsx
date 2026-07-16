@@ -57,19 +57,20 @@ const AdminRank = () => {
     const [draggingIndex, setDraggingIndex] = useState(null);
     const [dragOverIndex, setDragOverIndex] = useState(null);
 
-    useEffect(() => {
-        const fetchRanks = async () => {
-            showLoading();
-            try {
-                const resp = await getRankList();
-                setRanks(normalizeRankList(resp.data));
-            } catch (error) {
-                console.error('직급 목록 로딩 실패', error);
-            } finally {
-                hideLoading();
-            }
-        };
+    const fetchRanks = async (withLoading = true) => {
+        if(withLoading){showLoading();}
 
+        try {
+            const resp = await getRankList();
+            setRanks(normalizeRankList(resp.data));
+        } catch (error) {
+            console.error('직급 목록 로딩 실패', error);
+        } finally {
+            if(withLoading){hideLoading();}
+        }
+    };
+
+    useEffect(() => {
         fetchRanks();
     }, []);
 
@@ -141,21 +142,22 @@ const AdminRank = () => {
         }
 
         showLoading();
-        
-        setRanks(prev => reorderRanks([
-            ...prev,
-            {
-                rank_seq: `temp-${Date.now()}`,
-                rank_name: rankName,
-                rankName,
-                rank_order: prev.length + 1,
-                rankOrder: prev.length + 1
+
+        try {
+            const data = {
+                rank_name: rankName
             }
-        ]));
-        await alertSuccess('추가 완료', '직급 정보가 화면에 반영되었습니다.');
 
+            await insertRank(data);
+            await fetchRanks(false);
+            handleCloseForm();
 
-        handleCloseForm();
+            await alertSuccess('추가 완료', '직급이 추가되었습니다.');
+        } catch (error) {
+            console.error("직급 추가 실패", error);
+        } finally {
+            hideLoading();
+        }
     };
 
     const handleDelete = async (rank) => {
