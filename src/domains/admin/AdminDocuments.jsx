@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Pagination from '../../components/common/Pagination';
 import MobilePagination from '../../components/common/MobilePagination';
 import useUserStore from '../../store/userStore';
@@ -9,7 +9,7 @@ import { createDocument, deleteDocument, editDocument, getAllDocs } from './admi
 import useAuthStore from '../../store/authStore';
 import Preview from '../../components/common/Preview';
 import useLoadingStore from '../../store/useLoadingStore';
-import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
+import { alertSuccess, alertError, alertConfirm, alertWarning } from '../../utils/alert';
 
 const AdminDocuments = () => {
   const { user } = useUserStore();
@@ -51,6 +51,13 @@ const AdminDocuments = () => {
     setUploadedFiles(acceptedFiles);
     if (acceptedFiles.length > 0) {
       setFileError('');
+      const file = acceptedFiles[0];
+      const validExtensions = ['.pdf', '.doc', '.docx'];
+      const isAICompatible = validExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+
+      if (!isAICompatible) {
+        alertWarning('안내', 'AI 챗봇에는 연동이 되지 않는 파일 형식입니다.<br>(지원 형식: pdf, doc, docx)');
+      }
     }
   }, []);
 
