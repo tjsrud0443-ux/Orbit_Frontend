@@ -101,7 +101,7 @@ export const updateCompanyWatermark = (file) => {
     });
 };
 
-
+export const insertRank = (data) => maxios.post("/admin/hr/insertRank", data);
 
 
 
