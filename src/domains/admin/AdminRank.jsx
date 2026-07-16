@@ -341,19 +341,19 @@ const AdminRank = () => {
 
         {formMode && (
           <div
-            className="fixed inset-0 z-30 bg-[#1a1c3d]/45 backdrop-blur-sm md:hidden"
+            className="admin-rank-modal-backdrop fixed inset-0 z-30 bg-[#1a1c3d]/45 backdrop-blur-sm md:hidden"
             onClick={handleCloseForm}
           />
         )}
 
         <aside
           ref={panelRef}
-          className={`admin-rank-form-panel bg-white border border-slate-200 rounded-2xl shadow-xl z-40 transition-all duration-500 ease-in-out flex flex-col overflow-hidden
+          className={`admin-rank-form-panel bg-white border border-slate-200 rounded-2xl shadow-xl z-40 md:transition-all md:duration-500 md:ease-in-out flex flex-col overflow-hidden
             ${formMode
-              ? 'fixed left-1/2 top-1/2 w-[calc(100vw-32px)] max-w-sm opacity-100 -translate-x-1/2 -translate-y-1/2 md:static md:left-auto md:top-auto md:w-[320px] lg:w-[380px] md:max-w-none md:translate-x-0 md:translate-y-0 md:ml-0 md:self-start'
+              ? 'admin-rank-modal-open fixed left-1/2 top-1/2 w-[calc(100vw-32px)] max-w-sm opacity-100 -translate-x-1/2 -translate-y-1/2 md:static md:left-auto md:top-auto md:w-[320px] lg:w-[380px] md:max-w-none md:translate-x-0 md:translate-y-0 md:ml-0 md:self-start'
               : 'fixed left-1/2 top-1/2 w-[calc(100vw-32px)] max-w-sm opacity-0 -translate-x-1/2 -translate-y-1/2 pointer-events-none md:static md:left-auto md:top-auto md:w-0 md:max-w-none md:translate-x-10 md:translate-y-0 md:ml-[-24px] md:self-start'}
           `}
-          style={{ height: formMode ? '360px' : '0', maxHeight: 'calc(100vh - 48px)', minHeight: formMode ? '320px' : '0' }}
+          style={{ height: formMode ? '310px' : '0', maxHeight: 'calc(100vh - 48px)', minHeight: formMode ? '280px' : '0' }}
         >
           <div className="h-16 px-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
             <h2 className="text-base font-bold text-slate-800">{formMode === 'EDIT' ? '직급 수정' : '직급 추가'}</h2>
@@ -389,6 +389,40 @@ const AdminRank = () => {
       </div>
 
       <style>{`
+        @keyframes adminRankModalBackdropIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes adminRankModalPopIn {
+          from {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+          }
+        }
+        @media (max-width: 767px) {
+          .admin-rank-modal-backdrop {
+            animation: adminRankModalBackdropIn 180ms ease-out both;
+          }
+          .admin-rank-form-panel.admin-rank-modal-open {
+            position: fixed !important;
+            left: 50% !important;
+            top: 50% !important;
+            right: auto !important;
+            bottom: auto !important;
+            margin: 0 !important;
+            translate: none !important;
+            transform: translate(-50%, -50%) scale(1) !important;
+            width: calc(100vw - 32px) !important;
+            max-width: 24rem !important;
+          }
+          .admin-rank-modal-open {
+            animation: adminRankModalPopIn 180ms ease-out both;
+          }
+        }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar:horizontal { height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
