@@ -111,9 +111,15 @@ const MeetingRooms = () => {
   }, [fetchEmployees]);
 
   const timeSlots = [];
+  /* 09:00~18:00 제한
   for (let i = 9; i <= 18; i++) {
     timeSlots.push(`${String(i).padStart(2, '0')}:00`);
     if (i < 18) timeSlots.push(`${String(i).padStart(2, '0')}:30`);
+  }
+  */
+  for (let i = 0; i <= 24; i++) {
+    timeSlots.push(`${String(i).padStart(2, '0')}:00`);
+    if (i < 24) timeSlots.push(`${String(i).padStart(2, '0')}:30`);
   }
 
   const handlePrevDay = () => {
@@ -165,13 +171,19 @@ const MeetingRooms = () => {
 
     const defaultEnd = format(addMinutes(parse(time, 'HH:mm', new Date()), 60), 'HH:mm');
 
-    let endTime = nextEvent && defaultEnd > getTime(nextEvent.start_dt)
+    let endTime = nextEvent && (defaultEnd > getTime(nextEvent.start_dt) || defaultEnd < time)
       ? getTime(nextEvent.start_dt)
       : defaultEnd;
 
+    if (endTime < time) {
+      endTime = '24:00';
+    }
+
+    /* 18:00 제한
     if (endTime > '18:00') {
       endTime = '18:00';
     }
+    */
 
     setForm({
       ...form,
@@ -192,16 +204,26 @@ const MeetingRooms = () => {
     const end = addMinutes(start, hours * 60);
     const endStr = format(end, 'HH:mm');
 
+    const isNextDay = endStr < form.startTime && endStr !== '00:00';
+    const finalEndStr = endStr === '00:00' ? '24:00' : endStr;
+
     const hasOverlap = panelEvents.some(event => {
       const eStart = getTime(event.start_dt);
       const eEnd = getTime(event.end_dt);
-      return (form.startTime < eEnd && endStr > eStart);
+      return (form.startTime < eEnd && finalEndStr > eStart);
     });
 
+    /* 18:00 제한
     if (!hasOverlap && endStr <= '18:00') {
       setForm({ ...form, endTime: endStr });
     } else {
       await alertWarning('예약 불가', '해당 시간에 이미 예약이 존재하거나 운영 시간을 벗어납니다.');
+    }
+    */
+    if (!hasOverlap && !isNextDay) {
+      setForm({ ...form, endTime: finalEndStr });
+    } else {
+      await alertWarning('예약 불가', '해당 시간에 이미 예약이 존재하거나 당일(24:00)을 넘길 수 없습니다.');
     }
   };
 
@@ -424,7 +446,7 @@ const MeetingRooms = () => {
             </div>
 
             <div className="flex-1 overflow-x-auto overflow-y-hidden custom-scrollbar pb-2 md:pb-6">
-              <div className="min-w-[1000px] h-full flex flex-col relative pt-8 md:pt-10">
+              <div className="min-w-[2600px] h-full flex flex-col relative pt-8 md:pt-10">
                 <div className="absolute top-0 left-0 right-0 flex border-b border-gray-50 pb-2">
                   {timeSlots.map((time, idx) => (
                     <div key={idx} className="flex-1 text-[9px] md:text-[10px] font-bold text-gray-400 text-center">
@@ -437,7 +459,8 @@ const MeetingRooms = () => {
                   {timeSlots.map((time, idx) => {
                     const isOccupied = isTimeOccupied(time);
                     const isPast = isPastTime(time, format(currentDate, 'yyyy-MM-dd'));
-                    const isEndTime = time >= '18:00';
+                    // const isEndTime = time >= '18:00'; // 18:00 제한
+                    const isEndTime = time >= '24:00';
                     const isWeekendDay = isWeekend(currentDate);
                     const isDisabled = isOccupied || isEndTime || isWeekendDay;
 
@@ -576,7 +599,10 @@ const MeetingRooms = () => {
                           className="fixed z-[9999] bg-white border border-gray-100 rounded-2xl shadow-2xl max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95"
                           style={{ top: `${dropdownPos.top + 8}px`, left: `${dropdownPos.left}px`, width: `${dropdownPos.width}px` }}
                         >
+                          {/* 18:00 제한
                           {timeSlots.filter(t => t <= '17:30').map(time => {
+                          */}
+                          {timeSlots.filter(t => t <= '23:30').map(time => {
                             const isOccupied = panelEvents.some(e =>
                               time >= getTime(e.start_dt) && time < getTime(e.end_dt)
                             );
@@ -618,7 +644,10 @@ const MeetingRooms = () => {
                           className="fixed z-[9999] bg-white border border-gray-100 rounded-2xl shadow-2xl max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95"
                           style={{ top: `${dropdownPos.top + 8}px`, left: `${dropdownPos.left}px`, width: `${dropdownPos.width}px` }}
                         >
+                          {/* 18:00 제한
                           {timeSlots.concat('18:30').filter(t => t >= '09:30' && t <= '18:00').map(time => {
+                          */}
+                          {timeSlots.filter(t => t >= '00:30' && t <= '24:00').map(time => {
                             const isBeforeStart = time <= form.startTime;
                             const hasOverlap = panelEvents.some(event => {
                               return (form.startTime < getTime(event.end_dt) && time > getTime(event.start_dt));
@@ -654,11 +683,16 @@ const MeetingRooms = () => {
                   {[1, 1.5, 2].map(h => {
                     const start = parse(form.startTime, 'HH:mm', new Date());
                     const end = addMinutes(start, h * 60);
-                    const endStr = format(end, 'HH:mm');
+                    let endStr = format(end, 'HH:mm');
+
+                    const isNextDay = endStr < form.startTime && endStr !== '00:00';
+                    const finalEndStr = endStr === '00:00' ? '24:00' : endStr;
+
                     const hasOverlap = panelEvents.some(event => {
-                      return (form.startTime < getTime(event.end_dt) && endStr > getTime(event.start_dt));
+                      return (form.startTime < getTime(event.end_dt) && finalEndStr > getTime(event.start_dt));
                     });
-                    const isInvalid = hasOverlap || endStr > '18:00';
+                    // const isInvalid = hasOverlap || endStr > '18:00'; // 18:00 제한
+                    const isInvalid = hasOverlap || isNextDay;
 
                     return (
                       <button
