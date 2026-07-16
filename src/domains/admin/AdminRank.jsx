@@ -7,8 +7,8 @@ import {
     faTimes,
     faTrashCan
 } from '@fortawesome/free-solid-svg-icons';
-import { getRankList, insertRank } from './adminApi';
-import { alertConfirm, alertSuccess } from '../../utils/alert';
+import { getRankList, insertRank, updateRank, deleteRank } from './adminApi';
+import { alertConfirm, alertSuccess, alertError } from '../../utils/alert';
 import useLoadingStore from '../../store/useLoadingStore';
 
 const getRankKey = (rank, fallback) => rank?.rank_seq ?? rank?.rankSeq ?? rank?.id ?? fallback;
@@ -58,7 +58,7 @@ const AdminRank = () => {
     const [dragOverIndex, setDragOverIndex] = useState(null);
 
     const fetchRanks = async (withLoading = true) => {
-        if(withLoading){showLoading();}
+        if (withLoading) { showLoading(); }
 
         try {
             const resp = await getRankList();
@@ -66,7 +66,7 @@ const AdminRank = () => {
         } catch (error) {
             console.error('직급 목록 로딩 실패', error);
         } finally {
-            if(withLoading){hideLoading();}
+            if (withLoading) { hideLoading(); }
         }
     };
 
@@ -130,32 +130,44 @@ const AdminRank = () => {
             return;
         }
 
-        if (formMode === 'EDIT') {
-            setRanks(prev => prev.map(rank =>
-                getRankKey(rank) === getRankKey(selectedRank)
-                    ? { ...rank, rank_name: rankName, rankName }
-                    : rank
-            ));
-            await alertSuccess('수정 완료', '직급 정보가 화면에 반영되었습니다.');
-            handleCloseForm();
-            return;
-        }
-
         showLoading();
 
         try {
+            if (formMode === 'EDIT') {
+                const data = {
+                    rank_seq: getRankKey(selectedRank),
+                    rank_name: rankName
+                }
+
+                await updateRank(data);
+                await fetchRanks(false);
+
+                hideLoading();
+                handleCloseForm();
+
+                await alertSuccess('수정 완료', '직급이 수정되었습니다.');
+                return;
+            }
+
+
             const data = {
                 rank_name: rankName
             }
 
             await insertRank(data);
             await fetchRanks(false);
+
+            hideLoading();
             handleCloseForm();
 
             await alertSuccess('추가 완료', '직급이 추가되었습니다.');
         } catch (error) {
-            console.error("직급 추가 실패", error);
-        } finally {
+            console.error(
+                formMode === 'EDIT'
+                    ? '직급 수정 실패'
+                    : '직급 추가 실패',
+                error
+            );
             hideLoading();
         }
     };
@@ -163,13 +175,33 @@ const AdminRank = () => {
     const handleDelete = async (rank) => {
         const result = await alertConfirm(
             `[ ${getRankName(rank)} ] 직급을 삭제하시겠습니까?`,
-            '현재 화면에서만 삭제되며 저장 API는 호출하지 않습니다.'
+            '삭제 후 복구는 불가합니다.'
         );
 
         if (!result.isConfirmed) return;
+        showLoading();
 
-        setRanks(prev => reorderRanks(prev.filter(item => getRankKey(item) !== getRankKey(rank))));
-        await alertSuccess('삭제 완료', '직급 정보가 화면에 반영되었습니다.');
+        try {
+            await deleteRank(getRankKey(rank));
+            await fetchRanks(false);
+        } catch (error) {
+            console.error("직급 삭제 실패", error);
+            const message =
+                error.response?.data?.message
+                ?? '직급 삭제 중 오류가 발생했습니다.';
+
+            hideLoading();
+
+            await alertError(
+                '삭제 불가', message.replace(/\n/g, '<br>')
+            );
+
+            return;
+        } finally {
+            hideLoading();
+        }
+
+        await alertSuccess('삭제 완료', '직급이 삭제되었습니다.');
     };
 
     const handleDragStart = (event, index) => {

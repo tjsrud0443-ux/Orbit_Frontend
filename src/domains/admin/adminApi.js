@@ -102,7 +102,8 @@ export const updateCompanyWatermark = (file) => {
 };
 
 export const insertRank = (data) => maxios.post("/admin/hr/insertRank", data);
-
+export const updateRank = (data) => maxios.put("/admin/hr/updateRank", data);
+export const deleteRank = (rank_seq) => maxios.delete(`/admin/hr/deleteRank/${rank_seq}`);
 
 
 
