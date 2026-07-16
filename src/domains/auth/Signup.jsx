@@ -32,6 +32,17 @@ const Signup = () => {
   const [isEmailChecked, setIsEmailChecked] = useState(false);
   const [errors, setErrors] = useState({});
 
+  const [selectedDefaultIdx, setSelectedDefaultIdx] = useState(null);
+
+  const DEFAULT_PROFILES = [
+    IMAGES.DEFAULT1,
+    IMAGES.DEFAULT2,
+    IMAGES.DEFAULT3,
+    IMAGES.DEFAULT4,
+    IMAGES.DEFAULT5,
+    IMAGES.DEFAULT6,
+  ];
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -64,10 +75,23 @@ const Signup = () => {
     }
   };
 
+  const handleDefaultProfileSelect = async (url, idx) => {
+    setSelectedDefaultIdx(idx);
+    setProfileImage(url);
+
+    // public URL → File 객체로 변환
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const file = new File([blob], `Default${idx + 1}.png`, { type: blob.type });
+    setProfileImgFile(file);
+    setErrors(prev => ({ ...prev, profileImage: '' }));
+  };
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setProfileImgFile(file);
+      setSelectedDefaultIdx(null);
 
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -94,9 +118,9 @@ const Signup = () => {
         setErrors((prev) => ({ ...prev, idCheck: '' }));
       }
     })
-    .finally(() => {
-      hideLoading();
-    });
+      .finally(() => {
+        hideLoading();
+      });
   };
 
   const handleEmailDuplCheck = () => {
@@ -115,15 +139,15 @@ const Signup = () => {
         setErrors((prev) => ({ ...prev, emailCheck: '' }));
       }
     })
-    .finally(() => {
-      hideLoading();
-    });
+      .finally(() => {
+        hideLoading();
+      });
   };
 
   useEffect(() => {
     if (isPostcodeOpen) {
       new window.kakao.Postcode({
-         width: '100%',
+        width: '100%',
         height: '300px',
         oncomplete: function (data) {
           setFormData((prev) => ({
@@ -168,7 +192,7 @@ const Signup = () => {
       } else {
         return false;
       }
-    } 
+    }
     else {
       if (genderCode === '1' || genderCode === '2' || genderCode === '5' || genderCode === '6') {
         fullYear = '19' + yy;
@@ -203,7 +227,7 @@ const Signup = () => {
 
   const handleSubmit = () => {
     const newErrors = {};
-    if (!profileImage) newErrors.profileImage = '프로필 사진을 선택해주세요.';
+    if (!profileImage) newErrors.profileImage = '기본 프로필을 선택하거나 직접 업로드해주세요.';
     if (!formData.name) {
       newErrors.name = '이름을 입력해주세요.';
     } else if (!nameRegex.test(formData.name)) {
@@ -338,6 +362,28 @@ const Signup = () => {
                   </button>
                 </div>
                 <p className="text-[10px] md:text-xs font-medium text-gray-400">프로필 이미지 등록</p>
+                <div className="mt-3 p-3 border border-gray-200 rounded-xl bg-gray-50 w-[240px] md:w-[380px]">
+                  <p className="text-[10px] md:text-xs font-medium text-gray-400 mb-1 ml-1">기본 프로필 선택</p>
+                  <div className="grid grid-cols-3 place-items-center gap-2 md:flex md:justify-center md:overflow-x-auto pb-1">
+                    {DEFAULT_PROFILES.map((url, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleDefaultProfileSelect(url, idx)}
+                        className={`w-10 h-10 md:w-12 md:h-12 rounded-full border-2 overflow-hidden shrink-0 ${selectedDefaultIdx === idx
+                          ? 'border-[#3530B8] ring-2 ring-[#3530B8]/20'
+                          : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                      >
+                        <img
+                          src={url}
+                          alt={`Default ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 {errors.profileImage && <p className="text-red-500 text-[10px] font-medium">{errors.profileImage}</p>
                 }
                 <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />

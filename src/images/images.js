@@ -11,4 +11,10 @@ export const IMAGES = {
     FIND_ACCOUNT: `${GCS_BUCKET_URL}/findAccount.png`,
     LOBOT_SMILE: `${GCS_BUCKET_URL}/LoadingRobot2.png`,
     LOBOT_THINKING: `${GCS_BUCKET_URL}/LoadingRobot1.png`,
+    DEFAULT1: `${GCS_BUCKET_URL}/Default1.png`,
+    DEFAULT2: `${GCS_BUCKET_URL}/Default2.png`,
+    DEFAULT3: `${GCS_BUCKET_URL}/Default3.png`,
+    DEFAULT4: `${GCS_BUCKET_URL}/Default4.png`,
+    DEFAULT5: `${GCS_BUCKET_URL}/Default5.png`,
+    DEFAULT6: `${GCS_BUCKET_URL}/Default6.png`,
 };

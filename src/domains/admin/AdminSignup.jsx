@@ -140,8 +140,12 @@ const AdminSignup = () => {
       newErrors.rank = '직급을 선택해 주세요.';
       isValid = false;
     }
+    const hireDateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!hireDate) {
-      newErrors.hireDate = '입사일자를 선택해 주세요.';
+      newErrors.hireDate = '입사일자를 입력해 주세요.';
+      isValid = false;
+    } else if (!hireDateRegex.test(hireDate)) {
+      newErrors.hireDate = 'YYYY-MM-DD 형식으로 입력해 주세요.';
       isValid = false;
     }
 
@@ -521,6 +525,17 @@ const AdminSignup = () => {
 
                         <div className="relative" ref={calendarRef}>
                           <label className="block text-[0.6875rem] font-bold text-gray-600 mb-1 ml-1">입사일자</label>
+                          <input
+                            type="text"
+                            value={hireDate}
+                            onChange={(e) => {
+                              setHireDate(e.target.value);
+                              if (errors.hireDate) setErrors(prev => ({ ...prev, hireDate: '' }));
+                            }}
+                            placeholder="YYYY-MM-DD 형식으로 입력해주세요"
+                            className={`w-full px-4 py-2.5 bg-white border ${errors.hireDate ? 'border-red-500' : 'border-gray-200'} rounded-xl text-xs font-medium transition-all focus:outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5`}
+                          />
+                          {/* 달력 선택 UI
                           <div
                             onClick={() => { setIsCalendarOpen(!isCalendarOpen); setIsDeptOpen(false); setIsRankOpen(false); }}
                             className={`w-full px-4 py-2.5 bg-white border ${errors.hireDate ? 'border-red-500' : isCalendarOpen ? 'border-[#3530B8] ring-4 ring-[#3530B8]/5' : 'border-gray-200'} rounded-xl text-xs font-medium transition-all cursor-pointer flex justify-between items-center`}
@@ -528,8 +543,10 @@ const AdminSignup = () => {
                             <span className={!hireDate ? 'text-gray-400' : 'text-gray-800'}>{hireDate || '입사일자를 선택하세요'}</span>
                             <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                           </div>
+                          */}
                           {errors.hireDate && <p className="text-red-500 text-[0.625rem] mt-1 ml-1 font-medium">{errors.hireDate}</p>}
 
+                          {/* 달력 모달 컴포넌트
                           {isCalendarOpen && (
                             <Calendar
                               value={hireDate}
@@ -540,6 +557,7 @@ const AdminSignup = () => {
                               onClose={() => setIsCalendarOpen(false)}
                             />
                           )}
+                          */}
                         </div>
                       </>
                     )}
@@ -548,7 +566,6 @@ const AdminSignup = () => {
               )}
             </div>
 
-            {/* Action Buttons - Fixed height */}
             {userInfo.status === 'PENDING' && (
               <div className="p-6 border-t border-gray-50 flex gap-3 flex-shrink-0 bg-white">
                 <button
