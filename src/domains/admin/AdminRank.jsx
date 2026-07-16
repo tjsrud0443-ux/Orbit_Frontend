@@ -46,6 +46,8 @@ const AdminRank = () => {
   const hideLoading = useLoadingStore(state => state.hideLoading);
   const panelRef = useRef(null);
   const dragIndexRef = useRef(null);
+  const touchDragIndexRef = useRef(null);
+  const touchDropIndexRef = useRef(null);
 
   const [ranks, setRanks] = useState([]);
   const [formMode, setFormMode] = useState(null);
@@ -200,6 +202,51 @@ const AdminRank = () => {
     setDragOverIndex(null);
   };
 
+  const handleTouchStart = (event, index) => {
+    touchDragIndexRef.current = index;
+    touchDropIndexRef.current = index;
+    setDraggingIndex(index);
+    setDragOverIndex(index);
+  };
+
+  const handleTouchMove = (event) => {
+    if (touchDragIndexRef.current === null) return;
+
+    event.preventDefault();
+
+    const touch = event.touches[0];
+    const targetRow = document
+      .elementFromPoint(touch.clientX, touch.clientY)
+      ?.closest('[data-rank-index]');
+
+    if (!targetRow) return;
+
+    const targetIndex = Number(targetRow.dataset.rankIndex);
+    if (!Number.isNaN(targetIndex)) {
+      touchDropIndexRef.current = targetIndex;
+      setDragOverIndex(targetIndex);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    const sourceIndex = touchDragIndexRef.current;
+    const dropIndex = touchDropIndexRef.current;
+
+    if (sourceIndex !== null && dropIndex !== null && sourceIndex !== dropIndex) {
+      setRanks(prev => {
+        const nextRanks = [...prev];
+        const [movedRank] = nextRanks.splice(sourceIndex, 1);
+        nextRanks.splice(dropIndex, 0, movedRank);
+        return reorderRanks(nextRanks);
+      });
+    }
+
+    touchDragIndexRef.current = null;
+    touchDropIndexRef.current = null;
+    setDraggingIndex(null);
+    setDragOverIndex(null);
+  };
+
   return (
     <div className="flex-1 bg-white flex flex-col h-full overflow-hidden">
       <div className="p-6 md:p-8 lg:p-10 md:pb-4 md:px-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4 md:gap-6">
@@ -237,6 +284,7 @@ const AdminRank = () => {
                   return (
                     <tr
                       key={key}
+                      data-rank-index={index}
                       draggable
                       onDragStart={(event) => handleDragStart(event, index)}
                       onDragOver={(event) => handleDragOver(event, index)}
@@ -246,7 +294,13 @@ const AdminRank = () => {
                     >
                       <td className="py-3.5 md:py-4 pl-4 md:pl-6 pr-2 md:pr-4">
                         <div className="flex items-center gap-2 md:gap-4">
-                          <span className="w-8 h-8 rounded-lg bg-slate-50 text-slate-300 group-hover:text-[#3530B8] group-hover:bg-indigo-50 flex items-center justify-center cursor-grab active:cursor-grabbing transition-all shrink-0">
+                          <span
+                            className="w-8 h-8 rounded-lg bg-slate-50 text-slate-300 group-hover:text-[#3530B8] group-hover:bg-indigo-50 flex items-center justify-center cursor-grab active:cursor-grabbing transition-all shrink-0 touch-none"
+                            onTouchStart={(event) => handleTouchStart(event, index)}
+                            onTouchMove={handleTouchMove}
+                            onTouchEnd={handleTouchEnd}
+                            onTouchCancel={handleTouchEnd}
+                          >
                             <FontAwesomeIcon icon={faGripVertical} className="text-xs" />
                           </span>
                           <span className="text-sm font-bold text-slate-600">{rank.rank_order ?? index + 1}</span>
