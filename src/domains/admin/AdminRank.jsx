@@ -7,7 +7,7 @@ import {
     faTimes,
     faTrashCan
 } from '@fortawesome/free-solid-svg-icons';
-import { getRankList, insertRank, updateRank, deleteRank } from './adminApi';
+import { getRankList, insertRank, updateRank, deleteRank, updateRankOrder } from './adminApi';
 import { alertConfirm, alertSuccess, alertError } from '../../utils/alert';
 import useLoadingStore from '../../store/useLoadingStore';
 
@@ -217,8 +217,18 @@ const AdminRank = () => {
         setDragOverIndex(index);
     };
 
-    const handleDrop = (event, dropIndex) => {
+    const saveRankOrder = async (rankList) => {
+        const data = rankList.map((rank, index) => ({
+            rank_seq: getRankKey(rank),
+            rank_order: index + 1
+        }));
+
+        await updateRankOrder(data);
+    }
+
+    const handleDrop = async (event, dropIndex) => {
         event.preventDefault();
+
         const sourceIndex = dragIndexRef.current;
 
         if (sourceIndex === null || sourceIndex === dropIndex) {
@@ -226,14 +236,48 @@ const AdminRank = () => {
             return;
         }
 
-        setRanks(prev => {
-            const nextRanks = [...prev];
-            const [movedRank] = nextRanks.splice(sourceIndex, 1);
-            nextRanks.splice(dropIndex, 0, movedRank);
-            return reorderRanks(nextRanks);
-        });
+        const previousRanks = [...ranks];
+        const nextRanks = [...ranks];
 
+        const [movedRank] = nextRanks.splice(sourceIndex, 1);
+        nextRanks.splice(dropIndex, 0, movedRank);
+
+        const reorderedRanks = reorderRanks(nextRanks);
+
+        setRanks(reorderedRanks);
         handleDragEnd();
+
+        let errorMessage = null;
+
+        showLoading();
+
+        try {
+            await saveRankOrder(reorderedRanks);
+            await fetchRanks(false);
+        } catch (error) {
+            console.error('직급 순서 변경 실패', error);
+
+            setRanks(previousRanks);
+
+            errorMessage =
+                error.response?.data?.message
+                ?? '직급 순서를 저장하지 못했습니다.';
+        } finally {
+            hideLoading();
+        }
+
+        if (errorMessage) {
+            await alertError(
+                '순서 변경 실패',
+                errorMessage
+            );
+            return;
+        }
+
+        await alertSuccess(
+            '순서 변경 완료',
+            '직급 순서가 변경되었습니다.'
+        );
     };
 
     const handleDragEnd = () => {
