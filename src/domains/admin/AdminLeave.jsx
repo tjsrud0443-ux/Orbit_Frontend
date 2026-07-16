@@ -1,15 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Pagination from '../../components/common/Pagination';
 import MobilePagination from '../../components/common/MobilePagination';
-// import { getAllLeaves, updateUserLeave } from './adminApi'; // TODO: 백엔드 API 구현 후 주석 해제
+import { getAllLeaves, updateUserLeave } from './adminApi';
 import { alertError, alertConfirm, alertSuccess } from '../../utils/alert';
-
-// TODO: adminApi 완성 전까지 사용할 더미 데이터
-const DUMMY_EMPLOYEES = [
-  { users_seq: 1, name: '김철수', dept_name: '개발팀', rank_name: '사원', hire_date: '2023-03-02', total_leave: 15, used_leave: 4 },
-  { users_seq: 2, name: '이영희', dept_name: '인사팀', rank_name: '대리', hire_date: '2021-07-15', total_leave: 15, used_leave: 12 },
-  { users_seq: 3, name: '박민수', dept_name: '영업팀', rank_name: '과장', hire_date: '2019-01-10', total_leave: 18, used_leave: 2 },
-];
 
 const AdminLeave = () => {
   const [employees, setEmployees] = useState([]);
@@ -31,7 +24,6 @@ const AdminLeave = () => {
   // 연차 스텝(1일 단위로 조절하고 싶으면 1로 변경)
   const LEAVE_STEP = 0.5;
   const LEAVE_MIN = 0;
-  const LEAVE_MAX = 30;
 
   // 외부 클릭 시 수정 모드 해제 (드롭다운이 없어졌으므로 단순화)
   useEffect(() => {
@@ -50,24 +42,25 @@ const AdminLeave = () => {
   }, [currentPage, searchKeyword]);
 
   const fetchEmployees = (page = 1, keyword = '') => {
-    // TODO: 백엔드 API 완성되면 아래 주석 해제하고 더미 데이터 로직 제거
-    // getAllLeaves(page, keyword).then((resp) => {
-    //   setEmployees(resp.data.users || []);
-    //   setTotalCount(resp.data.totalCount || 0);
-    // });
-
-    // ---- 더미 데이터로 임시 동작 ----
-    const filtered = keyword
-      ? DUMMY_EMPLOYEES.filter(
-          (emp) =>
-            emp.name.includes(keyword) ||
-            emp.dept_name.includes(keyword) ||
-            String(emp.users_seq).includes(keyword)
-        )
-      : DUMMY_EMPLOYEES;
-    setEmployees(filtered);
-    setTotalCount(filtered.length);
-    // ---------------------------------
+    getAllLeaves(page, keyword)
+      .then((resp) => {
+        const mapped = (resp.data.list || []).map((item) => ({
+          users_seq: item.users_seq,
+          users_id: item.users_id, 
+          leave_seq: item.leave_seq,
+          name: item.name,
+          dept_name: item.dept_name,
+          rank_name: item.rank_name,
+          hire_date: item.hire_date,
+          total_leave: item.total_days,
+          used_leave: item.used_days,
+        }));
+        setEmployees(mapped);
+        setTotalCount(resp.data.totalCount || 0);
+      })
+      .catch(() => {
+        alertError('오류 발생', '연차 목록을 불러오는 중 오류가 발생했습니다.');
+      });
   };
 
   // 검색 핸들러
@@ -100,85 +93,89 @@ const AdminLeave = () => {
   // 상세 정보 수정 시작
   const handleDetailEdit = () => {
     setEditForm({
-      total_leave: selectedUser.total_leave ?? 0,
-      used_leave: selectedUser.used_leave ?? 0,
+      delta: 0,          // 조정할 일수 (부여: 양수, 회수: 음수)
     });
     setIsDetailEditing(true);
   };
 
-  // 연차 숫자 증감 (업다운 버튼)
+  // 가감 스텝 (부여: up, 회수: down)
   const handleLeaveStep = (direction) => {
     setEditForm((prev) => {
-      const current = Number(prev.total_leave) || 0;
+      const current = Number(prev.delta) || 0;
       let next = direction === 'up' ? current + LEAVE_STEP : current - LEAVE_STEP;
-      next = Math.min(LEAVE_MAX, Math.max(LEAVE_MIN, next));
       next = Math.round(next * 10) / 10;
-      return { ...prev, total_leave: next };
+
+      // 잔여 연차보다 더 감축하려고 하는지 검증
+      const expectedTotal = Number(selectedUser.total_leave) + next;
+      if (expectedTotal < Number(selectedUser.used_leave)) {
+        alertError('입력 오류', '잔여연차보다 더 적습니다');
+        return prev;
+      }
+      return { ...prev, delta: next };
     });
   };
 
   // 입력창 직접 수정
   const handleLeaveInputChange = (e) => {
     const raw = e.target.value;
-    if (raw === '') {
-      setEditForm((prev) => ({ ...prev, total_leave: '' }));
+    if (raw === '' || raw === '-') {
+      setEditForm((prev) => ({ ...prev, delta: raw }));
       return;
     }
     const num = Number(raw);
     if (Number.isNaN(num)) return;
-    const clamped = Math.min(LEAVE_MAX, Math.max(LEAVE_MIN, num));
-    setEditForm((prev) => ({ ...prev, total_leave: clamped }));
+
+    // 잔여 연차보다 더 감축하려고 하는지 검증
+    const expectedTotal = Number(selectedUser.total_leave) + num;
+    if (expectedTotal < Number(selectedUser.used_leave)) {
+      alertError('입력 오류', '잔여연차보다 더 적습니다');
+      return;
+    }
+    setEditForm((prev) => ({ ...prev, delta: num }));
   };
 
   const handleLeaveInputBlur = () => {
-    setEditForm((prev) => ({
-      ...prev,
-      total_leave: prev.total_leave === '' ? 0 : prev.total_leave,
-    }));
+    setEditForm((prev) => {
+      const val = Number(prev.delta) || 0;
+      const rounded = Math.round(val * 10) / 10;
+
+      const expectedTotal = Number(selectedUser.total_leave) + rounded;
+      if (expectedTotal < Number(selectedUser.used_leave)) {
+        alertError('입력 오류', '잔여연차보다 더 적습니다');
+        return { ...prev, delta: 0 };
+      }
+      return { ...prev, delta: rounded };
+    });
   };
 
   // 상세 정보 저장
   const handleDetailSave = () => {
-    alertConfirm('연차 정보 수정', '해당 직원의 연차 정보를 수정하시겠습니까?').then((result) => {
-      if (result.isConfirmed) {
-        // TODO: 백엔드 API 완성되면 아래 주석 해제
-        // updateUserLeave(selectedUser.users_seq, editForm)
-        //   .then(() => {
-        //     setEmployees((prev) =>
-        //       prev.map((emp) =>
-        //         emp.users_seq === selectedUser.users_seq
-        //           ? { ...emp, total_leave: editForm.total_leave, used_leave: editForm.used_leave }
-        //           : emp
-        //       )
-        //     );
-        //     setSelectedUser((prev) => ({
-        //       ...prev,
-        //       total_leave: editForm.total_leave,
-        //       used_leave: editForm.used_leave,
-        //     }));
-        //     setIsDetailEditing(false);
-        //     alertSuccess('수정 완료', '연차 정보가 성공적으로 수정되었습니다.');
-        //   })
-        //   .catch(() => {
-        //     alertError('오류 발생', '연차 정보 수정 중 오류가 발생했습니다.');
-        //   });
+    const expectedTotal = Number(selectedUser.total_leave) + (Number(editForm.delta) || 0);
+    if (expectedTotal < Number(selectedUser.used_leave)) {
+      alertError('입력 오류', '잔여연차보다 더 적습니다');
+      return;
+    }
 
-        // ---- 더미 데이터로 임시 동작 (프론트 상태만 반영) ----
-        setEmployees((prev) =>
-          prev.map((emp) =>
-            emp.users_seq === selectedUser.users_seq
-              ? { ...emp, total_leave: editForm.total_leave, used_leave: editForm.used_leave }
-              : emp
-          )
-        );
-        setSelectedUser((prev) => ({
-          ...prev,
-          total_leave: editForm.total_leave,
-          used_leave: editForm.used_leave,
-        }));
-        setIsDetailEditing(false);
-        alertSuccess('수정 완료', '연차 정보가 성공적으로 수정되었습니다. (더미 데이터)');
-        // ---------------------------------------------------
+    alertConfirm('연차 정보 수정', '해당 직원의 연차를 조정하시겠습니까?').then((result) => {
+      if (result.isConfirmed) {
+        updateUserLeave(selectedUser.leave_seq, editForm.delta)
+          .then((resp) => {
+            // 백엔드가 계산한 최종 값을 응답으로 받아서 반영
+            const { total_days, used_days } = resp.data;
+            setEmployees((prev) =>
+              prev.map((emp) =>
+                emp.leave_seq === selectedUser.leave_seq
+                  ? { ...emp, total_leave: total_days, used_leave: used_days }
+                  : emp
+              )
+            );
+            setSelectedUser((prev) => ({ ...prev, total_leave: total_days, used_leave: used_days }));
+            setIsDetailEditing(false);
+            alertSuccess('수정 완료', '연차 정보가 성공적으로 수정되었습니다.');
+          })
+          .catch(() => {
+            alertError('오류 발생', '연차 정보 수정 중 오류가 발생했습니다.');
+          });
       }
     });
   };
@@ -234,14 +231,13 @@ const AdminLeave = () => {
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-16">부여 연차</th>
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-16">사용 연차</th>
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-16">잔여 연차</th>
-                  <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider pl-4 w-28">관리</th>
                 </tr>
               </thead>
 
               <tbody className="divide-y divide-slate-100 sm:divide-slate-50/60 block sm:table-row-group">
                 {filteredEmployees.length === 0 ? (
                   <tr className="block sm:table-row">
-                    <td colSpan={8} className="block sm:table-cell text-center py-12 text-slate-400 text-sm">
+                    <td colSpan={7} className="block sm:table-cell text-center py-12 text-slate-400 text-sm">
                       결과가 없습니다.
                     </td>
                   </tr>
@@ -299,19 +295,6 @@ const AdminLeave = () => {
                           </span>
                         </td>
 
-                        <td className="py-2 px-4 block sm:table-cell text-left w-fit sm:w-[120px] sm:min-w-[120px] clear-both mt-2">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedUser(emp);
-                              setIsDetailEditing(false);
-                            }}
-                            className="w-max px-7 py-1 text-xs font-bold text-slate-600 bg-white border border-slate-300 rounded-full hover:bg-slate-50 shadow-sm"
-                          >
-                            상세
-                          </button>
-                        </td>
                       </tr>
                     );
                   })
@@ -333,7 +316,7 @@ const AdminLeave = () => {
           <div
             className={`flex flex-col bg-white rounded-none md:rounded-[32px]
           border-0 md:border border-slate-100 shadow-sm overflow-hidden min-h-0 animate-in slide-in-from-right duration-500 ${
-            selectedUser ? 'flex-1 md:flex-[0.3]' : 'hidden'
+            selectedUser ? 'flex-1 md:flex-[0.3] md:min-w-[350px]' : 'hidden'
           }`}
           >
             <div className="p-6 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
@@ -384,12 +367,11 @@ const AdminLeave = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">부여 연차</span>
                       {isDetailEditing ? (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
                           <button
                             type="button"
                             onClick={() => handleLeaveStep('down')}
-                            disabled={Number(editForm.total_leave) <= LEAVE_MIN}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#3530B8] hover:border-[#3530B8]/30 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#3530B8] hover:border-[#3530B8]/30 transition-all"
                           >
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 12H4" />
@@ -398,27 +380,26 @@ const AdminLeave = () => {
 
                           <input
                             type="number"
-                            value={editForm.total_leave}
+                            value={editForm.delta}
                             onChange={handleLeaveInputChange}
                             onBlur={handleLeaveInputBlur}
                             step={LEAVE_STEP}
-                            min={LEAVE_MIN}
-                            max={LEAVE_MAX}
                             className="w-16 text-center px-1 py-1 bg-white border border-gray-200 rounded-lg text-[0.6875rem] font-bold text-slate-700 outline-none focus:border-[#3530B8] focus:ring-2 focus:ring-[#3530B8]/5 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
 
                           <button
                             type="button"
                             onClick={() => handleLeaveStep('up')}
-                            disabled={Number(editForm.total_leave) >= LEAVE_MAX}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#3530B8] hover:border-[#3530B8]/30 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#3530B8] hover:border-[#3530B8]/30 transition-all"
                           >
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
                             </svg>
                           </button>
 
-                          <span className="text-[0.6875rem] text-slate-400 font-bold ml-0.5">일</span>
+                          <span className="text-xs text-slate-400 font-medium ml-2">
+                            {(Number(selectedUser.total_leave) + Number(editForm.delta)).toFixed(1)}일
+                          </span>
                         </div>
                       ) : (
                         <span className="text-xs font-bold text-slate-700">{selectedUser.total_leave ?? 0}일</span>
@@ -435,9 +416,8 @@ const AdminLeave = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">잔여 연차</span>
                       {(() => {
-                        const remain = isDetailEditing
-                          ? getRemainLeave(editForm.total_leave, editForm.used_leave)
-                          : getRemainLeave(selectedUser.total_leave, selectedUser.used_leave);
+                        // 수정 중이어도 저장 전까지는 원래 값 기준으로 잔여 연차 표시
+                        const remain = getRemainLeave(selectedUser.total_leave, selectedUser.used_leave);
                         return (
                           <span
                             className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-center whitespace-nowrap ${

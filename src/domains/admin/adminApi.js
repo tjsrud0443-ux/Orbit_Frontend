@@ -1,4 +1,4 @@
-﻿import { maxios } from "../../api/axiosConfig";
+import { maxios } from "../../api/axiosConfig";
 
 // 회원가입 관리
 export const getAllRequest = (page, status, searchTerm) => maxios.get("/admin/hr/allRequest", { params: { cPage: page, status: status, searchTerm: searchTerm } });
@@ -447,3 +447,11 @@ export const updateCompanyWatermark = (file) => {
 
 
 
+//연차 관리
+export const getAllLeaves = (cPage, keyword) => { 
+    return maxios.get('/admin/hr/getAllLeaveList', { params: { cPage, keyword }, }); 
+}; 
+
+export const updateUserLeave = (leaveSeq, delta) => {
+    return maxios.put(`/admin/hr/updateUserLeave/${leaveSeq}`, { delta_days: delta });
+}; 
