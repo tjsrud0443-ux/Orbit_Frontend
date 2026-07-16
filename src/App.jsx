@@ -50,6 +50,9 @@ import './App.css';
 import { useEffect, useState } from 'react';
 import AdminCompanyInfo from './domains/admin/AdminCompanyInfo';
 import AdminLeave from './domains/admin/AdminLeave';
+import AdminRank from './domains/admin/AdminRank';
+import AdminApprovalLine from './domains/admin/AdminApprovalLine';
+import AdminPageInfo from './domains/admin/AdminPageInfo';
 
 function App() {
   const loading = useLoadingStore(state => state.loading);
@@ -132,13 +135,15 @@ function App() {
               <Route element={<ProtectedRoute
                 allow={[{ type: "group", value: "ROLE_SUPER_ADMIN" }]} />}>
                 <Route path="/adminMain" element={<AdminMain />} />
-                <Route path="/adminCompanyInfo" element={<AdminCompanyInfo />} />
+                <Route path="/adminApprovalLine" element={<AdminApprovalLine />} />
+                <Route path="/adminPageInfo" element={<AdminPageInfo />} />
               </Route>
 
               <Route element={<ProtectedRoute
                 allow={[{ type: "group", value: "ROLE_HR_ADMIN" }]} />}>
                 <Route path="/adminUsers" element={<AdminUsers />} />
                 <Route path="/adminDepartments" element={<AdminDept />} />
+                <Route path="/adminRank" element={<AdminRank />} />
                 <Route path="/adminSignup" element={<AdminSignup />} />
                 <Route path="/adminAttendance" element={<AdminAttendance />} />
                 <Route path="/adminLeave" element={<AdminLeave />} />
