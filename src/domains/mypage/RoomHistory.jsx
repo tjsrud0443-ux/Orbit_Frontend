@@ -234,10 +234,11 @@ const RoomHistory = () => {
 
   const isTimeInvalid = editForm.startTime >= editForm.endTime;
 
-  const timeSlots = [
-    '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
-    '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'
-  ];
+  const timeSlots = [];
+  for (let i = 0; i <= 24; i++) {
+    timeSlots.push(`${String(i).padStart(2, '0')}:00`);
+    if (i < 24) timeSlots.push(`${String(i).padStart(2, '0')}:30`);
+  }
 
   const updateDropdownPos = useCallback(() => {
     if (inputRef.current) {
@@ -542,7 +543,10 @@ const RoomHistory = () => {
                           className="fixed z-[9999] bg-white border border-gray-100 rounded-xl shadow-2xl max-h-48 overflow-y-auto custom-scrollbar"
                           style={{ top: `${dropdownPos.top + 4}px`, left: `${dropdownPos.left}px`, width: `${dropdownPos.width}px` }}
                         >
+                          {/* 18:00 제한
                           {timeSlots.map(time => {
+                          */}
+                          {timeSlots.filter(t => t <= '23:30').map(time => {
                             const isOccupied = isStartOccupied(time);
                             const isPast = isPastTime(time, editForm.date);
                             const isDisabled = isOccupied || isPast;
@@ -587,7 +591,10 @@ const RoomHistory = () => {
                           className="fixed z-[9999] bg-white border border-gray-100 rounded-xl shadow-2xl max-h-48 overflow-y-auto custom-scrollbar"
                           style={{ top: `${dropdownPos.top + 4}px`, left: `${dropdownPos.left}px`, width: `${dropdownPos.width}px` }}
                         >
+                          {/* 18:00 제한
                           {timeSlots.map(time => {
+                          */}
+                          {timeSlots.filter(t => t >= '00:30' && t <= '24:00').map(time => {
                             const isOccupied = isEndOccupied(time);
                             const isPast = isPastTime(time, editForm.date);
                             const isDisabled = isOccupied || isPast;
