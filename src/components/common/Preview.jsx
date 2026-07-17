@@ -32,6 +32,15 @@ const DocumentPreviewModal = ({ sysname, mimeType, title, token, onClose }) => {
           alertError('로딩 실패', '문서 미리보기를 불러오는 중 오류가 발생했습니다.');
           onClose();
         });
+    } else if (mimeType === 'text/plain' || sysname?.toLowerCase().endsWith('.txt')) {
+      setPreviewType('txt');
+      setIsLoading(true);
+      fetch(fileUrl)
+        .then(res => res.text())
+        .then(text => {
+          setFileBuffer(text);
+          setIsLoading(false);
+        });
     }
   }, [sysname, mimeType, token]);
 
@@ -92,6 +101,8 @@ const DocumentPreviewModal = ({ sysname, mimeType, title, token, onClose }) => {
                 className="w-full h-[70vh] rounded-xl border-0 bg-white shadow-inner"
                 title={title}
               />
+            ) : previewType === 'txt' ? (
+              <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono p-4">{fileBuffer}</pre>
             ) : null}
           </div>
         </div>

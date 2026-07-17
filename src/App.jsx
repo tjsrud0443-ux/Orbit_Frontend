@@ -135,6 +135,7 @@ function App() {
               <Route element={<ProtectedRoute
                 allow={[{ type: "group", value: "ROLE_SUPER_ADMIN" }]} />}>
                 <Route path="/adminMain" element={<AdminMain />} />
+                <Route path="/adminCompanyInfo" element={<AdminCompanyInfo />} />
                 <Route path="/adminApprovalLine" element={<AdminApprovalLine />} />
                 <Route path="/adminPageInfo" element={<AdminPageInfo />} />
               </Route>

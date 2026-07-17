@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { format, addDays, subDays, startOfDay, parse, addMinutes, isBefore, isWeekend } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -35,6 +35,8 @@ const MeetingRooms = () => {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showFormCalendar, setShowFormCalendar] = useState(false);
   const calendarRef = useRef(null);
+  const [showRoomDropdown, setShowRoomDropdown] = useState(false);
+  const roomRef = useRef(null);
   const [showStartTimeDropdown, setShowStartTimeDropdown] = useState(false);
   const [showEndTimeDropdown, setShowEndTimeDropdown] = useState(false);
   const startTimeRef = useRef(null);
@@ -90,6 +92,9 @@ const MeetingRooms = () => {
     showLoading();
     getAllRooms().then(resp => {
       setRooms(resp.data);
+      if (resp.data.length > 0) {
+        setSelectedRoomSeq(resp.data[0].room_seq);
+      }
     }).catch(err => console.error("회의실 목록 로드 실패:", err))
       .finally(() => {
         hideLoading();
@@ -111,9 +116,15 @@ const MeetingRooms = () => {
   }, [fetchEmployees]);
 
   const timeSlots = [];
+  /* 09:00~18:00 제한
   for (let i = 9; i <= 18; i++) {
     timeSlots.push(`${String(i).padStart(2, '0')}:00`);
     if (i < 18) timeSlots.push(`${String(i).padStart(2, '0')}:30`);
+  }
+  */
+  for (let i = 0; i <= 24; i++) {
+    timeSlots.push(`${String(i).padStart(2, '0')}:00`);
+    if (i < 24) timeSlots.push(`${String(i).padStart(2, '0')}:30`);
   }
 
   const handlePrevDay = () => {
@@ -165,13 +176,19 @@ const MeetingRooms = () => {
 
     const defaultEnd = format(addMinutes(parse(time, 'HH:mm', new Date()), 60), 'HH:mm');
 
-    let endTime = nextEvent && defaultEnd > getTime(nextEvent.start_dt)
+    let endTime = nextEvent && (defaultEnd > getTime(nextEvent.start_dt) || defaultEnd < time)
       ? getTime(nextEvent.start_dt)
       : defaultEnd;
 
+    if (endTime < time) {
+      endTime = '24:00';
+    }
+
+    /* 18:00 제한
     if (endTime > '18:00') {
       endTime = '18:00';
     }
+    */
 
     setForm({
       ...form,
@@ -187,21 +204,50 @@ const MeetingRooms = () => {
     setIsPanelOpen(true);
   };
 
+  const handleReserveBtnClick = () => {
+    setForm({
+      ...form,
+      date: format(currentDate, 'yyyy-MM-dd'),
+      startTime: '',
+      endTime: '',
+      title: '',
+      attendees: []
+    });
+    setSearchQuery('');
+    setShowSearchResults(false);
+    setShowValidation(false);
+    setIsPanelOpen(true);
+  };
+
   const handleQuickSelect = async (hours) => {
+    if (!form.startTime) {
+      await alertWarning('선택 불가', '시작 시간을 먼저 선택해주세요.');
+      return;
+    }
     const start = parse(form.startTime, 'HH:mm', new Date());
     const end = addMinutes(start, hours * 60);
     const endStr = format(end, 'HH:mm');
 
+    const isNextDay = endStr < form.startTime && endStr !== '00:00';
+    const finalEndStr = endStr === '00:00' ? '24:00' : endStr;
+
     const hasOverlap = panelEvents.some(event => {
       const eStart = getTime(event.start_dt);
       const eEnd = getTime(event.end_dt);
-      return (form.startTime < eEnd && endStr > eStart);
+      return (form.startTime < eEnd && finalEndStr > eStart);
     });
 
+    /* 18:00 제한
     if (!hasOverlap && endStr <= '18:00') {
       setForm({ ...form, endTime: endStr });
     } else {
       await alertWarning('예약 불가', '해당 시간에 이미 예약이 존재하거나 운영 시간을 벗어납니다.');
+    }
+    */
+    if (!hasOverlap && !isNextDay) {
+      setForm({ ...form, endTime: finalEndStr });
+    } else {
+      await alertWarning('예약 불가', '해당 시간에 이미 예약이 존재하거나 당일(24:00)을 넘길 수 없습니다.');
     }
   };
 
@@ -217,10 +263,11 @@ const MeetingRooms = () => {
   };
 
   useEffect(() => {
-    if (showSearchResults || showStartTimeDropdown || showEndTimeDropdown) {
+    if (showSearchResults || showRoomDropdown || showStartTimeDropdown || showEndTimeDropdown) {
       const currentRef = showSearchResults ? searchInputRef :
-        showStartTimeDropdown ? startTimeRef :
-          endTimeRef;
+        showRoomDropdown ? roomRef :
+          showStartTimeDropdown ? startTimeRef :
+            endTimeRef;
 
       const update = () => {
         if (currentRef.current) {
@@ -241,7 +288,7 @@ const MeetingRooms = () => {
         window.removeEventListener('scroll', update, true);
       };
     }
-  }, [showSearchResults, showStartTimeDropdown, showEndTimeDropdown]);
+  }, [showSearchResults, showRoomDropdown, showStartTimeDropdown, showEndTimeDropdown]);
 
   const filteredEmployees = allEmployees.filter(emp => {
     const name = emp?.name || '';
@@ -274,8 +321,7 @@ const MeetingRooms = () => {
     if (form.attendees.length > (selectedRoom?.max_people || 0)) {
       return;
     }
-    if (!form.date) {
-      await alertWarning('정보 미입력', '예약일을 선택해주세요.');
+    if (!form.date || !form.startTime || !form.endTime || !selectedRoomSeq) {
       return;
     }
     if (isWeekend(parse(form.date, 'yyyy-MM-dd', new Date()))) {
@@ -283,16 +329,6 @@ const MeetingRooms = () => {
       return;
     }
     if (isBefore(parse(form.date, 'yyyy-MM-dd', new Date()), startOfDay(new Date()))) {
-      return;
-    }
-    if (!form.startTime) {
-      alert('시작 시간을 선택해주세요.');
-      await alertWarning('정보 미입력', '시작 시간을 선택해주세요.');
-      return;
-    }
-    if (!form.endTime) {
-      alert('종료 시간을 선택해주세요.');
-      await alertWarning('정보 미입력', '종료 시간을 선택해주세요.');
       return;
     }
     if (form.startTime >= form.endTime) {
@@ -338,15 +374,19 @@ const MeetingRooms = () => {
   };
 
   const isDateInvalid = form.date && isBefore(parse(form.date, 'yyyy-MM-dd', new Date()), startOfDay(new Date()));
+  const isDateMissing = showValidation && !form.date;
   const isTitleInvalid = (showValidation && !form.title.trim()) || form.title.length > 20;
+  const isRoomMissing = showValidation && !selectedRoomSeq;
+  const isStartTimeMissing = showValidation && !form.startTime;
+  const isEndTimeMissing = showValidation && !form.endTime;
   const isAttendeeLimitExceeded = form.attendees.length > (selectedRoom?.max_people || 0);
-  const isTimeInvalid = form.startTime >= form.endTime;
+  const isTimeInvalid = form.startTime && form.endTime ? form.startTime >= form.endTime : false;
 
   return (
     <div className={`h-full flex flex-col ${isPanelOpen ? 'p-0 md:p-8' : 'p-6 md:p-8'} bg-[#FFFFFF] overflow-hidden font-sans`}>
 
       <div className={`mb-6 flex-shrink-0 ${isPanelOpen ? 'hidden md:block' : 'block'}`}>
-        <div className="flex items-center justify-between">
+        <div className="flex items-start md:items-center justify-between">
           <div>
             <h1 className="text-lg md:text-2xl font-bold text-gray-900 mb-1 flex items-center gap-3">
               <div className="w-1.5 h-6 bg-[#3530B8] rounded-full"></div>
@@ -356,12 +396,18 @@ const MeetingRooms = () => {
               회의실의 예약 현황을 확인하고 예약할 수 있습니다.
             </p>
           </div>
+          <button
+            onClick={handleReserveBtnClick}
+            className="bg-[#3530B8] text-white px-4 md:px-6 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold shadow-md hover:bg-[#2A2694] transition-all whitespace-nowrap"
+          >
+            예약하기
+          </button>
         </div>
       </div>
 
       <div className="flex-1 flex gap-6 min-h-0 overflow-hidden">
         <div className={`flex flex-col min-h-0 overflow-hidden transition-all duration-500 ${isPanelOpen ? 'hidden md:flex md:flex-[0.6]' : 'flex-1'}`}>
-          <div className="flex-shrink-0 mb-6 flex gap-4 overflow-x-auto pb-2 no-scrollbar">
+          <div className="w-full flex-shrink-0 mb-6 flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
             {rooms.map(room => (
               <div
                 key={room.room_seq}
@@ -424,7 +470,7 @@ const MeetingRooms = () => {
             </div>
 
             <div className="flex-1 overflow-x-auto overflow-y-hidden custom-scrollbar pb-2 md:pb-6">
-              <div className="min-w-[1000px] h-full flex flex-col relative pt-8 md:pt-10">
+              <div className="min-w-[2600px] h-full flex flex-col relative pt-8 md:pt-10">
                 <div className="absolute top-0 left-0 right-0 flex border-b border-gray-50 pb-2">
                   {timeSlots.map((time, idx) => (
                     <div key={idx} className="flex-1 text-[9px] md:text-[10px] font-bold text-gray-400 text-center">
@@ -437,7 +483,8 @@ const MeetingRooms = () => {
                   {timeSlots.map((time, idx) => {
                     const isOccupied = isTimeOccupied(time);
                     const isPast = isPastTime(time, format(currentDate, 'yyyy-MM-dd'));
-                    const isEndTime = time >= '18:00';
+                    // const isEndTime = time >= '18:00'; // 18:00 제한
+                    const isEndTime = time >= '24:00';
                     const isWeekendDay = isWeekend(currentDate);
                     const isDisabled = isOccupied || isEndTime || isWeekendDay;
 
@@ -465,7 +512,7 @@ const MeetingRooms = () => {
                     return (
                       <div
                         key={event.rsvn_seq}
-                        className="absolute top-[17%] md:top-10 bottom-[17%] md:bottom-10 bg-[#3530B8] rounded-xl shadow-lg shadow-gray-400/25 p-2 md:p-4 flex flex-col justify-center border-l-4 border-white/20 overflow-hidden"
+                        className="absolute top-[30%] md:top-10 bottom-[30%] md:bottom-10 bg-[#3530B8] rounded-xl shadow-lg shadow-gray-400/25 p-2 md:p-4 flex flex-col justify-center border-l-4 border-white/20 overflow-hidden"
                         style={{ left: `${left}%`, width: `${width}%`, zIndex: 10, backgroundColor: getColor(event.rsvn_seq) }}
                       >
                         <div className="text-black text-[10px] md:text-xs font-bold truncate mb-0.5">{event.title}</div>
@@ -511,9 +558,40 @@ const MeetingRooms = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-gray-400 uppercase ml-1 tracking-wider">회의실명</label>
-                    <div className="px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-gray-500">
-                      {selectedRoom?.room_name}
+                    <div
+                      ref={roomRef}
+                      onClick={() => setShowRoomDropdown(!showRoomDropdown)}
+                      className={`w-full px-5 py-3.5 bg-gray-50 border ${isRoomMissing ? 'border-red-500' : 'border-gray-100'} rounded-2xl text-sm font-bold text-gray-700 flex items-center justify-between cursor-pointer hover:border-[#3530B8] transition-all`}
+                    >
+                      {selectedRoom?.room_name || <span className="text-gray-400 font-medium">선택</span>}
+                      <FontAwesomeIcon icon={faChevronRight} className={`text-[10px] text-gray-300 transition-transform ${showRoomDropdown ? 'rotate-90' : ''}`} />
                     </div>
+                    {showRoomDropdown && createPortal(
+                      <>
+                        <div className="fixed inset-0 z-[9998]" onClick={() => setShowRoomDropdown(false)} />
+                        <div
+                          className="fixed z-[9999] bg-white border border-gray-100 rounded-2xl shadow-2xl max-h-48 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95"
+                          style={{ top: `${dropdownPos.top + 8}px`, left: `${dropdownPos.left}px`, width: `${dropdownPos.width}px` }}
+                        >
+                          {rooms.map(room => (
+                            <div
+                              key={room.room_seq}
+                              onClick={() => {
+                                setSelectedRoomSeq(room.room_seq);
+                                setShowRoomDropdown(false);
+                              }}
+                              className={`p-3 hover:bg-[#F0F4FF] cursor-pointer text-xs font-bold text-gray-700 border-b border-gray-50 last:border-0 ${selectedRoomSeq === room.room_seq ? 'bg-[#F0F4FF]' : ''}`}
+                            >
+                              {room.room_name}
+                            </div>
+                          ))}
+                        </div>
+                      </>,
+                      document.body
+                    )}
+                    {isRoomMissing && (
+                      <p className="text-[10px] text-red-500 font-bold ml-1">회의실을 선택해주세요.</p>
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-gray-400 uppercase ml-1 tracking-wider">예약자</label>
@@ -532,16 +610,19 @@ const MeetingRooms = () => {
                   <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">예약일</label>
                   <div
                     onClick={() => setShowFormCalendar(!showFormCalendar)}
-                    className={`w-full px-5 py-3.5 bg-gray-50 border ${isDateInvalid ? 'border-red-500' : 'border-gray-100'} rounded-2xl text-sm font-bold text-gray-700 flex items-center justify-between cursor-pointer hover:border-[#3530B8] transition-all`}
+                    className={`w-full px-5 py-3.5 bg-gray-50 border ${(isDateInvalid || isDateMissing) ? 'border-red-500' : 'border-gray-100'} rounded-2xl text-sm font-bold text-gray-700 flex items-center justify-between cursor-pointer hover:border-[#3530B8] transition-all`}
                   >
                     <div className="flex items-center gap-2">
                       <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-400" />
-                      {form.date}
+                      {form.date || <span className="text-gray-400 font-medium">선택</span>}
                     </div>
                     <FontAwesomeIcon icon={faChevronRight} className={`text-[10px] text-gray-300 transition-transform ${showFormCalendar ? 'rotate-90' : ''}`} />
                   </div>
                   {isDateInvalid && (
                     <p className="text-[10px] text-red-500 font-bold ml-1">오늘 이 전 날짜는 선택 불가합니다.</p>
+                  )}
+                  {isDateMissing && (
+                    <p className="text-[10px] text-red-500 font-bold ml-1">예약일을 선택해주세요.</p>
                   )}
                   {showFormCalendar && (
                     <div className="absolute bottom-5 left-0 right-4 z-50 p-4">
@@ -564,11 +645,14 @@ const MeetingRooms = () => {
                     <div
                       ref={startTimeRef}
                       onClick={() => setShowStartTimeDropdown(!showStartTimeDropdown)}
-                      className={`w-full px-5 py-3.5 bg-gray-50 border ${isTimeInvalid ? 'border-red-500' : 'border-gray-100'} rounded-2xl text-sm font-bold text-gray-700 flex items-center justify-between cursor-pointer hover:border-[#3530B8] transition-all`}
+                      className={`w-full px-5 py-3.5 bg-gray-50 border ${(isTimeInvalid || isStartTimeMissing) ? 'border-red-500' : 'border-gray-100'} rounded-2xl text-sm font-bold text-gray-700 flex items-center justify-between cursor-pointer hover:border-[#3530B8] transition-all`}
                     >
-                      {form.startTime}
+                      {form.startTime || <span className="text-gray-400 font-medium">선택</span>}
                       <FontAwesomeIcon icon={faChevronRight} className={`text-[10px] text-gray-300 transition-transform ${showStartTimeDropdown ? 'rotate-90' : ''}`} />
                     </div>
+                    {isStartTimeMissing && (
+                      <p className="text-[10px] text-red-500 font-bold ml-1">시작 시간을 선택해주세요.</p>
+                    )}
                     {showStartTimeDropdown && createPortal(
                       <>
                         <div className="fixed inset-0 z-[9998]" onClick={() => setShowStartTimeDropdown(false)} />
@@ -576,7 +660,10 @@ const MeetingRooms = () => {
                           className="fixed z-[9999] bg-white border border-gray-100 rounded-2xl shadow-2xl max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95"
                           style={{ top: `${dropdownPos.top + 8}px`, left: `${dropdownPos.left}px`, width: `${dropdownPos.width}px` }}
                         >
+                          {/* 18:00 제한
                           {timeSlots.filter(t => t <= '17:30').map(time => {
+                          */}
+                          {timeSlots.filter(t => t <= '23:30').map(time => {
                             const isOccupied = panelEvents.some(e =>
                               time >= getTime(e.start_dt) && time < getTime(e.end_dt)
                             );
@@ -606,11 +693,14 @@ const MeetingRooms = () => {
                     <div
                       ref={endTimeRef}
                       onClick={() => setShowEndTimeDropdown(!showEndTimeDropdown)}
-                      className={`w-full px-5 py-3.5 bg-gray-50 border ${isTimeInvalid ? 'border-red-500' : 'border-gray-100'} rounded-2xl text-sm font-bold text-gray-700 flex items-center justify-between cursor-pointer hover:border-[#3530B8] transition-all`}
+                      className={`w-full px-5 py-3.5 bg-gray-50 border ${(isTimeInvalid || isEndTimeMissing) ? 'border-red-500' : 'border-gray-100'} rounded-2xl text-sm font-bold text-gray-700 flex items-center justify-between cursor-pointer hover:border-[#3530B8] transition-all`}
                     >
-                      {form.endTime}
+                      {form.endTime || <span className="text-gray-400 font-medium">선택</span>}
                       <FontAwesomeIcon icon={faChevronRight} className={`text-[10px] text-gray-300 transition-transform ${showEndTimeDropdown ? 'rotate-90' : ''}`} />
                     </div>
+                    {isEndTimeMissing && (
+                      <p className="text-[10px] text-red-500 font-bold ml-1">종료 시간을 선택해주세요.</p>
+                    )}
                     {showEndTimeDropdown && createPortal(
                       <>
                         <div className="fixed inset-0 z-[9998]" onClick={() => setShowEndTimeDropdown(false)} />
@@ -618,7 +708,10 @@ const MeetingRooms = () => {
                           className="fixed z-[9999] bg-white border border-gray-100 rounded-2xl shadow-2xl max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95"
                           style={{ top: `${dropdownPos.top + 8}px`, left: `${dropdownPos.left}px`, width: `${dropdownPos.width}px` }}
                         >
+                          {/* 18:00 제한
                           {timeSlots.concat('18:30').filter(t => t >= '09:30' && t <= '18:00').map(time => {
+                          */}
+                          {timeSlots.filter(t => t >= '00:30' && t <= '24:00').map(time => {
                             const isBeforeStart = time <= form.startTime;
                             const hasOverlap = panelEvents.some(event => {
                               return (form.startTime < getTime(event.end_dt) && time > getTime(event.start_dt));
@@ -652,13 +745,20 @@ const MeetingRooms = () => {
 
                 <div className="flex gap-2">
                   {[1, 1.5, 2].map(h => {
-                    const start = parse(form.startTime, 'HH:mm', new Date());
-                    const end = addMinutes(start, h * 60);
-                    const endStr = format(end, 'HH:mm');
-                    const hasOverlap = panelEvents.some(event => {
-                      return (form.startTime < getTime(event.end_dt) && endStr > getTime(event.start_dt));
-                    });
-                    const isInvalid = hasOverlap || endStr > '18:00';
+                    let isInvalid = true;
+                    if (form.startTime) {
+                      const start = parse(form.startTime, 'HH:mm', new Date());
+                      const end = addMinutes(start, h * 60);
+                      let endStr = format(end, 'HH:mm');
+
+                      const isNextDay = endStr < form.startTime && endStr !== '00:00';
+                      const finalEndStr = endStr === '00:00' ? '24:00' : endStr;
+
+                      const hasOverlap = panelEvents.some(event => {
+                        return (form.startTime < getTime(event.end_dt) && finalEndStr > getTime(event.start_dt));
+                      });
+                      isInvalid = hasOverlap || isNextDay;
+                    }
 
                     return (
                       <button
