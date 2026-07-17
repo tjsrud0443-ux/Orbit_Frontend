@@ -1,9 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faSearch,
-  faUser,
   faChevronDown,
 } from '@fortawesome/free-solid-svg-icons';
 import Pagination from '../../components/common/Pagination';
@@ -33,7 +32,7 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const DocumentTable = ({ title, data, onDetailClick, showPagination = true, count = 0, page = 1, setPage = () => { } }) => {
+const DocumentTable = ({ data, onDetailClick, showPagination = true, count = 0, page = 1, setPage = () => { } }) => {
   const token = useAuthStore(state => state.token);
   const displayData = data;
 
@@ -53,11 +52,8 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, coun
   const hasPaginationData = displayData.length > 0 && count > 0;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-3">
-      <div className="pl-4 md:pl-6 pr-4 py-3 border-b border-slate-100 bg-white">
-        <h3 className="text-base md:text-lg font-bold text-slate-800">{title}</h3>
-      </div>
-      <div className="overflow-x-auto custom-scrollbar">
+    <>
+      <div className="overflow-x-auto custom-scrollbar min-h-[376px]">
         <table className="w-full min-w-[900px] md:min-w-full text-left border-collapse md:table-fixed">
           <thead>
             <tr className="bg-white text-gray-400 text-[0.8125rem] font-bold uppercase tracking-wider border-b border-slate-100">
@@ -112,8 +108,12 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, coun
         </table>
       </div>
       {showPagination && (
-        <div className="hidden md:block py-2 scale-95 origin-center">
-          <Pagination count={count} page={page} onChange={(_, value) => setPage(value)} />
+        <div className="hidden md:block py-2 scale-95 origin-center min-h-[48px]">
+          {count > 0 ? (
+            <Pagination count={count} page={page} onChange={(_, value) => setPage(value)} />
+          ) : (
+            <div className="h-8" />
+          )}
         </div>
       )}
       {showPagination && (
@@ -146,7 +146,7 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, coun
           </button>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
@@ -156,6 +156,9 @@ const ApprovalInbox = () => {
   const [selectedType, setSelectedType] = useState('전체 문서');
   const [isTypeOpen, setIsTypeOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const itemsPerPage = 5;
+  const [activeTab, setActiveTab] = useState('PENDING');
+  const [draftPage, setDraftPage] = useState(1);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -206,6 +209,7 @@ const ApprovalInbox = () => {
   const [doneDocument, setDoneDocument] = useState([]);
   const [doneDocumentPage, setDoneDocumentPage] = useState(1);
   const [doneDocumentCount, setDoneDocumentCount] = useState(0);
+  const [doneDocumentTotalCount, setDoneDocumentTotalCount] = useState(0);
   const showLoading = useLoadingStore(state => state.showLoading);
   const hideLoading = useLoadingStore(state => state.hideLoading);
 
@@ -221,19 +225,71 @@ const ApprovalInbox = () => {
     getPageMyDoneDoc(doneDocumentPage, searchTerm, docTypeMap[selectedType] || selectedType).then(resp => {
       setDoneDocument(resp.data.list);
       setDoneDocumentCount(Math.ceil(resp.data.count / 5));
+      setDoneDocumentTotalCount(resp.data.count);
     })
   }, [doneDocumentPage, searchTerm, selectedType])
 
+  const resetPages = () => {
+    setDraftPage(1);
+    setDoneDocumentPage(1);
+  };
+
+  const filteredDraftDocuments = useMemo(() => filterDocuments(draftDocument), [draftDocument, searchTerm, selectedType]);
+  const paginatedDraftDocuments = useMemo(() => {
+    const start = (draftPage - 1) * itemsPerPage;
+    return filteredDraftDocuments.slice(start, start + itemsPerPage);
+  }, [filteredDraftDocuments, draftPage]);
+
+  const tabs = [
+    {
+      label: '결재 대기중',
+      status: 'PENDING',
+      count: filteredDraftDocuments.length,
+      data: paginatedDraftDocuments,
+      pageCount: Math.ceil(filteredDraftDocuments.length / itemsPerPage),
+      page: draftPage,
+      setPage: setDraftPage,
+    },
+    {
+      label: '결재 완료',
+      status: 'DONE',
+      count: doneDocumentTotalCount,
+      data: doneDocument,
+      pageCount: doneDocumentCount,
+      page: doneDocumentPage,
+      setPage: setDoneDocumentPage,
+    },
+  ];
+  const activeTabData = tabs.find(tab => tab.status === activeTab) || tabs[0];
+
   return (
-    <div className="flex-1 bg-white md:overflow-hidden flex flex-col p-5 lg:p-6 custom-scrollbar">
-      <div className="max-w-[1440px] mx-auto w-full flex flex-col h-full space-y-10">
+    <div className="flex-1 bg-white py-8 px-1 md:px-7 overflow-y-auto md:overflow-hidden custom-scrollbar">
+      <div className="max-w-[1450px] mx-auto w-full flex flex-col h-full">
 
         {/* Title & Description */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 flex-shrink-0">
+        <div className="mb-6 px-4 md:px-2 flex-shrink-0">
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">결재할 문서함</h1>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">내가 결재할 기안</h1>
             <p className="text-xs text-slate-500 font-medium">나의 승인을 기다리는 문서와 이미 처리된 문서를 확인하세요.</p>
           </div>
+
+        </div>
+
+        <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-3 md:p-8 flex flex-col flex-1 md:overflow-hidden min-h-0">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+            <div className="flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit items-center flex-shrink-0 overflow-x-auto custom-scrollbar">
+              {tabs.map(tab => (
+                <button
+                  key={tab.status}
+                  type="button"
+                  onClick={() => setActiveTab(tab.status)}
+                  className={`flex-1 md:flex-none px-2 md:px-6 py-1.5 rounded-xl text-[11px] md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === tab.status ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}
+                >
+                  {tab.label}
+                  <span className="ml-1.5">({tab.count})</span>
+                </button>
+              ))}
+            </div>
 
           {/* Search Bar */}
           <div className="flex items-center gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-slate-200 w-full md:w-auto focus-within:ring-2 focus-within:ring-[#3530B8]/20 focus-within:border-[#3530B8] transition-all">
@@ -252,7 +308,7 @@ const ApprovalInbox = () => {
                       key={type}
                       onClick={() => {
                         setSelectedType(type);
-                        setDoneDocumentPage(1);
+                        resetPages();
                         setIsTypeOpen(false);
                       }}
                       className="px-3 py-1.5 text-xs text-slate-400 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
@@ -270,7 +326,7 @@ const ApprovalInbox = () => {
                 type="text"
                 placeholder="문서 제목 검색..."
                 value={searchTerm}
-                onChange={(e) => { setSearchTerm(e.target.value); setDoneDocumentPage(1); }}
+                onChange={(e) => { setSearchTerm(e.target.value); resetPages(); }}
                 className="w-full pl-9 pr-3 py-1.5 text-xs border-none focus:ring-0 placeholder:text-slate-400 outline-none bg-transparent"
               />
             </div>
@@ -278,22 +334,17 @@ const ApprovalInbox = () => {
         </div>
 
         {/* Sections */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-8 pr-1">
-          <DocumentTable
-            title="결재 대기중"
-            data={filterDocuments(draftDocument)}
-            onDetailClick={handleOpenDetail}
-            showPagination={false}
-          />
+        <div className="flex-1 md:overflow-y-auto md:min-h-0 custom-scrollbar">
           <DocumentTable
             title="결재 완료"
-            data={doneDocument}
+            data={activeTabData.data}
             onDetailClick={handleOpenDetail}
-            count={doneDocumentCount}
-            page={doneDocumentPage}
-            setPage={setDoneDocumentPage}
+            count={activeTabData.pageCount}
+            page={activeTabData.page}
+            setPage={activeTabData.setPage}
           />
         </div>
+      </div>
       </div>
       <style dangerouslySetInnerHTML={{
         __html: `
