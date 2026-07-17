@@ -67,6 +67,7 @@ const ApprovalTemp = () => {
 
   const count = Math.ceil(filteredDocs.length / itemsPerPage);
   const displayDocs = filteredDocs.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+  const emptyRowCount = Math.max(itemsPerPage - displayDocs.length, 0);
   const mobilePageNumbers = (() => {
     if (count <= 0) return [];
     const maxVisible = 5;
@@ -177,30 +178,30 @@ const ApprovalTemp = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {displayDocs.length > 0 ? (
+                {displayDocs.length > 0 ? ([
                   displayDocs.map((doc) => (
                     <tr key={doc.seq} className="transition-colors group">
-                      <td className="py-5 pl-8 pr-4">
+                      <td className="py-3 pl-8 pr-4">
                         <span className="text-sm font-bold text-slate-700 transition-colors whitespace-nowrap">
                           {doc.title}
                         </span>
                       </td>
-                      <td className="py-5 px-4 text-center">
+                      <td className="py-3 px-4 text-center">
                         <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md whitespace-nowrap">
                           {docType[doc.doc_type] || doc.doc_type}
                         </span>
                       </td>
-                      <td className="py-5 px-4 text-center">
+                      <td className="py-3 px-4 text-center">
                         <span className="text-xs font-bold text-slate-400 font-mono tracking-tighter whitespace-nowrap">
                           {doc.updated_at?.substring(0, 10)}
                         </span>
                       </td>
-                      <td className="py-5 px-4 text-center">
+                      <td className="py-3 px-4 text-center">
                         <span className={`text-xs font-bold whitespace-nowrap ${expiresDay(doc.temp_expires_at) <= 1 ? 'text-rose-500' : 'text-slate-600'}`}>
                           {expiresDay(doc.temp_expires_at)}일 남음
                         </span>
                       </td>
-                      <td className="py-5 pl-4 pr-8">
+                      <td className="py-3 pl-4 pr-8">
                         <div className="flex justify-center gap-2">
                           <button
                             onClick={() => handleEdit(doc)}
@@ -219,28 +220,49 @@ const ApprovalTemp = () => {
                         </div>
                       </td>
                     </tr>
+                  )),
+                  Array.from({ length: emptyRowCount }).map((_, index) => (
+                    <tr key={`empty-${index}`} className="pointer-events-none">
+                      <td className="py-3 pl-8 pr-4">&nbsp;</td>
+                      <td className="py-3 px-4">&nbsp;</td>
+                      <td className="py-3 px-4">&nbsp;</td>
+                      <td className="py-3 px-4">&nbsp;</td>
+                      <td className="py-3 pl-4 pr-8">&nbsp;</td>
+                    </tr>
                   ))
-                ) : (
-                  <tr>
+                ]
+                ) : ([
+                  <tr key="empty-message">
                     <td colSpan="5" className="py-20 text-center text-slate-400 text-sm font-bold whitespace-nowrap">
                       임시 저장된 문서가 없습니다.
                     </td>
-                  </tr>
-                )}
+                  </tr>,
+                  Array.from({ length: itemsPerPage - 4 }).map((_, index) => (
+                    <tr key={`empty-${index}`} className="pointer-events-none">
+                      <td className="py-3 pl-8 pr-4">&nbsp;</td>
+                      <td className="py-3 px-4">&nbsp;</td>
+                      <td className="py-3 px-4">&nbsp;</td>
+                      <td className="py-3 px-4">&nbsp;</td>
+                      <td className="py-3 pl-4 pr-8">&nbsp;</td>
+                    </tr>
+                  ))
+                ])}
               </tbody>
             </table>
           </div>
 
           {/* Pagination */}
-          {count > 0 && (
-            <div className="hidden md:block py-6 border-t border-slate-50">
+          <div className="hidden md:block py-3 border-t border-slate-50 min-h-[56px]">
+            {count > 0 ? (
               <Pagination
                 count={count}
                 page={page}
                 onChange={(_, value) => setPage(value)}
               />
-            </div>
-          )}
+            ) : (
+              <div className="h-8" />
+            )}
+          </div>
           <div className="md:hidden py-5 border-t border-slate-50 flex items-center justify-center gap-1.5">
             <button
               type="button"
