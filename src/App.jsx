@@ -53,13 +53,16 @@ import AdminLeave from './domains/admin/AdminLeave';
 import AdminRank from './domains/admin/AdminRank';
 import AdminApprovalLine from './domains/admin/AdminApprovalLine';
 import AdminPageInfo from './domains/admin/AdminPageInfo';
+import usePageInfoStore from './store/usePageInfoStore';
 
 function App() {
   const loading = useLoadingStore(state => state.loading);
   const loadingType = useLoadingStore(state => state.loadingType);
+  const { fetchPageInfo } = usePageInfoStore();
   const [isMobile, setIsMobile] = useState(window.matchMedia("(max-width:768px)").matches);
 
   useEffect(() => {
+    fetchPageInfo();
     const media = window.matchMedia("(max-width:768px)");
     const handler = (e) => { setIsMobile(e.matches) };
     media.addEventListener("change", handler);
@@ -158,9 +161,9 @@ function App() {
                 <Route path="/adminMeetingRoom" element={<AdminMeetingRooms />} />
               </Route>
 
-                <Route path="/adminDocument" element={<AdminDocuments />} />
-                <Route path="/adminQna" element={<AdminQna />} />
-                
+              <Route path="/adminDocument" element={<AdminDocuments />} />
+              <Route path="/adminQna" element={<AdminQna />} />
+
             </Route>
           </Routes>
         </Router>
