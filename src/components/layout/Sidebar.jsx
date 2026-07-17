@@ -14,6 +14,8 @@ import useAuthStore from '../../store/authStore';
 import { IMAGES } from '../../images/images';
 import useUserStore from '../../store/userStore';
 import useDepartmentsStore from '../../store/useDepartmentsStore';
+import useNotificationStore from '../../store/useNotificationStore';
+import { updateReadNoti } from '../../api/notificationApi';
 
 // 직원 사이드바
 const generalMenuItems = [
@@ -24,9 +26,18 @@ const generalMenuItems = [
     path: '/approval',
     navigateOnClick: true,
     icon: faFileSignature,
+    notiTypes: ['APPROVAL', 'APPROVED', 'REJECTED'],
     subItems: [
-      { name: '내가 올린 기안', path: '/approvalMypage' },
-      { name: '내가 결재할 기안', path: '/approvalInbox' },
+      {
+        name: '내가 올린 기안',
+        path: '/approvalMypage',
+        notiTypes: ['APPROVED', 'REJECTED']
+      },
+      {
+        name: '내가 결재할 기안',
+        path: '/approvalInbox',
+        notiTypes: ['APPROVAL']
+      },
       { name: '참조 문서함', path: '/approvalCc' },
       { name: '임시 문서함', path: '/approvalTemp' },
     ]
@@ -58,8 +69,13 @@ const generalMenuItems = [
   {
     name: '일정 · 회의',
     icon: faCalendar,
+    notiTypes: ['MEETING'],
     subItems: [
-      { name: '캘린더', path: '/calendar' },
+      {
+        name: '캘린더',
+        path: '/calendar',
+        notiTypes: ['MEETING']
+      },
       { name: '회의록', path: '/meetingMinutes' },
       { name: '회의실 예약', path: '/meetingRooms' },
     ]
@@ -73,13 +89,17 @@ const generalMenuItems = [
       { name: '자료실', path: '/documents' }
     ]
   },
-  { name: '프로젝트 관리', path: '/projects', icon: faDiagramProject },
+  {
+    name: '프로젝트 관리',
+    path: '/projects',
+    icon: faDiagramProject,
+    notiTypes: ['PROJECT', 'TASK'],
+  },
   { name: '사내 게시판', path: '/board', icon: faComments },
   { name: 'AI 챗봇', path: '/aiChat', icon: faRobot },
   {
     name: '문서 · AI 관리',
     icon: faFileShield,
-    rank: ['부서장', '본부장', '팀장', '원장'],
     subItems: [
       { name: '문서 관리', path: '/adminDocument' },
       { name: 'AI 미답변 질문 관리', path: '/adminQna' }
@@ -125,6 +145,26 @@ const adminMenuItems = [
   { name: '페이지 안내 문구 관리', path: '/adminPageInfo', icon: faFilePen }
 ];
 
+const NotificationBadge = ({ count }) => {
+  if (count <= 0) {
+    return null;
+  }
+
+  return (
+    <span
+      className='
+        min-w-[18px] h-[18px] px-1
+        inline-flex items-center justify-center
+        rounded-full bg-red-500 text-white
+        text-[10px] font-bold leading-none
+      '
+    >
+      {count > 99 ? '99+' : count}
+    </span>
+  );
+};
+
+
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
   const navi = useNavigate();
@@ -133,8 +173,51 @@ const Sidebar = ({ isOpen, onClose }) => {
   const [isAdminMode, setIsAdminMode] = useState(false);
   const user = useUserStore(state => state.user);
   const clearDepartments = useDepartmentsStore(state => state.clearAll);
+  const notifications = useNotificationStore(state => state.notifications);
+  const readNotis = useNotificationStore(state => state.readNotis);
 
   const currentMenuPool = isAdminMode ? adminMenuItems : generalMenuItems;
+
+  const getNotificationCount = (notiTypes) => {
+    if (!Array.isArray(notiTypes) || notiTypes.length === 0) {
+      return 0;
+    }
+
+    return notifications.filter(
+      noti => notiTypes.includes(noti.noti_type)
+    ).length;
+  }
+
+  const getMenuNotifications = (notiTypes) => {
+    if (!Array.isArray(notiTypes) || notiTypes.length === 0) {
+      return [];
+    }
+
+    return notifications.filter(
+      noti => noti.read_yn === 'N' && notiTypes.includes(noti.noti_type)
+    );
+  }
+
+  const readMenuNotifications = async (notiTypes) => {
+    const targetNotifications = getMenuNotifications(notiTypes);
+
+    if (targetNotifications.length === 0) {
+      return;
+    }
+
+    const notiSeqList = targetNotifications.map(noti => noti.noti_seq);
+
+    try {
+      await Promise.all(
+        notiSeqList.map(notiSeq => updateReadNoti(notiSeq))
+      );
+
+      readNotis(notiSeqList);
+
+    } catch (e) {
+      console.error('사이드바 알림 읽음 처리 실패', e);
+    }
+  }
 
   const handleLogout = () => {
     clearDepartments();
@@ -146,7 +229,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     setOpenMenuName(prev => prev === menuName ? null : menuName);
   };
 
-  const isAdminUser = user?.role === 'ADMIN' || user?.auth_group === 'ROLE_SUPER_ADMIN';
+  const isAdminUser = user?.auth_group === 'ROLE_SUPER_ADMIN';
 
   const hasMenuAccess = (item) => {
     if (isAdminMode) {
@@ -237,6 +320,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
           <nav className="space-y-1 flex-1 overflow-y-auto pr-1 custom-scrollbar">
             {filteredMenuItems.map((item, idx) => {
+              const itemNotificationCount = getNotificationCount(item.notiTypes);
               if (item.subItems) {
                 const isSubItemActive = item.subItems.some(sub => isPathActive(sub.path));
                 const isCurrentMenuOpen = openMenuName === item.name;
@@ -263,24 +347,33 @@ const Sidebar = ({ isOpen, onClose }) => {
                         <FontAwesomeIcon icon={item.icon} className="w-4 h-4" />
                         <span>{item.name}</span>
                       </div>
-                      <FontAwesomeIcon icon={isCurrentMenuOpen ? faChevronUp : faChevronDown} className="w-3 h-3" />
+                      <div className='flex items-center gap-2'>
+                        <NotificationBadge count={itemNotificationCount} />
+                        <FontAwesomeIcon icon={isCurrentMenuOpen ? faChevronUp : faChevronDown} className="w-3 h-3" />
+                      </div>
                     </button>
 
                     {isCurrentMenuOpen && (
                       <div className="mt-1 ml-4 border-l-2 border-slate-100 pl-4 space-y-1">
                         {item.subItems.map((sub, subIdx) => {
                           const isCurrent = isPathActive(sub.path);
+                          const subNotificationCount = getNotificationCount(sub.notiTypes);
+
                           return (
                             <Link
                               key={subIdx}
                               to={sub.path}
-                              onClick={onClose}
-                              className={`block py-1.5 text-xs transition-all
+                              onClick={async () => {
+                                await readMenuNotifications(sub.notiTypes);
+                                onClose?.();
+                              }}
+                              className={`flex items-center justify-between gap-2 py-1.5 text-xs transition-all
                                 ${isCurrent
                                   ? 'text-[#3530B8] font-bold'
                                   : 'text-slate-500 hover:text-[#3530B8] font-medium'}`}
                             >
                               {sub.name}
+                              <NotificationBadge count={subNotificationCount} />
                             </Link>
                           );
                         })}
@@ -295,21 +388,27 @@ const Sidebar = ({ isOpen, onClose }) => {
                 <Link
                   key={idx}
                   to={item.path}
-                  onClick={onClose}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all
+                  onClick={async () => {
+                    await readMenuNotifications(item.notiTypes);
+                    onClose?.();
+                  }}
+                  className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm transition-all
                     ${isCurrent
                       ? 'bg-[#DDE8FF] text-[#3530B8] font-bold'
                       : 'text-slate-600 hover:bg-[#DDE8FF] hover:text-[#3530B8] font-semibold'}`}
                 >
-                  <FontAwesomeIcon icon={item.icon} className="w-4 h-4" />
-                  <span>{item.name}</span>
+                  <div className='flex items-center gap-3'>
+                    <FontAwesomeIcon icon={item.icon} className="w-4 h-4" />
+                    <span>{item.name}</span>
+                  </div>
+                  <NotificationBadge count={itemNotificationCount} />
                 </Link>
               );
             })}
           </nav>
 
           <div className="mt-3 pt-3 border-t border-slate-100 shrink-0 space-y-1.5">
-            {(user?.role === 'ADMIN' || user?.auth_group === 'ROLE_SUPER_ADMIN') && (
+            {user?.auth_group === 'ROLE_SUPER_ADMIN' && (
               <button
                 onClick={() => {
                   const nextAdminMode = !isAdminMode;

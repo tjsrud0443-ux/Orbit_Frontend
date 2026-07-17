@@ -33,6 +33,15 @@ const useNotificationStore = create((set) => ({
                 )
         })),
 
+    // 다건의 알림 읽음 처리
+    readNotis: (notiSeqList) => 
+        set((state) => ({
+            notifications:
+                state.notifications.filter(
+                    noti => !notiSeqList.includes(noti.noti_seq)
+                )
+        })),
+
     // notifications 데이터 비우기
     clearNotifications: () =>
         set({
