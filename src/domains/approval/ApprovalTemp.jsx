@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faEdit, faTrashAlt, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import Pagination from '../../components/common/Pagination';
@@ -19,11 +19,14 @@ const docTypeMap = {
 const ApprovalTemp = () => {
   const { pages } = usePageInfoStore();
   const navi = useNavigate();
+  const location = useLocation();
+  const initialQuery = new URLSearchParams(location.search);
+  const initialPage = Math.max(Number(initialQuery.get('page')) || 1, 1);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('전체 문서');
   const [isTypeOpen, setIsTypeOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(initialPage);
   const itemsPerPage = 10;
   const [documents, setDocuments] = useState([]);
   const showLoading = useLoadingStore(state => state.showLoading);
@@ -80,6 +83,17 @@ const ApprovalTemp = () => {
   })();
   const hasPaginationData = displayDocs.length > 0 && count > 0;
 
+  const updateQuery = (nextPage) => {
+    const params = new URLSearchParams(location.search);
+    params.set('page', String(nextPage));
+    navi({ pathname: location.pathname, search: params.toString() }, { replace: true });
+  };
+
+  const handlePageChange = (nextPage) => {
+    setPage(nextPage);
+    updateQuery(nextPage);
+  };
+
   const handleEdit = (doc) => {
     navi(`/approval/detail/${doc.doc_type}/${doc.doc_seq}`);
   };
@@ -95,7 +109,7 @@ const ApprovalTemp = () => {
 
       const newCount = Math.ceil(resp.data.length / itemsPerPage);
       if (page > newCount && newCount > 0) {
-        setPage(newCount);
+        handlePageChange(newCount);
       }
     } catch (err) {
       await alertError('오류 발생', '삭제 중 오류가 발생했습니다.');
@@ -139,7 +153,7 @@ const ApprovalTemp = () => {
                       key={type}
                       onClick={() => {
                         setSelectedType(type);
-                        setPage(1);
+                        handlePageChange(1);
                         setIsTypeOpen(false);
                       }}
                       className="px-3 py-1.5 text-xs text-slate-400 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
@@ -159,7 +173,7 @@ const ApprovalTemp = () => {
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
-                  setPage(1);
+                  handlePageChange(1);
                 }}
                 className="w-full pl-9 pr-3 py-1.5 text-xs border-none focus:ring-0 placeholder:text-slate-400 outline-none bg-transparent"
               />
@@ -260,7 +274,7 @@ const ApprovalTemp = () => {
               <Pagination
                 count={count}
                 page={page}
-                onChange={(_, value) => setPage(value)}
+                onChange={(_, value) => handlePageChange(value)}
               />
             ) : (
               <div className="h-8" />
@@ -270,7 +284,7 @@ const ApprovalTemp = () => {
             <button
               type="button"
               disabled={!hasPaginationData || page <= 1}
-              onClick={() => hasPaginationData && page > 1 && setPage(page - 1)}
+              onClick={() => hasPaginationData && page > 1 && handlePageChange(page - 1)}
               className="w-8 h-8 rounded-xl border border-[rgba(0,0,0,0.23)] text-xs font-bold text-[rgba(0,0,0,0.87)] transition-colors hover:bg-[#F0F4FF] hover:text-[#3530B8] disabled:opacity-[0.38] disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[rgba(0,0,0,0.87)]"
             >
               &lt;
@@ -279,7 +293,7 @@ const ApprovalTemp = () => {
               <button
                 key={pageNumber}
                 type="button"
-                onClick={() => setPage(pageNumber)}
+                onClick={() => handlePageChange(pageNumber)}
                 className={`w-8 h-8 rounded-xl border text-xs font-bold transition-colors ${page === pageNumber ? 'bg-[#3530B8] border-[#3530B8] text-white hover:bg-[#2a2594]' : 'border-[rgba(0,0,0,0.23)] text-[rgba(0,0,0,0.87)] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}
               >
                 {pageNumber}
@@ -288,7 +302,7 @@ const ApprovalTemp = () => {
             <button
               type="button"
               disabled={!hasPaginationData || page >= count}
-              onClick={() => hasPaginationData && page < count && setPage(page + 1)}
+              onClick={() => hasPaginationData && page < count && handlePageChange(page + 1)}
               className="w-8 h-8 rounded-xl border border-[rgba(0,0,0,0.23)] text-xs font-bold text-[rgba(0,0,0,0.87)] transition-colors hover:bg-[#F0F4FF] hover:text-[#3530B8] disabled:opacity-[0.38] disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[rgba(0,0,0,0.87)]"
             >
               &gt;

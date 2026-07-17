@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faSearch,
@@ -245,6 +245,9 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
 const ApprovalCc = () => {
   const { pages } = usePageInfoStore();
   const navigate = useNavigate();
+  const location = useLocation();
+  const initialQuery = new URLSearchParams(location.search);
+  const initialApprovedPage = Math.max(Number(initialQuery.get('page')) || 1, 1);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('전체 문서');
   const [isTypeOpen, setIsTypeOpen] = useState(false);
@@ -264,7 +267,7 @@ const ApprovalCc = () => {
   }, []);
 
   const [approvedDocs, setApprovedDocs] = useState([]);
-  const [approvedPage, setApprovedPage] = useState(1);
+  const [approvedPage, setApprovedPage] = useState(initialApprovedPage);
   const [approvedCount, setApprovedCount] = useState(0);
 
   useEffect(() => {
@@ -276,6 +279,17 @@ const ApprovalCc = () => {
 
   const handleOpenDetail = (doc) => {
     navigate(`/approval/detail/${doc.doc_type}/${doc.doc_seq}`);
+  };
+
+  const updateQuery = (nextPage) => {
+    const params = new URLSearchParams(location.search);
+    params.set('page', String(nextPage));
+    navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
+  };
+
+  const handleApprovedPageChange = (nextPage) => {
+    setApprovedPage(nextPage);
+    updateQuery(nextPage);
   };
 
   const getFilteredData = (dataList) => {
@@ -318,8 +332,7 @@ const ApprovalCc = () => {
                       key={type}
                       onClick={() => {
                         setSelectedType(type);
-                        setApprovedPage(1);
-                        setRejectedPage(1);
+                        handleApprovedPageChange(1);
                         setIsTypeOpen(false);
                       }}
                       className="px-3 py-1.5 text-xs text-slate-400 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
@@ -338,7 +351,7 @@ const ApprovalCc = () => {
                 type="text"
                 placeholder="문서 제목 검색..."
                 value={searchTerm}
-                onChange={(e) => { setSearchTerm(e.target.value); setApprovedPage(1); setRejectedPage(1); }}
+                onChange={(e) => { setSearchTerm(e.target.value); handleApprovedPageChange(1); }}
                 className="w-full pl-9 pr-3 py-1.5 text-xs border-none focus:ring-0 placeholder:text-slate-400 outline-none bg-transparent"
               />
             </div>
@@ -352,7 +365,7 @@ const ApprovalCc = () => {
             data={approvedDocs}
             count={approvedCount}
             page={approvedPage}
-            setPage={setApprovedPage}
+            setPage={handleApprovedPageChange}
             onDetailClick={handleOpenDetail}
             showPagination={true}
             approverLabel="최종 결재자"

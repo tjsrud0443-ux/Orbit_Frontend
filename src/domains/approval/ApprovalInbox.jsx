@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faSearch,
@@ -168,13 +168,18 @@ const DocumentTable = ({ data, onDetailClick, showPagination = true, count = 0, 
 const ApprovalInbox = () => {
   const { pages } = usePageInfoStore();
   const navigate = useNavigate();
+  const location = useLocation();
+  const initialQuery = useMemo(() => new URLSearchParams(location.search), []);
+  const initialTab = initialQuery.get('tab') === 'DONE' ? 'DONE' : 'PENDING';
+  const initialDraftPage = Math.max(Number(initialQuery.get('draftPage')) || 1, 1);
+  const initialDonePage = Math.max(Number(initialQuery.get('donePage')) || 1, 1);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('전체 문서');
   const [isTypeOpen, setIsTypeOpen] = useState(false);
   const dropdownRef = useRef(null);
   const itemsPerPage = 5;
-  const [activeTab, setActiveTab] = useState('PENDING');
-  const [draftPage, setDraftPage] = useState(1);
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const [draftPage, setDraftPage] = useState(initialDraftPage);
 
   const currentPageInfo = pages.find(p => p.page_code === 'ApprovalInbox');
   useEffect(() => {
@@ -224,7 +229,7 @@ const ApprovalInbox = () => {
 
   const [draftDocument, setDraftDocuments] = useState([]);
   const [doneDocument, setDoneDocument] = useState([]);
-  const [doneDocumentPage, setDoneDocumentPage] = useState(1);
+  const [doneDocumentPage, setDoneDocumentPage] = useState(initialDonePage);
   const [doneDocumentCount, setDoneDocumentCount] = useState(0);
   const [doneDocumentTotalCount, setDoneDocumentTotalCount] = useState(0);
   const showLoading = useLoadingStore(state => state.showLoading);
@@ -246,9 +251,33 @@ const ApprovalInbox = () => {
     })
   }, [doneDocumentPage, searchTerm, selectedType])
 
+  const updateQuery = (next = {}) => {
+    const params = new URLSearchParams(location.search);
+    params.set('tab', next.activeTab || activeTab);
+    params.set('draftPage', String(next.draftPage || draftPage));
+    params.set('donePage', String(next.donePage || doneDocumentPage));
+    navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    updateQuery({ activeTab: tab });
+  };
+
+  const handleDraftPageChange = (page) => {
+    setDraftPage(page);
+    updateQuery({ draftPage: page });
+  };
+
+  const handleDonePageChange = (page) => {
+    setDoneDocumentPage(page);
+    updateQuery({ donePage: page });
+  };
+
   const resetPages = () => {
     setDraftPage(1);
     setDoneDocumentPage(1);
+    updateQuery({ draftPage: 1, donePage: 1 });
   };
 
   const filteredDraftDocuments = useMemo(() => filterDocuments(draftDocument), [draftDocument, searchTerm, selectedType]);
@@ -265,7 +294,7 @@ const ApprovalInbox = () => {
       data: paginatedDraftDocuments,
       pageCount: Math.ceil(filteredDraftDocuments.length / itemsPerPage),
       page: draftPage,
-      setPage: setDraftPage,
+      setPage: handleDraftPageChange,
     },
     {
       label: '결재 완료',
@@ -274,7 +303,7 @@ const ApprovalInbox = () => {
       data: doneDocument,
       pageCount: doneDocumentCount,
       page: doneDocumentPage,
-      setPage: setDoneDocumentPage,
+      setPage: handleDonePageChange,
     },
   ];
   const activeTabData = tabs.find(tab => tab.status === activeTab) || tabs[0];
@@ -299,7 +328,7 @@ const ApprovalInbox = () => {
                 <button
                   key={tab.status}
                   type="button"
-                  onClick={() => setActiveTab(tab.status)}
+                  onClick={() => handleTabChange(tab.status)}
                   className={`flex-1 md:flex-none px-2 md:px-6 py-1.5 rounded-xl text-[11px] md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === tab.status ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}
                 >
                   {tab.label}

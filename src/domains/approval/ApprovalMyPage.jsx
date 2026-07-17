@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faSearch,
@@ -215,12 +215,19 @@ const DocumentTable = ({ data, onDetailClick, showPagination = true, approverLab
 const ApprovalMyPage = () => {
   const { pages } = usePageInfoStore();
   const navigate = useNavigate();
+  const location = useLocation();
+  const initialQuery = useMemo(() => new URLSearchParams(location.search), []);
+  const initialTab = ['DRAFT', 'IN_PROGRESS', 'APPROVED', 'REJECTED'].includes(initialQuery.get('tab')) ? initialQuery.get('tab') : 'DRAFT';
+  const initialDraftPage = Math.max(Number(initialQuery.get('draftPage')) || 1, 1);
+  const initialProgressPage = Math.max(Number(initialQuery.get('progressPage')) || 1, 1);
+  const initialApprovedPage = Math.max(Number(initialQuery.get('approvedPage')) || 1, 1);
+  const initialRejectedPage = Math.max(Number(initialQuery.get('rejectedPage')) || 1, 1);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('전체 문서');
   const [isTypeOpen, setIsTypeOpen] = useState(false);
   const dropdownRef = useRef(null);
   const itemsPerPage = 5;
-  const [activeTab, setActiveTab] = useState('DRAFT');
+  const [activeTab, setActiveTab] = useState(initialTab);
   const currentPageInfo = pages.find(p => p.page_code === 'ApprovalMyPage');
 
   const docTypeMap = {
@@ -245,16 +252,16 @@ const ApprovalMyPage = () => {
 
   const [documents, setDocuments] = useState([]);
 
-  const [draftPage, setDraftPage] = useState(1);
-  const [progressPage, setProgressPage] = useState(1);
+  const [draftPage, setDraftPage] = useState(initialDraftPage);
+  const [progressPage, setProgressPage] = useState(initialProgressPage);
 
   const [approvedDocs, setApprovedDocs] = useState([]);
-  const [approvedPage, setApprovedPage] = useState(1);
+  const [approvedPage, setApprovedPage] = useState(initialApprovedPage);
   const [approvedCount, setApprovedCount] = useState(0);
   const [approvedTotalCount, setApprovedTotalCount] = useState(0);
 
   const [rejectedDocs, setRejectedDocs] = useState([]);
-  const [rejectedPage, setRejectedPage] = useState(1);
+  const [rejectedPage, setRejectedPage] = useState(initialRejectedPage);
   const [rejectedCount, setRejectedCount] = useState(0);
   const [rejectedTotalCount, setRejectedTotalCount] = useState(0);
 
@@ -294,6 +301,42 @@ const ApprovalMyPage = () => {
     setProgressPage(1);
     setApprovedPage(1);
     setRejectedPage(1);
+    updateQuery({ draftPage: 1, progressPage: 1, approvedPage: 1, rejectedPage: 1 });
+  };
+
+  const updateQuery = (next = {}) => {
+    const params = new URLSearchParams(location.search);
+    params.set('tab', next.activeTab || activeTab);
+    params.set('draftPage', String(next.draftPage || draftPage));
+    params.set('progressPage', String(next.progressPage || progressPage));
+    params.set('approvedPage', String(next.approvedPage || approvedPage));
+    params.set('rejectedPage', String(next.rejectedPage || rejectedPage));
+    navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    updateQuery({ activeTab: tab });
+  };
+
+  const handleDraftPageChange = (page) => {
+    setDraftPage(page);
+    updateQuery({ draftPage: page });
+  };
+
+  const handleProgressPageChange = (page) => {
+    setProgressPage(page);
+    updateQuery({ progressPage: page });
+  };
+
+  const handleApprovedPageChange = (page) => {
+    setApprovedPage(page);
+    updateQuery({ approvedPage: page });
+  };
+
+  const handleRejectedPageChange = (page) => {
+    setRejectedPage(page);
+    updateQuery({ rejectedPage: page });
   };
 
   const getFilteredData = (dataList) => {
@@ -327,7 +370,7 @@ const ApprovalMyPage = () => {
       data: paginatedDraftDocs,
       pageCount: Math.ceil(draftDocs.length / itemsPerPage),
       page: draftPage,
-      setPage: setDraftPage,
+      setPage: handleDraftPageChange,
       approverLabel: '현재 결재자',
     },
     {
@@ -337,7 +380,7 @@ const ApprovalMyPage = () => {
       data: paginatedProgressDocs,
       pageCount: Math.ceil(progressDocs.length / itemsPerPage),
       page: progressPage,
-      setPage: setProgressPage,
+      setPage: handleProgressPageChange,
       approverLabel: '현재 결재자',
     },
     {
@@ -347,7 +390,7 @@ const ApprovalMyPage = () => {
       data: approvedDocs,
       pageCount: approvedCount,
       page: approvedPage,
-      setPage: setApprovedPage,
+      setPage: handleApprovedPageChange,
       approverLabel: '최종 결재자',
     },
     {
@@ -357,7 +400,7 @@ const ApprovalMyPage = () => {
       data: rejectedDocs,
       pageCount: rejectedCount,
       page: rejectedPage,
-      setPage: setRejectedPage,
+      setPage: handleRejectedPageChange,
       approverLabel: '최종 결재자',
     },
   ];
@@ -378,7 +421,7 @@ const ApprovalMyPage = () => {
                 <button
                   key={tab.status}
                   type="button"
-                  onClick={() => setActiveTab(tab.status)}
+                  onClick={() => handleTabChange(tab.status)}
                   className={`flex-1 md:flex-none px-2 md:px-6 py-1.5 rounded-xl text-[11px] md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === tab.status ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}
                 >
                   {tab.label}
