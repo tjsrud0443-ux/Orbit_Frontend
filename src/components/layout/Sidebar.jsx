@@ -79,7 +79,6 @@ const generalMenuItems = [
   {
     name: '문서 · AI 관리',
     icon: faFileShield,
-    rank: ['부서장', '본부장', '팀장', '원장'],
     subItems: [
       { name: '문서 관리', path: '/adminDocument' },
       { name: 'AI 미답변 질문 관리', path: '/adminQna' }
@@ -146,7 +145,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     setOpenMenuName(prev => prev === menuName ? null : menuName);
   };
 
-  const isAdminUser = user?.role === 'ADMIN' || user?.auth_group === 'ROLE_SUPER_ADMIN';
+  const isAdminUser = user?.auth_group === 'ROLE_SUPER_ADMIN';
 
   const hasMenuAccess = (item) => {
     if (isAdminMode) {
@@ -309,7 +308,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           </nav>
 
           <div className="mt-3 pt-3 border-t border-slate-100 shrink-0 space-y-1.5">
-            {(user?.role === 'ADMIN' || user?.auth_group === 'ROLE_SUPER_ADMIN') && (
+            {user?.auth_group === 'ROLE_SUPER_ADMIN' && (
               <button
                 onClick={() => {
                   const nextAdminMode = !isAdminMode;
