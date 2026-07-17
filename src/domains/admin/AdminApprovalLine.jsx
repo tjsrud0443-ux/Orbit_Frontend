@@ -3,8 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt, faChevronRight, faTimes, faPlus, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import useLoadingStore from '../../store/useLoadingStore';
 import usePageInfoStore from '../../store/usePageInfoStore';
-import { getRankList, getDeptList } from './adminApi';
-import useUserStore from '../../store/userStore';
+import { getRankList, getDeptList, getApprovalLines, saveApprovalLines } from './adminApi';
 
 const CustomSelect = ({ value, options, onChange, placeholder, hasError, errorMessage }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -54,7 +53,6 @@ const AdminApprovalLine = () => {
     const { pages } = usePageInfoStore();
     const showLoading = useLoadingStore(state => state.showLoading);
     const hideLoading = useLoadingStore(state => state.hideLoading);
-    const { user } = useUserStore();
 
     const DOC_TYPES = {
         '휴가 신청서': 'VACATION',
@@ -75,19 +73,7 @@ const AdminApprovalLine = () => {
     const [editingLines, setEditingLines] = useState([]);
     const [validationErrors, setValidationErrors] = useState({});
 
-    const filteredDeptList = deptList;
-
-    // TODO: 백엔드 API로 결재선 데이터를 가져올 상태
-    const [approvalLines, setApprovalLines] = useState([
-        { step_order: 1, doc_type: 'VACATION', drafter_rank_seq: 1, rank_name: '부서장', approver_scope: 'DRAFTER_DEPT' },
-        { step_order: 2, doc_type: 'VACATION', drafter_rank_seq: 1, rank_name: '본부장', approver_scope: 'DRAFTER_DEPT' },
-        { step_order: 1, doc_type: 'VACATION', drafter_rank_seq: 2, rank_name: '본부장', approver_scope: 'DRAFTER_DEPT' },
-        { step_order: 2, doc_type: 'VACATION', drafter_rank_seq: 2, rank_name: '대표', approver_scope: 'SPECIFIC_DEPT', dept_name: '대표이사실' },
-        { step_order: 1, doc_type: 'VACATION', drafter_rank_seq: 3, rank_name: '대표', approver_scope: 'SPECIFIC_DEPT', dept_name: '대표이사실' },
-        { step_order: 1, doc_type: 'PAYMENT', drafter_rank_seq: 1, rank_name: '부서장', approver_scope: 'DRAFTER_DEPT' },
-        { step_order: 2, doc_type: 'PAYMENT', drafter_rank_seq: 1, rank_name: '부서장', approver_scope: 'SPECIFIC_DEPT', dept_name: '재무팀' },
-        { step_order: 3, doc_type: 'PAYMENT', drafter_rank_seq: 1, rank_name: '대표', approver_scope: 'SPECIFIC_DEPT', dept_name: '대표이사실' },
-    ]);
+    const [approvalLines, setApprovalLines] = useState([]);
 
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -97,6 +83,8 @@ const AdminApprovalLine = () => {
                 setRanks(rankResp.data || []);
                 const deptResp = await getDeptList();
                 setDeptList(deptResp.data || []);
+                const lineResp = await getApprovalLines(DOC_TYPES['휴가 신청서']);
+                setApprovalLines(lineResp.data || []);
             } catch (err) {
                 console.error("데이터 로드 실패:", err);
             } finally {
@@ -105,6 +93,19 @@ const AdminApprovalLine = () => {
         };
         fetchInitialData();
     }, []);
+
+    const handleTabChange = async (tab) => {
+        setActiveTab(tab);
+        try {
+            showLoading();
+            const lineResp = await getApprovalLines(DOC_TYPES[tab]);
+            setApprovalLines(lineResp.data || []);
+        } catch (err) {
+            console.error("결재선 로드 실패:", err);
+        } finally {
+            hideLoading();
+        }
+    };
 
     const currentPageInfo = pages.find(p => p.page_code === 'AdminApprovalLine');
 
@@ -165,9 +166,9 @@ const AdminApprovalLine = () => {
                 step_order: editingLines.length + 1,
                 doc_type: DOC_TYPES[activeTab],
                 drafter_rank_seq: editingRankSeq,
-                rank_name: '',
+                approver_rank_seq: null,
                 approver_scope: '',
-                dept_name: ''
+                target_dept_seq: null
             }
         ]);
     };
@@ -186,18 +187,18 @@ const AdminApprovalLine = () => {
         const newLines = [...editingLines];
         newLines[index][field] = value;
         if (field === 'approver_scope' && value !== 'SPECIFIC_DEPT') {
-            newLines[index].dept_name = '';
+            newLines[index].target_dept_seq = '';
         }
         setEditingLines(newLines);
         setValidationErrors(prev => {
             const next = { ...prev };
             delete next[`${index}_${field}`];
-            if (field === 'approver_scope') delete next[`${index}_dept_name`];
+            if (field === 'approver_scope') delete next[`${index}_target_dept_seq`];
             return next;
         });
     };
 
-    const handleSaveLines = () => {
+    const handleSaveLines = async () => {
         let hasError = false;
         const newErrors = {};
 
@@ -206,12 +207,12 @@ const AdminApprovalLine = () => {
                 newErrors[`${idx}_approver_scope`] = '검색 범위를 선택해주세요.';
                 hasError = true;
             }
-            if (line.approver_scope === 'SPECIFIC_DEPT' && !line.dept_name) {
-                newErrors[`${idx}_dept_name`] = '대상 부서를 선택해주세요.';
+            if (line.approver_scope === 'SPECIFIC_DEPT' && !line.target_dept_seq) {
+                newErrors[`${idx}_target_dept_seq`] = '대상 부서를 선택해주세요.';
                 hasError = true;
             }
-            if (!line.rank_name) {
-                newErrors[`${idx}_rank_name`] = '검색 직급을 선택해주세요.';
+            if (!line.approver_rank_seq) {
+                newErrors[`${idx}_approver_rank_seq`] = '검색 직급을 선택해주세요.';
                 hasError = true;
             }
         });
@@ -221,12 +222,17 @@ const AdminApprovalLine = () => {
             return;
         }
 
-        // 실제 저장 로직 (API 연동 시)
-        const otherLines = approvalLines.filter(
-            line => !(line.doc_type === DOC_TYPES[activeTab] && line.drafter_rank_seq === editingRankSeq)
-        );
-        setApprovalLines([...otherLines, ...editingLines]);
-        setIsModalOpen(false);
+        try {
+            showLoading();
+            await saveApprovalLines(DOC_TYPES[activeTab], editingRankSeq, editingLines);
+            const lineResp = await getApprovalLines(DOC_TYPES[activeTab]);
+            setApprovalLines(lineResp.data || []);
+            setIsModalOpen(false);
+        } catch (err) {
+            console.error("저장 실패:", err);
+        } finally {
+            hideLoading();
+        }
     };
 
     return (
@@ -248,7 +254,7 @@ const AdminApprovalLine = () => {
                 {tabs.map((tab, idx) => (
                     <button
                         key={idx}
-                        onClick={() => setActiveTab(tab)}
+                        onClick={() => handleTabChange(tab)}
                         className={`pb-3 text-sm font-bold transition-all relative whitespace-nowrap ${activeTab === tab
                             ? 'text-[#3530B8]'
                             : 'text-gray-400 hover:text-[#3530B8]'
@@ -374,12 +380,12 @@ const AdminApprovalLine = () => {
                                             <div className="flex-1 space-y-1.5">
                                                 <label className="text-xs font-bold text-gray-400">대상 부서</label>
                                                 <CustomSelect
-                                                    value={line.dept_name}
-                                                    options={filteredDeptList.map(d => ({ value: d.dept_name, label: d.dept_name }))}
-                                                    onChange={(val) => handleLineChange(idx, 'dept_name', val)}
+                                                    value={line.target_dept_seq}
+                                                    options={deptList.map(d => ({ value: d.dept_seq, label: d.dept_name }))}
+                                                    onChange={(val) => handleLineChange(idx, 'target_dept_seq', val)}
                                                     placeholder="선택"
-                                                    hasError={!!validationErrors[`${idx}_dept_name`]}
-                                                    errorMessage={validationErrors[`${idx}_dept_name`]}
+                                                    hasError={!!validationErrors[`${idx}_target_dept_seq`]}
+                                                    errorMessage={validationErrors[`${idx}_target_dept_seq`]}
                                                 />
                                             </div>
                                         )}
@@ -387,12 +393,12 @@ const AdminApprovalLine = () => {
                                         <div className="flex-1 space-y-1.5">
                                             <label className="text-xs font-bold text-gray-400">검색 직급</label>
                                             <CustomSelect
-                                                value={line.rank_name}
-                                                options={ranks.map(r => ({ value: r.rank_name, label: r.rank_name }))}
-                                                onChange={(val) => handleLineChange(idx, 'rank_name', val)}
+                                                value={line.approver_rank_seq}
+                                                options={ranks.map(r => ({ value: r.rank_seq, label: r.rank_name }))}
+                                                onChange={(val) => handleLineChange(idx, 'approver_rank_seq', val)}
                                                 placeholder="선택"
-                                                hasError={!!validationErrors[`${idx}_rank_name`]}
-                                                errorMessage={validationErrors[`${idx}_rank_name`]}
+                                                hasError={!!validationErrors[`${idx}_approver_rank_seq`]}
+                                                errorMessage={validationErrors[`${idx}_approver_rank_seq`]}
                                             />
                                         </div>
                                     </div>
