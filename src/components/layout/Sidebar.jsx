@@ -14,6 +14,7 @@ import useAuthStore from '../../store/authStore';
 import { IMAGES } from '../../images/images';
 import useUserStore from '../../store/userStore';
 import useDepartmentsStore from '../../store/useDepartmentsStore';
+import useNotificationStore from '../../store/useNotificationStore';
 
 // 직원 사이드바
 const generalMenuItems = [
@@ -24,9 +25,18 @@ const generalMenuItems = [
     path: '/approval',
     navigateOnClick: true,
     icon: faFileSignature,
+    notiTypes: ['APPROVAL', 'APPROVED', 'REJECTED'],
     subItems: [
-      { name: '내가 올린 기안', path: '/approvalMypage' },
-      { name: '내가 결재할 기안', path: '/approvalInbox' },
+      {
+        name: '내가 올린 기안',
+        path: '/approvalMypage',
+        notiTypes: ['APPROVED', 'REJECTED']
+      },
+      {
+        name: '내가 결재할 기안',
+        path: '/approvalInbox',
+        notiTypes: ['APPROVAL']
+      },
       { name: '참조 문서함', path: '/approvalCc' },
       { name: '임시 문서함', path: '/approvalTemp' },
     ]
@@ -58,10 +68,15 @@ const generalMenuItems = [
   {
     name: '일정 · 회의',
     icon: faCalendar,
+    notiTypes: ['MEETING'],
     subItems: [
       { name: '캘린더', path: '/calendar' },
       { name: '회의록', path: '/meetingMinutes' },
-      { name: '회의실 예약', path: '/meetingRooms' },
+      {
+        name: '회의실 예약',
+        path: '/meetingRooms',
+        notiTypes: ['MEETING']
+      },
     ]
   },
   {
@@ -73,7 +88,12 @@ const generalMenuItems = [
       { name: '자료실', path: '/documents' }
     ]
   },
-  { name: '프로젝트 관리', path: '/projects', icon: faDiagramProject },
+  {
+    name: '프로젝트 관리',
+    path: '/projects',
+    icon: faDiagramProject,
+    notiTypes: ['PROJECT', 'TASK'],
+  },
   { name: '사내 게시판', path: '/board', icon: faComments },
   { name: 'AI 챗봇', path: '/aiChat', icon: faRobot },
   {
@@ -124,6 +144,26 @@ const adminMenuItems = [
   { name: '페이지 안내 문구 관리', path: '/adminPageInfo', icon: faFilePen }
 ];
 
+const NotificationBadge = ({ count }) => {
+  if (count <= 0) {
+    return null;
+  }
+
+  return (
+    <span
+      className='
+        min-w-[18px] h-[18px] px-1
+        inline-flex items-center justify-center
+        rounded-full bg-red-500 text-white
+        text-[10px] font-bold leading-none
+      '
+    >
+      {count > 99 ? '99+' : count}
+    </span>
+  );
+};
+
+
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
   const navi = useNavigate();
@@ -132,8 +172,19 @@ const Sidebar = ({ isOpen, onClose }) => {
   const [isAdminMode, setIsAdminMode] = useState(false);
   const user = useUserStore(state => state.user);
   const clearDepartments = useDepartmentsStore(state => state.clearAll);
+  const notifications = useNotificationStore(state => state.notifications);
 
   const currentMenuPool = isAdminMode ? adminMenuItems : generalMenuItems;
+
+  const getNotificationCount = (notiTypes) => {
+    if (!Array.isArray(notiTypes) || notiTypes.length === 0) {
+      return 0;
+    }
+
+    return notifications.filter(
+      noti => notiTypes.includes(noti.noti_type)
+    ).length;
+  }
 
   const handleLogout = () => {
     clearDepartments();
@@ -236,6 +287,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
           <nav className="space-y-1 flex-1 overflow-y-auto pr-1 custom-scrollbar">
             {filteredMenuItems.map((item, idx) => {
+              const itemNotificationCount = getNotificationCount(item.notiTypes);
               if (item.subItems) {
                 const isSubItemActive = item.subItems.some(sub => isPathActive(sub.path));
                 const isCurrentMenuOpen = openMenuName === item.name;
@@ -262,24 +314,30 @@ const Sidebar = ({ isOpen, onClose }) => {
                         <FontAwesomeIcon icon={item.icon} className="w-4 h-4" />
                         <span>{item.name}</span>
                       </div>
-                      <FontAwesomeIcon icon={isCurrentMenuOpen ? faChevronUp : faChevronDown} className="w-3 h-3" />
+                      <div className='flex items-center gap-2'>
+                        <NotificationBadge count={itemNotificationCount} />
+                        <FontAwesomeIcon icon={isCurrentMenuOpen ? faChevronUp : faChevronDown} className="w-3 h-3" />
+                      </div>
                     </button>
 
                     {isCurrentMenuOpen && (
                       <div className="mt-1 ml-4 border-l-2 border-slate-100 pl-4 space-y-1">
                         {item.subItems.map((sub, subIdx) => {
                           const isCurrent = isPathActive(sub.path);
+                          const subNotificationCount = getNotificationCount(sub.notiTypes);
+
                           return (
                             <Link
                               key={subIdx}
                               to={sub.path}
                               onClick={onClose}
-                              className={`block py-1.5 text-xs transition-all
+                              className={`flex items-center justify-between gap-2 py-1.5 text-xs transition-all
                                 ${isCurrent
                                   ? 'text-[#3530B8] font-bold'
                                   : 'text-slate-500 hover:text-[#3530B8] font-medium'}`}
                             >
                               {sub.name}
+                              <NotificationBadge count={subNotificationCount}/>
                             </Link>
                           );
                         })}
@@ -295,13 +353,16 @@ const Sidebar = ({ isOpen, onClose }) => {
                   key={idx}
                   to={item.path}
                   onClick={onClose}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all
+                  className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm transition-all
                     ${isCurrent
                       ? 'bg-[#DDE8FF] text-[#3530B8] font-bold'
                       : 'text-slate-600 hover:bg-[#DDE8FF] hover:text-[#3530B8] font-semibold'}`}
                 >
+                  <div className='flex items-center gap-3'>
                   <FontAwesomeIcon icon={item.icon} className="w-4 h-4" />
                   <span>{item.name}</span>
+                  </div>
+                  <NotificationBadge count={itemNotificationCount} />
                 </Link>
               );
             })}
