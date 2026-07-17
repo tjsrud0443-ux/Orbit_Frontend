@@ -9,6 +9,7 @@ import { getSchedules, createSchedule, deleteSchedule, updateSchedule, getApprov
 import useLoadingStore from '../../store/useLoadingStore';
 import useUserStore from '../../store/userStore';
 import useCalendarStore from '../../store/useCalendarStore';
+import usePageInfoStore from '../../store/usePageInfoStore';
 import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 
 const currentYear = new Date().getFullYear();
@@ -116,6 +117,9 @@ const COMPANY_FILTERS = [
 const COMPANY_CATEGORIES = ['COMPANY', 'TEAM', 'holiday', 'ANNIVERSARY'];
 
 const Calendar = () => {
+  const { pages } = usePageInfoStore();
+  const currentPageInfo = pages.find(p => p.page_code === 'Calendar');
+
   const calendarStore = useCalendarStore();
   const user = useUserStore(state => state.user);
   const isHrAdmin = user?.auth_group === 'ROLE_HR_ADMIN' || user?.auth_group === 'ROLE_SUPER_ADMIN';
@@ -704,8 +708,8 @@ if (isEditing) {
       </style>
       <div className="flex-1 p-4 flex flex-col gap-4 min-h-0 h-full bg-white overflow-y-auto lg:overflow-hidden">
         <div className="px-1">
-          <h1 className="text-xl font-bold text-slate-900 leading-tight">캘린더</h1>
-          <p className="text-xs text-slate-500 mt-0.5">일정을 한눈에 확인하세요.</p>
+          <h1 className="text-xl font-bold text-slate-900 leading-tight">{currentPageInfo?.page_name}</h1>
+          <p className="text-xs text-slate-500 mt-0.5">{currentPageInfo?.page_info}</p>
         </div>
 
         <div className="flex gap-1 border-b border-slate-200 px-1">
