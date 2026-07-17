@@ -31,7 +31,7 @@ const AdminDocuments = () => {
   const token = useAuthStore(state => state.token);
   const showLoading = useLoadingStore(state => state.showLoading);
   const hideLoading = useLoadingStore(state => state.hideLoading);
-  // 문서 불러오기
+
   const loadDocuments = () => {
     showLoading();
     getAllDocs().then(resp => {
@@ -172,11 +172,27 @@ const AdminDocuments = () => {
     try {
       if (isEditMode) {
         formData.append('document_seq', editingSeq);
+        let isLoadingTypeDocument = false;
+        
         if (uploadedFiles.length > 0) {
           formData.append('file', uploadedFiles[0]);
+          const file = uploadedFiles[0];
+          const validExtensions = ['.pdf', '.doc', '.docx'];
+          isLoadingTypeDocument = validExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+        } else {
+          const originalDoc = documents.find(d => d.document_seq === editingSeq);
+          if (originalDoc) {
+            const validExtensions = ['.pdf', '.doc', '.docx'];
+            isLoadingTypeDocument = validExtensions.some(ext => originalDoc.file_sysname?.toLowerCase().endsWith(ext));
+          }
         }
+        
         handleModalClose();
-        showLoading("document");
+        if (isLoadingTypeDocument) {
+          showLoading("document");
+        } else {
+          showLoading();
+        }
         try {
           await editDocument(formData);
           await loadDocuments();
@@ -189,8 +205,17 @@ const AdminDocuments = () => {
           formData.append('users_id', user.id);
         }
         formData.append('file', uploadedFiles[0]);
+        
+        const file = uploadedFiles[0];
+        const validExtensions = ['.pdf', '.doc', '.docx'];
+        const isLoadingTypeDocument = validExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+        
         handleModalClose();
-        showLoading("document");
+        if (isLoadingTypeDocument) {
+          showLoading("document");
+        } else {
+          showLoading();
+        }
 
         try {
           await createDocument(formData);

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Pagination from '../../components/common/Pagination';
 import MobilePagination from '../../components/common/MobilePagination';
@@ -6,7 +6,7 @@ import { addFavorite, getAllDocs, getFavorites, removeFavorite } from './documen
 import useAuthStore from '../../store/authStore';
 import Preview from '../../components/common/Preview';
 import useLoadingStore from '../../store/useLoadingStore';
-import { alertError } from '../../utils/alert';
+import { alertError, alertWarning } from '../../utils/alert';
 
 const DocumentsList = () => {
   const [searchParams] = useSearchParams();
@@ -60,6 +60,17 @@ const DocumentsList = () => {
 
   const handlePageChange = (event, value) => {
     setCurrentPage(value);
+  };
+
+  const handlePreview = (doc) => {
+    const validExtensions = ['.pdf', '.doc', '.docx', '.txt'];
+    const isSupported = validExtensions.some(ext => doc.file_sysname?.toLowerCase().endsWith(ext));
+
+    if (!isSupported) {
+      alertWarning('미리보기가 불가한 파일 형식입니다.', '파일을 다운로드하여 확인해주세요.');
+      return;
+    }
+    setPreviewDoc({ sysname: doc.file_sysname, mimeType: doc.mime_type, title: doc.title });
   };
 
   const toggleFavorite = async (document_seq) => {
@@ -171,7 +182,7 @@ const DocumentsList = () => {
                       </a>
                     </td>
                     <td className="py-4 text-sm font-semibold text-slate-800 cursor-pointer hover:text-[#3530B8] transition-colors whitespace-nowrap">
-                      <button onClick={() => setPreviewDoc({ sysname: doc.file_sysname, mimeType: doc.mime_type, title: doc.title })}>
+                      <button onClick={() => handlePreview(doc)}>
                         {doc.title}
                       </button>
                     </td>
