@@ -43,7 +43,7 @@ const StatusBadge = ({ status, type = 'personal' }) => {
   );
 };
 
-const DocumentTable = ({ data, onDetailClick, showPagination = true, count = 0, page = 1, setPage = () => { } }) => {
+const DocumentTable = ({ data, onDetailClick, showPagination = true, count = 0, page = 1, setPage = () => { }, showCheckbox = false, checkedIds = [], onToggleCheck = () => { }, onToggleAll = () => { } }) => {
   const token = useAuthStore(state => state.token);
   const displayData = data;
 
@@ -65,10 +65,20 @@ const DocumentTable = ({ data, onDetailClick, showPagination = true, count = 0, 
   return (
     <>
       <div className="overflow-x-auto custom-scrollbar min-h-[376px]">
-        <table className="w-full min-w-[1000px] md:min-w-full text-left border-collapse md:table-fixed">
+        <table className="w-full min-w-[1040px] md:min-w-full text-left border-collapse md:table-fixed">
           <thead>
             <tr className="bg-white text-gray-400 text-[0.8125rem] font-bold uppercase tracking-wider border-b border-slate-100">
-              <th className="pl-4 md:pl-6 pr-3 py-3 w-[27%] whitespace-nowrap">제목</th>
+              {showCheckbox && (
+                <th className="pl-4 md:pl-6 pr-2 py-3 w-[5%] text-center whitespace-nowrap">
+                  <input
+                    type="checkbox"
+                    checked={displayData.length > 0 && displayData.every(doc => checkedIds.includes(doc.doc_seq))}
+                    onChange={onToggleAll}
+                    className="accent-indigo-600 w-4 h-4 cursor-pointer"
+                  />
+                </th>
+              )}
+              <th className={`${showCheckbox ? 'pl-2' : 'pl-4 md:pl-6'} pr-3 py-3 w-[27%] whitespace-nowrap`}>제목</th>
               <th className="px-3 py-3 w-[15%] whitespace-nowrap">문서 종류</th>
               <th className="px-3 py-3 w-[13%] whitespace-nowrap">기안자</th>
               <th className="px-3 py-3 text-center w-[12%] whitespace-nowrap">기안일</th>
@@ -80,7 +90,17 @@ const DocumentTable = ({ data, onDetailClick, showPagination = true, count = 0, 
           <tbody className="divide-y divide-slate-100">
             {displayData.map((doc) => (
               <tr key={doc.doc_seq} className="transition-colors">
-                <td className="pl-4 md:pl-6 pr-3 py-4 text-sm font-bold text-gray-700 truncate whitespace-nowrap">{doc.title}</td>
+                {showCheckbox && (
+                  <td className="pl-4 md:pl-6 pr-2 py-4 text-center whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={checkedIds.includes(doc.doc_seq)}
+                      onChange={() => onToggleCheck(doc.doc_seq)}
+                      className="accent-indigo-600 w-4 h-4 cursor-pointer"
+                    />
+                  </td>
+                )}
+                <td className={`${showCheckbox ? 'pl-2' : 'pl-4 md:pl-6'} pr-3 py-4 text-sm font-bold text-gray-700 truncate whitespace-nowrap`}>{doc.title}</td>
                 <td className="px-3 py-4 text-xs font-medium text-gray-500 truncate whitespace-nowrap">{docTypeText[doc.doc_type] || doc.doc_type}</td>
                 <td className="px-3 py-4 truncate whitespace-nowrap">
                   <div className="flex items-center gap-2 overflow-hidden">
@@ -116,7 +136,7 @@ const DocumentTable = ({ data, onDetailClick, showPagination = true, count = 0, 
             ))}
             {displayData.length === 0 && (
               <tr>
-                <td colSpan="7" className="py-10 text-center text-gray-400 text-[0.8rem] font-bold">해당 문서가 없습니다.</td>
+                <td colSpan={showCheckbox ? 8 : 7} className="py-10 text-center text-gray-400 text-[0.8rem] font-bold">해당 문서가 없습니다.</td>
               </tr>
             )}
           </tbody>
@@ -180,6 +200,7 @@ const ApprovalInbox = () => {
   const itemsPerPage = 5;
   const [activeTab, setActiveTab] = useState(initialTab);
   const [draftPage, setDraftPage] = useState(initialDraftPage);
+  const [checkedIds, setCheckedIds] = useState([]);
 
   const currentPageInfo = pages.find(p => p.page_code === 'ApprovalInbox');
   useEffect(() => {
@@ -261,6 +282,9 @@ const ApprovalInbox = () => {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
+    if (tab !== 'PENDING') {
+      setCheckedIds([]);
+    }
     updateQuery({ activeTab: tab });
   };
 
@@ -277,6 +301,7 @@ const ApprovalInbox = () => {
   const resetPages = () => {
     setDraftPage(1);
     setDoneDocumentPage(1);
+    setCheckedIds([]);
     updateQuery({ draftPage: 1, donePage: 1 });
   };
 
@@ -285,6 +310,20 @@ const ApprovalInbox = () => {
     const start = (draftPage - 1) * itemsPerPage;
     return filteredDraftDocuments.slice(start, start + itemsPerPage);
   }, [filteredDraftDocuments, draftPage]);
+
+  const toggleCheck = (id) => {
+    setCheckedIds(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
+  };
+
+  const toggleAll = () => {
+    const ids = paginatedDraftDocuments.map(doc => doc.doc_seq);
+    const allChecked = ids.length > 0 && ids.every(id => checkedIds.includes(id));
+    setCheckedIds(allChecked ? checkedIds.filter(id => !ids.includes(id)) : [...new Set([...checkedIds, ...ids])]);
+  };
+
+  const handleBulkApprove = () => {
+    if (checkedIds.length === 0) return;
+  };
 
   const tabs = [
     {
@@ -377,6 +416,20 @@ const ApprovalInbox = () => {
               />
             </div>
           </div>
+          {activeTab === 'PENDING' && (
+            <button
+              type="button"
+              onClick={handleBulkApprove}
+              disabled={checkedIds.length === 0}
+              className={`flex items-center justify-center gap-1.5 px-5 py-2.5 border rounded-full text-sm font-bold transition-all w-full md:w-auto
+                ${checkedIds.length > 0
+                  ? 'border-[#3530B8]/20 text-[#3530B8] hover:bg-[#F0F4FF] shadow-sm'
+                  : 'border-gray-200 text-gray-300 cursor-not-allowed'}`}
+            >
+              <span>승인</span>
+              {checkedIds.length > 0 && `(${checkedIds.length})`}
+            </button>
+          )}
         </div>
 
         {/* Sections */}
@@ -388,6 +441,10 @@ const ApprovalInbox = () => {
             count={activeTabData.pageCount}
             page={activeTabData.page}
             setPage={activeTabData.setPage}
+            showCheckbox={activeTab === 'PENDING'}
+            checkedIds={checkedIds}
+            onToggleCheck={toggleCheck}
+            onToggleAll={toggleAll}
           />
         </div>
       </div>
