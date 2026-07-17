@@ -10,6 +10,7 @@ import {
 import { getRankList, insertRank, updateRank, deleteRank, updateRankOrder } from './adminApi';
 import { alertConfirm, alertSuccess, alertError } from '../../utils/alert';
 import useLoadingStore from '../../store/useLoadingStore';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const getRankKey = (rank, fallback) => rank?.rank_seq ?? rank?.rankSeq ?? rank?.id ?? fallback;
 const getRankName = (rank) => rank?.rank_name ?? rank?.rankName ?? '';
@@ -42,12 +43,14 @@ const reorderRanks = (list) => list.map((rank, index) => ({
 }));
 
 const AdminRank = () => {
+    const { pages } = usePageInfoStore();
     const showLoading = useLoadingStore(state => state.showLoading);
     const hideLoading = useLoadingStore(state => state.hideLoading);
     const panelRef = useRef(null);
     const dragIndexRef = useRef(null);
     const touchDragIndexRef = useRef(null);
     const touchDropIndexRef = useRef(null);
+    const currentPageInfo = pages.find(p => p.page_code === 'AdminRank');
 
     const [ranks, setRanks] = useState([]);
     const [formMode, setFormMode] = useState(null);
@@ -335,8 +338,8 @@ const AdminRank = () => {
         <div className="flex-1 bg-white flex flex-col h-full overflow-hidden">
             <div className="p-6 md:p-8 lg:p-10 md:pb-4 md:px-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4 md:gap-6">
                 <div className="space-y-1.5">
-                    <h1 className="text-xl md:text-2xl font-bold text-[#1a1c3d] tracking-tight">직급 관리</h1>
-                    <p className="text-[11px] md:text-sm text-[#8a92a6] font-medium">직급을 추가하고 조직 내 직급 순서를 관리합니다.</p>
+                    <h1 className="text-xl md:text-2xl font-bold text-[#1a1c3d] tracking-tight">{currentPageInfo?.page_name}</h1>
+                    <p className="text-[11px] md:text-sm text-[#8a92a6] font-medium">{currentPageInfo?.page_info}</p>
                 </div>
                 <div className="flex justify-end gap-3 shrink-0">
                     <button

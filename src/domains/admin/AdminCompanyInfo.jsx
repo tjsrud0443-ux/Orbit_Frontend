@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Bell, Check } from 'lucide-react';
 import { maxios } from '../../api/axiosConfig';
 import { getCompanyInfo, insertCompanyInfo, updateCompanyInfo, updateCompanyStamp, updateCompanyWatermark } from './adminApi';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const companyFields = [
     {
@@ -249,6 +250,7 @@ const CompanyImageBox = ({ title, image, tempImage, isEditing, inputRef, onChang
 
 
 const AdminCompanyInfo = () => {
+    const { pages } = usePageInfoStore();
     const [formValues, setFormValues] = useState(initialFormValues);
     const [savedValues, setSavedValues] = useState(initialFormValues);
     const [isEditing, setIsEditing] = useState(false);
@@ -264,6 +266,7 @@ const AdminCompanyInfo = () => {
     const postcodeRef = useRef(null);
     const companyStampInputRef = useRef(null);
     const companyWatermarkInputRef = useRef(null);
+    const currentPageInfo = pages.find(p => p.page_code === 'AdminCompanyInfo');
 
     useEffect(() => {
         const loadCompanyInfo = async () => {
@@ -472,10 +475,10 @@ const AdminCompanyInfo = () => {
                     <div className="flex flex-1 flex-col gap-4 md:flex-row md:items-center">
                         <div>
                             <h1 className="text-2xl font-extrabold tracking-tight text-slate-950">
-                                회사 정보 관리
+                                {currentPageInfo?.page_name}
                             </h1>
                             <p className="mt-2 text-sm font-medium text-slate-500">
-                                회사 기본 정보를 등록하고 수정할 수 있습니다.
+                                {currentPageInfo?.page_info}
                             </p>
                         </div>
                     </div>

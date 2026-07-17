@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faEdit, faTrashAlt, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import Pagination from '../../components/common/Pagination';
 import { deleteDoc, getTempDoc } from './approvalApi';
 import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 import useLoadingStore from '../../store/useLoadingStore';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 
 const docTypeMap = {
@@ -16,16 +17,21 @@ const docTypeMap = {
 };
 
 const ApprovalTemp = () => {
+  const { pages } = usePageInfoStore();
   const navi = useNavigate();
+  const location = useLocation();
+  const initialQuery = new URLSearchParams(location.search);
+  const initialPage = Math.max(Number(initialQuery.get('page')) || 1, 1);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('전체 문서');
   const [isTypeOpen, setIsTypeOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(initialPage);
   const itemsPerPage = 10;
   const [documents, setDocuments] = useState([]);
   const showLoading = useLoadingStore(state => state.showLoading);
   const hideLoading = useLoadingStore(state => state.hideLoading);
+  const currentPageInfo = pages.find(p => p.page_code === 'ApprovalTemp');
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -67,6 +73,7 @@ const ApprovalTemp = () => {
 
   const count = Math.ceil(filteredDocs.length / itemsPerPage);
   const displayDocs = filteredDocs.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+  const emptyRowCount = Math.max(itemsPerPage - displayDocs.length, 0);
   const mobilePageNumbers = (() => {
     if (count <= 0) return [];
     const maxVisible = 5;
@@ -75,6 +82,17 @@ const ApprovalTemp = () => {
     return Array.from({ length: end - start + 1 }, (_, index) => start + index);
   })();
   const hasPaginationData = displayDocs.length > 0 && count > 0;
+
+  const updateQuery = (nextPage) => {
+    const params = new URLSearchParams(location.search);
+    params.set('page', String(nextPage));
+    navi({ pathname: location.pathname, search: params.toString() }, { replace: true });
+  };
+
+  const handlePageChange = (nextPage) => {
+    setPage(nextPage);
+    updateQuery(nextPage);
+  };
 
   const handleEdit = (doc) => {
     navi(`/approval/detail/${doc.doc_type}/${doc.doc_seq}`);
@@ -91,7 +109,7 @@ const ApprovalTemp = () => {
 
       const newCount = Math.ceil(resp.data.length / itemsPerPage);
       if (page > newCount && newCount > 0) {
-        setPage(newCount);
+        handlePageChange(newCount);
       }
     } catch (err) {
       await alertError('오류 발생', '삭제 중 오류가 발생했습니다.');
@@ -112,9 +130,9 @@ const ApprovalTemp = () => {
         {/* Title & Description */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">임시 문서함</h1>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{currentPageInfo?.page_name}</h1>
             <p className="text-xs text-slate-500 font-medium break-keep">
-              기안 작성 중 임시 저장된 문서를 확인하세요. (최대 저장 기간은 7일입니다.)
+              {currentPageInfo?.page_info}
             </p>
           </div>
 
@@ -135,7 +153,7 @@ const ApprovalTemp = () => {
                       key={type}
                       onClick={() => {
                         setSelectedType(type);
-                        setPage(1);
+                        handlePageChange(1);
                         setIsTypeOpen(false);
                       }}
                       className="px-3 py-1.5 text-xs text-slate-400 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
@@ -155,7 +173,7 @@ const ApprovalTemp = () => {
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
-                  setPage(1);
+                  handlePageChange(1);
                 }}
                 className="w-full pl-9 pr-3 py-1.5 text-xs border-none focus:ring-0 placeholder:text-slate-400 outline-none bg-transparent"
               />
@@ -177,30 +195,30 @@ const ApprovalTemp = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {displayDocs.length > 0 ? (
+                {displayDocs.length > 0 ? ([
                   displayDocs.map((doc) => (
                     <tr key={doc.seq} className="transition-colors group">
-                      <td className="py-5 pl-8 pr-4">
+                      <td className="py-3 pl-8 pr-4">
                         <span className="text-sm font-bold text-slate-700 transition-colors whitespace-nowrap">
                           {doc.title}
                         </span>
                       </td>
-                      <td className="py-5 px-4 text-center">
+                      <td className="py-3 px-4 text-center">
                         <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md whitespace-nowrap">
                           {docType[doc.doc_type] || doc.doc_type}
                         </span>
                       </td>
-                      <td className="py-5 px-4 text-center">
+                      <td className="py-3 px-4 text-center">
                         <span className="text-xs font-bold text-slate-400 font-mono tracking-tighter whitespace-nowrap">
                           {doc.updated_at?.substring(0, 10)}
                         </span>
                       </td>
-                      <td className="py-5 px-4 text-center">
+                      <td className="py-3 px-4 text-center">
                         <span className={`text-xs font-bold whitespace-nowrap ${expiresDay(doc.temp_expires_at) <= 1 ? 'text-rose-500' : 'text-slate-600'}`}>
                           {expiresDay(doc.temp_expires_at)}일 남음
                         </span>
                       </td>
-                      <td className="py-5 pl-4 pr-8">
+                      <td className="py-3 pl-4 pr-8">
                         <div className="flex justify-center gap-2">
                           <button
                             onClick={() => handleEdit(doc)}
@@ -219,33 +237,54 @@ const ApprovalTemp = () => {
                         </div>
                       </td>
                     </tr>
+                  )),
+                  Array.from({ length: emptyRowCount }).map((_, index) => (
+                    <tr key={`empty-${index}`} className="pointer-events-none">
+                      <td className="py-3 pl-8 pr-4">&nbsp;</td>
+                      <td className="py-3 px-4">&nbsp;</td>
+                      <td className="py-3 px-4">&nbsp;</td>
+                      <td className="py-3 px-4">&nbsp;</td>
+                      <td className="py-3 pl-4 pr-8">&nbsp;</td>
+                    </tr>
                   ))
-                ) : (
-                  <tr>
+                ]
+                ) : ([
+                  <tr key="empty-message">
                     <td colSpan="5" className="py-20 text-center text-slate-400 text-sm font-bold whitespace-nowrap">
                       임시 저장된 문서가 없습니다.
                     </td>
-                  </tr>
-                )}
+                  </tr>,
+                  Array.from({ length: itemsPerPage - 4 }).map((_, index) => (
+                    <tr key={`empty-${index}`} className="pointer-events-none">
+                      <td className="py-3 pl-8 pr-4">&nbsp;</td>
+                      <td className="py-3 px-4">&nbsp;</td>
+                      <td className="py-3 px-4">&nbsp;</td>
+                      <td className="py-3 px-4">&nbsp;</td>
+                      <td className="py-3 pl-4 pr-8">&nbsp;</td>
+                    </tr>
+                  ))
+                ])}
               </tbody>
             </table>
           </div>
 
           {/* Pagination */}
-          {count > 0 && (
-            <div className="hidden md:block py-6 border-t border-slate-50">
+          <div className="hidden md:block py-3 border-t border-slate-50 min-h-[56px]">
+            {count > 0 ? (
               <Pagination
                 count={count}
                 page={page}
-                onChange={(_, value) => setPage(value)}
+                onChange={(_, value) => handlePageChange(value)}
               />
-            </div>
-          )}
+            ) : (
+              <div className="h-8" />
+            )}
+          </div>
           <div className="md:hidden py-5 border-t border-slate-50 flex items-center justify-center gap-1.5">
             <button
               type="button"
               disabled={!hasPaginationData || page <= 1}
-              onClick={() => hasPaginationData && page > 1 && setPage(page - 1)}
+              onClick={() => hasPaginationData && page > 1 && handlePageChange(page - 1)}
               className="w-8 h-8 rounded-xl border border-[rgba(0,0,0,0.23)] text-xs font-bold text-[rgba(0,0,0,0.87)] transition-colors hover:bg-[#F0F4FF] hover:text-[#3530B8] disabled:opacity-[0.38] disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[rgba(0,0,0,0.87)]"
             >
               &lt;
@@ -254,7 +293,7 @@ const ApprovalTemp = () => {
               <button
                 key={pageNumber}
                 type="button"
-                onClick={() => setPage(pageNumber)}
+                onClick={() => handlePageChange(pageNumber)}
                 className={`w-8 h-8 rounded-xl border text-xs font-bold transition-colors ${page === pageNumber ? 'bg-[#3530B8] border-[#3530B8] text-white hover:bg-[#2a2594]' : 'border-[rgba(0,0,0,0.23)] text-[rgba(0,0,0,0.87)] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}
               >
                 {pageNumber}
@@ -263,7 +302,7 @@ const ApprovalTemp = () => {
             <button
               type="button"
               disabled={!hasPaginationData || page >= count}
-              onClick={() => hasPaginationData && page < count && setPage(page + 1)}
+              onClick={() => hasPaginationData && page < count && handlePageChange(page + 1)}
               className="w-8 h-8 rounded-xl border border-[rgba(0,0,0,0.23)] text-xs font-bold text-[rgba(0,0,0,0.87)] transition-colors hover:bg-[#F0F4FF] hover:text-[#3530B8] disabled:opacity-[0.38] disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[rgba(0,0,0,0.87)]"
             >
               &gt;
