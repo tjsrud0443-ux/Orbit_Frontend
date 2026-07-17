@@ -15,6 +15,7 @@ import { IMAGES } from '../../images/images';
 import useUserStore from '../../store/userStore';
 import useDepartmentsStore from '../../store/useDepartmentsStore';
 import useNotificationStore from '../../store/useNotificationStore';
+import { updateReadNoti } from '../../api/notificationApi';
 
 // 직원 사이드바
 const generalMenuItems = [
@@ -70,13 +71,13 @@ const generalMenuItems = [
     icon: faCalendar,
     notiTypes: ['MEETING'],
     subItems: [
-      { name: '캘린더', path: '/calendar' },
-      { name: '회의록', path: '/meetingMinutes' },
       {
-        name: '회의실 예약',
-        path: '/meetingRooms',
+        name: '캘린더',
+        path: '/calendar',
         notiTypes: ['MEETING']
       },
+      { name: '회의록', path: '/meetingMinutes' },
+      { name: '회의실 예약', path: '/meetingRooms' },
     ]
   },
   {
@@ -173,6 +174,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const user = useUserStore(state => state.user);
   const clearDepartments = useDepartmentsStore(state => state.clearAll);
   const notifications = useNotificationStore(state => state.notifications);
+  const readNotis = useNotificationStore(state => state.readNotis);
 
   const currentMenuPool = isAdminMode ? adminMenuItems : generalMenuItems;
 
@@ -184,6 +186,37 @@ const Sidebar = ({ isOpen, onClose }) => {
     return notifications.filter(
       noti => notiTypes.includes(noti.noti_type)
     ).length;
+  }
+
+  const getMenuNotifications = (notiTypes) => {
+    if (!Array.isArray(notiTypes) || notiTypes.length === 0) {
+      return [];
+    }
+
+    return notifications.filter(
+      noti => noti.read_yn === 'N' && notiTypes.includes(noti.noti_type)
+    );
+  }
+
+  const readMenuNotifications = async (notiTypes) => {
+    const targetNotifications = getMenuNotifications(notiTypes);
+
+    if (targetNotifications.length === 0) {
+      return;
+    }
+
+    const notiSeqList = targetNotifications.map(noti => noti.noti_seq);
+
+    try {
+      await Promise.all(
+        notiSeqList.map(notiSeq => updateReadNoti(notiSeq))
+      );
+
+      readNotis(notiSeqList);
+
+    } catch (e) {
+      console.error('사이드바 알림 읽음 처리 실패', e);
+    }
   }
 
   const handleLogout = () => {
@@ -330,14 +363,17 @@ const Sidebar = ({ isOpen, onClose }) => {
                             <Link
                               key={subIdx}
                               to={sub.path}
-                              onClick={onClose}
+                              onClick={async () => {
+                                await readMenuNotifications(sub.notiTypes);
+                                onClose?.();
+                              }}
                               className={`flex items-center justify-between gap-2 py-1.5 text-xs transition-all
                                 ${isCurrent
                                   ? 'text-[#3530B8] font-bold'
                                   : 'text-slate-500 hover:text-[#3530B8] font-medium'}`}
                             >
                               {sub.name}
-                              <NotificationBadge count={subNotificationCount}/>
+                              <NotificationBadge count={subNotificationCount} />
                             </Link>
                           );
                         })}
@@ -352,15 +388,18 @@ const Sidebar = ({ isOpen, onClose }) => {
                 <Link
                   key={idx}
                   to={item.path}
-                  onClick={onClose}
+                  onClick={async () => {
+                    await readMenuNotifications(item.notiTypes);
+                    onClose?.();
+                  }}
                   className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm transition-all
                     ${isCurrent
                       ? 'bg-[#DDE8FF] text-[#3530B8] font-bold'
                       : 'text-slate-600 hover:bg-[#DDE8FF] hover:text-[#3530B8] font-semibold'}`}
                 >
                   <div className='flex items-center gap-3'>
-                  <FontAwesomeIcon icon={item.icon} className="w-4 h-4" />
-                  <span>{item.name}</span>
+                    <FontAwesomeIcon icon={item.icon} className="w-4 h-4" />
+                    <span>{item.name}</span>
                   </div>
                   <NotificationBadge count={itemNotificationCount} />
                 </Link>
