@@ -3,13 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faSearch,
-  faUser,
   faChevronDown,
 } from '@fortawesome/free-solid-svg-icons';
 import Pagination from '../../components/common/Pagination';
-import { getAllCcDocuments, getPageDocuments } from './approvalApi';
+import { getPageDocuments } from './approvalApi';
 import useAuthStore from '../../store/authStore';
-import useLoadingStore from '../../store/useLoadingStore';
 
 // 결재선
 const ApprovalLineStack = ({ line }) => {
@@ -82,6 +80,8 @@ const docTypeMap = {
 const DocumentTable = ({ title, data, onDetailClick, showPagination = true, approverLabel = '현재 결재자', count = 0, page = 1, setPage = () => { } }) => {
   const token = useAuthStore(state => state.token);
   const displayData = data;
+  const fixedRowCount = 10;
+  const emptyRowCount = Math.max(fixedRowCount - displayData.length, 0);
 
   const docTypeText = {
     'VACATION': '휴가신청서',
@@ -124,10 +124,7 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
     return "";
   }
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-3">
-      <div className="pl-4 md:pl-6 pr-4 py-3 border-b border-slate-100 bg-white">
-        <h3 className="text-base md:text-lg font-bold text-slate-800">{title}</h3>
-      </div>
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all">
       <div className="overflow-x-auto custom-scrollbar">
         <table className="w-full min-w-[1100px] md:min-w-full text-left border-collapse md:table-fixed">
           <thead>
@@ -144,23 +141,23 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
           <tbody className="divide-y divide-slate-100">
             {displayData.map((doc) => (
               <tr key={doc.doc_seq} className="transition-colors">
-                <td className="pl-4 md:pl-6 pr-3 py-4 text-sm font-bold text-gray-700 truncate whitespace-nowrap">{doc.title}</td>
-                <td className="px-3 py-4 text-xs font-medium text-gray-500 truncate whitespace-nowrap">{docTypeText[doc.doc_type] || doc.doc_type}</td>
-                <td className="px-3 py-4 truncate whitespace-nowrap">
+                <td className="pl-4 md:pl-6 pr-3 py-3 text-sm font-bold text-gray-700 truncate whitespace-nowrap">{doc.title}</td>
+                <td className="px-3 py-3 text-xs font-medium text-gray-500 truncate whitespace-nowrap">{docTypeText[doc.doc_type] || doc.doc_type}</td>
+                <td className="px-3 py-3 truncate whitespace-nowrap">
                   <div className="flex items-center gap-2 overflow-hidden">
                     <span className="text-xs font-bold text-gray-600 truncate">{doc.name}</span>
                   </div>
                 </td>
-                <td className="px-3 py-4">
+                <td className="px-3 py-3">
                   <ApprovalLineStack line={doc.approvers || []} />
                 </td>
-                <td className="px-3 py-4 text-xs font-bold text-gray-600 truncate whitespace-nowrap">
+                <td className="px-3 py-3 text-xs font-bold text-gray-600 truncate whitespace-nowrap">
                   {approverName(doc)}
                 </td>
                 <td className="px-2 py-0.5 text-[11px] text-center whitespace-nowrap">
                   <StatusBadge status={doc.status} />
                 </td>
-                <td className="px-3 py-4 text-center whitespace-nowrap">
+                <td className="px-3 py-3 text-center whitespace-nowrap">
                   <button
                     onClick={() => onDetailClick(doc)}
                     className="text-[11px] font-bold text-[#3530B8] bg-[#F0F4FF] px-4 py-2 rounded-lg hover:bg-[#3530B8] hover:text-white transition-all"
@@ -170,17 +167,43 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
                 </td>
               </tr>
             ))}
-            {displayData.length === 0 && (
-              <tr>
-                <td colSpan="7" className="py-10 text-center text-gray-400 text-[0.7rem] font-bold">해당 문서가 없습니다.</td>
+            {displayData.length > 0 && Array.from({ length: emptyRowCount }).map((_, index) => (
+              <tr key={`empty-${index}`} className="pointer-events-none">
+                <td className="pl-4 md:pl-6 pr-3 py-3">&nbsp;</td>
+                <td className="px-3 py-3">&nbsp;</td>
+                <td className="px-3 py-3">&nbsp;</td>
+                <td className="px-3 py-3">&nbsp;</td>
+                <td className="px-3 py-3">&nbsp;</td>
+                <td className="px-2 py-0.5">&nbsp;</td>
+                <td className="px-3 py-3">&nbsp;</td>
               </tr>
-            )}
+            ))}
+            {displayData.length === 0 && ([
+              <tr key="empty-message">
+                <td colSpan="7" className="py-20 text-center text-gray-400 text-[0.8rem] font-bold">해당 문서가 없습니다.</td>
+              </tr>,
+              Array.from({ length: fixedRowCount - 4 }).map((_, index) => (
+                <tr key={`empty-${index}`} className="pointer-events-none">
+                  <td className="pl-4 md:pl-6 pr-3 py-3">&nbsp;</td>
+                  <td className="px-3 py-3">&nbsp;</td>
+                  <td className="px-3 py-3">&nbsp;</td>
+                  <td className="px-3 py-3">&nbsp;</td>
+                  <td className="px-3 py-3">&nbsp;</td>
+                  <td className="px-2 py-0.5">&nbsp;</td>
+                  <td className="px-3 py-3">&nbsp;</td>
+                </tr>
+              ))
+            ])}
           </tbody>
         </table>
       </div>
-      {showPagination && count > 0 && (
-        <div className="hidden md:block py-2 scale-95 origin-center">
-          <Pagination count={count} page={page} onChange={(_, value) => setPage(value)} />
+      {showPagination && (
+        <div className="hidden md:block py-3 border-t border-slate-50 min-h-[56px] scale-95 origin-center">
+          {count > 0 ? (
+            <Pagination count={count} page={page} onChange={(_, value) => setPage(value)} />
+          ) : (
+            <div className="h-8" />
+          )}
         </div>
       )}
       {showPagination && (
@@ -238,25 +261,9 @@ const ApprovalCc = () => {
     };
   }, []);
 
-  const [documents, setDocuments] = useState([]);
-
   const [approvedDocs, setApprovedDocs] = useState([]);
   const [approvedPage, setApprovedPage] = useState(1);
   const [approvedCount, setApprovedCount] = useState(0);
-
-  const [rejectedDocs, setRejectedDocs] = useState([]);
-  const [rejectedPage, setRejectedPage] = useState(1);
-  const [rejectedCount, setRejectedCount] = useState(0);
-  const showLoading = useLoadingStore(state => state.showLoading);
-  const hideLoading = useLoadingStore(state => state.hideLoading);
-
-  useEffect(() => {
-    showLoading();
-    getAllCcDocuments().then(resp => {
-      setDocuments(resp.data);
-      hideLoading();
-    })
-  }, [])
 
   useEffect(() => {
     getPageDocuments("APPROVED", approvedPage, searchTerm, docTypeMap[selectedType] || "").then(resp => {
@@ -264,13 +271,6 @@ const ApprovalCc = () => {
       setApprovedCount(Math.ceil(resp.data.count / 5));
     })
   }, [approvedPage, searchTerm, selectedType]);
-
-  useEffect(() => {
-    getPageDocuments("REJECTED", rejectedPage, searchTerm, docTypeMap[selectedType] || "").then(resp => {
-      setRejectedDocs(resp.data.list);
-      setRejectedCount(Math.ceil(resp.data.count / 5));
-    })
-  }, [rejectedPage, searchTerm, selectedType]);
 
   const handleOpenDetail = (doc) => {
     navigate(`/approval/detail/${doc.doc_type}/${doc.doc_seq}`);
@@ -282,10 +282,6 @@ const ApprovalCc = () => {
       const matchesType = selectedType === '전체 문서' || selectedType === '전체' || doc.doc_type === docTypeMap[selectedType];
       return matchesSearch && matchesType;
     });
-  };
-
-  const filterDocuments = (status) => {
-    return getFilteredData(documents.filter(doc => doc.status === status));
   };
 
   return (
@@ -317,7 +313,6 @@ const ApprovalCc = () => {
                       onClick={() => {
                         setSelectedType(type);
                         setApprovedPage(1);
-                        setRejectedPage(1);
                         setIsTypeOpen(false);
                       }}
                       className="px-3 py-1.5 text-xs text-slate-400 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
@@ -336,7 +331,7 @@ const ApprovalCc = () => {
                 type="text"
                 placeholder="문서 제목 검색..."
                 value={searchTerm}
-                onChange={(e) => { setSearchTerm(e.target.value); setApprovedPage(1); setRejectedPage(1); }}
+                onChange={(e) => { setSearchTerm(e.target.value); setApprovedPage(1); }}
                 className="w-full pl-9 pr-3 py-1.5 text-xs border-none focus:ring-0 placeholder:text-slate-400 outline-none bg-transparent"
               />
             </div>
@@ -344,35 +339,13 @@ const ApprovalCc = () => {
         </div>
 
         {/* Sections */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-8 pr-1">
-          <DocumentTable
-            title="결재 대기중"
-            data={filterDocuments('DRAFT')}
-            onDetailClick={handleOpenDetail}
-            showPagination={false}
-          />
-          <DocumentTable
-            title="결재 진행 중"
-            data={filterDocuments('IN_PROGRESS')}
-            onDetailClick={handleOpenDetail}
-            showPagination={false}
-          />
+        <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
           <DocumentTable
             title="결재 완료"
             data={approvedDocs}
             count={approvedCount}
             page={approvedPage}
             setPage={setApprovedPage}
-            onDetailClick={handleOpenDetail}
-            showPagination={true}
-            approverLabel="최종 결재자"
-          />
-          <DocumentTable
-            title="결재 반려"
-            data={rejectedDocs}
-            count={rejectedCount}
-            page={rejectedPage}
-            setPage={setRejectedPage}
             onDetailClick={handleOpenDetail}
             showPagination={true}
             approverLabel="최종 결재자"
