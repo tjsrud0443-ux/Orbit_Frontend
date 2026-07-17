@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+﻿import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -13,18 +13,28 @@ import usePageInfoStore from '../../store/usePageInfoStore';
 
 // --- Sub Components ---
 
-const StatusBadge = ({ status }) => {
+const StatusBadge = ({ status, type = 'personal' }) => {
   const styles = {
+    'DRAFT':'bg-[#FFF9F0] text-[#FF9800] border-[#FFF9F0]',
     'IN_PROGRESS': 'bg-[#FFF9F0] text-[#FF9800] border-[#FFF9F0]',
     'APPROVED': 'bg-[#F0FDF4] text-[#10B981] border-[#F0FDF4]',
     'REJECTED': 'bg-[#FFF0F0] text-[#FF4D4F] border-[#FFF0F0]'
   };
 
-  const statusText = {
+  const documentStatusText = {
+    'DRAFT':'결재 진행',
+    'IN_PROGRESS': '결재 진행',
+    'APPROVED': '최종 승인',
+    'REJECTED': '최종 반려'
+  };
+
+  const personalStatusText = {
     'IN_PROGRESS': '결재 대기',
-    'APPROVED': '결재 완료',
+    'APPROVED': '승인',
     'REJECTED': '반려'
   };
+
+  const statusText = type === 'document' ? documentStatusText : personalStatusText;
 
   return (
     <span className={`px-2 py-0.5 md:px-2.5 md:py-1 rounded-full text-[10px] md:text-xs font-semibold border whitespace-nowrap ${styles[status] || 'bg-gray-50 text-gray-600'}`}>
@@ -55,15 +65,16 @@ const DocumentTable = ({ data, onDetailClick, showPagination = true, count = 0, 
   return (
     <>
       <div className="overflow-x-auto custom-scrollbar min-h-[376px]">
-        <table className="w-full min-w-[900px] md:min-w-full text-left border-collapse md:table-fixed">
+        <table className="w-full min-w-[1000px] md:min-w-full text-left border-collapse md:table-fixed">
           <thead>
             <tr className="bg-white text-gray-400 text-[0.8125rem] font-bold uppercase tracking-wider border-b border-slate-100">
-              <th className="pl-4 md:pl-6 pr-3 py-3 w-[35%] whitespace-nowrap">제목</th>
-              <th className="px-3 py-3 w-[18%] whitespace-nowrap">문서 종류</th>
-              <th className="px-3 py-3 w-[15%] whitespace-nowrap">기안자</th>
-              <th className="px-3 py-3 text-center w-[14%] whitespace-nowrap">기안일</th>
-              <th className="px-3 py-3 text-center w-[10%] whitespace-nowrap">결재 상태</th>
-              <th className="px-3 py-3 text-center w-[12%] whitespace-nowrap">상세보기</th>
+              <th className="pl-4 md:pl-6 pr-3 py-3 w-[27%] whitespace-nowrap">제목</th>
+              <th className="px-3 py-3 w-[15%] whitespace-nowrap">문서 종류</th>
+              <th className="px-3 py-3 w-[13%] whitespace-nowrap">기안자</th>
+              <th className="px-3 py-3 text-center w-[12%] whitespace-nowrap">기안일</th>
+              <th className="px-3 py-3 text-center w-[11%] whitespace-nowrap">문서 상태</th>
+              <th className="px-3 py-3 text-center w-[11%] whitespace-nowrap">개인 상태</th>
+              <th className="px-3 py-3 text-center w-[11%] whitespace-nowrap">상세보기</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -86,9 +97,12 @@ const DocumentTable = ({ data, onDetailClick, showPagination = true, count = 0, 
                     <span className="text-xs font-bold text-gray-600 truncate">{doc.name}</span>
                   </div>
                 </td>
-                <td className="px-3 py-4 text-xs font-medium text-gray-400 text-center truncate whitespace-nowrap">{doc.created_at.substring(0, 10)}</td>
+                <td className="px-3 py-4 text-xs font-medium text-gray-400 text-center truncate whitespace-nowrap">{doc.created_at?.substring(0, 10)}</td>
                 <td className="px-3 py-4 text-center whitespace-nowrap">
-                  <StatusBadge status={doc.my_approval_status} />
+                  <StatusBadge status={doc.status} type="document" />
+                </td>
+                <td className="px-3 py-4 text-center whitespace-nowrap">
+                  <StatusBadge status={doc.my_approval_status} type="personal" />
                 </td>
                 <td className="px-3 py-4 text-center whitespace-nowrap">
                   <button
@@ -102,7 +116,7 @@ const DocumentTable = ({ data, onDetailClick, showPagination = true, count = 0, 
             ))}
             {displayData.length === 0 && (
               <tr>
-                <td colSpan="6" className="py-10 text-center text-gray-400 text-[0.8rem] font-bold">해당 문서가 없습니다.</td>
+                <td colSpan="7" className="py-10 text-center text-gray-400 text-[0.8rem] font-bold">해당 문서가 없습니다.</td>
               </tr>
             )}
           </tbody>
@@ -183,9 +197,9 @@ const ApprovalInbox = () => {
     '구매신청서': 'PURCHASE'
   };
 
-  // 상세 보기 버튼 클릭 시 ApprovalDetail 페이지로 이동
+  // ?곸꽭 蹂닿린 踰꾪듉 ?대┃ ??ApprovalDetail ?섏씠吏濡??대룞
   const handleOpenDetail = (doc) => {
-    // ApprovalDetail.jsx의 경로 규칙에 따라 /approval/detail/:type/:docId 로 이동
+    // ApprovalDetail.jsx??寃쎈줈 洹쒖튃???곕씪 /approval/detail/:type/:docId 濡??대룞
     navigate(`/approval/detail/${doc.doc_type}/${doc.doc_seq}`);
   };
 
@@ -327,7 +341,7 @@ const ApprovalInbox = () => {
               <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
               <input
                 type="text"
-                placeholder="문서 제목 검색..."
+                placeholder="문서 제목 검색"
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); resetPages(); }}
                 className="w-full pl-9 pr-3 py-1.5 text-xs border-none focus:ring-0 placeholder:text-slate-400 outline-none bg-transparent"
@@ -361,3 +375,5 @@ const ApprovalInbox = () => {
 };
 
 export default ApprovalInbox;
+
+
