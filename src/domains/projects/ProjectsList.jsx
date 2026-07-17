@@ -11,8 +11,10 @@ import { alertSuccess, alertConfirm } from '../../utils/alert';
 import useLoadingStore from '../../store/useLoadingStore';
 import Pagination from '../../components/common/Pagination';
 import useEmployeeStore from '../../store/useEmployeeStore';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const ProjectsList = () => {
+  const { pages } = usePageInfoStore();
   const navigate = useNavigate();
   const [filter, setFilter] = useState('전체');
   const [search, setSearch] = useState('');
@@ -58,6 +60,7 @@ const ProjectsList = () => {
   const [isEditStartCalendarOpen, setIsEditStartCalendarOpen] = useState(false);
   const [isEditEndCalendarOpen, setIsEditEndCalendarOpen] = useState(false);
   const [editErrors, setEditErrors] = useState({});
+  const currentPageInfo = pages.find(p => p.page_code === 'ProjectsList');
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -672,8 +675,8 @@ const ProjectsList = () => {
   return (
     <div className="flex flex-col h-full bg-[#FFFFFF] py-8 px-1 md:px-7 overflow-y-auto lg:overflow-hidden custom-scrollbar">
       <div className="mb-6 px-4 md:px-2">
-        <h1 className="text-xl md:text-2xl font-bold text-[#121331]">프로젝트 관리</h1>
-        <p className="text-xs md:text-sm text-[#8a92a6] mt-1">진행 중인 프로젝트명을 클릭하여 칸반 보드에서 업무를 관리하세요.</p>
+        <h1 className="text-xl md:text-2xl font-bold text-[#121331]">{currentPageInfo?.page_name}</h1>
+        <p className="text-xs md:text-sm text-[#8a92a6] mt-1">{currentPageInfo?.page_info}</p>
       </div>
 
       {/* 2단 분할은 lg(1024px) 이상에서만. 그 미만은 목록 전체폭 + 상세 모달 */}
