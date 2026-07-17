@@ -224,22 +224,14 @@ const ApprovalInbox = () => {
     '구매신청서': 'PURCHASE'
   };
 
-  // ?곸꽭 蹂닿린 踰꾪듉 ?대┃ ??ApprovalDetail ?섏씠吏濡??대룞
+  // 상세보기 버튼 클릭 시 ApprovalDetail 페이지로 이동
   const handleOpenDetail = (doc) => {
-    // ApprovalDetail.jsx??寃쎈줈 洹쒖튃???곕씪 /approval/detail/:type/:docId 濡??대룞
     navigate(`/approval/detail/${doc.doc_type}/${doc.doc_seq}`);
   };
 
   const filterDocuments = (docs) => {
     return docs.filter(doc => {
       const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase());
-      const docTypeText = {
-        'VACATION': '휴가신청서',
-        'PAYMENT': '지출결의서',
-        'GENERAL': '일반품의서',
-        'PURCHASE': '구매신청서'
-      }
-
       const matchesType =
         selectedType === '전체 문서' ||
         selectedType === '전체' ||
