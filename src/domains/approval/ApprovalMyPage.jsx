@@ -1,9 +1,8 @@
-﻿import React, { useEffect, useState, useRef } from 'react';
+﻿import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faSearch,
-  faUser,
   faChevronDown,
 } from '@fortawesome/free-solid-svg-icons';
 import Pagination from '../../components/common/Pagination';
@@ -72,7 +71,7 @@ const StatusBadge = ({ status }) => {
 };
 
 // 현재 결재자
-const DocumentTable = ({ title, data, onDetailClick, showPagination = true, approverLabel = '현재 결재자', count = 0, page = 1, setPage = () => { } }) => {
+const DocumentTable = ({ data, onDetailClick, showPagination = true, approverLabel = '현재 결재자', count = 0, page = 1, setPage = () => { } }) => {
   const token = useAuthStore(state => state.token);
   const displayData = data;
 
@@ -117,10 +116,7 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
     return "";
   }
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-3">
-      <div className="pl-4 md:pl-6 pr-4 py-3 border-b border-slate-100 bg-white">
-        <h3 className="text-base md:text-lg font-bold text-slate-800">{title}</h3>
-      </div>
+    <>
       <div className="overflow-x-auto custom-scrollbar">
         <table className="w-full min-w-[1100px] md:min-w-full text-left border-collapse md:table-fixed">
           <thead>
@@ -206,7 +202,7 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
           </button>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
@@ -217,6 +213,15 @@ const ApprovalMyPage = () => {
   const [selectedType, setSelectedType] = useState('전체 문서');
   const [isTypeOpen, setIsTypeOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const itemsPerPage = 5;
+  const [activeTab, setActiveTab] = useState('DRAFT');
+
+  const docTypeMap = {
+    '일반품의서': 'GENERAL',
+    '지출결의서': 'PAYMENT',
+    '휴가신청서': 'VACATION',
+    '구매신청서': 'PURCHASE'
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -233,13 +238,18 @@ const ApprovalMyPage = () => {
 
   const [documents, setDocuments] = useState([]);
 
+  const [draftPage, setDraftPage] = useState(1);
+  const [progressPage, setProgressPage] = useState(1);
+
   const [approvedDocs, setApprovedDocs] = useState([]);
   const [approvedPage, setApprovedPage] = useState(1);
   const [approvedCount, setApprovedCount] = useState(0);
+  const [approvedTotalCount, setApprovedTotalCount] = useState(0);
 
   const [rejectedDocs, setRejectedDocs] = useState([]);
   const [rejectedPage, setRejectedPage] = useState(1);
   const [rejectedCount, setRejectedCount] = useState(0);
+  const [rejectedTotalCount, setRejectedTotalCount] = useState(0);
 
   const showLoading = useLoadingStore(state => state.showLoading);
   const hideLoading = useLoadingStore(state => state.hideLoading);
@@ -256,6 +266,7 @@ const ApprovalMyPage = () => {
     getPageMyDoc("APPROVED", approvedPage, searchTerm, docTypeMap[selectedType] || selectedType).then(resp => {
       setApprovedDocs(resp.data.list);
       setApprovedCount(Math.ceil(resp.data.count / 5));
+      setApprovedTotalCount(resp.data.count);
     })
   }, [approvedPage, searchTerm, selectedType]);
 
@@ -263,6 +274,7 @@ const ApprovalMyPage = () => {
     getPageMyDoc("REJECTED", rejectedPage, searchTerm, docTypeMap[selectedType] || selectedType).then(resp => {
       setRejectedDocs(resp.data.list);
       setRejectedCount(Math.ceil(resp.data.count / 5));
+      setRejectedTotalCount(resp.data.count);
     })
   }, [rejectedPage, searchTerm, selectedType]);
 
@@ -270,22 +282,16 @@ const ApprovalMyPage = () => {
     navigate(`/approval/detail/${doc.doc_type}/${doc.doc_seq}`);
   };
 
-  const docTypeMap = {
-    '일반품의서': 'GENERAL',
-    '지출결의서': 'PAYMENT',
-    '휴가신청서': 'VACATION',
-    '구매신청서': 'PURCHASE'
+  const resetPages = () => {
+    setDraftPage(1);
+    setProgressPage(1);
+    setApprovedPage(1);
+    setRejectedPage(1);
   };
 
   const getFilteredData = (dataList) => {
     return dataList.filter(doc => {
       const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase());
-      const docTypeText = {
-        'VACATION': '휴가신청서',
-        'PAYMENT': '지출결의서',
-        'GENERAL': '일반품의서',
-        'PURCHASE': '구매신청서'
-      }
       const matchesType = selectedType === '전체 문서' || selectedType === '전체' || doc.doc_type === docTypeMap[selectedType];
       return matchesSearch && matchesType;
     });
@@ -295,94 +301,138 @@ const ApprovalMyPage = () => {
     return getFilteredData(documents.filter(doc => doc.status === status));
   };
 
+  const draftDocs = useMemo(() => filterDocuments('DRAFT'), [documents, searchTerm, selectedType]);
+  const progressDocs = useMemo(() => filterDocuments('IN_PROGRESS'), [documents, searchTerm, selectedType]);
+  const paginatedDraftDocs = useMemo(() => {
+    const start = (draftPage - 1) * itemsPerPage;
+    return draftDocs.slice(start, start + itemsPerPage);
+  }, [draftDocs, draftPage]);
+  const paginatedProgressDocs = useMemo(() => {
+    const start = (progressPage - 1) * itemsPerPage;
+    return progressDocs.slice(start, start + itemsPerPage);
+  }, [progressDocs, progressPage]);
+
+  const tabs = [
+    {
+      label: '결재 대기중',
+      status: 'DRAFT',
+      count: draftDocs.length,
+      data: paginatedDraftDocs,
+      pageCount: Math.ceil(draftDocs.length / itemsPerPage),
+      page: draftPage,
+      setPage: setDraftPage,
+      approverLabel: '현재 결재자',
+    },
+    {
+      label: '결재 진행중',
+      status: 'IN_PROGRESS',
+      count: progressDocs.length,
+      data: paginatedProgressDocs,
+      pageCount: Math.ceil(progressDocs.length / itemsPerPage),
+      page: progressPage,
+      setPage: setProgressPage,
+      approverLabel: '현재 결재자',
+    },
+    {
+      label: '결재 완료',
+      status: 'APPROVED',
+      count: approvedTotalCount,
+      data: approvedDocs,
+      pageCount: approvedCount,
+      page: approvedPage,
+      setPage: setApprovedPage,
+      approverLabel: '최종 결재자',
+    },
+    {
+      label: '결재 반려',
+      status: 'REJECTED',
+      count: rejectedTotalCount,
+      data: rejectedDocs,
+      pageCount: rejectedCount,
+      page: rejectedPage,
+      setPage: setRejectedPage,
+      approverLabel: '최종 결재자',
+    },
+  ];
+  const activeTabData = tabs.find(tab => tab.status === activeTab) || tabs[0];
+
   return (
-    <div className="flex-1 bg-white md:overflow-hidden flex flex-col p-5 lg:p-6 custom-scrollbar">
-      <div className="max-w-[1440px] mx-auto w-full flex flex-col h-full space-y-10">
-
-        {/* Title & Description */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 flex-shrink-0">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">나의 전자결재</h1>
-            <p className="text-xs text-slate-500 font-medium">전자결재 문서의 진행 현황과 상세 정보를 확인하세요.</p>
-          </div>
-
-          {/* Search Bar */}
-          <div className="flex items-center gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-slate-200 w-full md:w-auto focus-within:ring-2 focus-within:ring-[#3530B8]/20 focus-within:border-[#3530B8] transition-all">
-            <div className="relative" ref={dropdownRef}>
-              <div
-                onClick={() => setIsTypeOpen(!isTypeOpen)}
-                className="px-3 py-1.5 text-xs bg-slate-50 border-none rounded-lg text-slate-400 font-medium cursor-pointer outline-none flex items-center justify-between min-w-[100px]"
-              >
-                <span>{selectedType}</span>
-                <FontAwesomeIcon icon={faChevronDown} className={`ml-2 text-[10px] transition-transform ${isTypeOpen ? 'rotate-180' : ''}`} />
-              </div>
-              {isTypeOpen && (
-                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1">
-                  {['전체 문서', '일반품의서', '지출결의서', '휴가신청서', '구매신청서'].map((type) => (
-                    <div
-                      key={type}
-                      onClick={() => {
-                        setSelectedType(type);
-                        setApprovedPage(1);
-                        setRejectedPage(1);
-                        setIsTypeOpen(false);
-                      }}
-                      className="px-3 py-1.5 text-xs text-slate-400 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
-                    >
-                      {type}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="h-5 w-[1px] bg-slate-200 mx-1"></div>
-            <div className="relative flex-1 md:w-56">
-              <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
-              <input
-                type="text"
-                placeholder="문서 제목 검색..."
-                value={searchTerm}
-                onChange={(e) => { setSearchTerm(e.target.value); setApprovedPage(1); setRejectedPage(1); }}
-                className="w-full pl-9 pr-3 py-1.5 text-xs border-none focus:ring-0 placeholder:text-slate-400 outline-none bg-transparent"
-              />
-            </div>
-          </div>
+    <div className="flex-1 bg-white py-8 px-1 md:px-7 overflow-y-auto md:overflow-hidden custom-scrollbar">
+      <div className="max-w-[1450px] mx-auto w-full flex flex-col h-full">
+        <div className="mb-6 px-4 md:px-2 flex-shrink-0">
+          <h1 className="text-xl md:text-2xl font-bold text-[#121331] tracking-tight">내가 올린 기안</h1>
+          <p className="text-xs md:text-sm text-[#8a92a6] mt-1">전자결재 문서의 진행 현황과 상세 정보를 확인하세요.</p>
         </div>
 
-        {/* Sections */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-8 pr-1">
-          <DocumentTable
-            title="결재 대기중"
-            data={filterDocuments('DRAFT')}
-            onDetailClick={handleOpenDetail}
-            showPagination={false}
-          />
-          <DocumentTable
-            title="결재 진행 중"
-            data={filterDocuments('IN_PROGRESS')}
-            onDetailClick={handleOpenDetail}
-            showPagination={false}
-          />
-          <DocumentTable
-            title="결재 완료"
-            data={approvedDocs}
-            count={approvedCount}
-            page={approvedPage}
-            setPage={setApprovedPage}
-            onDetailClick={handleOpenDetail}
-            showPagination={true}
-            approverLabel="최종 결재자"
-          />
-          <DocumentTable
-            title="결재 반려"
-            data={rejectedDocs}
-            count={rejectedCount}
-            page={rejectedPage}
-            setPage={setRejectedPage}
-            onDetailClick={handleOpenDetail}
-            showPagination={true}
-            approverLabel="최종 결재자"
-          />
+        <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-3 md:p-8 flex flex-col flex-1 md:overflow-hidden min-h-0">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+            <div className="flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit items-center flex-shrink-0 overflow-x-auto custom-scrollbar">
+              {tabs.map(tab => (
+                <button
+                  key={tab.status}
+                  type="button"
+                  onClick={() => setActiveTab(tab.status)}
+                  className={`flex-1 md:flex-none px-2 md:px-6 py-1.5 rounded-xl text-[11px] md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === tab.status ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}
+                >
+                  {tab.label}
+                  <span className="ml-1.5">({tab.count})</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto items-end md:items-center">
+              <div className="flex gap-2 w-full md:w-auto justify-end">
+                <div className="relative w-fit md:w-auto" ref={dropdownRef}>
+                  <div
+                    onClick={() => setIsTypeOpen(!isTypeOpen)}
+                    className="bg-[#f4f7fc] px-4 h-[40px] rounded-xl text-xs text-[#8a92a6] outline-none cursor-pointer flex items-center justify-between gap-3 whitespace-nowrap"
+                  >
+                    <span>{selectedType}</span>
+                    <FontAwesomeIcon icon={faChevronDown} className={`text-[10px] transition-transform ${isTypeOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                  {isTypeOpen && (
+                    <div className="absolute top-full left-0 mt-2 w-full bg-white border border-[#edf2f9] rounded-xl shadow-lg z-50 py-1 overflow-hidden">
+                      {['전체 문서', '일반품의서', '지출결의서', '휴가신청서', '구매신청서'].map((type) => (
+                        <div
+                          key={type}
+                          onClick={() => {
+                            setSelectedType(type);
+                            resetPages();
+                            setIsTypeOpen(false);
+                          }}
+                          className="px-4 py-2.5 text-xs text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors whitespace-nowrap"
+                        >
+                          {type}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="relative flex items-center flex-1 md:w-56">
+                  <FontAwesomeIcon icon={faSearch} className="absolute left-4 text-[#8a92a6] text-xs" />
+                  <input
+                    type="text"
+                    placeholder="문서 제목 검색"
+                    value={searchTerm}
+                    onChange={(e) => { setSearchTerm(e.target.value); resetPages(); }}
+                    className="pl-12 pr-4 h-[40px] bg-[#f4f7fc] rounded-xl text-sm w-full outline-none placeholder:text-[#8a92a6]"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 md:overflow-y-auto md:min-h-0 custom-scrollbar">
+            <DocumentTable
+              data={activeTabData.data}
+              count={activeTabData.pageCount}
+              page={activeTabData.page}
+              setPage={activeTabData.setPage}
+              onDetailClick={handleOpenDetail}
+              showPagination={true}
+              approverLabel={activeTabData.approverLabel}
+            />
+          </div>
         </div>
       </div>
       <style dangerouslySetInnerHTML={{
