@@ -1,30 +1,41 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+﻿import React, { useEffect, useMemo, useState, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faSearch,
-  faUser,
   faChevronDown,
 } from '@fortawesome/free-solid-svg-icons';
 import Pagination from '../../components/common/Pagination';
-import { getMyDraftDoc, getPageMyDoneDoc } from './approvalApi';
+import { getMyDraftDoc, getPageMyDoneDoc, bulkApproveDocuments } from './approvalApi';
 import useAuthStore from '../../store/authStore';
 import useLoadingStore from '../../store/useLoadingStore';
+import usePageInfoStore from '../../store/usePageInfoStore';
+import { alertConfirm, alertWarning, alertError, alertSuccess } from '../../utils/alert';
 
 // --- Sub Components ---
 
-const StatusBadge = ({ status }) => {
+const StatusBadge = ({ status, type = 'personal' }) => {
   const styles = {
+    'DRAFT': 'bg-[#FFF9F0] text-[#FF9800] border-[#FFF9F0]',
     'IN_PROGRESS': 'bg-[#FFF9F0] text-[#FF9800] border-[#FFF9F0]',
     'APPROVED': 'bg-[#F0FDF4] text-[#10B981] border-[#F0FDF4]',
     'REJECTED': 'bg-[#FFF0F0] text-[#FF4D4F] border-[#FFF0F0]'
   };
 
-  const statusText = {
+  const documentStatusText = {
+    'DRAFT': '결재 진행',
+    'IN_PROGRESS': '결재 진행',
+    'APPROVED': '최종 승인',
+    'REJECTED': '최종 반려'
+  };
+
+  const personalStatusText = {
     'IN_PROGRESS': '결재 대기',
-    'APPROVED': '결재 완료',
+    'APPROVED': '승인',
     'REJECTED': '반려'
   };
+
+  const statusText = type === 'document' ? documentStatusText : personalStatusText;
 
   return (
     <span className={`px-2 py-0.5 md:px-2.5 md:py-1 rounded-full text-[10px] md:text-xs font-semibold border whitespace-nowrap ${styles[status] || 'bg-gray-50 text-gray-600'}`}>
@@ -33,7 +44,7 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const DocumentTable = ({ title, data, onDetailClick, showPagination = true, count = 0, page = 1, setPage = () => { } }) => {
+const DocumentTable = ({ data, onDetailClick, showPagination = true, count = 0, page = 1, setPage = () => { }, showCheckbox = false, checkedIds = [], onToggleCheck = () => { }, onToggleAll = () => { } }) => {
   const token = useAuthStore(state => state.token);
   const displayData = data;
 
@@ -53,26 +64,44 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, coun
   const hasPaginationData = displayData.length > 0 && count > 0;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-3">
-      <div className="pl-4 md:pl-6 pr-4 py-3 border-b border-slate-100 bg-white">
-        <h3 className="text-base md:text-lg font-bold text-slate-800">{title}</h3>
-      </div>
-      <div className="overflow-x-auto custom-scrollbar">
-        <table className="w-full min-w-[900px] md:min-w-full text-left border-collapse md:table-fixed">
+    <>
+      <div className="overflow-x-auto custom-scrollbar min-h-[376px]">
+        <table className="w-full min-w-[1040px] md:min-w-full text-left border-collapse md:table-fixed">
           <thead>
             <tr className="bg-white text-gray-400 text-[0.8125rem] font-bold uppercase tracking-wider border-b border-slate-100">
-              <th className="pl-4 md:pl-6 pr-3 py-3 w-[35%] whitespace-nowrap">제목</th>
-              <th className="px-3 py-3 w-[18%] whitespace-nowrap">문서 종류</th>
-              <th className="px-3 py-3 w-[15%] whitespace-nowrap">기안자</th>
-              <th className="px-3 py-3 text-center w-[14%] whitespace-nowrap">기안일</th>
-              <th className="px-3 py-3 text-center w-[10%] whitespace-nowrap">결재 상태</th>
-              <th className="px-3 py-3 text-center w-[12%] whitespace-nowrap">상세보기</th>
+              {showCheckbox && (
+                <th className="pl-4 md:pl-6 pr-2 py-3 w-[5%] text-center whitespace-nowrap">
+                  <input
+                    type="checkbox"
+                    checked={displayData.length > 0 && displayData.every(doc => checkedIds.includes(doc.doc_seq))}
+                    onChange={onToggleAll}
+                    className="accent-indigo-600 w-4 h-4 cursor-pointer"
+                  />
+                </th>
+              )}
+              <th className={`${showCheckbox ? 'pl-2' : 'pl-4 md:pl-6'} pr-3 py-3 w-[27%] whitespace-nowrap`}>제목</th>
+              <th className="px-3 py-3 w-[15%] whitespace-nowrap">문서 종류</th>
+              <th className="px-3 py-3 w-[13%] whitespace-nowrap">기안자</th>
+              <th className="px-3 py-3 text-center w-[12%] whitespace-nowrap">기안일</th>
+              <th className="px-3 py-3 text-center w-[11%] whitespace-nowrap">문서 상태</th>
+              <th className="px-3 py-3 text-center w-[11%] whitespace-nowrap">개인 상태</th>
+              <th className="px-3 py-3 text-center w-[11%] whitespace-nowrap">상세보기</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {displayData.map((doc) => (
               <tr key={doc.doc_seq} className="transition-colors">
-                <td className="pl-4 md:pl-6 pr-3 py-4 text-sm font-bold text-gray-700 truncate whitespace-nowrap">{doc.title}</td>
+                {showCheckbox && (
+                  <td className="pl-4 md:pl-6 pr-2 py-4 text-center whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={checkedIds.includes(doc.doc_seq)}
+                      onChange={() => onToggleCheck(doc.doc_seq)}
+                      className="accent-indigo-600 w-4 h-4 cursor-pointer"
+                    />
+                  </td>
+                )}
+                <td className={`${showCheckbox ? 'pl-2' : 'pl-4 md:pl-6'} pr-3 py-4 text-sm font-bold text-gray-700 truncate whitespace-nowrap`}>{doc.title}</td>
                 <td className="px-3 py-4 text-xs font-medium text-gray-500 truncate whitespace-nowrap">{docTypeText[doc.doc_type] || doc.doc_type}</td>
                 <td className="px-3 py-4 truncate whitespace-nowrap">
                   <div className="flex items-center gap-2 overflow-hidden">
@@ -89,9 +118,12 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, coun
                     <span className="text-xs font-bold text-gray-600 truncate">{doc.name}</span>
                   </div>
                 </td>
-                <td className="px-3 py-4 text-xs font-medium text-gray-400 text-center truncate whitespace-nowrap">{doc.created_at.substring(0, 10)}</td>
+                <td className="px-3 py-4 text-xs font-medium text-gray-400 text-center truncate whitespace-nowrap">{doc.created_at?.substring(0, 10)}</td>
                 <td className="px-3 py-4 text-center whitespace-nowrap">
-                  <StatusBadge status={doc.app_status} />
+                  <StatusBadge status={doc.status} type="document" />
+                </td>
+                <td className="px-3 py-4 text-center whitespace-nowrap">
+                  <StatusBadge status={doc.my_approval_status} type="personal" />
                 </td>
                 <td className="px-3 py-4 text-center whitespace-nowrap">
                   <button
@@ -105,15 +137,19 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, coun
             ))}
             {displayData.length === 0 && (
               <tr>
-                <td colSpan="6" className="py-10 text-center text-gray-400 text-[0.8rem] font-bold">해당 문서가 없습니다.</td>
+                <td colSpan={showCheckbox ? 8 : 7} className="py-10 text-center text-gray-400 text-[0.8rem] font-bold">해당 문서가 없습니다.</td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
       {showPagination && (
-        <div className="hidden md:block py-2 scale-95 origin-center">
-          <Pagination count={count} page={page} onChange={(_, value) => setPage(value)} />
+        <div className="hidden md:block py-2 scale-95 origin-center min-h-[48px]">
+          {count > 0 ? (
+            <Pagination count={count} page={page} onChange={(_, value) => setPage(value)} />
+          ) : (
+            <div className="h-8" />
+          )}
         </div>
       )}
       {showPagination && (
@@ -146,17 +182,28 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, coun
           </button>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
 const ApprovalInbox = () => {
+  const { pages } = usePageInfoStore();
   const navigate = useNavigate();
+  const location = useLocation();
+  const initialQuery = useMemo(() => new URLSearchParams(location.search), []);
+  const initialTab = initialQuery.get('tab') === 'DONE' ? 'DONE' : 'PENDING';
+  const initialDraftPage = Math.max(Number(initialQuery.get('draftPage')) || 1, 1);
+  const initialDonePage = Math.max(Number(initialQuery.get('donePage')) || 1, 1);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('전체 문서');
   const [isTypeOpen, setIsTypeOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const itemsPerPage = 5;
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const [draftPage, setDraftPage] = useState(initialDraftPage);
+  const [checkedIds, setCheckedIds] = useState([]);
 
+  const currentPageInfo = pages.find(p => p.page_code === 'ApprovalInbox');
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -177,22 +224,14 @@ const ApprovalInbox = () => {
     '구매신청서': 'PURCHASE'
   };
 
-  // 상세 보기 버튼 클릭 시 ApprovalDetail 페이지로 이동
+  // 상세보기 버튼 클릭 시 ApprovalDetail 페이지로 이동
   const handleOpenDetail = (doc) => {
-    // ApprovalDetail.jsx의 경로 규칙에 따라 /approval/detail/:type/:docId 로 이동
     navigate(`/approval/detail/${doc.doc_type}/${doc.doc_seq}`);
   };
 
   const filterDocuments = (docs) => {
     return docs.filter(doc => {
       const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase());
-      const docTypeText = {
-        'VACATION': '휴가신청서',
-        'PAYMENT': '지출결의서',
-        'GENERAL': '일반품의서',
-        'PURCHASE': '구매신청서'
-      }
-
       const matchesType =
         selectedType === '전체 문서' ||
         selectedType === '전체' ||
@@ -204,95 +243,272 @@ const ApprovalInbox = () => {
 
   const [draftDocument, setDraftDocuments] = useState([]);
   const [doneDocument, setDoneDocument] = useState([]);
-  const [doneDocumentPage, setDoneDocumentPage] = useState(1);
+  const [doneDocumentPage, setDoneDocumentPage] = useState(initialDonePage);
   const [doneDocumentCount, setDoneDocumentCount] = useState(0);
+  const [doneDocumentTotalCount, setDoneDocumentTotalCount] = useState(0);
   const showLoading = useLoadingStore(state => state.showLoading);
   const hideLoading = useLoadingStore(state => state.hideLoading);
 
+  const fetchDraftDocuments = async () => {
+    const resp = await getMyDraftDoc();
+    setDraftDocuments(resp.data);
+  };
+
+  const fetchDoneDocuments = async (page = doneDocumentPage) => {
+    const resp = await getPageMyDoneDoc(
+      page,
+      searchTerm,
+      docTypeMap[selectedType] || selectedType
+    );
+
+    setDoneDocument(resp.data.list);
+    setDoneDocumentCount(Math.ceil(resp.data.count / itemsPerPage));
+    setDoneDocumentTotalCount(resp.data.count);
+  };
+
   useEffect(() => {
-    showLoading();
-    getMyDraftDoc().then(resp => {
-      setDraftDocuments(resp.data);
-      hideLoading();
-    })
+    const loadDraftDocuments = async () => {
+      try {
+        showLoading();
+        await fetchDraftDocuments();
+      } catch (error) {
+        console.error('결재 대기 문서 조회 실패:', error);
+      } finally {
+        hideLoading();
+      }
+    };
+
+    loadDraftDocuments();
   }, []);
 
   useEffect(() => {
-    getPageMyDoneDoc(doneDocumentPage, searchTerm, docTypeMap[selectedType] || selectedType).then(resp => {
-      setDoneDocument(resp.data.list);
-      setDoneDocumentCount(Math.ceil(resp.data.count / 5));
-    })
-  }, [doneDocumentPage, searchTerm, selectedType])
+    fetchDoneDocuments();
+  }, [doneDocumentPage, searchTerm, selectedType]);
+
+  const updateQuery = (next = {}) => {
+    const params = new URLSearchParams(location.search);
+    params.set('tab', next.activeTab || activeTab);
+    params.set('draftPage', String(next.draftPage || draftPage));
+    params.set('donePage', String(next.donePage || doneDocumentPage));
+    navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab !== 'PENDING') {
+      setCheckedIds([]);
+    }
+    updateQuery({ activeTab: tab });
+  };
+
+  const handleDraftPageChange = (page) => {
+    setDraftPage(page);
+    updateQuery({ draftPage: page });
+  };
+
+  const handleDonePageChange = (page) => {
+    setDoneDocumentPage(page);
+    updateQuery({ donePage: page });
+  };
+
+  const resetPages = () => {
+    setDraftPage(1);
+    setDoneDocumentPage(1);
+    setCheckedIds([]);
+    updateQuery({ draftPage: 1, donePage: 1 });
+  };
+
+  const filteredDraftDocuments = useMemo(() => filterDocuments(draftDocument), [draftDocument, searchTerm, selectedType]);
+  const paginatedDraftDocuments = useMemo(() => {
+    const start = (draftPage - 1) * itemsPerPage;
+    return filteredDraftDocuments.slice(start, start + itemsPerPage);
+  }, [filteredDraftDocuments, draftPage]);
+
+  const toggleCheck = (id) => {
+    setCheckedIds(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
+  };
+
+  const toggleAll = () => {
+    const ids = paginatedDraftDocuments.map(doc => doc.doc_seq);
+    const allChecked = ids.length > 0 && ids.every(id => checkedIds.includes(id));
+    setCheckedIds(allChecked ? checkedIds.filter(id => !ids.includes(id)) : [...new Set([...checkedIds, ...ids])]);
+  };
+
+  const handleBulkApprove = async () => {
+    const selectedCount = checkedIds.length;
+
+    const result = await alertConfirm(
+      '선택 문서 일괄 승인',
+      `${selectedCount}건의 문서를 승인하시겠습니까?`
+    );
+
+    if (!result.isConfirmed) return;
+
+    let approvedCount = selectedCount;
+
+    try {
+      showLoading();
+
+      const resp = await bulkApproveDocuments(checkedIds);
+      approvedCount = resp.data.approved_count ?? selectedCount;
+
+      await Promise.all([
+        fetchDraftDocuments(),
+        fetchDoneDocuments(1)
+      ]);
+
+      setCheckedIds([]);
+      setDraftPage(1);
+      setDoneDocumentPage(1);
+
+      updateQuery({
+        draftPage: 1,
+        donePage: 1
+      });
+    } catch (error) {
+      console.error('일괄 승인 실패:', error);
+
+      await alertError(
+        '승인 실패',
+        error.response?.data?.message ||
+        '일괄 승인 처리에 실패했습니다.'
+      );
+
+      return;
+    } finally {
+      hideLoading();
+    }
+
+    await alertSuccess(
+      '승인 완료',
+      `${approvedCount}건이 승인되었습니다.`
+    );
+  };
+
+  const tabs = [
+    {
+      label: '결재 대기중',
+      status: 'PENDING',
+      count: filteredDraftDocuments.length,
+      data: paginatedDraftDocuments,
+      pageCount: Math.ceil(filteredDraftDocuments.length / itemsPerPage),
+      page: draftPage,
+      setPage: handleDraftPageChange,
+    },
+    {
+      label: '결재 완료',
+      status: 'DONE',
+      count: doneDocumentTotalCount,
+      data: doneDocument,
+      pageCount: doneDocumentCount,
+      page: doneDocumentPage,
+      setPage: handleDonePageChange,
+    },
+  ];
+  const activeTabData = tabs.find(tab => tab.status === activeTab) || tabs[0];
 
   return (
-    <div className="flex-1 bg-white md:overflow-hidden flex flex-col p-5 lg:p-6 custom-scrollbar">
-      <div className="max-w-[1440px] mx-auto w-full flex flex-col h-full space-y-10">
+    <div className="flex-1 bg-white py-8 px-1 md:px-7 overflow-y-auto md:overflow-hidden custom-scrollbar">
+      <div className="max-w-[1450px] mx-auto w-full flex flex-col h-full">
 
         {/* Title & Description */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 flex-shrink-0">
+        <div className="mb-6 px-4 md:px-2 flex-shrink-0">
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">결재할 문서함</h1>
-            <p className="text-xs text-slate-500 font-medium">나의 승인을 기다리는 문서와 이미 처리된 문서를 확인하세요.</p>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{currentPageInfo?.page_name}</h1>
+            <p className="text-xs text-slate-500 font-medium">{currentPageInfo?.page_info}</p>
           </div>
 
-          {/* Search Bar */}
-          <div className="flex items-center gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-slate-200 w-full md:w-auto focus-within:ring-2 focus-within:ring-[#3530B8]/20 focus-within:border-[#3530B8] transition-all">
-            <div className="relative" ref={dropdownRef}>
-              <div
-                onClick={() => setIsTypeOpen(!isTypeOpen)}
-                className="px-3 py-1.5 text-xs bg-slate-50 border-none rounded-lg text-slate-400 font-medium cursor-pointer outline-none flex items-center justify-between min-w-[100px]"
-              >
-                <span>{selectedType}</span>
-                <FontAwesomeIcon icon={faChevronDown} className={`ml-2 text-[10px] transition-transform ${isTypeOpen ? 'rotate-180' : ''}`} />
-              </div>
-              {isTypeOpen && (
-                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1">
-                  {['전체 문서', '일반품의서', '지출결의서', '휴가신청서', '구매신청서'].map((type) => (
-                    <div
-                      key={type}
-                      onClick={() => {
-                        setSelectedType(type);
-                        setDoneDocumentPage(1);
-                        setIsTypeOpen(false);
-                      }}
-                      className="px-3 py-1.5 text-xs text-slate-400 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
-                    >
-                      {type}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="h-5 w-[1px] bg-slate-200 mx-1"></div>
-            <div className="relative flex-1 md:w-56">
-              <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
-              <input
-                type="text"
-                placeholder="문서 제목 검색..."
-                value={searchTerm}
-                onChange={(e) => { setSearchTerm(e.target.value); setDoneDocumentPage(1); }}
-                className="w-full pl-9 pr-3 py-1.5 text-xs border-none focus:ring-0 placeholder:text-slate-400 outline-none bg-transparent"
-              />
-            </div>
-          </div>
         </div>
 
-        {/* Sections */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-8 pr-1">
-          <DocumentTable
-            title="결재 대기중"
-            data={filterDocuments(draftDocument)}
-            onDetailClick={handleOpenDetail}
-            showPagination={false}
-          />
-          <DocumentTable
-            title="결재 완료"
-            data={doneDocument}
-            onDetailClick={handleOpenDetail}
-            count={doneDocumentCount}
-            page={doneDocumentPage}
-            setPage={setDoneDocumentPage}
-          />
+        <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-3 md:p-8 flex flex-col flex-1 md:overflow-hidden min-h-0">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+              <div className="flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit items-center flex-shrink-0 overflow-x-auto custom-scrollbar">
+                {tabs.map(tab => (
+                  <button
+                    key={tab.status}
+                    type="button"
+                    onClick={() => handleTabChange(tab.status)}
+                    className={`flex-1 md:flex-none px-2 md:px-6 py-1.5 rounded-xl text-[11px] md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === tab.status ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}
+                  >
+                    {tab.label}
+                    <span className="ml-1.5">({tab.count})</span>
+                  </button>
+                ))}
+              </div>
+              {activeTab === 'PENDING' && (
+                <button
+                  type="button"
+                  onClick={handleBulkApprove}
+                  disabled={checkedIds.length === 0}
+                  className={`flex items-center justify-center gap-1.5 px-5 py-2.5 border rounded-full text-sm font-bold transition-all w-full sm:w-auto whitespace-nowrap
+                    ${checkedIds.length > 0
+                      ? 'border-[#3530B8]/20 text-[#3530B8] hover:bg-[#F0F4FF] shadow-sm'
+                      : 'border-gray-200 text-gray-300 cursor-not-allowed'}`}
+                >
+                  <span>일괄 승인</span>
+                  {checkedIds.length > 0 && `(${checkedIds.length})`}
+                </button>
+              )}
+            </div>
+
+            {/* Search Bar */}
+            <div className="flex items-center gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-slate-200 w-full md:w-auto focus-within:ring-2 focus-within:ring-[#3530B8]/20 focus-within:border-[#3530B8] transition-all">
+              <div className="relative" ref={dropdownRef}>
+                <div
+                  onClick={() => setIsTypeOpen(!isTypeOpen)}
+                  className="px-3 py-1.5 text-xs bg-slate-50 border-none rounded-lg text-slate-400 font-medium cursor-pointer outline-none flex items-center justify-between min-w-[100px]"
+                >
+                  <span>{selectedType}</span>
+                  <FontAwesomeIcon icon={faChevronDown} className={`ml-2 text-[10px] transition-transform ${isTypeOpen ? 'rotate-180' : ''}`} />
+                </div>
+                {isTypeOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1">
+                    {['전체 문서', '일반품의서', '지출결의서', '휴가신청서', '구매신청서'].map((type) => (
+                      <div
+                        key={type}
+                        onClick={() => {
+                          setSelectedType(type);
+                          resetPages();
+                          setIsTypeOpen(false);
+                        }}
+                        className="px-3 py-1.5 text-xs text-slate-400 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
+                      >
+                        {type}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="h-5 w-[1px] bg-slate-200 mx-1"></div>
+              <div className="relative flex-1 md:w-56">
+                <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
+                <input
+                  type="text"
+                  placeholder="문서 제목 검색"
+                  value={searchTerm}
+                  onChange={(e) => { setSearchTerm(e.target.value); resetPages(); }}
+                  className="w-full pl-9 pr-3 py-1.5 text-xs border-none focus:ring-0 placeholder:text-slate-400 outline-none bg-transparent"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Sections */}
+          <div className="flex-1 md:overflow-y-auto md:min-h-0 custom-scrollbar">
+            <DocumentTable
+              title="결재 완료"
+              data={activeTabData.data}
+              onDetailClick={handleOpenDetail}
+              count={activeTabData.pageCount}
+              page={activeTabData.page}
+              setPage={activeTabData.setPage}
+              showCheckbox={activeTab === 'PENDING'}
+              checkedIds={checkedIds}
+              onToggleCheck={toggleCheck}
+              onToggleAll={toggleAll}
+            />
+          </div>
         </div>
       </div>
       <style dangerouslySetInnerHTML={{
@@ -307,3 +523,5 @@ const ApprovalInbox = () => {
 };
 
 export default ApprovalInbox;
+
+

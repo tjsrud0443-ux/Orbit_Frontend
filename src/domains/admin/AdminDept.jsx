@@ -16,8 +16,12 @@ import { getGroup } from '../departments/departmentsApi';
 import { addDept, delDept, updateDept } from './adminApi';
 import { alertSuccess, alertConfirm, alertWarning } from '../../utils/alert';
 import useLoadingStore from '../../store/useLoadingStore';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const AdminDept = () => {
+  const { pages } = usePageInfoStore();
+  const currentPageInfo = pages.find(p => p.page_code === 'AdminDept');
+
   // --- 1. Data States ---
   const [fullTree, setFullTree] = useState({
     root: null,
@@ -365,8 +369,8 @@ const AdminDept = () => {
     <div className="flex-1 bg-white flex flex-col h-full overflow-hidden">
       <div className="p-8 lg:p-10 pb-4 px-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
         <div className="space-y-1.5">
-          <h1 className="text-2xl font-bold text-[#1a1c3d] tracking-tight">부서 관리</h1>
-          <p className="text-sm text-[#8a92a6] font-medium">그룹웨어 조직 체계와 부서 정보를 구성하고 관리합니다.</p>
+          <h1 className="text-2xl font-bold text-[#1a1c3d] tracking-tight">{currentPageInfo?.page_name}</h1>
+          <p className="text-sm text-[#8a92a6] font-medium">{currentPageInfo?.page_info}</p>
         </div>
         <div className="flex justify-end gap-3 shrink-0">
           <button onClick={openCreateHq} className="action-trigger px-3 sm:px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-[11px] sm:text-xs font-bold hover:bg-slate-50 transition-all flex items-center gap-1.5 sm:gap-2 shadow-sm cursor-pointer whitespace-nowrap flex-shrink-0"><FontAwesomeIcon icon={faPlus} className="text-[#3530B8]" /> 본부 생성</button>

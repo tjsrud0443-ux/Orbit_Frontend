@@ -26,6 +26,7 @@ import {
 import { getAiQuestions, getDashboard, getDeptEmployeeCount, getDeptLeave, getJoinResign } from './adminApi';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 // 1. ChartJS 필수 구성 요소 등록
 ChartJS.register(
@@ -98,6 +99,9 @@ const ChartCard = ({ title, subtitle, children, extra }) => (
 // --- [Main Dashboard Component] ---
 
 const AdminMain = () => {
+  const { pages } = usePageInfoStore();
+  const currentPageInfo = pages.find(p => p.page_code === 'AdminMain');
+
   const navigate = useNavigate();
   const barRef = useRef(null);
   const [dashboard, setDashboard] = useState({
@@ -273,9 +277,9 @@ const AdminMain = () => {
 
         {/* 1. 타이틀 영역 */}
         <div className="flex flex-col gap-1.5 px-1">
-          <h1 className="text-3xl font-extrabold text-[#1a1c3d]">관리자 대시보드</h1>
+          <h1 className="text-3xl font-extrabold text-[#1a1c3d]">{currentPageInfo?.page_name}</h1>
           <p className="text-[#8a92a6] text-sm font-medium tracking-tight">
-            그룹웨어 시스템 주요 현황을 한눈에 확인하세요.
+            {currentPageInfo?.page_info}
           </p>
         </div>
 

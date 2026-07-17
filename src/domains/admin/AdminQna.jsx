@@ -8,8 +8,10 @@ import useUserStore from '../../store/userStore';
 import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 import useLoadingStore from '../../store/useLoadingStore';
 import Pagination from '../../components/common/Pagination';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const AdminQna = () => {
+  const { pages } = usePageInfoStore();
   const [filter, setFilter] = useState('전체');
   const [search, setSearch] = useState('');
   const [searchBy, setSearchBy] = useState('질문 내용');
@@ -23,6 +25,7 @@ const AdminQna = () => {
   const user = useUserStore(state => state.user);
   const showLoading = useLoadingStore(state => state.showLoading);
   const hideLoading = useLoadingStore(state => state.hideLoading);
+  const currentPageInfo = pages.find(p => p.page_code === 'AdminQna');
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -41,20 +44,29 @@ const AdminQna = () => {
   const [selectedQna, setSelectedQna] = useState(null);
 
   useEffect(() => {
-    showLoading();
-    getMyDeptQuestion(user.dept_seq, user.auth_group).then(resp => {
-      setQnaList(resp.data);
-      hideLoading();
-    });
-  }, []);
+    if (!user) return;
 
-  useEffect(() => {
-    showLoading();
-    adminAiQuestionsData(user.dept_seq, user.auth_group).then(resp => {
-      setCount(resp.data);
-      hideLoading();
-    });
-  }, []);
+    const fetchData = async () => {
+      try {
+        showLoading();
+
+        const [qnaResp, countResp] = await Promise.all([
+          getMyDeptQuestion(user.dept_seq, user.auth_group),
+          adminAiQuestionsData(user.dept_seq, user.auth_group)
+        ]);
+
+        setQnaList(qnaResp.data);
+        setCount(countResp.data);
+      } catch (err) {
+        console.error("AI 문의 데이터 조회 실패: ", err);
+        alertError("조회 실패", "문의 데이터를 불러오지 못했습니다.");
+      } finally {
+        hideLoading();
+      }
+    };
+
+    fetchData();
+  }, [user?.dept_seq, user?.auth_group]);
 
   const filteredQna = useMemo(() => {
     return qnaList.filter(item => {
@@ -90,11 +102,11 @@ const AdminQna = () => {
       await deleteMyAnswer(question_seq);
       hideLoading();
       await alertSuccess('삭제 완료', '답변 삭제가 완료되었습니다.');
-      const resp = await getMyDeptQuestion(user.dept_seq, user.auth_group);
+      const resp = await getMyDeptQuestion(user?.dept_seq, user?.auth_group);
       setQnaList(resp.data);
       const updated = resp.data.find(q => q.question_seq === selectedQna.question_seq);
       setSelectedQna(updated);
-      const updateCount = await adminAiQuestionsData(user.dept_seq, user.auth_group);
+      const updateCount = await adminAiQuestionsData(user?.dept_seq, user?.auth_group);
       setCount(updateCount.data);
     }
   };
@@ -159,12 +171,12 @@ const AdminQna = () => {
         selectedQna.status === 'PENDING' ? '답변 등록이 완료되었습니다.' : '답변이 수정되었습니다.'
       );
       setIsEditing(false);
-      getMyDeptQuestion(user.dept_seq, user.auth_group).then(resp => {
+      getMyDeptQuestion(user?.dept_seq, user?.auth_group).then(resp => {
         setQnaList(resp.data);
         const updated = resp.data.find(q => q.question_seq === selectedQna.question_seq);
         setSelectedQna(updated);
       });
-      adminAiQuestionsData(user.dept_seq, user.auth_group).then(resp => {
+      adminAiQuestionsData(user?.dept_seq, user?.auth_group).then(resp => {
         setCount(resp.data);
       });
     }).catch(err => {
@@ -176,8 +188,8 @@ const AdminQna = () => {
   return (
     <div className="flex flex-col h-full bg-[#FFFFFF] py-8 px-1 md:px-7 overflow-y-auto md:overflow-hidden custom-scrollbar">
       <div className="mb-6 px-4 md:px-2">
-        <h1 className="text-xl md:text-2xl font-bold text-[#121331]">AI 답변 불가 질문 관리</h1>
-        <p className="text-xs md:text-sm text-[#8a92a6] mt-1">AI가 답변할 수 없는 질문을 관리하고 답변을 등록하세요.</p>
+        <h1 className="text-xl md:text-2xl font-bold text-[#121331]">{currentPageInfo?.page_name}</h1>
+        <p className="text-xs md:text-sm text-[#8a92a6] mt-1">{currentPageInfo?.page_info}</p>
       </div>
 
       <div className="flex flex-col md:flex-row h-auto md:flex-1 gap-6 min-h-0 max-w-[1450px] mx-auto w-full">
