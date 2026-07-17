@@ -1,10 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Pagination from '../../components/common/Pagination';
 import MobilePagination from '../../components/common/MobilePagination';
+import usePageInfoStore from '../../store/usePageInfoStore';
 import { getAllLeaves, updateUserLeave } from './adminApi';
 import { alertError, alertConfirm, alertSuccess } from '../../utils/alert';
 
 const AdminLeave = () => {
+  const { pages } = usePageInfoStore();
+  const currentPageInfo = pages.find(p => p.page_code === 'AdminLeave');
+
   const [employees, setEmployees] = useState([]);
   // 페이지네이션
   const [totalCount, setTotalCount] = useState(0);
@@ -173,8 +177,9 @@ const AdminLeave = () => {
             setIsDetailEditing(false);
             alertSuccess('수정 완료', '연차 정보가 성공적으로 수정되었습니다.');
           })
-          .catch(() => {
-            alertError('오류 발생', '연차 정보 수정 중 오류가 발생했습니다.');
+          .catch((err) => {
+            const message = err?.response?.data?.message || '연차 정보 수정 중 오류가 발생했습니다.';
+            alertError('오류 발생', message);
           });
       }
     });
@@ -185,8 +190,8 @@ const AdminLeave = () => {
 
       {/* [1] 헤더 영역 */}
       <div className={`mb-6 flex-shrink-0 ${selectedUser ? 'hidden md:block' : 'block'}`}>
-        <h1 className="text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">연차 관리</h1>
-        <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">직원별 연차 부여 및 사용 현황을 확인하고 관리할 수 있습니다.</p>
+        <h1 className="text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">{currentPageInfo?.page_name}</h1>
+        <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">{currentPageInfo?.page_info}</p>
       </div>
 
       {/* [2] 검색창 라인 */}
@@ -360,10 +365,10 @@ const AdminLeave = () => {
                   <div className="space-y-1">
 
                     {/* 부여 연차 - 업다운 스테퍼 */}
-                    <div className={`flex justify-between ${isDetailEditing ? 'items-start min-h-[32px] md:items-center md:h-8' : 'items-center h-8'}`}>
-                      <span className={`text-xs text-slate-500 min-w-[80px] whitespace-nowrap ${isDetailEditing ? 'pt-1.5 md:pt-0' : ''}`}>부여 연차</span>
+                    <div className={`flex justify-between items-center ${isDetailEditing ? 'min-h-[32px]' : 'h-8'}`}>
+                      <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">부여 연차</span>
                       {isDetailEditing ? (
-                        <div className="flex flex-col md:flex-row items-end md:items-center gap-1 md:gap-1.5 whitespace-nowrap flex-shrink-0">
+                        <div className="flex flex-row flex-wrap items-center justify-end gap-1.5 flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
                             <button
                               type="button"
@@ -377,11 +382,11 @@ const AdminLeave = () => {
 
                             <input
                               type="number"
-                              value={editForm.delta}
+                              value={editForm.delta ?? ''}
                               onChange={handleLeaveInputChange}
                               onBlur={handleLeaveInputBlur}
                               step={LEAVE_STEP}
-                              className="w-16 text-center px-1 py-1 bg-white border border-gray-200 rounded-lg text-[0.6875rem] font-bold text-slate-700 outline-none focus:border-[#3530B8] focus:ring-2 focus:ring-[#3530B8]/5 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              className="w-16 text-center px-1 py-1 bg-white border border-gray-200 rounded-lg text-[0.6875rem] font-bold text-slate-800 outline-none focus:border-[#3530B8] focus:ring-2 focus:ring-[#3530B8]/5 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
 
                             <button
@@ -395,8 +400,8 @@ const AdminLeave = () => {
                             </button>
                           </div>
 
-                          <span className="text-xs text-[#3530B8] font-bold md:ml-2">
-                            {(Number(selectedUser.total_leave) + Number(editForm.delta)).toFixed(1)}일
+                          <span className="text-xs text-[#3530B8] font-bold">
+                            {(Number(selectedUser.total_leave) + (Number(editForm.delta) || 0)).toFixed(1)}일
                           </span>
                         </div>
                       ) : (
