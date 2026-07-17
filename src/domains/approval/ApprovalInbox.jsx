@@ -362,18 +362,34 @@ const ApprovalInbox = () => {
 
         <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-3 md:p-8 flex flex-col flex-1 md:overflow-hidden min-h-0">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
-            <div className="flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit items-center flex-shrink-0 overflow-x-auto custom-scrollbar">
-              {tabs.map(tab => (
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+              <div className="flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit items-center flex-shrink-0 overflow-x-auto custom-scrollbar">
+                {tabs.map(tab => (
+                  <button
+                    key={tab.status}
+                    type="button"
+                    onClick={() => handleTabChange(tab.status)}
+                    className={`flex-1 md:flex-none px-2 md:px-6 py-1.5 rounded-xl text-[11px] md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === tab.status ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}
+                  >
+                    {tab.label}
+                    <span className="ml-1.5">({tab.count})</span>
+                  </button>
+                ))}
+              </div>
+              {activeTab === 'PENDING' && (
                 <button
-                  key={tab.status}
                   type="button"
-                  onClick={() => handleTabChange(tab.status)}
-                  className={`flex-1 md:flex-none px-2 md:px-6 py-1.5 rounded-xl text-[11px] md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === tab.status ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}
+                  onClick={handleBulkApprove}
+                  disabled={checkedIds.length === 0}
+                  className={`flex items-center justify-center gap-1.5 px-5 py-2.5 border rounded-full text-sm font-bold transition-all w-full sm:w-auto whitespace-nowrap
+                    ${checkedIds.length > 0
+                      ? 'border-[#3530B8]/20 text-[#3530B8] hover:bg-[#F0F4FF] shadow-sm'
+                      : 'border-gray-200 text-gray-300 cursor-not-allowed'}`}
                 >
-                  {tab.label}
-                  <span className="ml-1.5">({tab.count})</span>
+                  <span>일괄 승인</span>
+                  {checkedIds.length > 0 && `(${checkedIds.length})`}
                 </button>
-              ))}
+              )}
             </div>
 
           {/* Search Bar */}
@@ -416,20 +432,6 @@ const ApprovalInbox = () => {
               />
             </div>
           </div>
-          {activeTab === 'PENDING' && (
-            <button
-              type="button"
-              onClick={handleBulkApprove}
-              disabled={checkedIds.length === 0}
-              className={`flex items-center justify-center gap-1.5 px-5 py-2.5 border rounded-full text-sm font-bold transition-all w-full md:w-auto
-                ${checkedIds.length > 0
-                  ? 'border-[#3530B8]/20 text-[#3530B8] hover:bg-[#F0F4FF] shadow-sm'
-                  : 'border-gray-200 text-gray-300 cursor-not-allowed'}`}
-            >
-              <span>승인</span>
-              {checkedIds.length > 0 && `(${checkedIds.length})`}
-            </button>
-          )}
         </div>
 
         {/* Sections */}
