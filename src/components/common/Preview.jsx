@@ -14,7 +14,7 @@ const DocumentPreviewModal = ({ sysname, mimeType, title, token, onClose }) => {
 
   useEffect(() => {
     const fileUrl = (sysname && sysname !== 'undefined')
-      ? `${import.meta.env.VITE_API_BASE_URL}/file/preview/${sysname}?token=${token}` : '';
+      ? `${import.meta.env.VITE_API_BASE_URL}/file/preview/${encodeURIComponent(sysname)}?token=${token}` : '';
 
     if (mimeType === 'application/pdf' || sysname?.toLowerCase().endsWith('.pdf')) {
       setPreviewType('pdf');
