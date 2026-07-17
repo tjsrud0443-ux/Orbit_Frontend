@@ -5,6 +5,7 @@ import Pagination from '../../components/common/Pagination';
 import useLoadingStore from '../../store/useLoadingStore';
 import usePageInfoStore from '../../store/usePageInfoStore';
 import { updateCategory, updatePageInfo } from './adminApi';
+import { alertWarning } from '../../utils/alert';
 
 const AdminPageInfo = () => {
     const { categories, pages, fetchPageInfo } = usePageInfoStore();
@@ -36,13 +37,6 @@ const AdminPageInfo = () => {
         setCurrentPage(value);
     };
 
-    useEffect(() => {
-        showLoading();
-        fetchPageInfo().finally(() => {
-            hideLoading();
-        });
-    }, []);
-
     const handleSavePage = async (pageSeq) => {
         showLoading();
         await updatePageInfo(pageSeq, editRowData);
@@ -52,6 +46,11 @@ const AdminPageInfo = () => {
     };
 
     const handleSaveCategory = async (oldCategoryName) => {
+        if (!editCategoryNewName || editCategoryNewName.trim() === '') {
+            alertWarning("정보 미입력", "카테고리명을 입력해주세요.");
+            return;
+        }
+
         showLoading();
         await updateCategory(oldCategoryName, editCategoryNewName);
         await fetchPageInfo();
@@ -59,12 +58,14 @@ const AdminPageInfo = () => {
         setEditCategoryNameId(null);
     };
 
+    const currentPageInfo = pages.find(p => p.page_code === 'AdminPageInfo');
     return (
         <div className="h-full flex flex-col bg-white font-sans p-3 md:p-8">
             {/* 타이틀 영역 */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 md:gap-4 mb-4 md:mb-6 flex-shrink-0">
                 <div className="space-y-1">
-                    <h1 className="text-[1.25rem] md:text-[1.5rem] font-bold text-slate-900 mb-0 md:mb-1 tracking-tight">페이지 안내 문구 관리</h1>
+                    <h1 className="text-[1.25rem] md:text-[1.5rem] font-bold text-slate-900 mb-0 md:mb-1 tracking-tight">{currentPageInfo?.page_name}</h1>
+                    <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">{currentPageInfo?.page_info}</p>
                 </div>
             </div>
 

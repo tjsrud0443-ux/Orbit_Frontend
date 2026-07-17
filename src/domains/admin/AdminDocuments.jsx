@@ -10,9 +10,11 @@ import useAuthStore from '../../store/authStore';
 import Preview from '../../components/common/Preview';
 import useLoadingStore from '../../store/useLoadingStore';
 import { alertSuccess, alertError, alertConfirm, alertWarning } from '../../utils/alert';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const AdminDocuments = () => {
   const { user } = useUserStore();
+  const { pages } = usePageInfoStore();
   const [searchKeyword, setSearchKeyword] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [documents, setDocuments] = useState([]);
@@ -173,7 +175,7 @@ const AdminDocuments = () => {
       if (isEditMode) {
         formData.append('document_seq', editingSeq);
         let isLoadingTypeDocument = false;
-        
+
         if (uploadedFiles.length > 0) {
           formData.append('file', uploadedFiles[0]);
           const file = uploadedFiles[0];
@@ -186,7 +188,7 @@ const AdminDocuments = () => {
             isLoadingTypeDocument = validExtensions.some(ext => originalDoc.file_sysname?.toLowerCase().endsWith(ext));
           }
         }
-        
+
         handleModalClose();
         if (isLoadingTypeDocument) {
           showLoading("document");
@@ -205,11 +207,11 @@ const AdminDocuments = () => {
           formData.append('users_id', user.id);
         }
         formData.append('file', uploadedFiles[0]);
-        
+
         const file = uploadedFiles[0];
         const validExtensions = ['.pdf', '.doc', '.docx'];
         const isLoadingTypeDocument = validExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
-        
+
         handleModalClose();
         if (isLoadingTypeDocument) {
           showLoading("document");
@@ -248,13 +250,15 @@ const AdminDocuments = () => {
     setPreviewDoc({ sysname: doc.file_sysname, mimeType: doc.mime_type, title: doc.title });
   };
 
+  const currentPageInfo = pages.find(p => p.page_code === 'AdminDocuments');
+
   return (
     <div className="h-full flex flex-col bg-white font-sans p-3 md:p-8">
       {/* 헤더 및 검색/버튼 영역 */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 md:gap-4 mb-4 md:mb-6 flex-shrink-0">
         <div className="space-y-1">
-          <h1 className="text-[1.25rem] md:text-[1.5rem] font-bold text-slate-900 mb-0 md:mb-1 tracking-tight">문서 관리</h1>
-          <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">자료실에 올라와 있는 문서를 관리할 수 있습니다.</p>
+          <h1 className="text-[1.25rem] md:text-[1.5rem] font-bold text-slate-900 mb-0 md:mb-1 tracking-tight">{currentPageInfo?.page_name}</h1>
+          <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">{currentPageInfo?.page_info}</p>
         </div>
 
         <div className="flex flex-row md:items-center gap-2 w-full md:w-auto">
