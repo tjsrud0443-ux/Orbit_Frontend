@@ -117,7 +117,7 @@ const DocumentTable = ({ data, onDetailClick, showPagination = true, approverLab
   }
   return (
     <>
-      <div className="overflow-x-auto custom-scrollbar">
+      <div className="overflow-x-auto custom-scrollbar min-h-[376px]">
         <table className="w-full min-w-[1100px] md:min-w-full text-left border-collapse md:table-fixed">
           <thead>
             <tr className="bg-white text-gray-400 text-[0.8125rem] font-bold uppercase tracking-wider border-b border-slate-100">
@@ -167,9 +167,13 @@ const DocumentTable = ({ data, onDetailClick, showPagination = true, approverLab
           </tbody>
         </table>
       </div>
-      {showPagination && count > 0 && (
-        <div className="hidden md:block py-2 scale-95 origin-center">
-          <Pagination count={count} page={page} onChange={(_, value) => setPage(value)} />
+      {showPagination && (
+        <div className="hidden md:block py-2 scale-95 origin-center min-h-[48px]">
+          {count > 0 ? (
+            <Pagination count={count} page={page} onChange={(_, value) => setPage(value)} />
+          ) : (
+            <div className="h-8" />
+          )}
         </div>
       )}
       {showPagination && (
