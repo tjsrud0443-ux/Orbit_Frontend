@@ -4,13 +4,16 @@ import { faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown, faTras
 import { deleteMyQuestions, getMyQnaCount, getMyQuestions } from './mypageApi';
 import { alertSuccess, alertConfirm } from '../../utils/alert';
 import Pagination from '../../components/common/Pagination';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const QnaHistory = () => {
+  const { pages } = usePageInfoStore();
   const [filter, setFilter] = useState('전체');
   const [search, setSearch] = useState('');
   const [searchBy, setSearchBy] = useState('질문 내용');
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const searchDropdownRef = useRef(null);
+  const currentPageInfo = pages.find(p => p.page_code === 'QnaHistory');
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -82,8 +85,8 @@ const QnaHistory = () => {
   return (
     <div className="flex flex-col h-full bg-[#FFFFFF] py-8 px-1 md:px-7 overflow-y-auto md:overflow-hidden custom-scrollbar">
       <div className="mb-6 px-4 md:px-2">
-        <h1 className="text-xl md:text-2xl font-bold text-[#121331]">문의 내역</h1>
-        <p className="text-xs md:text-sm text-[#8a92a6] mt-1">내가 작성한 문의 내역과 관리자의 답변을 확인할 수 있습니다.</p>
+        <h1 className="text-xl md:text-2xl font-bold text-[#121331]">{currentPageInfo?.page_name}</h1>
+        <p className="text-xs md:text-sm text-[#8a92a6] mt-1">{currentPageInfo?.page_info}</p>
       </div>
 
       <div className="flex flex-col md:flex-row h-auto md:flex-1 gap-6 min-h-0 max-w-[1450px] mx-auto w-full">
