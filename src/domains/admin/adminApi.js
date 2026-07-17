@@ -106,7 +106,12 @@ export const updateRank = (data) => maxios.put("/admin/hr/updateRank", data);
 export const deleteRank = (rank_seq) => maxios.delete(`/admin/hr/deleteRank/${rank_seq}`);
 export const updateRankOrder = (data) => maxios.put("/admin/hr/updateRankOrder", data);
 
+export const updatePageInfo = (pageSeq, editRowData) =>
+    maxios.put(`/admin/updatePageInfo/${pageSeq}`, editRowData);
 
+export const updateCategory = (oldCategoryName, editCategoryNewName) =>
+    maxios.put("/admin/updateCategory", { oldCategoryName, editCategoryNewName }
+    );
 
 
 
@@ -449,9 +454,9 @@ export const updateRankOrder = (data) => maxios.put("/admin/hr/updateRankOrder",
 
 
 //연차 관리
-export const getAllLeaves = (cPage, keyword) => { 
-    return maxios.get('/admin/hr/getAllLeaveList', { params: { cPage, keyword }, }); 
-}; 
+export const getAllLeaves = (cPage, keyword) => {
+    return maxios.get('/admin/hr/getAllLeaveList', { params: { cPage, keyword }, });
+};
 
 export const updateUserLeave = (leaveSeq, delta) => {
     return maxios.put(`/admin/hr/updateUserLeave/${leaveSeq}`, { delta_days: delta });
