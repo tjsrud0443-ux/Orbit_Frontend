@@ -87,7 +87,7 @@ const DocumentTable = ({ data, onDetailClick, showPagination = true, count = 0, 
                 </td>
                 <td className="px-3 py-4 text-xs font-medium text-gray-400 text-center truncate whitespace-nowrap">{doc.created_at.substring(0, 10)}</td>
                 <td className="px-3 py-4 text-center whitespace-nowrap">
-                  <StatusBadge status={doc.app_status} />
+                  <StatusBadge status={doc.my_approval_status} />
                 </td>
                 <td className="px-3 py-4 text-center whitespace-nowrap">
                   <button
