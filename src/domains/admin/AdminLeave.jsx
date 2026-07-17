@@ -220,11 +220,11 @@ const AdminLeave = () => {
 
         <div className={`flex flex-col bg-white border border-slate-100 rounded-[32px]
           shadow-sm overflow-hidden transition-all duration-500 min-h-0 ${selectedUser ? 'hidden md:flex md:flex-[0.7]' : 'flex-1'}`}>
-          <div className="flex-1 overflow-y-auto p-6 pt-0 overflow-x-hidden sm:overflow-x-auto custom-scrollbar">
-            <table className="w-full text-left border-collapse block sm:table mt-6 min-w-[800px] sm:min-w-0">
+          <div className="flex-1 overflow-y-auto p-6 pt-0 overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left border-collapse mt-6 min-w-[800px]">
               <thead className="sticky top-0 bg-white z-10">
-                <tr className="border-b border-slate-100 hidden sm:table-row">
-                  <th className="pb-4 pl-2 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-12">사번</th>
+                <tr className="border-b border-slate-100">
+                  <th className="pb-4 pl-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-12">사번</th>
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-16">이름</th>
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-32">부서</th>
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-14">직급</th>
@@ -234,10 +234,10 @@ const AdminLeave = () => {
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-slate-100 sm:divide-slate-50/60 block sm:table-row-group">
+              <tbody className="divide-y divide-slate-100">
                 {filteredEmployees.length === 0 ? (
-                  <tr className="block sm:table-row">
-                    <td colSpan={7} className="block sm:table-cell text-center py-12 text-slate-400 text-sm">
+                  <tr>
+                    <td colSpan={7} className="text-center py-12 text-slate-400 text-sm">
                       결과가 없습니다.
                     </td>
                   </tr>
@@ -251,37 +251,33 @@ const AdminLeave = () => {
                           setSelectedUser(emp);
                           setIsDetailEditing(false);
                         }}
-                        className={`hover:bg-[#F5F8FF] transition-colors block sm:table-row py-4 sm:py-0 border-b border-slate-50 sm:border-none
-                         relative cursor-pointer ${selectedUser?.users_seq === emp.users_seq ? 'bg-[#F0F4FF] hover:bg-[#F0F4FF]' : ''}`}
+                        className={`hover:bg-[#F5F8FF] transition-colors cursor-pointer ${selectedUser?.users_seq === emp.users_seq ? 'bg-[#F0F4FF] hover:bg-[#F0F4FF]' : ''}`}
                       >
-                        <td className="py-1 sm:py-4 pl-4 text-xs font-bold text-slate-400 font-mono block sm:table-cell sm:text-slate-700 sm:align-middle">
-                          <span className="inline sm:hidden text-[0.625rem] font-medium text-slate-300 mr-1">사번</span>
+                        <td className="py-4 pl-4 text-xs font-bold text-slate-700 font-mono align-middle">
                           {emp.users_seq}
                         </td>
 
-                        <td className="py-1 sm:py-4 pl-4 sm:pl-0 text-sm sm:text-xs font-semibold sm:font-bold text-slate-800 sm:text-slate-700 inline-block sm:table-cell whitespace-nowrap align-baseline sm:align-middle">
+                        <td className="py-4 text-xs font-bold text-slate-700 whitespace-nowrap align-middle">
                           {emp.name}
                         </td>
 
-                        <td className="py-1 sm:py-4 pl-4 sm:pl-0 text-xs text-slate-500 sm:text-slate-600 block sm:table-cell font-medium whitespace-nowrap sm:align-middle">
-                          <span className="inline sm:hidden text-slate-300 mr-1">부서:</span>
+                        <td className="py-4 text-xs text-slate-600 font-medium whitespace-nowrap align-middle">
                           {emp.dept_name}
                         </td>
 
-                        <td className="py-1 sm:py-4 pl-4 sm:pl-0 text-xs text-slate-400 sm:text-slate-500 inline-block sm:table-cell sm:align-middle">
-                          <span className="inline sm:hidden text-slate-300 mr-1">직급:</span>
+                        <td className="py-4 text-xs text-slate-500 align-middle">
                           {emp.rank_name}
                         </td>
 
-                        <td className="hidden sm:table-cell py-4 text-center text-xs font-bold text-slate-700 align-middle">
+                        <td className="py-4 text-center text-xs font-bold text-slate-700 align-middle">
                           {emp.total_leave ?? 0}일
                         </td>
 
-                        <td className="hidden sm:table-cell py-4 text-center text-xs font-bold text-slate-500 align-middle">
+                        <td className="py-4 text-center text-xs font-bold text-slate-500 align-middle">
                           {emp.used_leave ?? 0}일
                         </td>
 
-                        <td className="hidden sm:table-cell py-4 text-center align-middle">
+                        <td className="py-4 text-center align-middle">
                           <span
                             className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-center whitespace-nowrap ${
                               remain <= 3
@@ -334,23 +330,23 @@ const AdminLeave = () => {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-              <div className="flex flex-col mb-8">
+            <div className="flex-1 overflow-y-auto px-6 pt-4 pb-6 custom-scrollbar">
+              <div className="flex flex-col mb-4">
                 <h3 className="text-xl font-bold text-slate-900">{selectedUser.name}</h3>
                 <p className="text-sm text-[#3530B8] font-bold mt-1">
                   {selectedUser.dept_name} · {selectedUser.rank_name}
                 </p>
               </div>
 
-              <div className="space-y-6">
-                <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
-                  <h4 className="text-[0.6875rem] font-bold text-slate-400 uppercase tracking-wider mb-4">인적 사항</h4>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
+              <div className="space-y-4">
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                  <h4 className="text-[0.6875rem] font-bold text-slate-400 uppercase tracking-wider mb-2">인적 사항</h4>
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-center h-8">
                       <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">사번</span>
                       <span className="text-xs font-bold text-slate-700">{selectedUser.users_seq}</span>
                     </div>
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center h-8">
                       <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">입사일</span>
                       <span className="text-xs font-bold text-slate-700 font-mono">
                         {selectedUser.hire_date ? String(selectedUser.hire_date).split(' ')[0] : ''}
@@ -359,45 +355,47 @@ const AdminLeave = () => {
                   </div>
                 </div>
 
-                <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
-                  <h4 className="text-[0.6875rem] font-bold text-slate-400 uppercase tracking-wider mb-4">연차 현황</h4>
-                  <div className="space-y-4">
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                  <h4 className="text-[0.6875rem] font-bold text-slate-400 uppercase tracking-wider mb-2">연차 현황</h4>
+                  <div className="space-y-1">
 
                     {/* 부여 연차 - 업다운 스테퍼 */}
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">부여 연차</span>
+                    <div className={`flex justify-between ${isDetailEditing ? 'items-start min-h-[32px] md:items-center md:h-8' : 'items-center h-8'}`}>
+                      <span className={`text-xs text-slate-500 min-w-[80px] whitespace-nowrap ${isDetailEditing ? 'pt-1.5 md:pt-0' : ''}`}>부여 연차</span>
                       {isDetailEditing ? (
-                        <div className="flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => handleLeaveStep('down')}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#3530B8] hover:border-[#3530B8]/30 transition-all"
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 12H4" />
-                            </svg>
-                          </button>
+                        <div className="flex flex-col md:flex-row items-end md:items-center gap-1 md:gap-1.5 whitespace-nowrap flex-shrink-0">
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleLeaveStep('down')}
+                              className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#3530B8] hover:border-[#3530B8]/30 transition-all"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 12H4" />
+                              </svg>
+                            </button>
 
-                          <input
-                            type="number"
-                            value={editForm.delta}
-                            onChange={handleLeaveInputChange}
-                            onBlur={handleLeaveInputBlur}
-                            step={LEAVE_STEP}
-                            className="w-16 text-center px-1 py-1 bg-white border border-gray-200 rounded-lg text-[0.6875rem] font-bold text-slate-700 outline-none focus:border-[#3530B8] focus:ring-2 focus:ring-[#3530B8]/5 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          />
+                            <input
+                              type="number"
+                              value={editForm.delta}
+                              onChange={handleLeaveInputChange}
+                              onBlur={handleLeaveInputBlur}
+                              step={LEAVE_STEP}
+                              className="w-16 text-center px-1 py-1 bg-white border border-gray-200 rounded-lg text-[0.6875rem] font-bold text-slate-700 outline-none focus:border-[#3530B8] focus:ring-2 focus:ring-[#3530B8]/5 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
 
-                          <button
-                            type="button"
-                            onClick={() => handleLeaveStep('up')}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#3530B8] hover:border-[#3530B8]/30 transition-all"
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                            </svg>
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => handleLeaveStep('up')}
+                              className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#3530B8] hover:border-[#3530B8]/30 transition-all"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                              </svg>
+                            </button>
+                          </div>
 
-                          <span className="text-xs text-slate-400 font-medium ml-2">
+                          <span className="text-xs text-[#3530B8] font-bold md:ml-2">
                             {(Number(selectedUser.total_leave) + Number(editForm.delta)).toFixed(1)}일
                           </span>
                         </div>
@@ -407,13 +405,13 @@ const AdminLeave = () => {
                     </div>
 
                     {/* 사용 연차 - 표시 전용 */}
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center h-8">
                       <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">사용 연차</span>
                       <span className="text-xs font-bold text-slate-700">{selectedUser.used_leave ?? 0}일</span>
                     </div>
 
                     {/* 잔여 연차 - 자동 계산 */}
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center h-8">
                       <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">잔여 연차</span>
                       {(() => {
                         // 수정 중이어도 저장 전까지는 원래 값 기준으로 잔여 연차 표시
@@ -478,7 +476,7 @@ const AdminLeave = () => {
       <style
         dangerouslySetInnerHTML={{
           __html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
