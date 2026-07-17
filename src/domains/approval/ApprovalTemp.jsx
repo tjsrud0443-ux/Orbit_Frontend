@@ -6,6 +6,7 @@ import Pagination from '../../components/common/Pagination';
 import { deleteDoc, getTempDoc } from './approvalApi';
 import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 import useLoadingStore from '../../store/useLoadingStore';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 
 const docTypeMap = {
@@ -16,6 +17,7 @@ const docTypeMap = {
 };
 
 const ApprovalTemp = () => {
+  const { pages } = usePageInfoStore();
   const navi = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('전체 문서');
@@ -26,6 +28,7 @@ const ApprovalTemp = () => {
   const [documents, setDocuments] = useState([]);
   const showLoading = useLoadingStore(state => state.showLoading);
   const hideLoading = useLoadingStore(state => state.hideLoading);
+  const currentPageInfo = pages.find(p => p.page_code === 'ApprovalTemp');
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -113,9 +116,9 @@ const ApprovalTemp = () => {
         {/* Title & Description */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">임시 문서함</h1>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{currentPageInfo?.page_name}</h1>
             <p className="text-xs text-slate-500 font-medium break-keep">
-              기안 작성 중 임시 저장된 문서를 확인하세요. (최대 저장 기간은 7일입니다.)
+              {currentPageInfo?.page_info}
             </p>
           </div>
 

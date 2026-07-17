@@ -9,6 +9,7 @@ import Pagination from '../../components/common/Pagination';
 import { getMyDoc, getPageMyDoc } from './approvalApi';
 import useAuthStore from '../../store/authStore';
 import useLoadingStore from '../../store/useLoadingStore';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 // 결재선
 const ApprovalLineStack = ({ line }) => {
@@ -212,6 +213,7 @@ const DocumentTable = ({ data, onDetailClick, showPagination = true, approverLab
 
 // 결재문서 출력 -> 결재문서 디테일로 이동
 const ApprovalMyPage = () => {
+  const { pages } = usePageInfoStore();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('전체 문서');
@@ -219,6 +221,7 @@ const ApprovalMyPage = () => {
   const dropdownRef = useRef(null);
   const itemsPerPage = 5;
   const [activeTab, setActiveTab] = useState('DRAFT');
+  const currentPageInfo = pages.find(p => p.page_code === 'ApprovalMyPage');
 
   const docTypeMap = {
     '일반품의서': 'GENERAL',
@@ -364,8 +367,8 @@ const ApprovalMyPage = () => {
     <div className="flex-1 bg-white py-8 px-1 md:px-7 overflow-y-auto md:overflow-hidden custom-scrollbar">
       <div className="max-w-[1450px] mx-auto w-full flex flex-col h-full">
         <div className="mb-6 px-4 md:px-2 flex-shrink-0">
-          <h1 className="text-xl md:text-2xl font-bold text-[#121331] tracking-tight">내가 올린 기안</h1>
-          <p className="text-xs md:text-sm text-[#8a92a6] mt-1">전자결재 문서의 진행 현황과 상세 정보를 확인하세요.</p>
+          <h1 className="text-xl md:text-2xl font-bold text-[#121331] tracking-tight">{currentPageInfo?.page_name}</h1>
+          <p className="text-xs md:text-sm text-[#8a92a6] mt-1">{currentPageInfo?.page_info}</p>
         </div>
 
         <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-3 md:p-8 flex flex-col flex-1 md:overflow-hidden min-h-0">

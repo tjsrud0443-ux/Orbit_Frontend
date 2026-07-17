@@ -4,12 +4,15 @@ import { IMAGES } from '../../images/images';
 import { getApprovalHomeData } from './approvalApi';
 import useAuthStore from '../../store/authStore';
 import useLoadingStore from '../../store/useLoadingStore';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const ApprovalHome = () => {
+  const { pages } = usePageInfoStore();
   const navi = useNavigate();
   const { token } = useAuthStore();
   const showLoading = useLoadingStore(state => state.showLoading);
   const hideLoading = useLoadingStore(state => state.hideLoading);
+  const currentPageInfo = pages.find(p => p.page_code === 'ApprovalHome');
 
   const [homeData, setHomeData] = useState({
     pendingCount: 0,
@@ -204,9 +207,9 @@ const ApprovalHome = () => {
 
       <div className="md:h-full max-w-[100rem] mx-auto flex flex-col gap-6">
         <div className="flex-shrink-0 px-2">
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">전자결재 홈</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">{currentPageInfo?.page_name}</h1>
           <p className="text-sm text-gray-500 font-medium">
-            전자결재 현황을 한눈에 확인하고 빠르게 업무를 처리하세요.
+            {currentPageInfo?.page_info}
           </p>
         </div>
 

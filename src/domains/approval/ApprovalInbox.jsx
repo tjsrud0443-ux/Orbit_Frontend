@@ -9,6 +9,7 @@ import Pagination from '../../components/common/Pagination';
 import { getMyDraftDoc, getPageMyDoneDoc } from './approvalApi';
 import useAuthStore from '../../store/authStore';
 import useLoadingStore from '../../store/useLoadingStore';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 // --- Sub Components ---
 
@@ -151,6 +152,7 @@ const DocumentTable = ({ data, onDetailClick, showPagination = true, count = 0, 
 };
 
 const ApprovalInbox = () => {
+  const { pages } = usePageInfoStore();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('전체 문서');
@@ -160,6 +162,7 @@ const ApprovalInbox = () => {
   const [activeTab, setActiveTab] = useState('PENDING');
   const [draftPage, setDraftPage] = useState(1);
 
+  const currentPageInfo = pages.find(p => p.page_code === 'ApprovalInbox');
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -269,8 +272,8 @@ const ApprovalInbox = () => {
         {/* Title & Description */}
         <div className="mb-6 px-4 md:px-2 flex-shrink-0">
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">내가 결재할 기안</h1>
-            <p className="text-xs text-slate-500 font-medium">나의 승인을 기다리는 문서와 이미 처리된 문서를 확인하세요.</p>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{currentPageInfo?.page_name}</h1>
+            <p className="text-xs text-slate-500 font-medium">{currentPageInfo?.page_info}</p>
           </div>
 
         </div>

@@ -8,6 +8,7 @@ import {
 import Pagination from '../../components/common/Pagination';
 import { getPageDocuments } from './approvalApi';
 import useAuthStore from '../../store/authStore';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 // 결재선
 const ApprovalLineStack = ({ line }) => {
@@ -242,12 +243,13 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
 
 // 참조문서 출력 -> 참조문서 디테일로 이동
 const ApprovalCc = () => {
+  const { pages } = usePageInfoStore();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('전체 문서');
   const [isTypeOpen, setIsTypeOpen] = useState(false);
   const dropdownRef = useRef(null);
-
+  const currentPageInfo = pages.find(p => p.page_code === 'ApprovalCc');
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -295,8 +297,8 @@ const ApprovalCc = () => {
         {/* Title & Description */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 flex-shrink-0">
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">참조 문서함</h1>
-            <p className="text-xs text-slate-500 font-medium">나에게 참조된 문서들의 목록과 상세정보를 확인하세요.</p>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{currentPageInfo?.page_name}</h1>
+            <p className="text-xs text-slate-500 font-medium">{currentPageInfo?.page_info}</p>
           </div>
 
           {/* Search Bar */}
