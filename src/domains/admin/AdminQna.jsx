@@ -44,20 +44,29 @@ const AdminQna = () => {
   const [selectedQna, setSelectedQna] = useState(null);
 
   useEffect(() => {
-    showLoading();
-    getMyDeptQuestion(user.dept_seq, user.auth_group).then(resp => {
-      setQnaList(resp.data);
-      hideLoading();
-    });
-  }, []);
+    if (!user) return;
 
-  useEffect(() => {
-    showLoading();
-    adminAiQuestionsData(user.dept_seq, user.auth_group).then(resp => {
-      setCount(resp.data);
-      hideLoading();
-    });
-  }, []);
+    const fetchData = async () => {
+      try {
+        showLoading();
+
+        const [qnaResp, countResp] = await Promise.all([
+          getMyDeptQuestion(user.dept_seq, user.auth_group),
+          adminAiQuestionsData(user.dept_seq, user.auth_group)
+        ]);
+
+        setQnaList(qnaResp.data);
+        setCount(countResp.data);
+      } catch (err) {
+        console.error("AI 문의 데이터 조회 실패: ", err);
+        alertError("조회 실패", "문의 데이터를 불러오지 못했습니다.");
+      } finally {
+        hideLoading();
+      }
+    };
+
+    fetchData();
+  }, [user?.dept_seq, user?.auth_group]);
 
   const filteredQna = useMemo(() => {
     return qnaList.filter(item => {
@@ -93,11 +102,11 @@ const AdminQna = () => {
       await deleteMyAnswer(question_seq);
       hideLoading();
       await alertSuccess('삭제 완료', '답변 삭제가 완료되었습니다.');
-      const resp = await getMyDeptQuestion(user.dept_seq, user.auth_group);
+      const resp = await getMyDeptQuestion(user?.dept_seq, user?.auth_group);
       setQnaList(resp.data);
       const updated = resp.data.find(q => q.question_seq === selectedQna.question_seq);
       setSelectedQna(updated);
-      const updateCount = await adminAiQuestionsData(user.dept_seq, user.auth_group);
+      const updateCount = await adminAiQuestionsData(user?.dept_seq, user?.auth_group);
       setCount(updateCount.data);
     }
   };
@@ -162,12 +171,12 @@ const AdminQna = () => {
         selectedQna.status === 'PENDING' ? '답변 등록이 완료되었습니다.' : '답변이 수정되었습니다.'
       );
       setIsEditing(false);
-      getMyDeptQuestion(user.dept_seq, user.auth_group).then(resp => {
+      getMyDeptQuestion(user?.dept_seq, user?.auth_group).then(resp => {
         setQnaList(resp.data);
         const updated = resp.data.find(q => q.question_seq === selectedQna.question_seq);
         setSelectedQna(updated);
       });
-      adminAiQuestionsData(user.dept_seq, user.auth_group).then(resp => {
+      adminAiQuestionsData(user?.dept_seq, user?.auth_group).then(resp => {
         setCount(resp.data);
       });
     }).catch(err => {
