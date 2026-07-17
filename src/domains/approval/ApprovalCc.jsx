@@ -80,7 +80,7 @@ const docTypeMap = {
 const DocumentTable = ({ title, data, onDetailClick, showPagination = true, approverLabel = '현재 결재자', count = 0, page = 1, setPage = () => { } }) => {
   const token = useAuthStore(state => state.token);
   const displayData = data;
-  const fixedRowCount = 10;
+  const fixedRowCount = 9;
   const emptyRowCount = Math.max(fixedRowCount - displayData.length, 0);
 
   const docTypeText = {
@@ -284,6 +284,10 @@ const ApprovalCc = () => {
     });
   };
 
+  const filterDocuments = (status) => {
+    return getFilteredData(documents.filter(doc => doc.status === status));
+  };
+
   return (
     <div className="flex-1 bg-white md:overflow-hidden flex flex-col p-5 lg:p-6 custom-scrollbar">
       <div className="max-w-[1440px] mx-auto w-full flex flex-col h-full space-y-10">
@@ -313,6 +317,7 @@ const ApprovalCc = () => {
                       onClick={() => {
                         setSelectedType(type);
                         setApprovedPage(1);
+                        setRejectedPage(1);
                         setIsTypeOpen(false);
                       }}
                       className="px-3 py-1.5 text-xs text-slate-400 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
@@ -331,7 +336,7 @@ const ApprovalCc = () => {
                 type="text"
                 placeholder="문서 제목 검색..."
                 value={searchTerm}
-                onChange={(e) => { setSearchTerm(e.target.value); setApprovedPage(1); }}
+                onChange={(e) => { setSearchTerm(e.target.value); setApprovedPage(1); setRejectedPage(1); }}
                 className="w-full pl-9 pr-3 py-1.5 text-xs border-none focus:ring-0 placeholder:text-slate-400 outline-none bg-transparent"
               />
             </div>
