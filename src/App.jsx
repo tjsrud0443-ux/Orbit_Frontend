@@ -58,16 +58,22 @@ import usePageInfoStore from './store/usePageInfoStore';
 function App() {
   const loading = useLoadingStore(state => state.loading);
   const loadingType = useLoadingStore(state => state.loadingType);
-  const { fetchPageInfo } = usePageInfoStore();
   const [isMobile, setIsMobile] = useState(window.matchMedia("(max-width:768px)").matches);
+  const { pages, fetchPageInfo } = usePageInfoStore();
 
   useEffect(() => {
-    fetchPageInfo();
     const media = window.matchMedia("(max-width:768px)");
     const handler = (e) => { setIsMobile(e.matches) };
     media.addEventListener("change", handler);
     return () => { media.removeEventListener("change", handler); }
   }, []);
+
+  useEffect(() => {
+    if (pages.length === 0) {
+      const token = sessionStorage.getItem("token");
+      if (token) fetchPageInfo();
+    }
+  }, [pages]);
 
   return (
     <>

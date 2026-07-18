@@ -5,8 +5,15 @@ const usePageInfoStore = create((set) => ({
     categories: [],
     pages: [],
     fetchPageInfo: async () => {
-        const resp = await getPageInfoList();
-        set({ categories: resp.data.categories, pages: resp.data.pages });
+        try {
+            const resp = await getPageInfoList();
+            set({
+                categories: resp.data.categories || [],
+                pages: resp.data.pages || []
+            });
+        } catch (err) {
+            console.error('pageInfo 로드 실패:', err);
+        }
     }
 }));
 

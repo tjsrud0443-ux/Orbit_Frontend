@@ -74,7 +74,7 @@ export const rejectCheckout = (seq) => maxios.put(`/admin/hr/rejectCheckout/${se
 export const approveOvertime = (seq) => maxios.put(`/admin/hr/approveOvertime/${seq}`);
 export const rejectOvertime = (seq) => maxios.put(`admin/hr/rejectOvertime/${seq}`);
 
-export const adminAiQuestionsData = (dept_seq, auth_group) => maxios.get("/admin/ai/adminAiQuestionsData", { params: { dept_seq,auth_group } });
+export const adminAiQuestionsData = (dept_seq, auth_group) => maxios.get("/admin/ai/adminAiQuestionsData", { params: { dept_seq, auth_group } });
 
 export const getCompanyInfo = () => maxios.get("/admin/company/getCompanyInfo");
 export const insertCompanyInfo = (data) => maxios.post("/admin/company/insertCompanyInfo", data);
@@ -106,6 +106,7 @@ export const updateRank = (data) => maxios.put("/admin/hr/updateRank", data);
 export const deleteRank = (rank_seq) => maxios.delete(`/admin/hr/deleteRank/${rank_seq}`);
 export const updateRankOrder = (data) => maxios.put("/admin/hr/updateRankOrder", data);
 
+// 페이지 안내 문구 관리
 export const updatePageInfo = (pageSeq, editRowData) =>
     maxios.put(`/admin/updatePageInfo/${pageSeq}`, editRowData);
 
@@ -113,7 +114,15 @@ export const updateCategory = (oldCategoryName, editCategoryNewName) =>
     maxios.put("/admin/updateCategory", { oldCategoryName, editCategoryNewName }
     );
 
+// 결재선 관리
+export const getApprovalLines = (doc_type) =>
+    maxios.get("/admin/defaultApprovalLine/list", { params: { doc_type } });
 
+export const saveApprovalLines = (doc_type, drafter_rank_seq, lines) =>
+    maxios.post("/admin/defaultApprovalLine/save", lines, { params: { doc_type, drafter_rank_seq } });
+
+export const deleteApprovalLine = (doc_type, drafter_rank_seq) =>
+    maxios.delete("/admin/defaultApprovalLine/delete", { params: { doc_type, drafter_rank_seq } });
 
 
 
