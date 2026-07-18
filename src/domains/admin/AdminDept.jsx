@@ -153,6 +153,8 @@ const AdminDept = () => {
 
     setFormMode('EDIT');
     setSelectedNode(node);
+    setIsDropdownOpen(false);
+
     setFormData({
       dept_seq: node.deptSeq,
       dept_name: node.deptName,
@@ -166,6 +168,7 @@ const AdminDept = () => {
   const handleCloseForm = () => {
     setFormMode(null);
     setSelectedNode(null);
+    setIsDropdownOpen(false);
     setErrors({});
   };
 
@@ -427,7 +430,7 @@ const AdminDept = () => {
                 {isDropdownOpen && (
                   <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.15)] z-50 overflow-hidden border border-slate-100">
                     {Object.values(fullTree.nodeMap)
-                      .filter(node => node.parentDeptSeq === hqParentDeptSeq)
+                      .filter(node => node.parentDeptSeq === hqParentDeptSeq && node.deptSeq !== formData.dept_seq)
                       .sort((a, b) => a.deptSeq - b.deptSeq)
                       .map(dept => (
                         <div
