@@ -156,6 +156,8 @@ const AdminDept = () => {
   };
 
   const openEdit = (node) => {
+    const currentDeptType = node.parentDeptSeq === hqParentDeptSeq ? 'HQ' : 'SUB';
+
     setFormMode('EDIT');
     setSelectedNode(node);
     setFormData({
@@ -164,7 +166,7 @@ const AdminDept = () => {
       dept_code: node.deptCode,
       parent_dept_seq: node.parentDeptSeq,
       auth_group: node.auth_group,
-      dept_type:node.deptType
+      dept_type: currentDeptType
     });
   };
 
@@ -195,7 +197,8 @@ const AdminDept = () => {
       }
     }
 
-    if (formMode === 'CREATE_SUB' && !formData.parent_dept_seq) {
+    const reqParentHq = formMode === 'CREATE_SUB' || (formMode === 'EDIT' && formData.dept_type === 'SUB');
+    if (reqParentHq && !formData.parent_dept_seq) {
       newErrors.parent_dept_seq = "상위 본부를 선택해주세요.";
     }
 
@@ -228,7 +231,7 @@ const AdminDept = () => {
       }
 
       showLoading();
-      await updateDept(formData);
+      await updateDept(payload);
 
       invalidateGroupData();
       const resp = await getGroup();
@@ -405,7 +408,7 @@ const AdminDept = () => {
             <button onClick={handleCloseForm} className="w-8 h-8 rounded-full hover:bg-white hover:shadow-sm text-slate-400 hover:text-slate-600 transition-all flex items-center justify-center cursor-pointer"><FontAwesomeIcon icon={faTimes} className="text-xs" /></button>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-            {formMode === 'CREATE_SUB' && (
+            {(formMode === 'CREATE_SUB' || (formMode === 'EDIT' && formData.dept_type === 'SUB')) && (
               <div className="space-y-1.5 relative">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">상위 본부 선택</label>
                 <div
@@ -436,6 +439,40 @@ const AdminDept = () => {
                       ))}
                   </div>
                 )}
+              </div>
+            )}
+            {formMode === 'EDIT' && (
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">조직 구분</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div
+                    className={`px-3 py-2 rounded-xl border text-[11px] font-bold cursor-pointer transition-all flex items-center justify-center
+                      ${formData.dept_type === 'HQ' ? 'bg-[#3530B8] text-white border-[#3530B8]' : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-[#3530B8]'}`}
+                    onClick={() => setFormData(prev => ({
+                      ...prev,
+                      dept_type: 'HQ',
+                      parent_dept_seq: hqParentDeptSeq
+                    }))}
+                  >
+                    본부
+                  </div>
+                  <div
+                    className={`px-3 py-2 rounded-xl border text-[11px] font-bold cursor-pointer transition-all flex items-center justify-center
+                      ${formData.dept_type === 'SUB' ? 'bg-[#3530B8] text-white border-[#3530B8]' : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-[#3530B8]'}`}
+                    onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        dept_type: 'SUB',
+                        parent_dept_seq:
+                          prev.dept_type === 'HQ'
+                            ? ''
+                            : prev.parent_dept_seq
+                      }));
+                    }}
+                  >
+                    부서
+                  </div>
+                </div>
               </div>
             )}
             <div className="space-y-1.5">
