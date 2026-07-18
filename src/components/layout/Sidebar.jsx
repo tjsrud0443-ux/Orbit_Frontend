@@ -240,10 +240,6 @@ const Sidebar = ({ isOpen, onClose }) => {
       return item.authGroups.includes(user?.auth_group);
     }
 
-    if (item.rank) {
-      return item.rank.includes(user?.rank_name);
-    }
-
     return true;
   };
 
@@ -290,9 +286,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   }, [
     location.pathname,
     isAdminMode,
-    user?.auth_group,
-    user?.rank_name,
-    user?.role
+    user?.auth_group
   ]);
 
   return (
