@@ -174,8 +174,8 @@ const AdminMain = () => {
             data: deptList.map(item => item.employeeCount),
             backgroundColor: BRAND_COLORS.main,
             barThickness: 36,
-            borderRadius: (context) => {
-              return innerWidth >= 1024 ? 8 : 2;
+            borderRadius: () => {
+              return window.innerWidth >= 1024 ? 8 : 2;
             },
           },
         ],
@@ -406,19 +406,34 @@ const AdminMain = () => {
             }
           >
             <div className="divide-y divide-gray-100">
-              {aiQuestions.slice(0, 5).map((item, index) => (
-                <div key={index} className="flex items-center justify-between py-4 px-2">
-                  <span className="text-[#1a1c3d] text-sm font-bold truncate pr-4">
-                    {item.question}
-                  </span>
-                  <span className="text-[#8a92a6] text-xs font-medium whitespace-nowrap">
-                    {formatDistanceToNow(new Date(item.created_at.replace(' ', 'T')), {
-                      addSuffix: true,
-                      locale: ko,
-                    })}
-                  </span>
+              {aiQuestions.length > 0 ? (
+                aiQuestions.slice(0, 5).map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between py-4 px-2"
+                  >
+                    <span className="text-[#1a1c3d] text-sm font-bold truncate pr-4">
+                      {item.question}
+                    </span>
+
+                    <span className="text-[#8a92a6] text-xs font-medium whitespace-nowrap">
+                      {formatDistanceToNow(
+                        new Date(item.created_at.replace(' ', 'T')),
+                        {
+                          addSuffix: true,
+                          locale: ko
+                        }
+                      )}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="h-full min-h-[220px] flex items-center justify-center">
+                  <p className="text-sm font-medium text-slate-400">
+                    대기 중인 AI 미답변 질문이 없습니다.
+                  </p>
                 </div>
-              ))}
+              )}
             </div>
           </ChartCard>
         </div>
