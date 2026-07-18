@@ -10,11 +10,11 @@ import useLoadingStore from '../../store/useLoadingStore';
 import useUserStore from '../../store/userStore';
 import useCalendarStore from '../../store/useCalendarStore';
 import usePageInfoStore from '../../store/usePageInfoStore';
-import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
+import { alertSuccess, alertError, alertConfirm, alertWarning } from '../../utils/alert';
 
 const currentYear = new Date().getFullYear();
-const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
-// 현재 연도 기준 -10년 ~ +10년, 총 21년치
+const years = Array.from({ length: 13 }, (_, i) => currentYear - 10 + i);
+// 현재 연도 기준 -10년 ~ +2년, 총 21년치 결과: 2016 ~ 2028
 
 const MiniCalendar = () => {
   const [date, setDate] = useState(new Date());
@@ -125,6 +125,7 @@ const Calendar = () => {
   const isHrAdmin = user?.auth_group === 'ROLE_HR_ADMIN' || user?.auth_group === 'ROLE_SUPER_ADMIN';
 
   const calendarRef = useRef(null);
+  const alertedYearsRef = useRef(new Set());
   // 화면이 모바일인지 여부 (캘린더 height 분기용)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [dateError, setDateError] = useState('');
@@ -188,6 +189,16 @@ const Calendar = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [pickerYear, setPickerYear] = useState(new Date().getFullYear());
   const [pickerMonth, setPickerMonth] = useState(new Date().getMonth() + 1);
+  const yearScrollRef = useRef(null);
+
+  useEffect(() => {
+    if (showDatePicker && yearScrollRef.current) {
+      const selectedEl = yearScrollRef.current.querySelector('[data-selected="true"]');
+      if (selectedEl) {
+        selectedEl.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+      }
+    }
+  }, [showDatePicker]);
 
   const handleGoToDate = () => {
     const api = getApi();
@@ -348,9 +359,9 @@ const Calendar = () => {
   }, [openCalendar]);
 
   // API에서 공휴일 가져와서 companyEvents에 추가
-  const loadHolidaysForYear = useCallback(async (year) => {
+  const loadHolidaysForYear = useCallback(async (year, isPrimary = false) => {
     try {
-      const holidays = await fetchHolidays(year);//해당 연도 공휴일 1년치
+      const holidays = await fetchHolidays(year);//해당 연도 공휴일 1년치     
       if (holidays?.length > 0) {
         const addHolidays = (prev) => {
           const existingIds = new Set(prev.map(e => e.id));//기존 이벤트 id 목록
@@ -363,6 +374,10 @@ const Calendar = () => {
         };
         setCompanyEvents(addHolidays);  // 기존
         setPersonalEvents(addHolidays); // 추가
+      }
+      else if (isPrimary && !alertedYearsRef.current.has(year)) {
+        alertedYearsRef.current.add(year);
+        alertWarning('공휴일 정보 없음', `${year}년 공휴일은 아직 정부에서 확정 발표되지 않았습니다.`);
       }
     } catch (err) {
       console.error(`${year}년 공휴일 로드 실패:`, err);
@@ -378,8 +393,8 @@ const Calendar = () => {
         const d = api.getDate();
         const year = d.getFullYear();
         setCurrentTitle(`${year}년 ${d.getMonth() + 1}월`);
-        loadHolidaysForYear(year);
-        loadHolidaysForYear(year + 1);
+        loadHolidaysForYear(year,true);
+        loadHolidaysForYear(year + 1, false);
       }
     }, 0);
   }, [loadHolidaysForYear]);
@@ -782,28 +797,72 @@ if (isEditing) {
                   </button>
 
                   {showDatePicker && (
-                    <div className="absolute z-50 top-full left-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl p-3 flex gap-2 items-center whitespace-nowrap min-w-max animate-in fade-in slide-in-from-top-2 duration-200">
-                      <select
-                        value={pickerYear}
-                        onChange={(e) => setPickerYear(Number(e.target.value))}
-                        className="border border-slate-300 rounded-lg text-xs px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#3530B8]"
-                      >
-                        {years.map(y => <option key={y} value={y}>{y}년</option>)}
-                      </select>
-                      <select
-                        value={pickerMonth}
-                        onChange={(e) => setPickerMonth(Number(e.target.value))}
-                        className="border border-slate-300 rounded-lg text-xs px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#3530B8]"
-                      >
-                        {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}월</option>)}
-                      </select>
-                      <button
-                        onClick={handleGoToDate}
-                        className="px-3 py-1.5 bg-[#3530B8] text-white text-xs font-bold rounded-lg hover:bg-[#2a2696] transition-colors whitespace-nowrap"
-                      >
-                        이동
-                      </button>
-                    </div>
+                    <>
+                      {/* 모바일 화면에서 배경을 흐리게 처리하여 모달감 부여 및 바깥 클릭 시 닫기 기능 지원 */}
+                      <div 
+                        className="fixed inset-0 bg-black/30 z-40 sm:hidden animate-in fade-in duration-200" 
+                        onClick={() => setShowDatePicker(false)}
+                      />
+                      <div className="fixed sm:absolute z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 sm:top-full sm:left-0 sm:translate-x-0 sm:translate-y-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl p-4 flex gap-4 animate-in fade-in slide-in-from-top-2 duration-200 min-w-[280px] max-w-[90vw]">
+                        {/* 연도 선택 영역 */}
+                        <div className="flex flex-col w-[90px] border-r border-slate-100 pr-3">
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-2 px-1">연도</span>
+                          <div 
+                            ref={yearScrollRef}
+                            className="overflow-y-auto max-h-[160px] custom-scrollbar space-y-1 flex-1 pr-1"
+                          >
+                            {years.map(y => (
+                              <button
+                                key={y}
+                                data-selected={pickerYear === y}
+                                onClick={() => setPickerYear(y)}
+                                className={`w-full text-left px-2.5 py-1.5 text-xs font-bold rounded-lg transition-all
+                                  ${pickerYear === y 
+                                    ? 'bg-[#3530B8] text-white shadow-sm' 
+                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'}`}
+                              >
+                                {y}년
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {/* 월 선택 영역 */}
+                        <div className="flex-1 flex flex-col min-w-[150px]">
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-2 px-1">월</span>
+                          <div className="grid grid-cols-3 gap-1 flex-1 content-start">
+                            {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                              <button
+                                key={m}
+                                onClick={() => setPickerMonth(m)}
+                                className={`py-2 text-center text-xs font-bold rounded-lg border transition-all
+                                  ${pickerMonth === m 
+                                    ? 'bg-[#F0F4FF] border-[#3530B8] text-[#3530B8]' 
+                                    : 'bg-white border-transparent text-slate-600 hover:bg-slate-50'}`}
+                              >
+                                {m}월
+                              </button>
+                            ))}
+                          </div>
+                          
+                          {/* 하단 이동/취소 버튼 */}
+                          <div className="flex gap-1.5 mt-4 pt-3 border-t border-slate-100 justify-end">
+                            <button
+                              onClick={() => setShowDatePicker(false)}
+                              className="px-2.5 py-1.5 text-[11px] font-semibold text-slate-500 rounded-lg hover:bg-slate-50 border border-transparent transition-colors"
+                            >
+                              취소
+                            </button>
+                            <button
+                              onClick={handleGoToDate}
+                              className="px-3.5 py-1.5 bg-[#3530B8] text-white text-[11px] font-bold rounded-lg hover:bg-[#2a2696] shadow-sm transition-all whitespace-nowrap"
+                            >
+                              이동
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
