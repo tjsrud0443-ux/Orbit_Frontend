@@ -54,16 +54,6 @@ const BRAND_COLORS = {
   lineExit: '#fc0000',
 };
 
-// const mode = import.meta.env.VITE_APP_MODE || 'production';
-// const isDemo = mode === 'demo';
-
-// const DEMO_CHART_DEPARTMENTS = [
-//   '행정관리팀',
-//   '교무팀'
-// ];
-
-
-
 // --- [Sub Components] ---
 const KpiCard = ({ title, value, icon, iconColor, bgColor }) => (
   <div className="bg-white p-6 rounded-2xl border border-[#edf2f9] shadow-sm flex items-center gap-5">
