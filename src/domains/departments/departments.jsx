@@ -19,19 +19,6 @@ import useDepartmentsStore from '../../store/useDepartmentsStore';
 
 const mode = import.meta.env.VITE_APP_MODE || 'production';
 
-const PRODUCTION_POSITION_RANK = {
-  '대표이사': 1, '본부장': 3, '부서장': 4, '차장': 5, '과장': 6, '대리': 7, '사원': 8
-};
-
-const DEMO_POSITION_RANK = {
-  '대표': 1, '원장': 3, '팀장': 4, '과장': 5, '대리': 6, '주임': 7, '사원': 8
-};
-
-const POSITION_RANK =
-  mode === 'demo'
-    ? DEMO_POSITION_RANK
-    : PRODUCTION_POSITION_RANK;
-
 const PROFILE_API = `${import.meta.env.VITE_API_BASE_URL}/file/profile/view`;
 
 const getProfileName = (obj) => obj?.sysname || obj?.sysName;
@@ -107,8 +94,6 @@ const loadProfileImages = async (sysnames, token) => {
   }
 };
 
-const getRank = (pos) => POSITION_RANK[pos] || 99;
-
 const OrgNode = ({ node, isChild = false, profileImageMap = {}, onEmployeeClick }) => {
 
   const firstMemberIsAdmin = node?.members?.some(m => m.id === 'kedu_admin');
@@ -130,7 +115,19 @@ const OrgNode = ({ node, isChild = false, profileImageMap = {}, onEmployeeClick 
   const isMember = !!safeNode.id;
   const isRoot = safeNode.parentDeptSeq === null && !isMember;
   let displayNode = safeNode;
-  let subMembers = [...(safeNode.members || [])].filter(member => !(mode === 'demo' && member.id === 'kedu_admin')).sort((a, b) => getRank(a.position) - getRank(b.position));
+  let subMembers = [...(safeNode.members || [])]
+  .filter(member => !(mode === 'demo' && member.id === 'kedu_admin'))
+  .sort((a,b) => {
+    const rankDiff =
+    (a.rankOrder ?? Number.MAX_SAFE_INTEGER) - (b.rankOrder ?? Number.MAX_SAFE_INTEGER);
+  
+    if(rankDiff !== 0) {
+      return rankDiff;
+    }
+
+    return (a.name ?? '').localeCompare(b.name ?? '', 'ko');
+  });
+  
   let subDepts = [...(safeNode.children || [])].sort((a, b) => (a.deptSeq - b.deptSeq));
 
   if (!isMember && subMembers.length > 0) {
@@ -184,7 +181,7 @@ const OrgNode = ({ node, isChild = false, profileImageMap = {}, onEmployeeClick 
             {displayNode.deptName}
           </p>
           <p className="text-xs lg:text-[11px] font-extrabold leading-tight">
-            {displayNode.name || (isRoot && !displayNode.id ? '본사' : '')}
+            {displayNode.name || (isRoot && !displayNode.id ? displayNode.deptName : '')}
           </p>
           <p className={`text-[10px] lg:text-[10px] mt-0 ${isRoot ? 'text-white/60' : 'text-gray-700'}`}>
             {displayNode.position || (displayNode.name ? '-' : '')}
