@@ -48,13 +48,6 @@ const AdminDept = () => {
   });
   const [errors, setErrors] = useState({});
 
-  const FIXED_AUTH_GROUPS = [
-    'ROLE_SUPER_ADMIN',
-    'ROLE_HR_ADMIN',
-    'ROLE_GA_ADMIN',
-    'ROLE_FN_ADMIN'
-  ];
-
   const hqParentDeptSeq = useMemo(() => {
     const executiveDept = Object.values(fullTree.nodeMap).find(
       node => node.deptCode === 'CEO'
@@ -207,6 +200,21 @@ const AdminDept = () => {
       return;
     }
 
+    const isChangingHqToSub = formMode === 'EDIT' &&
+      selectedNode?.parentDeptSeq === hqParentDeptSeq &&
+      formData.dept_type === 'SUB';
+
+    if (
+      isChangingHqToSub &&
+      selectedNode?.children?.length > 0
+    ) {
+      await alertWarning(
+        '변경 불가',
+        '하위 부서가 존재하는 본부는 부서로 변경할 수 없습니다.<br>하위 부서를 먼저 이동하거나 삭제해 주세요.'
+      );
+      return;
+    }
+
     let payload = { ...formData };
 
     if (formMode === 'CREATE_HQ') {
@@ -303,12 +311,9 @@ const AdminDept = () => {
       }
     }
   };
-  const canManageDept = (node, level) => {
-    if (level === 0) {
-      return false;
-    }
 
-    return !FIXED_AUTH_GROUPS.includes(node.auth_group);
+  const canManageDept = (node) => {
+    return !['ROOT', 'CEO'].includes(node.deptCode);
   };
 
   const renderRows = (node, level = 0) => {
@@ -350,7 +355,7 @@ const AdminDept = () => {
           </td>
           <td className="py-4 pl-4 pr-18 md:pr-20 text-right">
             <div className="flex justify-end gap-2">
-              {canManageDept(node, level) && (
+              {canManageDept(node) && (
                 <>
                   <button onClick={() => openEdit(node)} className="action-trigger w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-[#3530B8] transition-all flex items-center justify-center cursor-pointer" title="수정"><FontAwesomeIcon icon={faEdit} className="text-xs" /></button>
                   <button onClick={() => handleDelete(node)} className="action-trigger w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center cursor-pointer" title="삭제"><FontAwesomeIcon icon={faTrashAlt} className="text-xs" /></button>
