@@ -78,7 +78,7 @@ const AdminDept = () => {
         hideLoading();
       })
       .catch(err => {
-        console.error("조직도 로딩 실패", err);
+        console.error("조직 목록 로딩 실패", err);
         hideLoading();
       });
   }, []);
@@ -163,7 +163,8 @@ const AdminDept = () => {
       dept_name: node.deptName,
       dept_code: node.deptCode,
       parent_dept_seq: node.parentDeptSeq,
-      auth_group: node.auth_group
+      auth_group: node.auth_group,
+      dept_type:node.deptType
     });
   };
 
