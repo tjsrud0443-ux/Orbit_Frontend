@@ -24,10 +24,10 @@ const CustomSelect = ({ value, options, onChange, placeholder, hasError, errorMe
         <div className="relative" ref={selectRef}>
             <div
                 onClick={() => setIsOpen(!isOpen)}
-                className={`w-full px-4 py-2 bg-white border ${hasError ? 'border-red-500' : 'border-gray-200'} rounded-lg text-sm font-bold text-gray-700 flex items-center justify-between cursor-pointer hover:border-[#3530B8] transition-all`}
+                className={`w-full px-2 py-1.5 md:px-4 md:py-2 bg-white border ${hasError ? 'border-red-500' : 'border-gray-200'} rounded-lg text-[10px] md:text-sm font-bold text-gray-700 flex items-center justify-between cursor-pointer hover:border-[#3530B8] transition-all gap-1`}
             >
-                {value ? options.find(o => o.value === value)?.label : <span className="text-gray-400">{placeholder}</span>}
-                <FontAwesomeIcon icon={faChevronDown} className={`text-[10px] text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                <span className="truncate">{value ? options.find(o => o.value === value)?.label : <span className="text-gray-400">{placeholder}</span>}</span>
+                <FontAwesomeIcon icon={faChevronDown} className={`text-[8px] md:text-[10px] text-gray-400 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </div>
             {isOpen && (
                 <div className="absolute top-full left-0 right-0 mt-1 z-[100] bg-white border border-gray-100 rounded-xl shadow-lg max-h-48 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95">
@@ -38,7 +38,7 @@ const CustomSelect = ({ value, options, onChange, placeholder, hasError, errorMe
                                 onChange(opt.value);
                                 setIsOpen(false);
                             }}
-                            className={`p-3 hover:bg-[#F0F4FF] cursor-pointer text-xs font-bold text-gray-700 border-b border-gray-50 last:border-0 ${value === opt.value ? 'bg-[#F0F4FF]' : ''}`}
+                            className={`p-2 md:p-3 hover:bg-[#F0F4FF] cursor-pointer text-[10px] md:text-xs font-bold text-gray-700 border-b border-gray-50 last:border-0 ${value === opt.value ? 'bg-[#F0F4FF]' : ''}`}
                         >
                             {opt.label}
                         </div>
@@ -119,7 +119,7 @@ const AdminApprovalLine = () => {
         if (lines.length === 0) return null;
 
         return (
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-nowrap overflow-x-auto no-scrollbar w-full">
                 {lines.map((line, idx) => {
                     let scopeText = "";
                     if (line.approver_scope === 'DRAFTER_DEPT') {
@@ -296,15 +296,15 @@ const AdminApprovalLine = () => {
                     <table className="w-full min-w-[600px]">
                         <thead className="bg-white border-b border-gray-50 sticky top-0 z-10">
                             <tr>
-                                <th className="py-4 pl-16 pr-6 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/4">기안자 직급</th>
-                                <th className="py-4 px-6 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-2/4">기본 결재선</th>
-                                <th className="py-4 px-6 text-center text-xs font-bold text-gray-500 uppercase tracking-wider w-1/4">관리</th>
+                                <th className="py-4 pl-6 md:pl-16 pr-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap w-[20%] md:w-[15%]">기안자 직급</th>
+                                <th className="py-4 px-6 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-[55%] md:w-[60%]">기본 결재선</th>
+                                <th className="py-4 px-6 text-center text-xs font-bold text-gray-500 uppercase tracking-wider w-[25%] md:w-[25%]">관리</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
                             {ranks.map((rank) => (
                                 <tr key={rank.rank_seq} className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="py-4 pl-16 pr-6 text-sm font-bold text-slate-700">
+                                    <td className="py-4 pl-6 md:pl-16 pr-4 text-sm font-bold text-slate-700 whitespace-nowrap">
                                         {rank.rank_name}
                                     </td>
                                     <td className="py-4 px-6">
@@ -346,8 +346,8 @@ const AdminApprovalLine = () => {
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white w-full max-w-2xl rounded-[2rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
-                        <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-                            <h2 className="text-lg font-bold text-gray-900">
+                        <div className="p-4 md:p-6 border-b border-gray-50 flex items-center justify-between">
+                            <h2 className="text-[13px] sm:text-md md:text-lg font-bold text-gray-900 whitespace-nowrap md:whitespace-normal truncate">
                                 {activeTab} - {editingRankName} 직급 기본 결재선 수정
                             </h2>
                             <button onClick={() => setIsModalOpen(false)} className="text-gray-300 hover:text-gray-500 transition-colors cursor-pointer">
@@ -370,10 +370,10 @@ const AdminApprovalLine = () => {
                                 <div key={idx} className="bg-gray-50 rounded-2xl p-4 border border-gray-100 relative">
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-2">
-                                            <div className="w-6 h-6 rounded-full bg-[#3530B8] text-white flex items-center justify-center text-xs font-bold shadow-md">
+                                            <div className="w-6 h-6 rounded-full bg-[#3530B8] text-white flex items-center justify-center text-xs font-bold shadow-md flex-shrink-0">
                                                 {line.step_order}
                                             </div>
-                                            <span className="text-sm font-bold text-gray-700">{line.step_order}단계 결재자</span>
+                                            <span className="text-xs md:text-sm font-bold text-gray-700">{line.step_order}단계 결재자</span>
                                         </div>
                                         <button
                                             onClick={() => handleRemoveStep(idx)}
@@ -383,9 +383,9 @@ const AdminApprovalLine = () => {
                                         </button>
                                     </div>
 
-                                    <div className="flex gap-4">
-                                        <div className="flex-1 space-y-1.5">
-                                            <label className="text-xs font-bold text-gray-400">검색 범위</label>
+                                    <div className="flex gap-2 md:gap-4">
+                                        <div className="flex-1 space-y-1.5 min-w-0">
+                                            <label className="text-[10px] md:text-xs font-bold text-gray-400 whitespace-nowrap block truncate">검색 범위</label>
                                             <CustomSelect
                                                 value={line.approver_scope}
                                                 options={[
@@ -400,8 +400,8 @@ const AdminApprovalLine = () => {
                                         </div>
 
                                         {line.approver_scope === 'SPECIFIC_DEPT' && (
-                                            <div className="flex-1 space-y-1.5">
-                                                <label className="text-xs font-bold text-gray-400">대상 부서</label>
+                                            <div className="flex-1 space-y-1.5 min-w-0">
+                                                <label className="text-[10px] md:text-xs font-bold text-gray-400 whitespace-nowrap block truncate">대상 부서</label>
                                                 <CustomSelect
                                                     value={line.target_dept_seq}
                                                     options={deptList.map(d => ({ value: d.dept_seq, label: d.dept_name }))}
@@ -413,8 +413,8 @@ const AdminApprovalLine = () => {
                                             </div>
                                         )}
 
-                                        <div className="flex-1 space-y-1.5">
-                                            <label className="text-xs font-bold text-gray-400">검색 직급</label>
+                                        <div className="flex-1 space-y-1.5 min-w-0">
+                                            <label className="text-[10px] md:text-xs font-bold text-gray-400 whitespace-nowrap block truncate">검색 직급</label>
                                             <CustomSelect
                                                 value={line.approver_rank_seq}
                                                 options={ranks.map(r => ({ value: r.rank_seq, label: r.rank_name }))}
@@ -428,7 +428,7 @@ const AdminApprovalLine = () => {
                                 </div>
                             ))}
                             {editingLines.length === 0 && (
-                                <div className="text-center py-8 text-gray-400 text-sm font-bold">
+                                <div className="text-center py-8 text-gray-400 text-[10px] sm:text-[11px] md:text-sm font-bold whitespace-nowrap md:whitespace-normal">
                                     등록된 결재선이 없습니다. 단계 추가를 눌러 설정해주세요.
                                 </div>
                             )}
