@@ -13,8 +13,8 @@ import usePageInfoStore from '../../store/usePageInfoStore';
 import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 
 const currentYear = new Date().getFullYear();
-const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
-// 현재 연도 기준 -5년 ~ +5년, 총 11년치
+const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
+// 현재 연도 기준 -10년 ~ +10년, 총 21년치
 
 const MiniCalendar = () => {
   const [date, setDate] = useState(new Date());
@@ -182,6 +182,33 @@ const Calendar = () => {
   const [isPermissionOpen, setIsPermissionOpen] = useState(false); // Add this line
   // 일정 클릭 시 상세 보기 모달
   const [detailModal, setDetailModal] = useState({ open: false, event: null });
+
+  // 연/월 직접 이동을 위한 상태 및 ref
+  const datePickerRef = useRef(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [pickerYear, setPickerYear] = useState(new Date().getFullYear());
+  const [pickerMonth, setPickerMonth] = useState(new Date().getMonth() + 1);
+
+  const handleGoToDate = () => {
+    const api = getApi();
+    if (api) {
+      api.gotoDate(new Date(pickerYear, pickerMonth - 1, 1));
+      updateTitle(); // 제목 갱신 + 해당 연도/다음연도 공휴일 로드
+    }
+    setShowDatePicker(false);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target)) {
+        setShowDatePicker(false);
+      }
+    };
+    if (showDatePicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showDatePicker]);
 
   // 하루 일정 보기 패널 상태
   const [showDaily, setShowDaily] = useState(false);
@@ -726,7 +753,7 @@ if (isEditing) {
         <div className="flex flex-col lg:flex-row gap-2 lg:flex-1 lg:min-h-0 lg:items-stretch lg:overflow-hidden">
           <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 flex flex-col min-w-0 min-h-0 transition-all duration-300 lg:flex-1 lg:shrink ">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 relative" ref={datePickerRef}>
                 <button onClick={() => { getApi()?.today(); updateTitle(); }}
                   className="px-2.5 py-1 border border-slate-200 rounded-lg text-[0.6875rem] font-medium bg-white hover:bg-[#DDE8FF] transition-colors">오늘</button>
                 <div className="flex border border-slate-200 rounded-lg overflow-hidden bg-white">
@@ -735,7 +762,50 @@ if (isEditing) {
                   <button onClick={() => { getApi()?.next(); updateTitle(); }}
                     className="px-1.5 py-1 hover:bg-[#DDE8FF] text-[0.6875rem]">&gt;</button>
                 </div>
-                <h2 className="text-sm font-bold text-slate-800 ml-1">{currentTitle}</h2>
+
+                {/* 제목 + 이동 버튼을 묶어서 눈에 띄게 */}
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      const currentDate = getApi()?.getDate() || new Date();
+                      setPickerYear(currentDate.getFullYear());
+                      setPickerMonth(currentDate.getMonth() + 1);
+                      setShowDatePicker(!showDatePicker);
+                    }}
+                    className="flex items-center gap-1 ml-1 px-2 py-1 rounded-lg hover:bg-[#F0F4FF] transition-colors group"
+                  >
+                    <h2 className="text-sm font-bold text-slate-800 group-hover:text-[#3530B8] transition-colors">{currentTitle}</h2>
+                    <svg className={`w-3.5 h-3.5 text-slate-400 group-hover:text-[#3530B8] transition-transform duration-200 ${showDatePicker ? 'rotate-180' : ''}`}
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {showDatePicker && (
+                    <div className="absolute z-50 top-full left-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl p-3 flex gap-2 items-center whitespace-nowrap min-w-max animate-in fade-in slide-in-from-top-2 duration-200">
+                      <select
+                        value={pickerYear}
+                        onChange={(e) => setPickerYear(Number(e.target.value))}
+                        className="border border-slate-300 rounded-lg text-xs px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#3530B8]"
+                      >
+                        {years.map(y => <option key={y} value={y}>{y}년</option>)}
+                      </select>
+                      <select
+                        value={pickerMonth}
+                        onChange={(e) => setPickerMonth(Number(e.target.value))}
+                        className="border border-slate-300 rounded-lg text-xs px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#3530B8]"
+                      >
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}월</option>)}
+                      </select>
+                      <button
+                        onClick={handleGoToDate}
+                        className="px-3 py-1.5 bg-[#3530B8] text-white text-xs font-bold rounded-lg hover:bg-[#2a2696] transition-colors whitespace-nowrap"
+                      >
+                        이동
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
               {(activeTab === 'personal' || (activeTab === 'company' && isHrAdmin)) && (
                 <button onClick={() => {
