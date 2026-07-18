@@ -3,7 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt, faChevronRight, faTimes, faPlus, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import useLoadingStore from '../../store/useLoadingStore';
 import usePageInfoStore from '../../store/usePageInfoStore';
-import { getRankList, getDeptList, getApprovalLines, saveApprovalLines } from './adminApi';
+import { getRankList, getDeptList, getApprovalLines, saveApprovalLines, deleteApprovalLine } from './adminApi';
+import { alertWarning, alertConfirm, alertSuccess, alertError } from '../../utils/alert';
 
 const CustomSelect = ({ value, options, onChange, placeholder, hasError, errorMessage }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -122,11 +123,9 @@ const AdminApprovalLine = () => {
                 {lines.map((line, idx) => {
                     let scopeText = "";
                     if (line.approver_scope === 'DRAFTER_DEPT') {
-                        scopeText = "(기안자 부서)";
+                        scopeText = "(기안자 소속)";
                     } else if (line.approver_scope === 'SPECIFIC_DEPT') {
-                        if (!line.rank_name.includes("대표")) {
-                            scopeText = `(${line.dept_name})`;
-                        }
+                        scopeText = `(${line.dept_name})`;
                     }
 
                     return (
@@ -158,6 +157,24 @@ const AdminApprovalLine = () => {
         setEditingLines(lines);
         setIsModalOpen(true);
     };
+
+    const handleDeleteClick = async (doc_type, rank_seq) => {
+        const result = await alertConfirm('정말 삭제하시겠습니까?', '삭제 후 복구는 불가합니다.');
+        if (result.isConfirmed) {
+            try {
+                showLoading();
+                await deleteApprovalLine(doc_type, rank_seq);
+                const lineResp = await getApprovalLines(DOC_TYPES[activeTab]);
+                setApprovalLines(lineResp.data || []);
+                hideLoading();
+                await alertSuccess('삭제 완료', '결재선 삭제가 완료되었습니다.');
+            } catch (error) {
+                console.error('결재선 삭제 실패:', error);
+                hideLoading();
+                await alertError('오류 발생', '결재선이 삭제 중 오류가 발생했습니다.');
+            }
+        }
+    }
 
     const handleAddStep = () => {
         setEditingLines([
@@ -199,6 +216,11 @@ const AdminApprovalLine = () => {
     };
 
     const handleSaveLines = async () => {
+        if (editingLines.length === 0) {
+            alertWarning("정보 미입력", "한 단계 이상의 결재선을 지정해주세요.");
+            return;
+        }
+
         let hasError = false;
         const newErrors = {};
 
@@ -298,6 +320,7 @@ const AdminApprovalLine = () => {
                                                 <FontAwesomeIcon icon={faEdit} className="text-xs" />
                                             </button>
                                             <button
+                                                onClick={() => handleDeleteClick(DOC_TYPES[activeTab], rank.rank_seq)}
                                                 className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center cursor-pointer"
                                                 title="삭제"
                                             >
@@ -366,7 +389,7 @@ const AdminApprovalLine = () => {
                                             <CustomSelect
                                                 value={line.approver_scope}
                                                 options={[
-                                                    { value: 'DRAFTER_DEPT', label: '기안자와 동일 부서' },
+                                                    { value: 'DRAFTER_DEPT', label: '기안자의 소속 조직' },
                                                     { value: 'SPECIFIC_DEPT', label: '지정 부서' }
                                                 ]}
                                                 onChange={(val) => handleLineChange(idx, 'approver_scope', val)}

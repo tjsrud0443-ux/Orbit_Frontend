@@ -121,6 +121,9 @@ export const getApprovalLines = (doc_type) =>
 export const saveApprovalLines = (doc_type, drafter_rank_seq, lines) =>
     maxios.post("/admin/defaultApprovalLine/save", lines, { params: { doc_type, drafter_rank_seq } });
 
+export const deleteApprovalLine = (doc_type, drafter_rank_seq) =>
+    maxios.delete("/admin/defaultApprovalLine/delete", { params: { doc_type, drafter_rank_seq } });
+
 
 
 

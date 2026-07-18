@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import useAuthStore from '../../store/authStore';
 import { loginRequest } from './authApi';
 import { IMAGES } from '../../images/images';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const Login = () => {
   const navi = useNavigate();
@@ -10,6 +11,7 @@ const Login = () => {
   const [error, setError] = useState({ id: false, pw: false });
   const [loginError, setLoginError] = useState("");
   const loginSuccess = useAuthStore(state => state.login);
+  const { fetchPageInfo } = usePageInfoStore();
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
@@ -35,13 +37,14 @@ const Login = () => {
     }
 
 
-    loginRequest(login).then(resp => {
-      loginSuccess(resp.data)
+    loginRequest(login).then(async resp => {
+      loginSuccess(resp.data);
+      await fetchPageInfo();
       navi("/main");
     }).catch(error => {
       if (error.response.status === 403) {
         setLoginError("로그인이 불가한 계정입니다. 관리자에게 문의해 주세요.");
-      } else if(error.response.status === 401) {
+      } else if (error.response.status === 401) {
         setLoginError("계정 정보가 일치하지 않습니다. 다시 시도해 주세요.");
       }
     })
@@ -118,7 +121,7 @@ const Login = () => {
                   to="/findPw"
                   className="text-[10px] md:text-xs text-[#3530B8] hover:underline transition-all"
                 >
-                  비밀번호 찾기
+                  비밀번호 변경
                 </Link>
               </div>
               {loginError && <p className="text-red-500 text-sm mt-2 text-center"> {loginError} </p>}
