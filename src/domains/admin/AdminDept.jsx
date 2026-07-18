@@ -178,6 +178,14 @@ const AdminDept = () => {
       newErrors.dept_name = `${formMode === 'CREATE_HQ' ? '본부명' : '부서명'}을 입력해주세요.`;
     } else if (!/^[ㄱ-ㅎㅏ-ㅣ가-힣]+$/.test(formData.dept_name)) {
       newErrors.dept_name = "한글만 입력 가능합니다.";
+    } else {
+      const isDuplicateName = Object.values(fullTree.nodeMap).some(
+        node => node.deptName === formData.dept_name && node.deptSeq !== formData.dept_seq
+      );
+
+      if(isDuplicateName) {
+        newErrors.dept_name = "이미 존재하는 본부 또는 부서명입니다. 다시 작성해 주세요.";
+      }
     }
 
     if (!formData.dept_code) {
