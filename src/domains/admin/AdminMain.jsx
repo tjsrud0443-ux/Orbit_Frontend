@@ -54,13 +54,13 @@ const BRAND_COLORS = {
   lineExit: '#fc0000',
 };
 
-const mode = import.meta.env.VITE_APP_MODE || 'production';
-const isDemo = mode === 'demo';
+// const mode = import.meta.env.VITE_APP_MODE || 'production';
+// const isDemo = mode === 'demo';
 
-const DEMO_CHART_DEPARTMENTS = [
-  '행정관리팀',
-  '교무팀'
-];
+// const DEMO_CHART_DEPARTMENTS = [
+//   '행정관리팀',
+//   '교무팀'
+// ];
 
 
 
@@ -164,9 +164,7 @@ const AdminMain = () => {
 
   useEffect(() => {
     getDeptEmployeeCount().then(resp => {
-      const deptList = isDemo
-      ? resp.data.filter(item => DEMO_CHART_DEPARTMENTS.includes(item.deptName))
-      : resp.data.filter(item => item.deptName.endsWith("팀"));
+      const deptList = resp.data || [];
 
       setDeptEmployeeData({
         labels: deptList.map(item => item.deptName),
@@ -177,8 +175,7 @@ const AdminMain = () => {
             backgroundColor: BRAND_COLORS.main,
             barThickness: 36,
             borderRadius: (context) => {
-              const width = window.innerWidth;
-              return width >= 1024 ? 8 : 2;
+              return innerWidth >= 1024 ? 8 : 2;
             },
           },
         ],
