@@ -47,7 +47,6 @@ const AdminDept = () => {
     auth_group: ""
   });
   const [errors, setErrors] = useState({});
-  // const isDemo = import.meta.env.VITE_APP_MODE === 'demo';
 
   const FIXED_AUTH_GROUPS = [
     'ROLE_SUPER_ADMIN',
@@ -55,33 +54,6 @@ const AdminDept = () => {
     'ROLE_GA_ADMIN',
     'ROLE_FN_ADMIN'
   ];
-
-  // const deptConfig = isDemo
-  //   ? {
-  //     companyName: '한국정보교육원',
-  //     hqParentDeptCode: 'CEO'
-  //   }
-  //   : {
-  //     companyName: '(주)Lunex Soft (본사)',
-  //     hqParentDeptSeq: 2
-  //   };
-
-  // const hqParentDeptSeq = useMemo(() => {
-  //   if (!isDemo) {
-  //     return deptConfig.hqParentDeptSeq;
-  //   }
-
-  //   const rootDept = Object.values(fullTree.nodeMap).find(
-  //     node => node.deptCode === deptConfig.hqParentDeptCode
-  //   );
-
-  //   return rootDept?.deptSeq ?? null;
-  // }, [
-  //   isDemo,
-  //   fullTree.nodeMap,
-  //   deptConfig.hqParentDeptCode,
-  //   deptConfig.hqParentDeptSeq
-  // ]);
 
   const hqParentDeptSeq = useMemo(() => {
     const executiveDept = Object.values(fullTree.nodeMap).find(
