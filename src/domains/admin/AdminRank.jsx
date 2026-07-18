@@ -11,6 +11,7 @@ import { getRankList, insertRank, updateRank, deleteRank, updateRankOrder } from
 import { alertConfirm, alertSuccess, alertError } from '../../utils/alert';
 import useLoadingStore from '../../store/useLoadingStore';
 import usePageInfoStore from '../../store/usePageInfoStore';
+import useDepartmentsStore from '../../store/useDepartmentsStore';
 
 const getRankKey = (rank, fallback) => rank?.rank_seq ?? rank?.rankSeq ?? rank?.id ?? fallback;
 const getRankName = (rank) => rank?.rank_name ?? rank?.rankName ?? '';
@@ -51,7 +52,8 @@ const AdminRank = () => {
     const touchDragIndexRef = useRef(null);
     const touchDropIndexRef = useRef(null);
     const currentPageInfo = pages.find(p => p.page_code === 'AdminRank');
-
+    const invalidateGroupData = useDepartmentsStore(state => state.invalidateGroupData);
+    
     const [ranks, setRanks] = useState([]);
     const [formMode, setFormMode] = useState(null);
     const [formData, setFormData] = useState({ rank_name: '' });
@@ -143,6 +145,7 @@ const AdminRank = () => {
                 }
 
                 await updateRank(data);
+                invalidateGroupData();
                 await fetchRanks(false);
 
                 hideLoading();
@@ -158,6 +161,7 @@ const AdminRank = () => {
             }
 
             await insertRank(data);
+            invalidateGroupData();
             await fetchRanks(false);
 
             hideLoading();
@@ -186,6 +190,8 @@ const AdminRank = () => {
 
         try {
             await deleteRank(getRankKey(rank));
+
+            invalidateGroupData();
             await fetchRanks(false);
         } catch (error) {
             console.error("직급 삭제 실패", error);
@@ -256,6 +262,8 @@ const AdminRank = () => {
 
         try {
             await saveRankOrder(reorderedRanks);
+
+            invalidateGroupData();
             await fetchRanks(false);
         } catch (error) {
             console.error('직급 순서 변경 실패', error);
