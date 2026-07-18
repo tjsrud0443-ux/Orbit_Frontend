@@ -54,16 +54,6 @@ const BRAND_COLORS = {
   lineExit: '#fc0000',
 };
 
-const mode = import.meta.env.VITE_APP_MODE || 'production';
-const isDemo = mode === 'demo';
-
-const DEMO_CHART_DEPARTMENTS = [
-  '행정관리팀',
-  '교무팀'
-];
-
-
-
 // --- [Sub Components] ---
 const KpiCard = ({ title, value, icon, iconColor, bgColor }) => (
   <div className="bg-white p-6 rounded-2xl border border-[#edf2f9] shadow-sm flex items-center gap-5">
@@ -164,9 +154,7 @@ const AdminMain = () => {
 
   useEffect(() => {
     getDeptEmployeeCount().then(resp => {
-      const deptList = isDemo
-      ? resp.data.filter(item => DEMO_CHART_DEPARTMENTS.includes(item.deptName))
-      : resp.data.filter(item => item.deptName.endsWith("팀"));
+      const deptList = resp.data || [];
 
       setDeptEmployeeData({
         labels: deptList.map(item => item.deptName),
@@ -176,9 +164,8 @@ const AdminMain = () => {
             data: deptList.map(item => item.employeeCount),
             backgroundColor: BRAND_COLORS.main,
             barThickness: 36,
-            borderRadius: (context) => {
-              const width = window.innerWidth;
-              return width >= 1024 ? 8 : 2;
+            borderRadius: () => {
+              return window.innerWidth >= 1024 ? 8 : 2;
             },
           },
         ],
@@ -409,19 +396,34 @@ const AdminMain = () => {
             }
           >
             <div className="divide-y divide-gray-100">
-              {aiQuestions.slice(0, 5).map((item, index) => (
-                <div key={index} className="flex items-center justify-between py-4 px-2">
-                  <span className="text-[#1a1c3d] text-sm font-bold truncate pr-4">
-                    {item.question}
-                  </span>
-                  <span className="text-[#8a92a6] text-xs font-medium whitespace-nowrap">
-                    {formatDistanceToNow(new Date(item.created_at.replace(' ', 'T')), {
-                      addSuffix: true,
-                      locale: ko,
-                    })}
-                  </span>
+              {aiQuestions.length > 0 ? (
+                aiQuestions.slice(0, 5).map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between py-4 px-2"
+                  >
+                    <span className="text-[#1a1c3d] text-sm font-bold truncate pr-4">
+                      {item.question}
+                    </span>
+
+                    <span className="text-[#8a92a6] text-xs font-medium whitespace-nowrap">
+                      {formatDistanceToNow(
+                        new Date(item.created_at.replace(' ', 'T')),
+                        {
+                          addSuffix: true,
+                          locale: ko
+                        }
+                      )}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="h-full min-h-[220px] flex items-center justify-center">
+                  <p className="text-sm font-medium text-slate-400">
+                    대기 중인 AI 미답변 질문이 없습니다.
+                  </p>
                 </div>
-              ))}
+              )}
             </div>
           </ChartCard>
         </div>

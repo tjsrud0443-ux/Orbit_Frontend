@@ -17,6 +17,7 @@ import { addDept, delDept, updateDept } from './adminApi';
 import { alertSuccess, alertConfirm, alertWarning } from '../../utils/alert';
 import useLoadingStore from '../../store/useLoadingStore';
 import usePageInfoStore from '../../store/usePageInfoStore';
+import useDepartmentsStore from '../../store/useDepartmentsStore';
 
 const AdminDept = () => {
   const { pages } = usePageInfoStore();
@@ -31,7 +32,7 @@ const AdminDept = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); // 드롭다운 상태 추가
   const showLoading = useLoadingStore(state => state.showLoading);
   const hideLoading = useLoadingStore(state => state.hideLoading);
-
+  const invalidateGroupData = useDepartmentsStore(state => state.invalidateGroupData);
   // --- 2. UI States ---
   const sidePanelRef = useRef(null);
   const [expandedNodes, setExpandedNodes] = useState(new Set());
@@ -46,7 +47,6 @@ const AdminDept = () => {
     auth_group: ""
   });
   const [errors, setErrors] = useState({});
-  const isDemo = import.meta.env.VITE_APP_MODE === 'demo';
 
   const FIXED_AUTH_GROUPS = [
     'ROLE_SUPER_ADMIN',
@@ -55,32 +55,13 @@ const AdminDept = () => {
     'ROLE_FN_ADMIN'
   ];
 
-  const deptConfig = isDemo
-    ? {
-      companyName: '한국정보교육원',
-      hqParentDeptCode: 'CEO'
-    }
-    : {
-      companyName: '(주)Lunex Soft (본사)',
-      hqParentDeptSeq: 2
-    };
-
   const hqParentDeptSeq = useMemo(() => {
-    if (!isDemo) {
-      return deptConfig.hqParentDeptSeq;
-    }
-
-    const rootDept = Object.values(fullTree.nodeMap).find(
-      node => node.deptCode === deptConfig.hqParentDeptCode
+    const executiveDept = Object.values(fullTree.nodeMap).find(
+      node => node.deptCode === 'CEO'
     );
 
-    return rootDept?.deptSeq ?? null;
-  }, [
-    isDemo,
-    fullTree.nodeMap,
-    deptConfig.hqParentDeptCode,
-    deptConfig.hqParentDeptSeq
-  ]);
+    return executiveDept?.deptSeq ?? null;
+  }, [fullTree.nodeMap]);
 
   useEffect(() => {
     showLoading();
@@ -135,11 +116,21 @@ const AdminDept = () => {
   };
 
   const getDeptMemberCount = (node) => {
-    if (node.deptName === '대표이사실') {
-      return employees.filter(emp => emp.deptSeq === node.deptSeq && (!isDemo || emp.id !== 'kedu_admin')).length;
+    const visibleEmployees = employees.filter(
+      emp => emp.id !== 'kedu_admin'
+    );
+
+    if (node.deptCode === 'CEO') {
+      return visibleEmployees.filter(
+        emp => emp.deptSeq === node.deptSeq
+      ).length;
     }
+
     const allSeqs = getAllChildDeptSeqs(node);
-    return employees.filter(emp => allSeqs.includes(emp.deptSeq) && (!isDemo || emp.id !== 'kedu_admin')).length;
+
+    return visibleEmployees.filter(
+      emp => allSeqs.includes(emp.deptSeq)
+    ).length;
   };
 
   const toggleNode = (deptSeq) => {
@@ -215,7 +206,7 @@ const AdminDept = () => {
     let payload = { ...formData };
 
     if (formMode === 'CREATE_HQ') {
-      if (!hqParentDeptSeq) {
+      if (hqParentDeptSeq == null) {
         await alertWarning(
           '생성 불가',
           '최상위 조직 정보를 찾을 수 없습니다.'
@@ -237,6 +228,8 @@ const AdminDept = () => {
 
       showLoading();
       await updateDept(formData);
+
+      invalidateGroupData();
       const resp = await getGroup();
       hideLoading();
       setFullTree({
@@ -251,6 +244,7 @@ const AdminDept = () => {
     } else {
       showLoading();
       await addDept(payload);
+      invalidateGroupData();
       const resp = await getGroup();
       hideLoading();
       setFullTree({
@@ -293,6 +287,7 @@ const AdminDept = () => {
       hideLoading();
       await alertSuccess('삭제 완료', '삭제가 완료되었습니다.');
 
+      invalidateGroupData();
       const resp = await getGroup();
       setFullTree({
         root: resp.data.root,
@@ -317,7 +312,7 @@ const AdminDept = () => {
     const isExpanded = expandedNodes.has(node.deptSeq);
     const hasChildren = node.children && node.children.length > 0;
     const memberCount = getDeptMemberCount(node);
-    const displayName = level === 0 ? deptConfig.companyName : node.deptName;
+    const displayName = node.deptName;
 
     return (
       <React.Fragment key={node.deptSeq}>
@@ -422,19 +417,22 @@ const AdminDept = () => {
                 {errors.parent_dept_seq && <p className="text-[9px] text-red-500 font-medium ml-1">{errors.parent_dept_seq}</p>}
                 {isDropdownOpen && (
                   <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.15)] z-50 overflow-hidden border border-slate-100">
-                    {Object.values(fullTree.nodeMap).filter(node => node.parentDeptSeq === hqParentDeptSeq).map(dept => (
-                      <div
-                        key={dept.deptSeq}
-                        className="px-4 py-3 text-xs text-slate-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
-                        onClick={() => {
-                          setFormData({ ...formData, parent_dept_seq: dept.deptSeq });
-                          setIsDropdownOpen(false);
-                          setErrors(prev => ({ ...prev, parent_dept_seq: null }));
-                        }}
-                      >
-                        {dept.deptName}
-                      </div>
-                    ))}
+                    {Object.values(fullTree.nodeMap)
+                      .filter(node => node.parentDeptSeq === hqParentDeptSeq)
+                      .sort((a, b) => a.deptSeq - b.deptSeq)
+                      .map(dept => (
+                        <div
+                          key={dept.deptSeq}
+                          className="px-4 py-3 text-xs text-slate-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
+                          onClick={() => {
+                            setFormData({ ...formData, parent_dept_seq: dept.deptSeq });
+                            setIsDropdownOpen(false);
+                            setErrors(prev => ({ ...prev, parent_dept_seq: null }));
+                          }}
+                        >
+                          {dept.deptName}
+                        </div>
+                      ))}
                   </div>
                 )}
               </div>
