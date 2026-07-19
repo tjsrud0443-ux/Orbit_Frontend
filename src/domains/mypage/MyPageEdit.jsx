@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import useUserStore from '../../store/userStore';
 import { alertSuccess, alertError } from '../../utils/alert';
 import usePageInfoStore from '../../store/usePageInfoStore';
+import useDepartmentsStore from '../../store/useDepartmentsStore';
 
 const MyPageEdit = () => {
   const { pages } = usePageInfoStore();
@@ -22,6 +23,8 @@ const MyPageEdit = () => {
   const [tempStamp, setTempStamp] = useState(null);
   const [stampFile, setStampFile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const clearProfileImages = useDepartmentsStore(state => state.clearProfileImages);
+  const invalidateGroupData = useDepartmentsStore(state => state.invalidateGroupData);
 
   useEffect(() => {
     const token = sessionStorage.getItem("token");
@@ -211,6 +214,8 @@ const MyPageEdit = () => {
       if (profileImageFile) {
         const uploadResp = await updateProfileFile(profileImageFile);
         newProfileSysname = uploadResp.data.sysname;
+        clearProfileImages();
+        invalidateGroupData();
       }
 
       if (stampFile) {
