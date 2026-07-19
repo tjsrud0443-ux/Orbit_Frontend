@@ -5,6 +5,7 @@ import { useDropzone } from 'react-dropzone';
 import { addMeetingRoom, deleteMeetingRoom, editMeetingRoom, getAllRooms } from './adminApi';
 import useAuthStore from '../../store/authStore';
 import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const AdminMeetingRooms = () => {
   const [isAddMode, setIsAddMode] = useState(false);
@@ -23,6 +24,7 @@ const AdminMeetingRooms = () => {
   });
 
   const token = useAuthStore(state => state.token);
+  const { pages } = usePageInfoStore();
 
   const loadRooms = () => {
     getAllRooms().then(resp => {
@@ -192,14 +194,16 @@ const AdminMeetingRooms = () => {
 
   }
 
+  const currentPageInfo = pages.find(p => p.page_code === 'AdminMeetingRooms');
+
   return (
     <div className={`h-full flex flex-col ${isAddMode ? 'p-0 md:p-8' : 'p-6 md:p-8'} font-sans overflow-hidden bg-white`}>
       <div className={`mb-6 flex-shrink-0 ${isAddMode ? 'hidden md:block' : 'block'}`}>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">회의실 관리</h1>
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">{currentPageInfo?.page_name}</h1>
             <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">
-              회의실 정보를 확인하고 관리할 수 있습니다.
+              {currentPageInfo?.page_info}
             </p>
           </div>
           <button

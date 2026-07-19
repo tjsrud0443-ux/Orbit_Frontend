@@ -6,6 +6,7 @@ import useAuthStore from '../../store/authStore';
 import Calendar from '../../components/common/Calendar';
 import useLoadingStore from '../../store/useLoadingStore';
 import { alertSuccess } from '../../utils/alert';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const AdminSignup = () => {
   const [activeTab, setActiveTab] = useState('전체');
@@ -35,6 +36,7 @@ const AdminSignup = () => {
   const token = useAuthStore(state => state.token);
   const showLoading = useLoadingStore(state => state.showLoading);
   const hideLoading = useLoadingStore(state => state.hideLoading);
+  const { pages } = usePageInfoStore();
 
   const statusMap = {
     '전체': 'TOTAL',
@@ -207,6 +209,8 @@ const AdminSignup = () => {
     });
   };
 
+  const currentPageInfo = pages.find(p => p.page_code === 'AdminSignup');
+
   return (
     <div className={`h-full flex flex-col ${selectedUser ? 'p-0 md:p-8' : 'p-6 md:p-8'} font-sans overflow-hidden bg-[#FFFFFF]`}>
 
@@ -259,9 +263,9 @@ const AdminSignup = () => {
 
       {/* Header Section - Fixed height */}
       <div className={`mb-6 flex-shrink-0 ${selectedUser ? 'hidden md:block' : 'block'}`}>
-        <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">회원가입 관리</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">{currentPageInfo?.page_name}</h1>
         <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">
-          신규 회원가입 신청 내역을 확인하고 승인, 반려할 수 있습니다.
+          {currentPageInfo?.page_info}
         </p>
       </div>
 

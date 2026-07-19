@@ -11,6 +11,7 @@ import useEmployeeStore from '../../store/useEmployeeStore';
 import useLoadingStore from '../../store/useLoadingStore';
 import { createReservation, getAllRooms, getReservations } from './meetingRoomsApi';
 import { alertWarning, alertSuccess, alertError } from '../../utils/alert';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const MeetingRooms = () => {
   const { user } = useUserStore();
@@ -18,6 +19,7 @@ const MeetingRooms = () => {
   const { allEmployees, fetchEmployees } = useEmployeeStore();
   const showLoading = useLoadingStore(state => state.showLoading);
   const hideLoading = useLoadingStore(state => state.hideLoading);
+  const { pages } = usePageInfoStore();
 
   const [rooms, setRooms] = useState([]);
 
@@ -382,6 +384,8 @@ const MeetingRooms = () => {
   const isAttendeeLimitExceeded = form.attendees.length > (selectedRoom?.max_people || 0);
   const isTimeInvalid = form.startTime && form.endTime ? form.startTime >= form.endTime : false;
 
+  const currentPageInfo = pages.find(p => p.page_code === 'MeetingRooms');
+
   return (
     <div className={`h-full flex flex-col ${isPanelOpen ? 'p-0 md:p-8' : 'p-6 md:p-8'} bg-[#FFFFFF] overflow-hidden font-sans`}>
 
@@ -390,10 +394,10 @@ const MeetingRooms = () => {
           <div>
             <h1 className="text-lg md:text-2xl font-bold text-gray-900 mb-1 flex items-center gap-3">
               <div className="w-1.5 h-6 bg-[#3530B8] rounded-full"></div>
-              회의실 예약
+              {currentPageInfo?.page_name}
             </h1>
             <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">
-              회의실의 예약 현황을 확인하고 예약할 수 있습니다.
+              {currentPageInfo?.page_info}
             </p>
           </div>
           <button
