@@ -1,24 +1,41 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { checkMyPageEmail, getProfileInfo, updateUserInfo, uploadStampFile } from '../mypage/mypageApi';
+import { checkMyPageEmail, getProfileInfo, updateUserInfo, uploadStampFile, updateProfileFile } from '../mypage/mypageApi';
 import { emailDuplCheck } from '../auth/authApi';
 import { useNavigate } from 'react-router-dom';
 import useUserStore from '../../store/userStore';
 import { alertSuccess, alertError } from '../../utils/alert';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const MyPageEdit = () => {
+  const { pages } = usePageInfoStore();
+  const currentPageInfo = pages.find(p => p.page_code === 'MyPageEdit');
   const navigate = useNavigate();
   const { user, setUser } = useUserStore();
   const postcodeRef = useRef(null);
   const fileInputRef = useRef(null);
+  const profileFileInputRef = useRef(null);
   const [profileData, setProfileData] = useState(null);
+  const [profileImage, setProfileImage] = useState(null);
+  const [tempProfileImage, setTempProfileImage] = useState(null);
+  const [profileImageFile, setProfileImageFile] = useState(null);
   const [stamp, setStamp] = useState(null);
   const [tempStamp, setTempStamp] = useState(null);
   const [stampFile, setStampFile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
+    const token = sessionStorage.getItem("token");
+
+    if (profileData?.sysname) {
+      const imageUrl = `${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${profileData.sysname}&token=${token}`;
+      setProfileImage(imageUrl);
+      setTempProfileImage(imageUrl);
+    } else {
+      setProfileImage(null);
+      setTempProfileImage(null);
+    }
+
     if (profileData?.stamp_sysname) {
-      const token = sessionStorage.getItem("token");
       const imageUrl = `${import.meta.env.VITE_API_BASE_URL}/file/profile/view?sysname=${profileData.stamp_sysname}&token=${token}`;
       setStamp(imageUrl);
       setTempStamp(imageUrl);
@@ -30,10 +47,28 @@ const MyPageEdit = () => {
 
   useEffect(() => {
     if (isEditing) {
+      setTempProfileImage(profileImage);
+      setProfileImageFile(null);
       setTempStamp(stamp);
       setStampFile(null);
     }
-  }, [isEditing, stamp]);
+  }, [isEditing, profileImage, stamp]);
+
+  const handleProfileImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        alertError('업로드 실패', '이미지 파일만 등록할 수 있습니다.');
+        return;
+      }
+      setProfileImageFile(file);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setTempProfileImage(event.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleStampChange = (e) => {
     const file = e.target.files[0];
@@ -170,7 +205,13 @@ const MyPageEdit = () => {
     try {
       await updateUserInfo(formData);
 
+      let newProfileSysname = profileData?.sysname || '';
       let newSysname = profileData?.stamp_sysname || '';
+
+      if (profileImageFile) {
+        const uploadResp = await updateProfileFile(profileImageFile);
+        newProfileSysname = uploadResp.data.sysname;
+      }
 
       if (stampFile) {
         const uploadResp = await uploadStampFile(stampFile);
@@ -178,9 +219,9 @@ const MyPageEdit = () => {
       }
 
       // 성공 처리 (then 안에 있던 것들 그대로)
-      const updatedProfile = { ...profileData, ...formData, stamp_sysname: newSysname };
+      const updatedProfile = { ...profileData, ...formData, sysname: newProfileSysname, stamp_sysname: newSysname };
       setProfileData(updatedProfile);
-      setUser({ ...user, ...formData, stamp_sysname: newSysname });
+      setUser({ ...user, ...formData, sysname: newProfileSysname, stamp_sysname: newSysname });
       alertSuccess('수정 완료', '회원 정보가 수정되었습니다.');
       setIsEditing(false);
 
@@ -198,6 +239,8 @@ const MyPageEdit = () => {
       address1: profileData?.address1 || '',
       address2: profileData?.address2 || '',
     });
+    setTempProfileImage(profileImage);
+    setProfileImageFile(null);
     setTempStamp(stamp);
     setStampFile(null);
     setIsEditing(false);
@@ -307,8 +350,8 @@ const MyPageEdit = () => {
       {/* 헤더 */}
       <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', shrink: 0 }}>
         <div>
-          <h1 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0F172A', marginBottom: '0.15rem' }}>내 정보 관리</h1>
-          <p style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: '500' }}>나의 인사 정보와 연락처를 확인하고 관리할 수 있습니다.</p>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0F172A', marginBottom: '0.15rem' }}>{currentPageInfo?.page_name}</h1>
+          <p style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: '500' }}>{currentPageInfo?.page_info}</p>
         </div>
       </div>
 
@@ -328,63 +371,6 @@ const MyPageEdit = () => {
               <div style={{ ...infoRowStyle, height: '2.8rem', border: 'none' }} className="info-row"><span style={labelStyle} className="info-label">직급</span><span style={valueStyle} className="info-value">{profileData?.rank_name}</span></div>
               <div style={{ ...infoRowStyle, height: '2.8rem', border: 'none' }} className="info-row"><span style={labelStyle} className="info-label">입사일</span><span style={valueStyle} className="info-value">{profileData?.hire_date?.split(' ')[0]}</span></div>
             </div>
-
-            {/* 결제용 도장 이미지 영역 */}
-            <div className="stamp-container" style={{ width: '150px', borderLeft: '1px solid #F1F5F9', paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748B', marginBottom: '0.5rem' }}>결재용 도장</span>
-              <div
-                style={{
-                  width: '90px',
-                  height: '90px',
-                  border: isEditing ? '2px dashed #CBD5E1' : '1px solid #E2E8F0',
-                  borderRadius: '0.5rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  position: 'relative',
-                  cursor: isEditing ? 'pointer' : 'default',
-                  overflow: 'hidden',
-                  background: '#F8FAFC'
-                }}
-                onClick={() => { if (isEditing) fileInputRef.current.click(); }}
-              >
-                {isEditing ? (
-                  tempStamp ? (
-                    <img src={tempStamp} alt="도장 임시 이미지" style={{ width: '75px', height: '75px', objectFit: 'contain' }} />
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#94A3B8', fontSize: '0.65rem', fontWeight: '600' }}>
-                      <span style={{ fontSize: '1.25rem', marginBottom: '2px' }}>+</span>
-                      <span>도장 등록</span>
-                    </div>
-                  )
-                ) : (
-                  stamp ? (
-                    <img src={stamp} alt="결재용 도장" style={{ width: '75px', height: '75px', objectFit: 'contain' }} />
-                  ) : (
-                    <span style={{ fontSize: '0.65rem', color: '#94A3B8', fontWeight: '500' }}>미등록</span>
-                  )
-                )}
-              </div>
-
-              {isEditing && (
-                <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current.click()}
-                    style={{ padding: '0.2rem 0.5rem', fontSize: '0.65rem', fontWeight: '700', color: '#3530B8', background: '#F0F4FF', border: 'none', borderRadius: '0.25rem', cursor: 'pointer' }}
-                  >
-                    변경
-                  </button>
-                </div>
-              )}
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleStampChange}
-                accept="image/*"
-                style={{ display: 'none' }}
-              />
-            </div>
           </div>
         </div>
 
@@ -396,91 +382,208 @@ const MyPageEdit = () => {
             </h3>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-            <div style={{ ...infoRowStyle, minHeight: '2.8rem' }} className="info-row">
-              <label style={labelStyle} className="info-label">이메일</label>
-              {isEditing ? (
-                <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '0.25rem', padding: '0.5rem 0' }}>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="example@email.com"
-                      style={{ ...inputStyle, height: '2.2rem', flex: 1, border: (errors.email || errors.emailCheck) ? '1px solid #EF4444' : '1px solid #3530B8' }}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleEmailDuplCheck}
-                      style={{ padding: '0 0.8rem', background: '#3530B8', color: 'white', border: 'none', borderRadius: '0.4rem', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer', whiteSpace: 'nowrap' }}
-                    >
-                      중복확인
-                    </button>
+          <div className="mypage-info-container" style={{ display: 'flex', gap: '1.5rem', alignItems: 'stretch' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              <div style={{ ...infoRowStyle, minHeight: '2.8rem' }} className="info-row">
+                <label style={labelStyle} className="info-label">이메일</label>
+                {isEditing ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '0.25rem', padding: '0.5rem 0' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        placeholder="example@email.com"
+                        style={{ ...inputStyle, height: '2.2rem', flex: 1, border: (errors.email || errors.emailCheck) ? '1px solid #EF4444' : '1px solid #3530B8' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleEmailDuplCheck}
+                        style={{ padding: '0 0.8rem', background: '#3530B8', color: 'white', border: 'none', borderRadius: '0.4rem', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                      >
+                        중복확인
+                      </button>
+                    </div>
+                    {errors.email && <p style={{ color: '#EF4444', fontSize: '0.65rem', margin: '0 0 0 0.25rem', fontWeight: '500' }}>{errors.email}</p>}
+                    {errors.emailCheck && <p style={{ color: '#EF4444', fontSize: '0.65rem', margin: '0 0 0 0.25rem', fontWeight: '500' }}>{errors.emailCheck}</p>}
+                    {isEmailChecked && !errors.emailCheck && formData.email !== profileData?.email && (
+                      <p style={{ color: '#10B981', fontSize: '0.65rem', margin: '0 0 0 0.25rem', fontWeight: '500' }}>사용 가능한 이메일입니다.</p>
+                    )}
                   </div>
-                  {errors.email && <p style={{ color: '#EF4444', fontSize: '0.65rem', margin: '0 0 0 0.25rem', fontWeight: '500' }}>{errors.email}</p>}
-                  {errors.emailCheck && <p style={{ color: '#EF4444', fontSize: '0.65rem', margin: '0 0 0 0.25rem', fontWeight: '500' }}>{errors.emailCheck}</p>}
-                  {isEmailChecked && !errors.emailCheck && formData.email !== profileData?.email && (
-                    <p style={{ color: '#10B981', fontSize: '0.65rem', margin: '0 0 0 0.25rem', fontWeight: '500' }}>사용 가능한 이메일입니다.</p>
+                ) : (
+                  <span style={valueStyle} className="info-value">{profileData?.email || '-'}</span>
+                )}
+              </div>
+              <div style={{ ...infoRowStyle, minHeight: '2.8rem' }} className="info-row">
+                <label style={labelStyle} className="info-label">휴대전화</label>
+                {isEditing ? (
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <input type="text" name="phone" value={formData.phone} onChange={handleChange} style={{ ...inputStyle, height: '2.2rem', border: errors.phone ? '1px solid #EF4444' : '1px solid #3530B8' }} />
+                    {errors.phone && <span style={{ fontSize: '0.7rem', color: '#EF4444', marginTop: '2px' }}>{errors.phone}</span>}
+                  </div>
+                ) : (
+                  <span style={valueStyle} className="info-value">{profileData?.phone || '-'}</span>
+                )}
+              </div>
+
+              {/* 우편번호 */}
+              <div style={{ ...infoRowStyle, height: '2.8rem' }} className="info-row">
+                <label style={labelStyle} className="info-label">우편번호</label>
+                {isEditing ? (
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input type="text" name="zonecode" value={formData.zonecode} readOnly style={{ ...inputStyle, height: '2.2rem', width: '100px', background: '#F8FAFC', border: '1px solid #E2E8F0' }} />
+                    <button type="button" onClick={handleSearch} style={{ padding: '0 0.8rem', background: '#3530B8', color: 'white', border: 'none', borderRadius: '0.4rem', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer' }}>검색</button>
+                  </div>
+                ) : (
+                  <span style={valueStyle} className="info-value">{profileData?.zonecode || '-'}</span>
+                )}
+              </div>
+
+              {/* 기본주소 */}
+              <div style={{ ...infoRowStyle, height: '2.8rem' }} className="info-row">
+                <label style={labelStyle} className="info-label">기본주소</label>
+                {isEditing ? (
+                  <input type="text" name="address1" value={formData.address1} readOnly style={{ ...inputStyle, height: '2.2rem', background: '#F8FAFC', border: '1px solid #E2E8F0' }} />
+                ) : (
+                  <span style={valueStyle} className="info-value">{profileData?.address1 || '-'}</span>
+                )}
+              </div>
+
+              {/* 상세주소 */}
+              <div style={{ ...infoRowStyle, minHeight: '2.8rem' }} className="info-row">
+                <label style={labelStyle} className="info-label">상세주소</label>
+                {isEditing ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                    <input
+                      type="text"
+                      name="address2"
+                      value={formData.address2}
+                      onChange={handleChange}
+                      style={{ ...inputStyle, height: '2.2rem', border: errors.address2 ? '1px solid #EF4444' : '1px solid #3530B8' }}
+                      maxLength={20}
+                    />
+                    {errors.address2 && <span style={{ fontSize: '0.7rem', color: '#EF4444', marginTop: '2px' }}>{errors.address2}</span>}
+                  </div>
+                ) : (
+                  <span style={valueStyle} className="info-value">{profileData?.address2 || '-'}</span>
+                )}
+              </div>
+            </div>
+
+            <div className="stamp-container" style={{ width: '150px', borderLeft: '1px solid #F1F5F9', paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748B', marginBottom: '0.5rem' }}>프로필 사진</span>
+                <div
+                  style={{
+                    width: '90px',
+                    height: '90px',
+                    border: isEditing ? '2px dashed #CBD5E1' : '1px solid #E2E8F0',
+                    borderRadius: '0.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative',
+                    cursor: isEditing ? 'pointer' : 'default',
+                    overflow: 'hidden',
+                    background: '#F8FAFC'
+                  }}
+                  onClick={() => { if (isEditing) profileFileInputRef.current.click(); }}
+                >
+                  {isEditing ? (
+                    tempProfileImage ? (
+                      <img src={tempProfileImage} alt="프로필 임시 이미지" style={{ width: '90px', height: '90px', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#94A3B8', fontSize: '0.65rem', fontWeight: '600' }}>
+                        <span style={{ fontSize: '1.25rem', marginBottom: '2px' }}>+</span>
+                        <span>사진 등록</span>
+                      </div>
+                    )
+                  ) : (
+                    profileImage ? (
+                      <img src={profileImage} alt="프로필 사진" style={{ width: '90px', height: '90px', objectFit: 'cover' }} />
+                    ) : (
+                      <span style={{ fontSize: '0.65rem', color: '#94A3B8', fontWeight: '500' }}>미등록</span>
+                    )
                   )}
                 </div>
-              ) : (
-                <span style={valueStyle} className="info-value">{profileData?.email || '-'}</span>
-              )}
-            </div>
-            <div style={{ ...infoRowStyle, minHeight: '2.8rem' }} className="info-row">
-              <label style={labelStyle} className="info-label">휴대전화</label>
-              {isEditing ? (
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <input type="text" name="phone" value={formData.phone} onChange={handleChange} style={{ ...inputStyle, height: '2.2rem', border: errors.phone ? '1px solid #EF4444' : '1px solid #3530B8' }} />
-                  {errors.phone && <span style={{ fontSize: '0.7rem', color: '#EF4444', marginTop: '2px' }}>{errors.phone}</span>}
-                </div>
-              ) : (
-                <span style={valueStyle} className="info-value">{profileData?.phone || '-'}</span>
-              )}
-            </div>
 
-            {/* 우편번호 */}
-            <div style={{ ...infoRowStyle, height: '2.8rem' }} className="info-row">
-              <label style={labelStyle} className="info-label">우편번호</label>
-              {isEditing ? (
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input type="text" name="zonecode" value={formData.zonecode} readOnly style={{ ...inputStyle, height: '2.2rem', width: '100px', background: '#F8FAFC', border: '1px solid #E2E8F0' }} />
-                  <button type="button" onClick={handleSearch} style={{ padding: '0 0.8rem', background: '#3530B8', color: 'white', border: 'none', borderRadius: '0.4rem', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer' }}>검색</button>
-                </div>
-              ) : (
-                <span style={valueStyle} className="info-value">{profileData?.zonecode || '-'}</span>
-              )}
-            </div>
+                {isEditing && (
+                  <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => profileFileInputRef.current.click()}
+                      style={{ padding: '0.2rem 0.5rem', fontSize: '0.65rem', fontWeight: '700', color: '#3530B8', background: '#F0F4FF', border: 'none', borderRadius: '0.25rem', cursor: 'pointer' }}
+                    >
+                      변경
+                    </button>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  ref={profileFileInputRef}
+                  onChange={handleProfileImageChange}
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                />
+              </div>
 
-            {/* 기본주소 */}
-            <div style={{ ...infoRowStyle, height: '2.8rem' }} className="info-row">
-              <label style={labelStyle} className="info-label">기본주소</label>
-              {isEditing ? (
-                <input type="text" name="address1" value={formData.address1} readOnly style={{ ...inputStyle, height: '2.2rem', background: '#F8FAFC', border: '1px solid #E2E8F0' }} />
-              ) : (
-                <span style={valueStyle} className="info-value">{profileData?.address1 || '-'}</span>
-              )}
-            </div>
-
-            {/* 상세주소 */}
-            <div style={{ ...infoRowStyle, minHeight: '2.8rem' }} className="info-row">
-              <label style={labelStyle} className="info-label">상세주소</label>
-              {isEditing ? (
-                <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-                  <input
-                    type="text"
-                    name="address2"
-                    value={formData.address2}
-                    onChange={handleChange}
-                    style={{ ...inputStyle, height: '2.2rem', border: errors.address2 ? '1px solid #EF4444' : '1px solid #3530B8' }}
-                    maxLength={20}
-                  />
-                  {errors.address2 && <span style={{ fontSize: '0.7rem', color: '#EF4444', marginTop: '2px' }}>{errors.address2}</span>}
+              {/* 결제용 도장 이미지 영역 */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748B', marginBottom: '0.5rem' }}>결재용 도장</span>
+                <div
+                  style={{
+                    width: '90px',
+                    height: '90px',
+                    border: isEditing ? '2px dashed #CBD5E1' : '1px solid #E2E8F0',
+                    borderRadius: '0.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative',
+                    cursor: isEditing ? 'pointer' : 'default',
+                    overflow: 'hidden',
+                    background: '#F8FAFC'
+                  }}
+                  onClick={() => { if (isEditing) fileInputRef.current.click(); }}
+                >
+                  {isEditing ? (
+                    tempStamp ? (
+                      <img src={tempStamp} alt="도장 임시 이미지" style={{ width: '75px', height: '75px', objectFit: 'contain' }} />
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#94A3B8', fontSize: '0.65rem', fontWeight: '600' }}>
+                        <span style={{ fontSize: '1.25rem', marginBottom: '2px' }}>+</span>
+                        <span>도장 등록</span>
+                      </div>
+                    )
+                  ) : (
+                    stamp ? (
+                      <img src={stamp} alt="결재용 도장" style={{ width: '75px', height: '75px', objectFit: 'contain' }} />
+                    ) : (
+                      <span style={{ fontSize: '0.65rem', color: '#94A3B8', fontWeight: '500' }}>미등록</span>
+                    )
+                  )}
                 </div>
-              ) : (
-                <span style={valueStyle} className="info-value">{profileData?.address2 || '-'}</span>
-              )}
+
+                {isEditing && (
+                  <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current.click()}
+                      style={{ padding: '0.2rem 0.5rem', fontSize: '0.65rem', fontWeight: '700', color: '#3530B8', background: '#F0F4FF', border: 'none', borderRadius: '0.25rem', cursor: 'pointer' }}
+                    >
+                      변경
+                    </button>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleStampChange}
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                />
+              </div>
             </div>
           </div>
 

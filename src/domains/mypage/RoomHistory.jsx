@@ -10,8 +10,11 @@ import useAuthStore from '../../store/authStore';
 import { cancelMeetRsvn, getAllMyMeetRsvn, getAllRooms, getMeetRsvnDetail, getOccupiedTimes, updateMeetRsvn } from './mypageApi';
 import useLoadingStore from '../../store/useLoadingStore';
 import { alertWarning, alertSuccess, alertConfirm } from '../../utils/alert';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const RoomHistory = () => {
+  const { pages } = usePageInfoStore();
+  const currentPageInfo = pages.find(p => p.page_code === 'RoomHistory');
   const { allEmployees, fetchEmployees } = useEmployeeStore();
   const { user } = useUserStore();
   const token = useAuthStore(state => state.token);
@@ -344,9 +347,9 @@ const RoomHistory = () => {
   return (
     <div className={`h-full flex flex-col ${editingReservation || selectedReservation ? 'p-0 md:p-8' : 'p-6 md:p-8'} font-sans overflow-hidden bg-[#FFFFFF]`}>
       <div className={`mb-6 flex-shrink-0 ${editingReservation || selectedReservation ? 'hidden md:block' : 'block'}`}>
-        <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">회의실 신청 내역</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">{currentPageInfo?.page_name}</h1>
         <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">
-          나의 회의실 예약 목록을 확인하고 관리할 수 있습니다.
+          {currentPageInfo?.page_info}
         </p>
       </div>
 

@@ -11,11 +11,13 @@ import interactionPlugin from '@fullcalendar/interaction';
 
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const MyPage = () => {
   const token = useAuthStore(state => state.token);
   const user = useUserStore(state => state.user);
-
+  const { pages } = usePageInfoStore();
+  const currentPageInfo = pages.find(p => p.page_code === 'MyPage');
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [activeTab, setActiveTab] = useState('비품');
@@ -172,8 +174,8 @@ const MyPage = () => {
       `}</style>
       {/* 헤더 */}
       <div style={{ marginBottom: '1.25rem' }}>
-        <h1 style={{ fontSize: '1.375rem', fontWeight: '800', color: '#0F172A', marginBottom: '0.25rem' }}>마이페이지</h1>
-        <p style={{ fontSize: '0.8rem', color: '#94A3B8', fontWeight: '500' }}>내 정보와 업무 현황을 확인하세요</p>
+        <h1 style={{ fontSize: '1.375rem', fontWeight: '800', color: '#0F172A', marginBottom: '0.25rem' }}>{currentPageInfo?.page_name}</h1>
+        <p style={{ fontSize: '0.8rem', color: '#94A3B8', fontWeight: '500' }}>{currentPageInfo?.page_info}</p>
       </div>
 
       {/* 메인 2열 그리드 레이아웃 */}

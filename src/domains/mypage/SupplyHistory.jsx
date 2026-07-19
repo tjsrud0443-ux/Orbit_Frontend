@@ -4,6 +4,7 @@ import MobilePagination from '../../components/common/MobilePagination';
 import { getMySupplyRequest, deleteMySupplyRequest } from './mypageApi';
 import useLoadingStore from '../../store/useLoadingStore';
 import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const PAGE_SIZE = 8;
 
@@ -46,6 +47,8 @@ const ItemSummary = ({ items }) => {
 };
 
 const SupplyHistory = () => {
+  const { pages } = usePageInfoStore(); 
+  const currentPageInfo = pages.find(p => p.page_code === 'SupplyHistory');
   const [requests, setRequests] = useState([]);
   const [page, setPage] = useState(1);
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -100,9 +103,9 @@ const SupplyHistory = () => {
       
       {/* Header Section */}
       <div className={`mb-6 flex-shrink-0 ${selectedRequest ? 'hidden md:block' : 'block'}`}>
-        <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">비품 신청 내역</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">{currentPageInfo?.page_name}</h1>
         <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">
-          나의 비품 신청 목록을 확인하고 관리할 수 있습니다.
+          {currentPageInfo?.page_info}
         </p>
       </div>
 
