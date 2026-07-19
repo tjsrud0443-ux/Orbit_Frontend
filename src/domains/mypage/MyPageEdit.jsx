@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { checkMyPageEmail, getProfileInfo, updateUserInfo, uploadStampFile } from '../mypage/mypageApi';
+import { checkMyPageEmail, getProfileInfo, updateUserInfo, uploadStampFile, updateProfileFile } from '../mypage/mypageApi';
 import { emailDuplCheck } from '../auth/authApi';
 import { useNavigate } from 'react-router-dom';
 import useUserStore from '../../store/userStore';
 import { alertSuccess, alertError } from '../../utils/alert';
-import { maxios } from '../../api/axiosConfig';
 
 const MyPageEdit = () => {
   const navigate = useNavigate();
@@ -51,16 +50,6 @@ const MyPageEdit = () => {
       setStampFile(null);
     }
   }, [isEditing, profileImage, stamp]);
-
-  const uploadProfileFile = (file) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    return maxios.put("/users/myPage/profile", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data"
-      }
-    });
-  };
 
   const handleProfileImageChange = (e) => {
     const file = e.target.files[0];
@@ -217,7 +206,7 @@ const MyPageEdit = () => {
       let newSysname = profileData?.stamp_sysname || '';
 
       if (profileImageFile) {
-        const uploadResp = await uploadProfileFile(profileImageFile);
+        const uploadResp = await updateProfileFile(profileImageFile);
         newProfileSysname = uploadResp.data.sysname;
       }
 
@@ -393,89 +382,89 @@ const MyPageEdit = () => {
           <div className="mypage-info-container" style={{ display: 'flex', gap: '1.5rem', alignItems: 'stretch' }}>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
               <div style={{ ...infoRowStyle, minHeight: '2.8rem' }} className="info-row">
-              <label style={labelStyle} className="info-label">이메일</label>
-              {isEditing ? (
-                <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '0.25rem', padding: '0.5rem 0' }}>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="example@email.com"
-                      style={{ ...inputStyle, height: '2.2rem', flex: 1, border: (errors.email || errors.emailCheck) ? '1px solid #EF4444' : '1px solid #3530B8' }}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleEmailDuplCheck}
-                      style={{ padding: '0 0.8rem', background: '#3530B8', color: 'white', border: 'none', borderRadius: '0.4rem', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer', whiteSpace: 'nowrap' }}
-                    >
-                      중복확인
-                    </button>
+                <label style={labelStyle} className="info-label">이메일</label>
+                {isEditing ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '0.25rem', padding: '0.5rem 0' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        placeholder="example@email.com"
+                        style={{ ...inputStyle, height: '2.2rem', flex: 1, border: (errors.email || errors.emailCheck) ? '1px solid #EF4444' : '1px solid #3530B8' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleEmailDuplCheck}
+                        style={{ padding: '0 0.8rem', background: '#3530B8', color: 'white', border: 'none', borderRadius: '0.4rem', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                      >
+                        중복확인
+                      </button>
+                    </div>
+                    {errors.email && <p style={{ color: '#EF4444', fontSize: '0.65rem', margin: '0 0 0 0.25rem', fontWeight: '500' }}>{errors.email}</p>}
+                    {errors.emailCheck && <p style={{ color: '#EF4444', fontSize: '0.65rem', margin: '0 0 0 0.25rem', fontWeight: '500' }}>{errors.emailCheck}</p>}
+                    {isEmailChecked && !errors.emailCheck && formData.email !== profileData?.email && (
+                      <p style={{ color: '#10B981', fontSize: '0.65rem', margin: '0 0 0 0.25rem', fontWeight: '500' }}>사용 가능한 이메일입니다.</p>
+                    )}
                   </div>
-                  {errors.email && <p style={{ color: '#EF4444', fontSize: '0.65rem', margin: '0 0 0 0.25rem', fontWeight: '500' }}>{errors.email}</p>}
-                  {errors.emailCheck && <p style={{ color: '#EF4444', fontSize: '0.65rem', margin: '0 0 0 0.25rem', fontWeight: '500' }}>{errors.emailCheck}</p>}
-                  {isEmailChecked && !errors.emailCheck && formData.email !== profileData?.email && (
-                    <p style={{ color: '#10B981', fontSize: '0.65rem', margin: '0 0 0 0.25rem', fontWeight: '500' }}>사용 가능한 이메일입니다.</p>
-                  )}
-                </div>
-              ) : (
-                <span style={valueStyle} className="info-value">{profileData?.email || '-'}</span>
-              )}
+                ) : (
+                  <span style={valueStyle} className="info-value">{profileData?.email || '-'}</span>
+                )}
               </div>
               <div style={{ ...infoRowStyle, minHeight: '2.8rem' }} className="info-row">
-              <label style={labelStyle} className="info-label">휴대전화</label>
-              {isEditing ? (
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <input type="text" name="phone" value={formData.phone} onChange={handleChange} style={{ ...inputStyle, height: '2.2rem', border: errors.phone ? '1px solid #EF4444' : '1px solid #3530B8' }} />
-                  {errors.phone && <span style={{ fontSize: '0.7rem', color: '#EF4444', marginTop: '2px' }}>{errors.phone}</span>}
-                </div>
-              ) : (
-                <span style={valueStyle} className="info-value">{profileData?.phone || '-'}</span>
-              )}
+                <label style={labelStyle} className="info-label">휴대전화</label>
+                {isEditing ? (
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <input type="text" name="phone" value={formData.phone} onChange={handleChange} style={{ ...inputStyle, height: '2.2rem', border: errors.phone ? '1px solid #EF4444' : '1px solid #3530B8' }} />
+                    {errors.phone && <span style={{ fontSize: '0.7rem', color: '#EF4444', marginTop: '2px' }}>{errors.phone}</span>}
+                  </div>
+                ) : (
+                  <span style={valueStyle} className="info-value">{profileData?.phone || '-'}</span>
+                )}
               </div>
 
-            {/* 우편번호 */}
+              {/* 우편번호 */}
               <div style={{ ...infoRowStyle, height: '2.8rem' }} className="info-row">
-              <label style={labelStyle} className="info-label">우편번호</label>
-              {isEditing ? (
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input type="text" name="zonecode" value={formData.zonecode} readOnly style={{ ...inputStyle, height: '2.2rem', width: '100px', background: '#F8FAFC', border: '1px solid #E2E8F0' }} />
-                  <button type="button" onClick={handleSearch} style={{ padding: '0 0.8rem', background: '#3530B8', color: 'white', border: 'none', borderRadius: '0.4rem', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer' }}>검색</button>
-                </div>
-              ) : (
-                <span style={valueStyle} className="info-value">{profileData?.zonecode || '-'}</span>
-              )}
+                <label style={labelStyle} className="info-label">우편번호</label>
+                {isEditing ? (
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input type="text" name="zonecode" value={formData.zonecode} readOnly style={{ ...inputStyle, height: '2.2rem', width: '100px', background: '#F8FAFC', border: '1px solid #E2E8F0' }} />
+                    <button type="button" onClick={handleSearch} style={{ padding: '0 0.8rem', background: '#3530B8', color: 'white', border: 'none', borderRadius: '0.4rem', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer' }}>검색</button>
+                  </div>
+                ) : (
+                  <span style={valueStyle} className="info-value">{profileData?.zonecode || '-'}</span>
+                )}
               </div>
 
-            {/* 기본주소 */}
+              {/* 기본주소 */}
               <div style={{ ...infoRowStyle, height: '2.8rem' }} className="info-row">
-              <label style={labelStyle} className="info-label">기본주소</label>
-              {isEditing ? (
-                <input type="text" name="address1" value={formData.address1} readOnly style={{ ...inputStyle, height: '2.2rem', background: '#F8FAFC', border: '1px solid #E2E8F0' }} />
-              ) : (
-                <span style={valueStyle} className="info-value">{profileData?.address1 || '-'}</span>
-              )}
+                <label style={labelStyle} className="info-label">기본주소</label>
+                {isEditing ? (
+                  <input type="text" name="address1" value={formData.address1} readOnly style={{ ...inputStyle, height: '2.2rem', background: '#F8FAFC', border: '1px solid #E2E8F0' }} />
+                ) : (
+                  <span style={valueStyle} className="info-value">{profileData?.address1 || '-'}</span>
+                )}
               </div>
 
-            {/* 상세주소 */}
+              {/* 상세주소 */}
               <div style={{ ...infoRowStyle, minHeight: '2.8rem' }} className="info-row">
-              <label style={labelStyle} className="info-label">상세주소</label>
-              {isEditing ? (
-                <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-                  <input
-                    type="text"
-                    name="address2"
-                    value={formData.address2}
-                    onChange={handleChange}
-                    style={{ ...inputStyle, height: '2.2rem', border: errors.address2 ? '1px solid #EF4444' : '1px solid #3530B8' }}
-                    maxLength={20}
-                  />
-                  {errors.address2 && <span style={{ fontSize: '0.7rem', color: '#EF4444', marginTop: '2px' }}>{errors.address2}</span>}
-                </div>
-              ) : (
-                <span style={valueStyle} className="info-value">{profileData?.address2 || '-'}</span>
-              )}
+                <label style={labelStyle} className="info-label">상세주소</label>
+                {isEditing ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                    <input
+                      type="text"
+                      name="address2"
+                      value={formData.address2}
+                      onChange={handleChange}
+                      style={{ ...inputStyle, height: '2.2rem', border: errors.address2 ? '1px solid #EF4444' : '1px solid #3530B8' }}
+                      maxLength={20}
+                    />
+                    {errors.address2 && <span style={{ fontSize: '0.7rem', color: '#EF4444', marginTop: '2px' }}>{errors.address2}</span>}
+                  </div>
+                ) : (
+                  <span style={valueStyle} className="info-value">{profileData?.address2 || '-'}</span>
+                )}
               </div>
             </div>
 
