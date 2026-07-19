@@ -4,16 +4,17 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 
-import { fetchHolidays } from '../../api/holidayApi';
+import { fetchHolidays, resyncHolidays } from '../../api/holidayApi';
 import { getSchedules, createSchedule, deleteSchedule, updateSchedule, getApprovedVacations } from './schedulesApi';
 import useLoadingStore from '../../store/useLoadingStore';
 import useUserStore from '../../store/userStore';
 import useCalendarStore from '../../store/useCalendarStore';
-import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
+import usePageInfoStore from '../../store/usePageInfoStore';
+import { alertSuccess, alertError, alertConfirm, alertWarning } from '../../utils/alert';
 
 const currentYear = new Date().getFullYear();
-const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
-// 현재 연도 기준 -5년 ~ +5년, 총 11년치
+const years = Array.from({ length: 13 }, (_, i) => currentYear - 10 + i);
+// 현재 연도 기준 -10년 ~ +2년, 총 21년치 결과: 2016 ~ 2028
 
 const MiniCalendar = () => {
   const [date, setDate] = useState(new Date());
@@ -116,11 +117,15 @@ const COMPANY_FILTERS = [
 const COMPANY_CATEGORIES = ['COMPANY', 'TEAM', 'holiday', 'ANNIVERSARY'];
 
 const Calendar = () => {
+  const { pages } = usePageInfoStore();
+  const currentPageInfo = pages.find(p => p.page_code === 'Calendar');
+
   const calendarStore = useCalendarStore();
   const user = useUserStore(state => state.user);
   const isHrAdmin = user?.auth_group === 'ROLE_HR_ADMIN' || user?.auth_group === 'ROLE_SUPER_ADMIN';
 
   const calendarRef = useRef(null);
+  const alertedYearsRef = useRef(new Set());
   // 화면이 모바일인지 여부 (캘린더 height 분기용)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [dateError, setDateError] = useState('');
@@ -178,6 +183,44 @@ const Calendar = () => {
   const [isPermissionOpen, setIsPermissionOpen] = useState(false); // Add this line
   // 일정 클릭 시 상세 보기 모달
   const [detailModal, setDetailModal] = useState({ open: false, event: null });
+
+  // 연/월 직접 이동을 위한 상태 및 ref
+  const datePickerRef = useRef(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [pickerYear, setPickerYear] = useState(new Date().getFullYear());
+  const [pickerMonth, setPickerMonth] = useState(new Date().getMonth() + 1);
+  const yearScrollRef = useRef(null);
+  const [isResyncing, setIsResyncing] = useState(false);
+
+  useEffect(() => {
+    if (showDatePicker && yearScrollRef.current) {
+      const selectedEl = yearScrollRef.current.querySelector('[data-selected="true"]');
+      if (selectedEl) {
+        selectedEl.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+      }
+    }
+  }, [showDatePicker]);
+
+  const handleGoToDate = () => {
+    const api = getApi();
+    if (api) {
+      api.gotoDate(new Date(pickerYear, pickerMonth - 1, 1));
+      updateTitle(); // 제목 갱신 + 해당 연도/다음연도 공휴일 로드
+    }
+    setShowDatePicker(false);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target)) {
+        setShowDatePicker(false);
+      }
+    };
+    if (showDatePicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showDatePicker]);
 
   // 하루 일정 보기 패널 상태
   const [showDaily, setShowDaily] = useState(false);
@@ -317,21 +360,29 @@ const Calendar = () => {
   }, [openCalendar]);
 
   // API에서 공휴일 가져와서 companyEvents에 추가
-  const loadHolidaysForYear = useCallback(async (year) => {
+  const loadHolidaysForYear = useCallback(async (year, isPrimary = false) => {
     try {
-      const holidays = await fetchHolidays(year);//해당 연도 공휴일 1년치
+      const holidays = await fetchHolidays(year);//해당 연도 공휴일 1년치     
       if (holidays?.length > 0) {
         const addHolidays = (prev) => {
           const existingIds = new Set(prev.map(e => e.id));//기존 이벤트 id 목록
           const mappedHolidays = holidays.map(h => ({
             ...h,
             allDay: true,
-            display: 'list-item'
+            display: 'list-item',
+            extendedProps: {
+              category: 'holiday',
+              is_holiday: h.is_holiday,
+            }
           }));
           return [...prev, ...mappedHolidays.filter(h => !existingIds.has(h.id))];
         };
         setCompanyEvents(addHolidays);  // 기존
         setPersonalEvents(addHolidays); // 추가
+      }
+      else if (isPrimary && !alertedYearsRef.current.has(year)) {
+        alertedYearsRef.current.add(year);
+        alertWarning('공휴일 정보 없음', `${year}년 공휴일은 아직 정부에서 확정 발표되지 않았습니다.`);
       }
     } catch (err) {
       console.error(`${year}년 공휴일 로드 실패:`, err);
@@ -347,11 +398,50 @@ const Calendar = () => {
         const d = api.getDate();
         const year = d.getFullYear();
         setCurrentTitle(`${year}년 ${d.getMonth() + 1}월`);
-        loadHolidaysForYear(year);
-        loadHolidaysForYear(year + 1);
+        loadHolidaysForYear(year,true);
+        loadHolidaysForYear(year + 1, false);
       }
     }, 0);
   }, [loadHolidaysForYear]);
+
+  //특정 연도 공휴일 재동기화
+  const handleResyncHolidays = async () => {
+    if (isResyncing) return;
+    setIsResyncing(true);
+    const result = await alertConfirm(
+      '공휴일 재동기화',
+      `${pickerYear}년 공휴일 정보를 다시 불러오시겠습니까?`
+    );
+    if (!result.isConfirmed) {
+      setIsResyncing(false);
+      return;
+    }
+
+    showLoading();
+    try {
+      await resyncHolidays(pickerYear);
+
+      // 재동기화했으니 알림 기록 초기화 (다시 확인 필요할 수도 있어서)
+      alertedYearsRef.current.delete(pickerYear);
+
+      // 기존에 화면에 그려진 해당 연도 공휴일 이벤트 제거
+      const isSameYear = (e) => e.start?.startsWith(String(pickerYear));
+      setCompanyEvents(prev => prev.filter(e => !(e.category === 'holiday' && isSameYear(e))));
+      setPersonalEvents(prev => prev.filter(e => !(e.category === 'holiday' && isSameYear(e))));
+
+      // 새로 받아온 데이터로 다시 채움
+      await loadHolidaysForYear(pickerYear, true);
+
+      alertSuccess('재동기화 완료', `${pickerYear}년 공휴일 정보가 갱신되었습니다.`);
+    } catch (err) {
+      console.error('공휴일 재동기화 실패:', err);
+      alertError('재동기화 실패', '공휴일 정보를 다시 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      hideLoading();
+      setIsResyncing(false);
+    }
+  };
+
 //카테고리가 PERSONAL이라 companyChecked 필터에 안 걸리니, 공유된 일정은 별도로 통과
   const filteredEvents = activeTab === 'personal'
     ? personalEvents.filter(e => personalChecked[e.category])
@@ -704,8 +794,8 @@ if (isEditing) {
       </style>
       <div className="flex-1 p-4 flex flex-col gap-4 min-h-0 h-full bg-white overflow-y-auto lg:overflow-hidden">
         <div className="px-1">
-          <h1 className="text-xl font-bold text-slate-900 leading-tight">캘린더</h1>
-          <p className="text-xs text-slate-500 mt-0.5">일정을 한눈에 확인하세요.</p>
+          <h1 className="text-xl font-bold text-slate-900 leading-tight">{currentPageInfo?.page_name}</h1>
+          <p className="text-xs text-slate-500 mt-0.5">{currentPageInfo?.page_info}</p>
         </div>
 
         <div className="flex gap-1 border-b border-slate-200 px-1">
@@ -722,7 +812,7 @@ if (isEditing) {
         <div className="flex flex-col lg:flex-row gap-2 lg:flex-1 lg:min-h-0 lg:items-stretch lg:overflow-hidden">
           <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 flex flex-col min-w-0 min-h-0 transition-all duration-300 lg:flex-1 lg:shrink ">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 relative" ref={datePickerRef}>
                 <button onClick={() => { getApi()?.today(); updateTitle(); }}
                   className="px-2.5 py-1 border border-slate-200 rounded-lg text-[0.6875rem] font-medium bg-white hover:bg-[#DDE8FF] transition-colors">오늘</button>
                 <div className="flex border border-slate-200 rounded-lg overflow-hidden bg-white">
@@ -731,7 +821,107 @@ if (isEditing) {
                   <button onClick={() => { getApi()?.next(); updateTitle(); }}
                     className="px-1.5 py-1 hover:bg-[#DDE8FF] text-[0.6875rem]">&gt;</button>
                 </div>
-                <h2 className="text-sm font-bold text-slate-800 ml-1">{currentTitle}</h2>
+
+                {/* 제목 + 이동 버튼을 묶어서 눈에 띄게 */}
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      const currentDate = getApi()?.getDate() || new Date();
+                      setPickerYear(currentDate.getFullYear());
+                      setPickerMonth(currentDate.getMonth() + 1);
+                      setShowDatePicker(!showDatePicker);
+                    }}
+                    className="flex items-center gap-1 ml-1 px-2 py-1 rounded-lg hover:bg-[#F0F4FF] transition-colors group"
+                  >
+                    <h2 className="text-sm font-bold text-slate-800 group-hover:text-[#3530B8] transition-colors">{currentTitle}</h2>
+                    <svg className={`w-3.5 h-3.5 text-slate-400 group-hover:text-[#3530B8] transition-transform duration-200 ${showDatePicker ? 'rotate-180' : ''}`}
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {showDatePicker && (
+                    <>
+                      {/* 모바일 화면에서 배경을 흐리게 처리하여 모달감 부여 및 바깥 클릭 시 닫기 기능 지원 */}
+                      <div 
+                        className="fixed inset-0 bg-black/30 z-40 sm:hidden animate-in fade-in duration-200" 
+                        onClick={() => setShowDatePicker(false)}
+                      />
+                      <div className="fixed sm:absolute z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 sm:top-full sm:left-0 sm:translate-x-0 sm:translate-y-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl p-4 flex gap-4 animate-in fade-in slide-in-from-top-2 duration-200 min-w-[280px] max-w-[90vw]">
+                        {/* 연도 선택 영역 */}
+                        <div className="flex flex-col w-[90px] border-r border-slate-100 pr-3">
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-2 px-1">연도</span>
+                          <div 
+                            ref={yearScrollRef}
+                            className="overflow-y-auto max-h-[160px] custom-scrollbar space-y-1 flex-1 pr-1"
+                          >
+                            {years.map(y => (
+                              <button
+                                key={y}
+                                data-selected={pickerYear === y}
+                                onClick={() => setPickerYear(y)}
+                                className={`w-full text-left px-2.5 py-1.5 text-xs font-bold rounded-lg transition-all
+                                  ${pickerYear === y 
+                                    ? 'bg-[#3530B8] text-white shadow-sm' 
+                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'}`}
+                              >
+                                {y}년
+                              </button>
+                            ))}
+                          </div>
+                          {isHrAdmin && (
+                            <button
+                              onClick={handleResyncHolidays}
+                              disabled={isResyncing}
+                              className="mt-3 w-full py-1.5 text-[10px] font-semibold text-slate-400 hover:text-[#3530B8] rounded-lg hover:bg-[#F0F4FF] transition-colors flex items-center justify-center gap-1 border border-slate-100 whitespace-nowrap shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                              title={`${pickerYear}년 공휴일 정보를 다시 불러옵니다`}
+                            >
+                              <svg className="w-2.5 h-2.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                              재동기화
+                            </button>
+                          )}
+                        </div>
+                        
+                        {/* 월 선택 영역 */}
+                        <div className="flex-1 flex flex-col min-w-[150px]">
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-2 px-1">월</span>
+                          <div className="grid grid-cols-3 gap-1 flex-1 content-start">
+                            {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                              <button
+                                key={m}
+                                onClick={() => setPickerMonth(m)}
+                                className={`py-2 text-center text-xs font-bold rounded-lg border transition-all
+                                  ${pickerMonth === m 
+                                    ? 'bg-[#F0F4FF] border-[#3530B8] text-[#3530B8]' 
+                                    : 'bg-white border-transparent text-slate-600 hover:bg-slate-50'}`}
+                              >
+                                {m}월
+                              </button>
+                            ))}
+                          </div>
+                          
+                          {/* 하단 이동/취소 버튼 */}
+                          <div className="flex gap-1.5 mt-4 pt-3 border-t border-slate-100 justify-end">
+                            <button
+                              onClick={() => setShowDatePicker(false)}
+                              className="px-2.5 py-1.5 text-[11px] font-semibold text-slate-500 rounded-lg hover:bg-slate-50 border border-transparent transition-colors"
+                            >
+                              취소
+                            </button>
+                            <button
+                              onClick={handleGoToDate}
+                              className="px-3.5 py-1.5 bg-[#3530B8] text-white text-[11px] font-bold rounded-lg hover:bg-[#2a2696] shadow-sm transition-all whitespace-nowrap"
+                            >
+                              이동
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
               {(activeTab === 'personal' || (activeTab === 'company' && isHrAdmin)) && (
                 <button onClick={() => {
@@ -1086,7 +1276,11 @@ if (isEditing) {
             <p className="mt-2 text-[0.625rem] text-slate-400 text-right">* 프로젝트 및 회의 일정은 수정할 수 없습니다.</p>
           )}
           {detailModal.event.extendedProps?.category === 'holiday' && (
-            <p className="mt-2 text-[0.625rem] text-slate-400 text-right">* 공휴일은 수정할 수 없습니다.</p>
+            <p className="mt-2 text-[0.625rem] text-slate-400 text-right">
+              {detailModal.event.extendedProps?.is_holiday === 'N' 
+                ? '* 국경일이지만 관공서 휴일은 아닙니다.' 
+                : '* 공휴일은 수정할 수 없습니다.'}
+            </p>
           )}
           {COMPANY_CATEGORIES.includes(detailModal.event.extendedProps?.category) && 
           detailModal.event.extendedProps?.category !== 'holiday' && 
