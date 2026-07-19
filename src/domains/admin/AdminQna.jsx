@@ -1,8 +1,6 @@
 ﻿import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown, faTrashCan } from '@fortawesome/free-solid-svg-icons';
-import { getMyQuestions, deleteMyQuestions } from '../mypage/mypageApi';
-import { maxios } from '../../api/axiosConfig';
 import { adminAiQuestionsData, deleteMyAnswer, getMyDeptQuestion, insertUpdateAnswer } from './adminApi';
 import useUserStore from '../../store/userStore';
 import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
