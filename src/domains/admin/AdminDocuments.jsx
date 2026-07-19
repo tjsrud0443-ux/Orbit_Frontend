@@ -236,7 +236,7 @@ const AdminDocuments = () => {
   // 권한 체크
   const canManage = (users_id) => {
     if (!user) return false;
-    return user.auth_group === 'ROLE_SUPER_ADMIN' || user.id === users_id;
+    return user.auth_group === 'ROLE_SUPER_ADMIN' || user.user_auth_group === 'ROLE_SUPER_ADMIN' || user.id === users_id;
   };
 
   const handlePreview = (doc) => {
