@@ -1,8 +1,6 @@
 ﻿import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faTimes, faChevronLeft, faChevronRight, faChevronDown, faTrashCan } from '@fortawesome/free-solid-svg-icons';
-import { getMyQuestions, deleteMyQuestions } from '../mypage/mypageApi';
-import { maxios } from '../../api/axiosConfig';
 import { adminAiQuestionsData, deleteMyAnswer, getMyDeptQuestion, insertUpdateAnswer } from './adminApi';
 import useUserStore from '../../store/userStore';
 import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
@@ -26,6 +24,10 @@ const AdminQna = () => {
   const showLoading = useLoadingStore(state => state.showLoading);
   const hideLoading = useLoadingStore(state => state.hideLoading);
   const currentPageInfo = pages.find(p => p.page_code === 'AdminQna');
+
+  const userAuthGroups = user?.user_auth_group ?? [];
+  const allUserGroups = [user?.auth_group, ...userAuthGroups].filter(Boolean);
+  const isSuperAdmin = allUserGroups.includes('ROLE_SUPER_ADMIN');
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -51,8 +53,8 @@ const AdminQna = () => {
         showLoading();
 
         const [qnaResp, countResp] = await Promise.all([
-          getMyDeptQuestion(user.dept_seq, user.auth_group),
-          adminAiQuestionsData(user.dept_seq, user.auth_group)
+          getMyDeptQuestion(user.dept_seq, isSuperAdmin),
+          adminAiQuestionsData(user.dept_seq, isSuperAdmin)
         ]);
 
         setQnaList(qnaResp.data);
@@ -66,7 +68,7 @@ const AdminQna = () => {
     };
 
     fetchData();
-  }, [user?.dept_seq, user?.auth_group]);
+  }, [user?.dept_seq, isSuperAdmin]);
 
   const filteredQna = useMemo(() => {
     return qnaList.filter(item => {
@@ -102,11 +104,11 @@ const AdminQna = () => {
       await deleteMyAnswer(question_seq);
       hideLoading();
       await alertSuccess('삭제 완료', '답변 삭제가 완료되었습니다.');
-      const resp = await getMyDeptQuestion(user?.dept_seq, user?.auth_group);
+      const resp = await getMyDeptQuestion(user?.dept_seq, isSuperAdmin);
       setQnaList(resp.data);
       const updated = resp.data.find(q => q.question_seq === selectedQna.question_seq);
       setSelectedQna(updated);
-      const updateCount = await adminAiQuestionsData(user?.dept_seq, user?.auth_group);
+      const updateCount = await adminAiQuestionsData(user?.dept_seq, isSuperAdmin);
       setCount(updateCount.data);
     }
   };
@@ -141,8 +143,7 @@ const AdminQna = () => {
 
   const hasPermission = (item) => {
     if (!item || !user) return false;
-    if (user.auth_group === 'ROLE_SUPER_ADMIN') return true;
-    return item.users_handle_id === user.id;
+    return isSuperAdmin || item.users_handle_id === user.id;
   };
 
   // selectedQna가 null일 때 렌더링 에러를 방지하기 위한 안전장치 추가
@@ -171,12 +172,12 @@ const AdminQna = () => {
         selectedQna.status === 'PENDING' ? '답변 등록이 완료되었습니다.' : '답변이 수정되었습니다.'
       );
       setIsEditing(false);
-      getMyDeptQuestion(user?.dept_seq, user?.auth_group).then(resp => {
+      getMyDeptQuestion(user?.dept_seq, isSuperAdmin).then(resp => {
         setQnaList(resp.data);
         const updated = resp.data.find(q => q.question_seq === selectedQna.question_seq);
         setSelectedQna(updated);
       });
-      adminAiQuestionsData(user?.dept_seq, user?.auth_group).then(resp => {
+      adminAiQuestionsData(user?.dept_seq, isSuperAdmin).then(resp => {
         setCount(resp.data);
       });
     }).catch(err => {
