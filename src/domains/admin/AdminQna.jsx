@@ -145,8 +145,7 @@ const AdminQna = () => {
 
   const hasPermission = (item) => {
     if (!item || !user) return false;
-    if (user.auth_group === 'ROLE_SUPER_ADMIN') return true;
-    return item.users_handle_id === user.id;
+    return isSuperAdmin || item.users_handle_id === user.id;
   };
 
   // selectedQna가 null일 때 렌더링 에러를 방지하기 위한 안전장치 추가
