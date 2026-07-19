@@ -151,24 +151,6 @@ const AdminSignup = () => {
       isValid = false;
     }
 
-    if (import.meta.env.VITE_APP_MODE !== 'demo') {
-      if (selectedDept.dept_seq !== null && selectedRank.rank_seq !== null) {
-        if (selectedDept.dept_seq === 2 && selectedRank.rank_seq !== 1) {
-          newErrors.rank = '대표이사실은 대표 직급만 선택 가능합니다.';
-          isValid = false;
-        } else if (selectedDept.dept_seq !== 2 && selectedRank.rank_seq === 1) {
-          newErrors.rank = '대표 직급은 대표이사실에서만 선택 가능합니다.';
-          isValid = false;
-        } else if (selectedDept.dept_name.includes('본부') && selectedRank.rank_name !== '본부장') {
-          newErrors.rank = '본부는 본부장 직급만 선택 가능합니다.';
-          isValid = false;
-        } else if (!selectedDept.dept_name.includes('본부') && selectedRank.rank_name === '본부장') {
-          newErrors.rank = '본부장 직급은 본부에서만 선택 가능합니다.';
-          isValid = false;
-        }
-      }
-    }
-
     if (!isValid) {
       setErrors(newErrors);
       return;
@@ -478,9 +460,6 @@ const AdminSignup = () => {
                                     setSelectedDept({ dept_seq: dept.dept_seq, dept_name: dept.dept_name });
                                     setIsDeptOpen(false);
                                     setErrors(prev => ({ ...prev, dept: '' }));
-                                    if (import.meta.env.VITE_APP_MODE !== 'demo') {
-                                      setSelectedRank({ rank_seq: null, rank_name: '직급을 선택하세요' });
-                                    }
                                   }}
                                   className="px-4 py-2.5 text-xs hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-medium border-b border-gray-50 last:border-0"
                                 >
@@ -504,12 +483,6 @@ const AdminSignup = () => {
                           {isRankOpen && (
                             <div className="absolute z-10 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-32 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
                               {rankList
-                                .filter(rank => {
-                                  if (import.meta.env.VITE_APP_MODE === 'demo') return true;
-                                  if (selectedDept.dept_seq === null) return true;
-                                  if (selectedDept.dept_seq === 2) return rank.rank_seq === 1;
-                                  return selectedDept.dept_name.includes('본부') ? rank.rank_name === '본부장' : (rank.rank_name !== '본부장' && rank.rank_seq !== 1);
-                                })
                                 .map((rank) => (
                                   <div
                                     key={rank.rank_seq}
