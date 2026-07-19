@@ -17,6 +17,7 @@ import { addDept, delDept, updateDept } from './adminApi';
 import { alertSuccess, alertConfirm, alertWarning } from '../../utils/alert';
 import useLoadingStore from '../../store/useLoadingStore';
 import usePageInfoStore from '../../store/usePageInfoStore';
+import useDepartmentsStore from '../../store/useDepartmentsStore';
 
 const AdminDept = () => {
   const { pages } = usePageInfoStore();
@@ -31,7 +32,7 @@ const AdminDept = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); // 드롭다운 상태 추가
   const showLoading = useLoadingStore(state => state.showLoading);
   const hideLoading = useLoadingStore(state => state.hideLoading);
-
+  const invalidateGroupData = useDepartmentsStore(state => state.invalidateGroupData);
   // --- 2. UI States ---
   const sidePanelRef = useRef(null);
   const [expandedNodes, setExpandedNodes] = useState(new Set());
@@ -46,41 +47,14 @@ const AdminDept = () => {
     auth_group: ""
   });
   const [errors, setErrors] = useState({});
-  const isDemo = import.meta.env.VITE_APP_MODE === 'demo';
-
-  const FIXED_AUTH_GROUPS = [
-    'ROLE_SUPER_ADMIN',
-    'ROLE_HR_ADMIN',
-    'ROLE_GA_ADMIN',
-    'ROLE_FN_ADMIN'
-  ];
-
-  const deptConfig = isDemo
-    ? {
-      companyName: '한국정보교육원',
-      hqParentDeptCode: 'CEO'
-    }
-    : {
-      companyName: '(주)Lunex Soft (본사)',
-      hqParentDeptSeq: 2
-    };
 
   const hqParentDeptSeq = useMemo(() => {
-    if (!isDemo) {
-      return deptConfig.hqParentDeptSeq;
-    }
-
-    const rootDept = Object.values(fullTree.nodeMap).find(
-      node => node.deptCode === deptConfig.hqParentDeptCode
+    const executiveDept = Object.values(fullTree.nodeMap).find(
+      node => node.deptCode === 'CEO'
     );
 
-    return rootDept?.deptSeq ?? null;
-  }, [
-    isDemo,
-    fullTree.nodeMap,
-    deptConfig.hqParentDeptCode,
-    deptConfig.hqParentDeptSeq
-  ]);
+    return executiveDept?.deptSeq ?? null;
+  }, [fullTree.nodeMap]);
 
   useEffect(() => {
     showLoading();
@@ -97,7 +71,7 @@ const AdminDept = () => {
         hideLoading();
       })
       .catch(err => {
-        console.error("조직도 로딩 실패", err);
+        console.error("조직 목록 로딩 실패", err);
         hideLoading();
       });
   }, []);
@@ -135,11 +109,21 @@ const AdminDept = () => {
   };
 
   const getDeptMemberCount = (node) => {
-    if (node.deptName === '대표이사실') {
-      return employees.filter(emp => emp.deptSeq === node.deptSeq && (!isDemo || emp.id !== 'kedu_admin')).length;
+    const visibleEmployees = employees.filter(
+      emp => emp.id !== 'kedu_admin'
+    );
+
+    if (node.deptCode === 'CEO') {
+      return visibleEmployees.filter(
+        emp => emp.deptSeq === node.deptSeq
+      ).length;
     }
+
     const allSeqs = getAllChildDeptSeqs(node);
-    return employees.filter(emp => allSeqs.includes(emp.deptSeq) && (!isDemo || emp.id !== 'kedu_admin')).length;
+
+    return visibleEmployees.filter(
+      emp => allSeqs.includes(emp.deptSeq)
+    ).length;
   };
 
   const toggleNode = (deptSeq) => {
@@ -165,20 +149,26 @@ const AdminDept = () => {
   };
 
   const openEdit = (node) => {
+    const currentDeptType = node.parentDeptSeq === hqParentDeptSeq ? 'HQ' : 'SUB';
+
     setFormMode('EDIT');
     setSelectedNode(node);
+    setIsDropdownOpen(false);
+
     setFormData({
       dept_seq: node.deptSeq,
       dept_name: node.deptName,
       dept_code: node.deptCode,
       parent_dept_seq: node.parentDeptSeq,
-      auth_group: node.auth_group
+      auth_group: node.auth_group,
+      dept_type: currentDeptType
     });
   };
 
   const handleCloseForm = () => {
     setFormMode(null);
     setSelectedNode(null);
+    setIsDropdownOpen(false);
     setErrors({});
   };
 
@@ -188,6 +178,14 @@ const AdminDept = () => {
       newErrors.dept_name = `${formMode === 'CREATE_HQ' ? '본부명' : '부서명'}을 입력해주세요.`;
     } else if (!/^[ㄱ-ㅎㅏ-ㅣ가-힣]+$/.test(formData.dept_name)) {
       newErrors.dept_name = "한글만 입력 가능합니다.";
+    } else {
+      const isDuplicateName = Object.values(fullTree.nodeMap).some(
+        node => node.deptName === formData.dept_name && node.deptSeq !== formData.dept_seq
+      );
+
+      if(isDuplicateName) {
+        newErrors.dept_name = "이미 존재하는 본부 또는 부서명입니다. 다시 작성해 주세요.";
+      }
     }
 
     if (!formData.dept_code) {
@@ -203,7 +201,8 @@ const AdminDept = () => {
       }
     }
 
-    if (formMode === 'CREATE_SUB' && !formData.parent_dept_seq) {
+    const reqParentHq = formMode === 'CREATE_SUB' || (formMode === 'EDIT' && formData.dept_type === 'SUB');
+    if (reqParentHq && !formData.parent_dept_seq) {
       newErrors.parent_dept_seq = "상위 본부를 선택해주세요.";
     }
 
@@ -212,10 +211,25 @@ const AdminDept = () => {
       return;
     }
 
+    const isChangingHqToSub = formMode === 'EDIT' &&
+      selectedNode?.parentDeptSeq === hqParentDeptSeq &&
+      formData.dept_type === 'SUB';
+
+    if (
+      isChangingHqToSub &&
+      selectedNode?.children?.length > 0
+    ) {
+      await alertWarning(
+        '변경 불가',
+        '하위 부서가 존재하는 본부는 부서로 변경할 수 없습니다.<br>하위 부서를 먼저 이동하거나 삭제해 주세요.'
+      );
+      return;
+    }
+
     let payload = { ...formData };
 
     if (formMode === 'CREATE_HQ') {
-      if (!hqParentDeptSeq) {
+      if (hqParentDeptSeq == null) {
         await alertWarning(
           '생성 불가',
           '최상위 조직 정보를 찾을 수 없습니다.'
@@ -236,7 +250,9 @@ const AdminDept = () => {
       }
 
       showLoading();
-      await updateDept(formData);
+      await updateDept(payload);
+
+      invalidateGroupData();
       const resp = await getGroup();
       hideLoading();
       setFullTree({
@@ -251,6 +267,7 @@ const AdminDept = () => {
     } else {
       showLoading();
       await addDept(payload);
+      invalidateGroupData();
       const resp = await getGroup();
       hideLoading();
       setFullTree({
@@ -293,6 +310,7 @@ const AdminDept = () => {
       hideLoading();
       await alertSuccess('삭제 완료', '삭제가 완료되었습니다.');
 
+      invalidateGroupData();
       const resp = await getGroup();
       setFullTree({
         root: resp.data.root,
@@ -304,12 +322,9 @@ const AdminDept = () => {
       }
     }
   };
-  const canManageDept = (node, level) => {
-    if (level === 0) {
-      return false;
-    }
 
-    return !FIXED_AUTH_GROUPS.includes(node.auth_group);
+  const canManageDept = (node) => {
+    return !['ROOT', 'CEO'].includes(node.deptCode);
   };
 
   const renderRows = (node, level = 0) => {
@@ -317,7 +332,7 @@ const AdminDept = () => {
     const isExpanded = expandedNodes.has(node.deptSeq);
     const hasChildren = node.children && node.children.length > 0;
     const memberCount = getDeptMemberCount(node);
-    const displayName = level === 0 ? deptConfig.companyName : node.deptName;
+    const displayName = node.deptName;
 
     return (
       <React.Fragment key={node.deptSeq}>
@@ -351,7 +366,7 @@ const AdminDept = () => {
           </td>
           <td className="py-4 pl-4 pr-18 md:pr-20 text-right">
             <div className="flex justify-end gap-2">
-              {canManageDept(node, level) && (
+              {canManageDept(node) && (
                 <>
                   <button onClick={() => openEdit(node)} className="action-trigger w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-[#3530B8] transition-all flex items-center justify-center cursor-pointer" title="수정"><FontAwesomeIcon icon={faEdit} className="text-xs" /></button>
                   <button onClick={() => handleDelete(node)} className="action-trigger w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center cursor-pointer" title="삭제"><FontAwesomeIcon icon={faTrashAlt} className="text-xs" /></button>
@@ -409,7 +424,7 @@ const AdminDept = () => {
             <button onClick={handleCloseForm} className="w-8 h-8 rounded-full hover:bg-white hover:shadow-sm text-slate-400 hover:text-slate-600 transition-all flex items-center justify-center cursor-pointer"><FontAwesomeIcon icon={faTimes} className="text-xs" /></button>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-            {formMode === 'CREATE_SUB' && (
+            {(formMode === 'CREATE_SUB' || (formMode === 'EDIT' && formData.dept_type === 'SUB')) && (
               <div className="space-y-1.5 relative">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">상위 본부 선택</label>
                 <div
@@ -422,21 +437,58 @@ const AdminDept = () => {
                 {errors.parent_dept_seq && <p className="text-[9px] text-red-500 font-medium ml-1">{errors.parent_dept_seq}</p>}
                 {isDropdownOpen && (
                   <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.15)] z-50 overflow-hidden border border-slate-100">
-                    {Object.values(fullTree.nodeMap).filter(node => node.parentDeptSeq === hqParentDeptSeq).map(dept => (
-                      <div
-                        key={dept.deptSeq}
-                        className="px-4 py-3 text-xs text-slate-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
-                        onClick={() => {
-                          setFormData({ ...formData, parent_dept_seq: dept.deptSeq });
-                          setIsDropdownOpen(false);
-                          setErrors(prev => ({ ...prev, parent_dept_seq: null }));
-                        }}
-                      >
-                        {dept.deptName}
-                      </div>
-                    ))}
+                    {Object.values(fullTree.nodeMap)
+                      .filter(node => node.parentDeptSeq === hqParentDeptSeq && node.deptSeq !== formData.dept_seq)
+                      .sort((a, b) => a.deptSeq - b.deptSeq)
+                      .map(dept => (
+                        <div
+                          key={dept.deptSeq}
+                          className="px-4 py-3 text-xs text-slate-600 hover:bg-[#F0F4FF] hover:text-[#3530B8] active:bg-[#F0F4FF] active:text-[#3530B8] cursor-pointer transition-colors"
+                          onClick={() => {
+                            setFormData({ ...formData, parent_dept_seq: dept.deptSeq });
+                            setIsDropdownOpen(false);
+                            setErrors(prev => ({ ...prev, parent_dept_seq: null }));
+                          }}
+                        >
+                          {dept.deptName}
+                        </div>
+                      ))}
                   </div>
                 )}
+              </div>
+            )}
+            {formMode === 'EDIT' && (
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">조직 구분</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div
+                    className={`px-3 py-2 rounded-xl border text-[11px] font-bold cursor-pointer transition-all flex items-center justify-center
+                      ${formData.dept_type === 'HQ' ? 'bg-[#3530B8] text-white border-[#3530B8]' : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-[#3530B8]'}`}
+                    onClick={() => setFormData(prev => ({
+                      ...prev,
+                      dept_type: 'HQ',
+                      parent_dept_seq: hqParentDeptSeq
+                    }))}
+                  >
+                    본부
+                  </div>
+                  <div
+                    className={`px-3 py-2 rounded-xl border text-[11px] font-bold cursor-pointer transition-all flex items-center justify-center
+                      ${formData.dept_type === 'SUB' ? 'bg-[#3530B8] text-white border-[#3530B8]' : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-[#3530B8]'}`}
+                    onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        dept_type: 'SUB',
+                        parent_dept_seq:
+                          prev.dept_type === 'HQ'
+                            ? ''
+                            : prev.parent_dept_seq
+                      }));
+                    }}
+                  >
+                    부서
+                  </div>
+                </div>
               </div>
             )}
             <div className="space-y-1.5">

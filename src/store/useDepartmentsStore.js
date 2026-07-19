@@ -21,6 +21,12 @@ const useDepartmentsStore = create((set, get) => ({
         });
     },
 
+     invalidateGroupData: () => {
+        set({
+            loaded: false
+        });
+    },
+
     setProfileImage: (sysname, imageUrl) => {
         const oldUrls = get().profileObjectUrls[sysname];
         if (oldUrls && oldUrls !== imageUrl) {
