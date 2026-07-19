@@ -230,7 +230,6 @@ const Sidebar = ({ isOpen, onClose }) => {
   };
 
   const userAuthGroups = user?.user_auth_group ?? [];
-
   const allUserGroups = [user?.auth_group, ...userAuthGroups].filter(Boolean);
   const isSuperAdmin = allUserGroups.includes("ROLE_SUPER_ADMIN");
 
