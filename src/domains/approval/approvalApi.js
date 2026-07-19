@@ -43,3 +43,5 @@ export const getMyDraftDoc = () => maxios.get("/approval/MydraftDoc");
 export const getPageMyDoneDoc = (cpage, keyword, docType) => maxios.get("/approval/MyDoneDoc/page", { params: { cpage, keyword, docType } });
 
 export const bulkApproveDocuments = (docSeqList) => maxios.put("/approval/bulkApproveDocuments", docSeqList);
+
+export const getDefaultApprovers = (doc_type) => maxios.get("/approval/defaultApprovalLine", { params: { doc_type: doc_type } });
