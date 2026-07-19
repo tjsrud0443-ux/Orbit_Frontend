@@ -4,8 +4,11 @@ import { emailDuplCheck } from '../auth/authApi';
 import { useNavigate } from 'react-router-dom';
 import useUserStore from '../../store/userStore';
 import { alertSuccess, alertError } from '../../utils/alert';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const MyPageEdit = () => {
+  const { pages } = usePageInfoStore();
+  const currentPageInfo = pages.find(p => p.page_code === 'MyPageEdit');
   const navigate = useNavigate();
   const { user, setUser } = useUserStore();
   const postcodeRef = useRef(null);
@@ -347,8 +350,8 @@ const MyPageEdit = () => {
       {/* 헤더 */}
       <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', shrink: 0 }}>
         <div>
-          <h1 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0F172A', marginBottom: '0.15rem' }}>내 정보 관리</h1>
-          <p style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: '500' }}>나의 인사 정보와 연락처를 확인하고 관리할 수 있습니다.</p>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0F172A', marginBottom: '0.15rem' }}>{currentPageInfo?.page_name}</h1>
+          <p style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: '500' }}>{currentPageInfo?.page_info}</p>
         </div>
       </div>
 
