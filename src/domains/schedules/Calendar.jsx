@@ -4,7 +4,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 
-import { fetchHolidays } from '../../api/holidayApi';
+import { fetchHolidays, resyncHolidays } from '../../api/holidayApi';
 import { getSchedules, createSchedule, deleteSchedule, updateSchedule, getApprovedVacations } from './schedulesApi';
 import useLoadingStore from '../../store/useLoadingStore';
 import useUserStore from '../../store/userStore';
@@ -190,6 +190,7 @@ const Calendar = () => {
   const [pickerYear, setPickerYear] = useState(new Date().getFullYear());
   const [pickerMonth, setPickerMonth] = useState(new Date().getMonth() + 1);
   const yearScrollRef = useRef(null);
+  const [isResyncing, setIsResyncing] = useState(false);
 
   useEffect(() => {
     if (showDatePicker && yearScrollRef.current) {
@@ -368,7 +369,11 @@ const Calendar = () => {
           const mappedHolidays = holidays.map(h => ({
             ...h,
             allDay: true,
-            display: 'list-item'
+            display: 'list-item',
+            extendedProps: {
+              category: 'holiday',
+              is_holiday: h.is_holiday,
+            }
           }));
           return [...prev, ...mappedHolidays.filter(h => !existingIds.has(h.id))];
         };
@@ -398,6 +403,45 @@ const Calendar = () => {
       }
     }, 0);
   }, [loadHolidaysForYear]);
+
+  //특정 연도 공휴일 재동기화
+  const handleResyncHolidays = async () => {
+    if (isResyncing) return;
+    setIsResyncing(true);
+    const result = await alertConfirm(
+      '공휴일 재동기화',
+      `${pickerYear}년 공휴일 정보를 다시 불러오시겠습니까?`
+    );
+    if (!result.isConfirmed) {
+      setIsResyncing(false);
+      return;
+    }
+
+    showLoading();
+    try {
+      await resyncHolidays(pickerYear);
+
+      // 재동기화했으니 알림 기록 초기화 (다시 확인 필요할 수도 있어서)
+      alertedYearsRef.current.delete(pickerYear);
+
+      // 기존에 화면에 그려진 해당 연도 공휴일 이벤트 제거
+      const isSameYear = (e) => e.start?.startsWith(String(pickerYear));
+      setCompanyEvents(prev => prev.filter(e => !(e.category === 'holiday' && isSameYear(e))));
+      setPersonalEvents(prev => prev.filter(e => !(e.category === 'holiday' && isSameYear(e))));
+
+      // 새로 받아온 데이터로 다시 채움
+      await loadHolidaysForYear(pickerYear, true);
+
+      alertSuccess('재동기화 완료', `${pickerYear}년 공휴일 정보가 갱신되었습니다.`);
+    } catch (err) {
+      console.error('공휴일 재동기화 실패:', err);
+      alertError('재동기화 실패', '공휴일 정보를 다시 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      hideLoading();
+      setIsResyncing(false);
+    }
+  };
+
 //카테고리가 PERSONAL이라 companyChecked 필터에 안 걸리니, 공유된 일정은 별도로 통과
   const filteredEvents = activeTab === 'personal'
     ? personalEvents.filter(e => personalChecked[e.category])
@@ -825,6 +869,19 @@ if (isEditing) {
                               </button>
                             ))}
                           </div>
+                          {isHrAdmin && (
+                            <button
+                              onClick={handleResyncHolidays}
+                              disabled={isResyncing}
+                              className="mt-3 w-full py-1.5 text-[10px] font-semibold text-slate-400 hover:text-[#3530B8] rounded-lg hover:bg-[#F0F4FF] transition-colors flex items-center justify-center gap-1 border border-slate-100 whitespace-nowrap shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                              title={`${pickerYear}년 공휴일 정보를 다시 불러옵니다`}
+                            >
+                              <svg className="w-2.5 h-2.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                              재동기화
+                            </button>
+                          )}
                         </div>
                         
                         {/* 월 선택 영역 */}
@@ -1219,7 +1276,11 @@ if (isEditing) {
             <p className="mt-2 text-[0.625rem] text-slate-400 text-right">* 프로젝트 및 회의 일정은 수정할 수 없습니다.</p>
           )}
           {detailModal.event.extendedProps?.category === 'holiday' && (
-            <p className="mt-2 text-[0.625rem] text-slate-400 text-right">* 공휴일은 수정할 수 없습니다.</p>
+            <p className="mt-2 text-[0.625rem] text-slate-400 text-right">
+              {detailModal.event.extendedProps?.is_holiday === 'N' 
+                ? '* 국경일이지만 관공서 휴일은 아닙니다.' 
+                : '* 공휴일은 수정할 수 없습니다.'}
+            </p>
           )}
           {COMPANY_CATEGORIES.includes(detailModal.event.extendedProps?.category) && 
           detailModal.event.extendedProps?.category !== 'holiday' && 
