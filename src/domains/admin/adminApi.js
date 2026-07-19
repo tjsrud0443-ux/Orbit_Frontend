@@ -62,9 +62,10 @@ export const updateSupplyReqStatus = (upData) => maxios.put("/admin/supplyReqSta
 export const getSupplyRentalList = (params) => maxios.get("/admin/supplyRental", { params });
 export const updateRentalStatus = (upRental) => maxios.put("/admin/returnSupply", upRental);
 
-export const getMyDeptQuestion = (dept_seq, auth_group) => maxios.get("/admin/ai/myDeptQuestion", { params: { dept_seq, auth_group } });
+export const getMyDeptQuestion = (dept_seq, isSuperAdmin) => maxios.get("/admin/ai/myDeptQuestion", { params: { dept_seq, is_super_admin : isSuperAdmin } });
 export const insertUpdateAnswer = (payload) => maxios.put("/admin/ai/insertUpdateAnswer", payload);
 export const deleteMyAnswer = (question_seq) => maxios.put("/admin/ai/deleteAnswer/" + question_seq);
+export const adminAiQuestionsData = (dept_seq, isSuperAdmin) => maxios.get("/admin/ai/adminAiQuestionsData", { params: { dept_seq, is_super_admin : isSuperAdmin} });
 
 // 근무시간 정정 신청 관리
 export const getAllCheckoutRQ = (page, status) => maxios.get("/admin/hr/getAllCheckoutRQ", { params: { cPage: page, status: status } });
@@ -73,8 +74,6 @@ export const approveCheckout = (seq) => maxios.put(`/admin/hr/approveCheckout/${
 export const rejectCheckout = (seq) => maxios.put(`/admin/hr/rejectCheckout/${seq}`);
 export const approveOvertime = (seq) => maxios.put(`/admin/hr/approveOvertime/${seq}`);
 export const rejectOvertime = (seq) => maxios.put(`admin/hr/rejectOvertime/${seq}`);
-
-export const adminAiQuestionsData = (dept_seq, auth_group) => maxios.get("/admin/ai/adminAiQuestionsData", { params: { dept_seq, auth_group } });
 
 export const getCompanyInfo = () => maxios.get("/admin/company/getCompanyInfo");
 export const insertCompanyInfo = (data) => maxios.post("/admin/company/insertCompanyInfo", data);
