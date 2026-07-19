@@ -9,116 +9,11 @@ import GeneralForm from './forms/GeneralForm';
 import PurchaseForm from './forms/PurchaseForm';
 import {
   submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail, approveDraft, rejectApproval,
-  updateVacation, updateGeneral, updatePayment, updatePurchase, deleteDoc
+  updateVacation, updateGeneral, updatePayment, updatePurchase, deleteDoc,
+  getDefaultApprovers
 } from './approvalApi';
 import useLoadingStore from '../../store/useLoadingStore';
 import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
-
-const getDefaultApprovers = (docType, user, allEmployees) => {
-  if (!user || !allEmployees?.length) return [];
-
-  const mode = import.meta.env.VITE_APP_MODE;
-
-  if (mode === 'demo') {
-    return getDemoApprovers(docType, user, allEmployees);
-  } else {
-    return getProductionApprovers(docType, user, allEmployees);
-  }
-};
-
-const getDemoApprovers = (docType, user, allEmployees) => {
-  const isStaff = !['팀장', '원장', '대표'].includes(user.rank_name);
-  const isManager = user.rank_name === '팀장';
-  const isDirector = user.rank_name === '원장';
-
-  const myManager = allEmployees.find(e => e.rank_name === '팀장' && e.dept_seq === user.dept_seq && e.users_seq !== user.users_seq) || null;
-  const director = allEmployees.find(e => e.rank_name === '원장') || null;
-  const ceo = allEmployees.find(e => e.rank_name === '대표') || null;
-
-  const fnManager = allEmployees
-    .filter(e => e.auth_group === 'ROLE_FN_ADMIN' && e.users_seq !== user.users_seq)
-    .sort((a, b) => a.rank_order - b.rank_order)[0] || null;
-
-  const lines = {
-    VACATION: {
-      staff: [myManager ?? director],
-      manager: [director ?? ceo],
-      director: [ceo],
-    },
-    PURCHASE: {
-      staff: [myManager, director, ceo],
-      manager: [director, ceo],
-      director: [ceo],
-    },
-    PAYMENT: {
-      staff: [myManager, fnManager, director, ceo],
-      manager: [fnManager, director, ceo],
-      director: [ceo],
-    },
-    GENERAL: {
-      staff: [myManager, director, ceo],
-      manager: [director, ceo],
-      director: [ceo],
-    },
-  };
-
-  const role = isStaff ? 'staff' : isManager ? 'manager' : isDirector ? 'director' : null;
-  if (!role) return [];
-
-  return dedup(lines[docType]?.[role] ?? [], user);
-};
-
-const getProductionApprovers = (docType, user, allEmployees) => {
-  const isStaff = !['부서장', '본부장', '대표'].includes(user.rank_name);
-  const isManager = user.rank_name === '부서장';
-  const isDirector = user.rank_name === '본부장';
-
-  const myManager = allEmployees.find(e => e.rank_name === '부서장' && e.dept_seq === user.dept_seq && e.users_seq !== user.users_seq) || null;
-  const myDirector = allEmployees.find(e => e.rank_name === '본부장' && e.dept_seq === user.parent_dept_seq) || null;
-  const fnManager = allEmployees.find(e => e.rank_name === '부서장' && e.auth_group === 'ROLE_FN_ADMIN') || null;
-  const ceo = allEmployees.find(e => e.rank_name === '대표') || null;
-
-  const lines = {
-    VACATION: {
-      staff: [myManager ?? myDirector],
-      manager: [myDirector ?? ceo],
-      director: [ceo],
-    },
-    PURCHASE: {
-      staff: [myManager, myDirector, ceo],
-      manager: [myDirector, ceo],
-      director: [ceo],
-    },
-    PAYMENT: {
-      staff: [myManager, fnManager, myDirector, ceo],
-      manager: [fnManager, myDirector, ceo],
-      director: [ceo],
-    },
-    GENERAL: {
-      staff: [myManager, myDirector, ceo],
-      manager: [myDirector, ceo],
-      director: [ceo],
-    },
-  };
-
-  const role = isStaff ? 'staff' : isManager ? 'manager' : isDirector ? 'director' : null;
-  if (!role) return [];
-
-  return dedup(lines[docType]?.[role] ?? [], user);
-};
-
-const dedup = (candidates, user) => {
-  const seen = new Set();
-  return candidates
-    .filter(Boolean)
-    .filter(emp => {
-      if (emp.users_seq === user.users_seq) return false;
-      if (seen.has(emp.users_seq)) return false;
-      seen.add(emp.users_seq);
-      return true;
-    })
-    .map(e => ({ ...e, status: 'WAITING' }));
-}
 
 const EmployeeSelectionModal = ({ isOpen, onClose, onSelect }) => {
   const { allEmployees } = useEmployeeStore();
@@ -231,10 +126,14 @@ const ApprovalDetail = () => {
   }, [type, docSeq, user?.id, refresh]);
 
   useEffect(() => {
-    if (!docSeq && allEmployees?.length > 0 && user && doc_type) {
-      setApprovers(getDefaultApprovers(doc_type, user, allEmployees));
-    }
-  }, [allEmployees, user, doc_type, docSeq]);
+    if (!type || docSeq) return;
+    if (!user) return;
+
+    const upperType = type.toUpperCase();
+    getDefaultApprovers(upperType).then(resp => {
+      setApprovers(resp.data.map(a => ({ ...a, status: 'WAITING' })));
+    }).catch(err => console.error('기본 결재라인 로드 실패:', err));
+  }, [type, docSeq, user?.id]);
 
   const handleReorderApprover = (index, direction) => {
     setApprovers(prev => {

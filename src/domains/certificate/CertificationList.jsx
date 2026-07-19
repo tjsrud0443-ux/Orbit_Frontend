@@ -3,12 +3,14 @@ import { FileText } from 'lucide-react';
 import Pagination from '../../components/common/Pagination';
 import PurposeSelectModal from './PurposeSelectModal';
 import EmploymentCertificate from './EmploymentCertificate';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const CertificationList = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [previewMode, setPreviewMode] = useState(false);
     const [selectedPurpose, setSelectedPurpose] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const { pages } = usePageInfoStore();
 
     const handlePreviewClick = (purpose) => {
         setSelectedPurpose(purpose);
@@ -30,12 +32,14 @@ const CertificationList = () => {
         );
     }
 
+    const currentPageInfo = pages.find(p => p.page_code === 'CertificationList');
+
     return (
         <div className="w-full h-full flex flex-col p-6 md:p-8 lg:px-10 box-border bg-white font-sans">
             <div className="mb-4 sm:mb-8 flex justify-between items-start shrink-0">
                 <div>
-                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">증명서 발급</h1>
-                    <p className="text-xs sm:text-[0.85rem] text-gray-500 font-medium mb-3">발급 및 출력을 위해 증명서 종류를 선택하세요.</p>
+                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">{currentPageInfo?.page_name}</h1>
+                    <p className="text-xs sm:text-[0.85rem] text-gray-500 font-medium mb-3">{currentPageInfo?.page_info}</p>
                 </div>
             </div>
 
