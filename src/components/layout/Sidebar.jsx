@@ -229,18 +229,23 @@ const Sidebar = ({ isOpen, onClose }) => {
     setOpenMenuName(prev => prev === menuName ? null : menuName);
   };
 
-  const isAdminUser = user?.auth_group === 'ROLE_SUPER_ADMIN';
+  const userAuthGroups = user?.user_auth_group ?? [];
+
+  const allUserGroups = [user?.auth_group, ...userAuthGroups].filter(Boolean);
+  const isSuperAdmin = allUserGroups.includes("ROLE_SUPER_ADMIN");
 
   const hasMenuAccess = (item) => {
     if (isAdminMode) {
-      return isAdminUser;
+      return isSuperAdmin;
     }
 
-    if (item.authGroups) {
-      return item.authGroups.includes(user?.auth_group);
+    if (!item.authGroups) {
+      return true;
     }
 
-    return true;
+    return item.authGroups.some(
+      authGroup => allUserGroups.includes(authGroup)
+    );
   };
 
   const filteredMenuItems = currentMenuPool.filter(hasMenuAccess);
@@ -286,7 +291,8 @@ const Sidebar = ({ isOpen, onClose }) => {
   }, [
     location.pathname,
     isAdminMode,
-    user?.auth_group
+    user?.auth_group,
+    user?.user_auth_group
   ]);
 
   return (
@@ -402,7 +408,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           </nav>
 
           <div className="mt-3 pt-3 border-t border-slate-100 shrink-0 space-y-1.5">
-            {user?.auth_group === 'ROLE_SUPER_ADMIN' && (
+            {isSuperAdmin && (
               <button
                 onClick={() => {
                   const nextAdminMode = !isAdminMode;
