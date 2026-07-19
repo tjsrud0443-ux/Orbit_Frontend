@@ -1,11 +1,16 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
-import ReactQuill from 'react-quill-new';
+import ReactQuill, { Quill } from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css'; // 기본 스노우 테마 CSS 로드
 import { maxios } from "../../api/axiosConfig";
 import { useNavigate, useLocation } from 'react-router-dom';
 import useUserStore from '../../store/userStore';
 import { insertBoard, insertEditorImage, updateBoard } from './boardApi';
 import { alertSuccess, alertError } from '../../utils/alert';
+
+// 💡 폰트 크기 whitelist를 숫자(px) 단위로 등록
+const Size = Quill.import('attributors/style/size');
+Size.whitelist = ['12px', '14px', '16px', '18px', '20px', '24px', '32px', '48px','64px', '72px'];
+Quill.register(Size, true);
 
 const CATEGORIES_HR = ['공지', '경조', '생일', '승진', '부서 이동', '자유'];
 
@@ -108,10 +113,11 @@ const BoardWrite = () => {
       toolbar: {
         container: isMobile ? [
           ['bold', 'italic', 'underline'],
+          [{ size: ['12px', '14px', '16px', '18px', '20px', '24px', '32px', '48px', '64px', '72px'] }],
           [{ list: 'ordered' }, { list: 'bullet' }],
           ['image', 'link'],
         ] : [
-          [{ header: [1, 2, 3, false] }],
+          [{ size: ['12px', '14px', '16px', '18px', '20px', '24px', '32px', '48px', '64px', '72px'] }],
           ['bold', 'italic', 'underline', 'strike'],
           [{ color: [] }, { background: [] }],
           [{ list: 'ordered' }, { list: 'bullet' }],
@@ -254,7 +260,6 @@ const BoardWrite = () => {
       {/* 페이지 헤더 */}
       <div className="w-full mb-6 shrink-0">
         <h1 className="text-2xl font-bold text-gray-900 mb-1">사내 게시판</h1>
-        <p className="text-[0.85rem] text-gray-500 font-medium">공지사항, 이벤트, 자유게시글을 확인하세요</p>
       </div>
 
       {/* 카드 */}
@@ -386,6 +391,23 @@ const BoardWrite = () => {
                 .ql-error .ql-container.ql-snow {
                   border-color: #F87171 !important;
                   box-shadow: 0 0 0 4px rgba(248, 113, 113, 0.1);
+                }
+
+                /* ✅ 폰트 크기 드롭다운 - 숫자로 표시 */
+                .ql-snow .ql-picker.ql-size .ql-picker-label::before,
+                .ql-snow .ql-picker.ql-size .ql-picker-item::before {
+                  content: attr(data-value) !important;
+                }
+
+                /* 기본값(설정 안 했을 때 normal) 라벨 처리 */
+                .ql-snow .ql-picker.ql-size .ql-picker-label[data-value=""]::before,
+                .ql-snow .ql-picker.ql-size .ql-picker-item[data-value=""]::before {
+                  content: '기본' !important;
+                }
+
+                /* 드롭다운 너비가 좁으면 숫자가 잘릴 수 있어 살짝 넓혀줌 */
+                .ql-snow .ql-picker.ql-size {
+                  width: 70px !important;
                 }
               `}</style>
               {/* 에디터 컴포넌트 감싸기 및 Tailwind 커스텀 */}

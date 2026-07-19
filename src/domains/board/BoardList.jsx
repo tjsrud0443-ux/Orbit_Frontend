@@ -5,6 +5,7 @@ import MobilePagination from '../../components/common/MobilePagination';
 import { maxios } from "../../api/axiosConfig"; 
 import { getBoardList } from './boardApi';
 import useLoadingStore from '../../store/useLoadingStore';
+import usePageInfoStore from '../../store/usePageInfoStore';
 import { alertSuccess, alertError } from '../../utils/alert';
 
 const ITEMS_PER_PAGE = 10;
@@ -102,6 +103,8 @@ const PostRow = ({ post, total, onLike, onClick }) => {
 );
 }
 const BoardList = () => {
+  const { pages } = usePageInfoStore();
+  const currentPageInfo = pages.find(p => p.page_code === 'BoardList'); // DB
   const navigate = useNavigate();
   const location = useLocation();
   const nav = () => {
@@ -172,8 +175,8 @@ useEffect(() => {
       {/* 페이지 헤더 */}
       <div className="mb-4 flex justify-between items-start shrink-0">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">사내 게시판</h1>
-          <p className="text-[0.85rem] text-gray-500 font-medium mb-3">공지사항, 이벤트, 게시글을 확인하세요</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">{currentPageInfo?.page_name}</h1>
+          <p className="text-[0.85rem] text-gray-500 font-medium mb-3">{currentPageInfo?.page_info}</p>
         </div>
         <div className="flex flex-col items-end">
           <button 
