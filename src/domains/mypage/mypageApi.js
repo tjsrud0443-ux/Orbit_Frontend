@@ -13,6 +13,15 @@ export const uploadStampFile = (file) => {
     }
   });
 };
+export const updateProfileFile = (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return maxios.put("/users/myPage/updateProfileFile", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    });
+  };
 
 /*이번 달 요약 */
 export const getCntMonth = () => maxios.get("/Attendance/monthCount");
