@@ -120,7 +120,8 @@ const adminMenuItems = [
       { name: '직급 관리', path: '/adminRank' },
       { name: '회원가입 관리', path: '/adminSignup' },
       { name: '근태 관리', path: '/adminAttendance' },
-      { name: '연차 관리', path: '/adminLeave' }
+      { name: '연차 관리', path: '/adminLeave' },
+      { name: '증명서 발급 신청 관리', path: '/adminCertRequest' }
     ]
   },
   {
