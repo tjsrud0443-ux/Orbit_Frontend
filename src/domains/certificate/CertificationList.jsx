@@ -1,15 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FileText } from 'lucide-react';
 import Pagination from '../../components/common/Pagination';
 import PurposeSelectModal from './PurposeSelectModal';
 import EmploymentCertificate from './EmploymentCertificate';
 import usePageInfoStore from '../../store/usePageInfoStore';
-import { getCertType } from './certificateApi';
+import { getCertType, insertCertRequest } from './certificateApi';
+import { alertError, alertSuccess } from '../../utils/alert';
 
 const CertificationList = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [previewMode, setPreviewMode] = useState(false);
     const [selectedPurpose, setSelectedPurpose] = useState('');
+    const [selectedCertType, setSelectedCertType] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const { pages } = usePageInfoStore();
     const [certType, setCertType] = useState([]);
@@ -26,15 +28,36 @@ const CertificationList = () => {
         fetchCertType();
     },[]);
 
-    const handlePreviewClick = (purpose) => {
-        setSelectedPurpose(purpose);
-        setIsModalOpen(false);
-        setPreviewMode(true);
+    const handleRequestClick = (cert) => {
+        setSelectedCertType(cert);
+        setIsModalOpen(true);
+    };
+
+    const handlePreviewClick = async ({ purposeValue, purposeLabel }) => {
+        if (!selectedCertType?.cert_type_seq) {
+            await alertError('신청 실패', '증명서 유형 정보가 없습니다.');
+            return;
+        }
+
+        try {
+            await insertCertRequest({
+                cert_type_seq: selectedCertType.cert_type_seq,
+                requset_reason: purposeLabel
+            });
+            await alertSuccess('신청 완료', '증명서 발급 신청이 완료되었습니다.');
+            setSelectedPurpose(purposeLabel);
+            setIsModalOpen(false);
+            setPreviewMode(true);
+        } catch (err) {
+            console.error('증명서 발급 신청 실패', err);
+            await alertError('신청 실패', '증명서 발급 신청 중 오류가 발생했습니다.');
+        }
     };
 
     const handleBackToOptions = () => {
         setPreviewMode(false);
         setSelectedPurpose('');
+        setSelectedCertType(null);
     };
 
     if (previewMode) {
@@ -63,7 +86,7 @@ const CertificationList = () => {
 
                     return cert ? (
                         <div
-                            key={cert.cert_type_id ?? cert.cert_type_name ?? idx}
+                            key={cert.cert_type_seq ?? cert.cert_type_id ?? cert.cert_type_name ?? idx}
                             className="relative overflow-hidden rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 shadow-md flex flex-row items-center justify-between sm:flex-col sm:items-stretch sm:justify-start p-4 sm:p-6 hover:shadow-lg transition-shadow"
                         >
                             <div className="flex-grow sm:flex-grow-0 sm:flex-grow">
@@ -74,7 +97,7 @@ const CertificationList = () => {
                                 <p className="hidden sm:block text-sm text-gray-600 mb-6">{cert.cert_description}</p>
                             </div>
                             <button
-                                onClick={() => setIsModalOpen(true)}
+                                onClick={() => handleRequestClick(cert)}
                                 className="w-auto sm:w-full py-2 px-3 sm:px-0 sm:py-2.5 bg-white text-indigo-600 text-sm sm:text-base font-semibold rounded-lg shadow-sm border border-indigo-100 hover:bg-indigo-50 transition-colors whitespace-nowrap ml-4 sm:ml-0"
                             >
                                 발급 신청
@@ -94,7 +117,10 @@ const CertificationList = () => {
 
             {isModalOpen && (
                 <PurposeSelectModal
-                    onClose={() => setIsModalOpen(false)}
+                    onClose={() => {
+                        setIsModalOpen(false);
+                        setSelectedCertType(null);
+                    }}
                     onConfirm={handlePreviewClick}
                 />
             )}

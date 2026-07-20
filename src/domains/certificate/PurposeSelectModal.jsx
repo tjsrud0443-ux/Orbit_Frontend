@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { X } from 'lucide-react';
 import { alertWarning } from '../../utils/alert';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -33,7 +33,10 @@ const PurposeSelectModal = ({ onClose, onConfirm }) => {
       }
     }
     const finalPurpose = selected === 'ETC' ? etcText.trim() : options.find(o => o.value === selected)?.label;
-    onConfirm(finalPurpose);
+    onConfirm({
+      purposeValue: selected,
+      purposeLabel: finalPurpose
+    });
   };
 
   return (
