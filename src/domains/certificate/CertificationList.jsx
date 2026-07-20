@@ -42,7 +42,7 @@ const CertificationList = () => {
         try {
             await insertCertRequest({
                 cert_type_seq: selectedCertType.cert_type_seq,
-                requset_reason: purposeLabel
+                request_reason: purposeLabel
             });
             await alertSuccess('신청 완료', '증명서 발급 신청이 완료되었습니다.');
             setSelectedPurpose(purposeLabel);
