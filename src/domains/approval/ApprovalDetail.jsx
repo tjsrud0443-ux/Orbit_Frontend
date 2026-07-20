@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import useUserStore from '../../store/userStore';
 import useEmployeeStore from '../../store/useEmployeeStore';
 import ApprovalDocumentContainer from './components/ApprovalDocumentContainer';
@@ -90,6 +90,20 @@ const ApprovalDetail = () => {
   const hideLoading = useLoadingStore(state => state.hideLoading);
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const [originalDocSeq, setOriginalDocSeq] = useState(null);
+
+  useEffect(() => {
+    if (location.state?.resubmitData) {
+      const upperType = type.toUpperCase();
+      setDoc_type(upperType);
+      setUserRole('DRAFTER');
+      setMode('EDIT');
+      setFormData(location.state.resubmitData);
+      setOriginalDocSeq(location.state.originalDocSeq);
+      setApprovers([]);
+    }
+  }, []);
 
   useEffect(() => {
     fetchEmployees();
@@ -97,6 +111,7 @@ const ApprovalDetail = () => {
 
   useEffect(() => {
     if (!type) return;
+    if (location.state?.resubmitData) return;
 
     const upperType = type.toUpperCase();
     setDoc_type(upperType);
@@ -326,10 +341,10 @@ const ApprovalDetail = () => {
 
       if (doc_type === 'VACATION') {
         const formDataObj = buildFormData(submitPayload, formData);
-        response = await (isNew ? submitVacation(formDataObj) : updateVacation(docSeq, formDataObj));
+        response = await (isNew ? submitVacation(formDataObj, originalDocSeq) : updateVacation(docSeq, formDataObj));
       } else if (doc_type === 'GENERAL') {
         const formDataObj = buildFormData(submitPayload, formData);
-        response = await (isNew ? submitGeneral(formDataObj) : updateGeneral(docSeq, formDataObj));
+        response = await (isNew ? submitGeneral(formDataObj, originalDocSeq) : updateGeneral(docSeq, formDataObj));
       } else if (doc_type === 'PAYMENT') {
         const formDataObj = new FormData();
         const processedItems = (formData.items || []).map(({ receipt, ...rest }) => rest);
@@ -347,10 +362,10 @@ const ApprovalDetail = () => {
           }
         });
 
-        response = await (isNew ? submitPayment(formDataObj) : updatePayment(docSeq, formDataObj));
+        response = await (isNew ? submitPayment(formDataObj, originalDocSeq) : updatePayment(docSeq, formDataObj));
       } else if (doc_type === 'PURCHASE') {
         const formDataObj = buildFormData(submitPayload, formData);
-        response = await (isNew ? submitPurchase(formDataObj) : updatePurchase(docSeq, formDataObj));
+        response = await (isNew ? submitPurchase(formDataObj, originalDocSeq) : updatePurchase(docSeq, formDataObj));
       }
 
       if (response && (response.status === 200 || response.status === 201 || response.data)) {
@@ -433,9 +448,35 @@ const ApprovalDetail = () => {
     }
 
     if (actionType === 'CANCEL_EDIT') {
+      if (originalDocSeq) {
+        setOriginalDocSeq(null);
+        navigate(-1);
+        return;
+      }
+
       setMode('VIEW');
       setRefresh(prev => prev + 1);
       return;
+    }
+
+    if (actionType === 'RESUBMIT') {
+      navigate(`/approval/write/${doc_type.toLowerCase()}`, {
+        state: {
+          resubmitData: {
+            ...formData,
+            approvers: undefined,
+            status: undefined,
+            doc_seq: undefined,
+            resubmit_doc_seq: undefined,
+          },
+          originalDocSeq: docSeq
+        },
+        replace: false
+      });
+      setApprovers([]);
+      setMode('EDIT');
+      setUserRole('DRAFTER');
+      setOriginalDocSeq(docSeq);
     }
 
     if (actionType === 'SUBMIT' || actionType === 'TEMP_SAVE') {
@@ -542,6 +583,9 @@ const ApprovalDetail = () => {
         onRemoveApprover={handleRemoveApprover}
         onReorderApprover={handleReorderApprover}
         onAction={handleAction}
+        resubmit_doc_seq={formData?.resubmit_doc_seq}
+        docSeq={docSeq}
+        originalDocSeq={originalDocSeq}
         isRejecting={isRejecting}
         setIsRejecting={setIsRejecting}
         rejectReason={rejectReason}

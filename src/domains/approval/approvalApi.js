@@ -4,18 +4,18 @@ export const getAllEmployees = () => maxios.get("/approval/all");
 export const getTopReferrers = () => maxios.get("/approval/topReferrers");
 export const getAllVacationTypes = () => maxios.get("/approval/vacationTypes");
 
-export const submitVacation = (formData) => maxios.post("/approval/submit/vacation", formData, {
+export const submitVacation = (formData, originalDocSeq = null) => maxios.post(`/approval/submit/vacation${originalDocSeq ? `?originalDocSeq=${originalDocSeq}` : ''}`, formData, {
     headers: {
         "Content-Type": "multipart/form-data"
     }
 });
-export const submitPurchase = (formData) => maxios.post("/approval/submit/purchase", formData, {
+export const submitPurchase = (formData, originalDocSeq = null) => maxios.post(`/approval/submit/purchase${originalDocSeq ? `?originalDocSeq=${originalDocSeq}` : ''}`, formData, {
     headers: {
         "Content-Type": "multipart/form-data"
     }
 });
-export const submitPayment = (payload) => maxios.post("/approval/submit/payment", payload);
-export const submitGeneral = (formData) => maxios.post("/approval/submit/general", formData, {
+export const submitPayment = (payload, originalDocSeq = null) => maxios.post(`/approval/submit/payment${originalDocSeq ? `?originalDocSeq=${originalDocSeq}` : ''}`, payload);
+export const submitGeneral = (formData, originalDocSeq = null) => maxios.post(`/approval/submit/general${originalDocSeq ? `?originalDocSeq=${originalDocSeq}` : ''}`, formData, {
     headers: {
         "Content-Type": "multipart/form-data"
     }

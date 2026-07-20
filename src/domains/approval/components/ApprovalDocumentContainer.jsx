@@ -14,6 +14,9 @@ const ApprovalDocumentContainer = ({
   onRemoveApprover,
   onReorderApprover,
   onAction,
+  resubmit_doc_seq,
+  originalDocSeq,
+  docSeq,
   isRejecting,
   setIsRejecting,
   rejectReason,
@@ -58,6 +61,9 @@ const ApprovalDocumentContainer = ({
               mode={mode}
               documentStatus={documentStatus}
               onAction={onAction}
+              resubmit_doc_seq={resubmit_doc_seq}
+              originalDocSeq={originalDocSeq}
+              docSeq={docSeq}
               approvers={approvers}
               isRejecting={isRejecting}
               setIsRejecting={setIsRejecting}
@@ -103,6 +109,9 @@ const ApprovalDocumentContainer = ({
             mode={mode}
             documentStatus={documentStatus}
             onAction={onAction}
+            resubmit_doc_seq={resubmit_doc_seq}
+            originalDocSeq={originalDocSeq}
+            docSeq={docSeq}
             approvers={approvers}
             isRejecting={isRejecting}
             setIsRejecting={setIsRejecting}

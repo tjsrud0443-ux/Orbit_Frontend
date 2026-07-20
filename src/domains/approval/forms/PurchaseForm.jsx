@@ -127,12 +127,13 @@ const PurchaseForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
     onChange(prev => {
       const currentAttachments = prev.attachments || [];
       const filteredFiles = currentAttachments.filter((_, i) => i !== targetIdx);
-
-      if (filteredFiles.length === 0) {
-        setErrors(err => ({ ...err, attachments: '파일을 첨부해주세요.' }));
-      }
       return { ...prev, attachments: filteredFiles };
     });
+
+    const currentAttachments = data.attachments || [];
+    if (currentAttachments.length === 0) {
+      setErrors(err => ({ ...err, attachments: '파일을 첨부해주세요.' }));
+    }
   };
 
   const handleAddRow = () => {
