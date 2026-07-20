@@ -75,8 +75,8 @@ const AdminCertRequest = () => {
         </p>
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-center justify-end gap-4 mb-6 flex-shrink-0">
-        <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-[#F0F4FF] flex-shrink-0 overflow-x-auto no-scrollbar">
+      <div className="mb-6 flex-shrink-0 w-full text-left">
+        <div className="inline-flex bg-white p-1 rounded-2xl shadow-sm border border-[#F0F4FF] max-w-full overflow-x-auto no-scrollbar align-top">
           {tabs.map((tab) => (
             <button
               key={tab}
