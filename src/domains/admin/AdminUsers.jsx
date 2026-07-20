@@ -5,10 +5,14 @@ import { getAllUsers, updateUsersInfo, updateUsersState, getDeptList, getRankLis
 import { alertError, alertConfirm, alertSuccess } from '../../utils/alert';
 import useUserStore from '../../store/userStore';
 import useDepartmentsStore from '../../store/useDepartmentsStore';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const OPS_TEAM = '운영총괄'; 
 
 const AdminUsers = () => {
+  const { pages } = usePageInfoStore();
+  const currentPageInfo = pages.find(p => p.page_code === 'AdminUsers');
+  
   const mode = import.meta.env.VITE_APP_MODE;
   const isDemoMode = mode === 'demo';
   
@@ -255,8 +259,8 @@ const AdminUsers = () => {
       
       {/* [1] 헤더 영역 */}
       <div className={`mb-6 flex-shrink-0 ${selectedUser ? 'hidden md:block' : 'block'}`}>
-        <h1 className="text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">직원 관리</h1>
-        <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">등록된 직원 인적사항 및 재직 상태를 확인하고 관리할 수 있습니다.</p>
+        <h1 className="text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">{currentPageInfo?.page_name}</h1>
+        <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">{currentPageInfo?.page_info}</p>
       </div>
 
       {/* [2] 필터 탭 & 검색창 라인 */}
@@ -318,7 +322,9 @@ const AdminUsers = () => {
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-32">부서</th>
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-14">직급</th>
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-16">상태</th>
-                  <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-28">입사일</th>
+                  <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-28" title="재직: 입사일 / 휴직: 처리일 / 퇴사: 퇴사일">
+                    {activeTab === '퇴사' ? '퇴사일자' : activeTab === '휴직' ? '휴직일자' : activeTab === '재직' ? '입사일' : '기준일자'}
+                  </th>
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider pl-4 w-40">관리</th>
                 </tr>
               </thead>
@@ -380,8 +386,37 @@ const AdminUsers = () => {
                       </td>
 
                       <td className="py-1 sm:py-4 pl-4 sm:pl-0 text-[0.6875rem] sm:text-xs text-slate-400 font-mono block sm:table-cell sm:align-middle">
-                        <span className="inline sm:hidden text-slate-300 mr-1">입사일:</span>
-                        {emp.hire_date ? String(emp.hire_date).split(' ')[0] : ''}
+                        <span className="inline sm:hidden text-slate-300 mr-1">
+                          {activeTab === '전체' ? '기준일자:' : activeTab === '퇴사' ? '퇴사일자:' : activeTab === '휴직' ? '휴직일자:' : '입사일:'}
+                        </span>
+                        {(() => {
+                          const label = getStatusLabel(emp.status);
+                          const isAllTab = activeTab === '전체';
+                          if (label === '퇴사') {
+                            const rDate = emp.resignDate || emp.resign_date || emp.retire_date || emp.retireDate;
+                            return (
+                              <>
+                                {isAllTab && <span className="text-[9px] text-slate-400 mr-1">[퇴사]</span>}
+                                {rDate ? String(rDate).split(' ')[0] : '-'}
+                              </>
+                            );
+                          }
+                          if (label === '휴직') {
+                            const uDate = emp.updateAt || emp.update_at || emp.updatedAt || emp.updated_at;
+                            return (
+                              <>
+                                {isAllTab && <span className="text-[9px] text-slate-400 mr-1">[휴직]</span>}
+                                {uDate ? String(uDate).split(' ')[0] : '-'}
+                              </>
+                            );
+                          }
+                          return (
+                            <>
+                              {isAllTab && <span className="text-[9px] text-slate-400 mr-1">[입사]</span>}
+                              {emp.hire_date ? String(emp.hire_date).split(' ')[0] : '-'}
+                            </>
+                          );
+                        })()}
                       </td>
 
                       <td className="py-2 px-4 block sm:table-cell text-left w-fit sm:w-[160px] sm:min-w-[160px] clear-both mt-2">
@@ -677,8 +712,30 @@ const AdminUsers = () => {
                     )}
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">입사일</span>
-                      <span className="text-xs font-bold text-slate-700 font-mono">{selectedUser.hire_date ? String(selectedUser.hire_date).split(' ')[0] : ''}</span>
+                      <span className="text-xs font-bold text-slate-700 font-mono">{selectedUser.hire_date ? String(selectedUser.hire_date).split(' ')[0] : '-'}</span>
                     </div>
+                    {getStatusLabel(selectedUser.status) === '휴직' && (
+                      <div className="flex justify-between items-center mt-4">
+                        <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">휴직 처리일</span>
+                        <span className="text-xs font-bold text-slate-700 font-mono">
+                          {(() => {
+                            const uDate = selectedUser.updateAt || selectedUser.update_at || selectedUser.updatedAt || selectedUser.updated_at;
+                            return uDate ? String(uDate).split(' ')[0] : '-';
+                          })()}
+                        </span>
+                      </div>
+                    )}
+                    {getStatusLabel(selectedUser.status) === '퇴사' && (
+                      <div className="flex justify-between items-center mt-4">
+                        <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">퇴사일</span>
+                        <span className="text-xs font-bold text-slate-700 font-mono">
+                          {(() => {
+                            const rDate = selectedUser.resignDate || selectedUser.resign_date || selectedUser.retire_date || selectedUser.retireDate;
+                            return rDate ? String(rDate).split(' ')[0] : '-';
+                          })()}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
