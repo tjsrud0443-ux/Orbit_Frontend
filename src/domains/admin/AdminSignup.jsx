@@ -6,6 +6,7 @@ import useAuthStore from '../../store/authStore';
 import Calendar from '../../components/common/Calendar';
 import useLoadingStore from '../../store/useLoadingStore';
 import { alertSuccess } from '../../utils/alert';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const AdminSignup = () => {
   const [activeTab, setActiveTab] = useState('전체');
@@ -35,6 +36,7 @@ const AdminSignup = () => {
   const token = useAuthStore(state => state.token);
   const showLoading = useLoadingStore(state => state.showLoading);
   const hideLoading = useLoadingStore(state => state.hideLoading);
+  const { pages } = usePageInfoStore();
 
   const statusMap = {
     '전체': 'TOTAL',
@@ -149,24 +151,6 @@ const AdminSignup = () => {
       isValid = false;
     }
 
-    if (import.meta.env.VITE_APP_MODE !== 'demo') {
-      if (selectedDept.dept_seq !== null && selectedRank.rank_seq !== null) {
-        if (selectedDept.dept_seq === 2 && selectedRank.rank_seq !== 1) {
-          newErrors.rank = '대표이사실은 대표 직급만 선택 가능합니다.';
-          isValid = false;
-        } else if (selectedDept.dept_seq !== 2 && selectedRank.rank_seq === 1) {
-          newErrors.rank = '대표 직급은 대표이사실에서만 선택 가능합니다.';
-          isValid = false;
-        } else if (selectedDept.dept_name.includes('본부') && selectedRank.rank_name !== '본부장') {
-          newErrors.rank = '본부는 본부장 직급만 선택 가능합니다.';
-          isValid = false;
-        } else if (!selectedDept.dept_name.includes('본부') && selectedRank.rank_name === '본부장') {
-          newErrors.rank = '본부장 직급은 본부에서만 선택 가능합니다.';
-          isValid = false;
-        }
-      }
-    }
-
     if (!isValid) {
       setErrors(newErrors);
       return;
@@ -206,6 +190,8 @@ const AdminSignup = () => {
       }, 1500);
     });
   };
+
+  const currentPageInfo = pages.find(p => p.page_code === 'AdminSignup');
 
   return (
     <div className={`h-full flex flex-col ${selectedUser ? 'p-0 md:p-8' : 'p-6 md:p-8'} font-sans overflow-hidden bg-[#FFFFFF]`}>
@@ -259,9 +245,9 @@ const AdminSignup = () => {
 
       {/* Header Section - Fixed height */}
       <div className={`mb-6 flex-shrink-0 ${selectedUser ? 'hidden md:block' : 'block'}`}>
-        <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">회원가입 관리</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">{currentPageInfo?.page_name}</h1>
         <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">
-          신규 회원가입 신청 내역을 확인하고 승인, 반려할 수 있습니다.
+          {currentPageInfo?.page_info}
         </p>
       </div>
 
@@ -474,9 +460,6 @@ const AdminSignup = () => {
                                     setSelectedDept({ dept_seq: dept.dept_seq, dept_name: dept.dept_name });
                                     setIsDeptOpen(false);
                                     setErrors(prev => ({ ...prev, dept: '' }));
-                                    if (import.meta.env.VITE_APP_MODE !== 'demo') {
-                                      setSelectedRank({ rank_seq: null, rank_name: '직급을 선택하세요' });
-                                    }
                                   }}
                                   className="px-4 py-2.5 text-xs hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-medium border-b border-gray-50 last:border-0"
                                 >
@@ -500,12 +483,6 @@ const AdminSignup = () => {
                           {isRankOpen && (
                             <div className="absolute z-10 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-32 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
                               {rankList
-                                .filter(rank => {
-                                  if (import.meta.env.VITE_APP_MODE === 'demo') return true;
-                                  if (selectedDept.dept_seq === null) return true;
-                                  if (selectedDept.dept_seq === 2) return rank.rank_seq === 1;
-                                  return selectedDept.dept_name.includes('본부') ? rank.rank_name === '본부장' : (rank.rank_name !== '본부장' && rank.rank_seq !== 1);
-                                })
                                 .map((rank) => (
                                   <div
                                     key={rank.rank_seq}

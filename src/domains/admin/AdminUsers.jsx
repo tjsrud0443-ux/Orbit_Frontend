@@ -4,6 +4,8 @@ import MobilePagination from '../../components/common/MobilePagination';
 import { getAllUsers, updateUsersInfo, updateUsersState, getDeptList, getRankList} from './adminApi';
 import { alertError, alertConfirm, alertSuccess } from '../../utils/alert';
 import useUserStore from '../../store/userStore';
+import useDepartmentsStore from '../../store/useDepartmentsStore';
+
 const OPS_TEAM = '운영총괄'; 
 
 const AdminUsers = () => {
@@ -29,7 +31,8 @@ const AdminUsers = () => {
   const [isRankOpen, setIsRankOpen] = useState(false);
   const [isPermissionOpen, setIsPermissionOpen] = useState(false);
   const [isHrManagerOpen, setIsHrManagerOpen] = useState(false);
-
+  const invalidateGroupData = useDepartmentsStore(state => state.invalidateGroupData);
+  
   // 부서, 직급 리스트 (API로부터 가져옴)
   const [deptList, setDeptList] = useState([]);
   const [rankList, setRankList] = useState([]);
@@ -204,6 +207,9 @@ const AdminUsers = () => {
              role: editForm.role,
              is_hr_manager: editForm.is_hr_manager, // ✅ 추가
           }));
+
+          invalidateGroupData();
+
           setIsDetailEditing(false);
           alertSuccess('수정 완료', '직원 상세 정보가 성공적으로 수정되었습니다.');
         }).catch(err => {
@@ -232,6 +238,8 @@ const AdminUsers = () => {
           // 1. 현재 페이지 데이터 다시 불러오기 (데이터와 상단 카운트 동시 갱신)
           fetchEmployees(currentPage, searchKeyword, activeTab);
           
+          invalidateGroupData();
+
           setEditingId(null); // 수정 완료 후 버튼 숨김
           if (selectedUser?.users_seq === upUsersSeq) {
             setSelectedUser(prev => ({ ...prev, status: koreanStatus }));

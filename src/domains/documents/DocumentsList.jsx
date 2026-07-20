@@ -7,6 +7,7 @@ import useAuthStore from '../../store/authStore';
 import Preview from '../../components/common/Preview';
 import useLoadingStore from '../../store/useLoadingStore';
 import { alertError, alertWarning } from '../../utils/alert';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const DocumentsList = () => {
   const [searchParams] = useSearchParams();
@@ -21,6 +22,7 @@ const DocumentsList = () => {
   const token = useAuthStore(state => state.token);
   const showLoading = useLoadingStore(state => state.showLoading);
   const hideLoading = useLoadingStore(state => state.hideLoading);
+  const { pages } = usePageInfoStore();
 
   const loadDocuments = async () => {
     try {
@@ -100,12 +102,14 @@ const DocumentsList = () => {
     }
   }
 
+  const currentPageInfo = pages.find(p => p.page_code === 'DocumentsList');
+
   return (
     <div className="h-full flex flex-col bg-white font-sans p-3 md:p-8">
       {/* 헤더 영역 */}
       <div className="mb-3 md:mb-6 flex-shrink-0">
-        <h1 className="text-[1.25rem] md:text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">자료실</h1>
-        <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">업무에 필요한 사내 문서를 간편하게 조회하고 다운로드하세요.</p>
+        <h1 className="text-[1.25rem] md:text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">{currentPageInfo?.page_name}</h1>
+        <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">{currentPageInfo?.page_info}</p>
       </div>
 
       {/* 필터 탭 & 검색창 라인 */}
@@ -119,8 +123,8 @@ const DocumentsList = () => {
                 setCurrentPage(1);
               }}
               className={`px-6 py-2 text-[0.6875rem] md:text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${activeTab === tab
-                  ? 'bg-[#3530B8] text-white shadow-md'
-                  : 'text-gray-500 hover:text-[#3530B8] hover:bg-[#F0F4FF]'
+                ? 'bg-[#3530B8] text-white shadow-md'
+                : 'text-gray-500 hover:text-[#3530B8] hover:bg-[#F0F4FF]'
                 }`}
             >
               {tab}
