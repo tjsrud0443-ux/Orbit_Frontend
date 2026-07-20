@@ -1,3 +1,3 @@
 import { maxios } from "../../api/axiosConfig";
 
-export const getCertInfo = () => maxios.get("/certType/getCertInfo");
+export const getCertType = () => maxios.get("/certType/getCertType");

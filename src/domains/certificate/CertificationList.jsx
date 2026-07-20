@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FileText } from 'lucide-react';
 import Pagination from '../../components/common/Pagination';
 import PurposeSelectModal from './PurposeSelectModal';
 import EmploymentCertificate from './EmploymentCertificate';
 import usePageInfoStore from '../../store/usePageInfoStore';
+import { getCertType } from './certificateApi';
 
 const CertificationList = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -11,6 +12,19 @@ const CertificationList = () => {
     const [selectedPurpose, setSelectedPurpose] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const { pages } = usePageInfoStore();
+    const [certType, setCertType] = useState([]);
+
+    useEffect(() => {
+        const fetchCertType = async () => {
+            try{
+                const resp = await getCertType();
+                setCertType(resp.data ?? []);
+            }catch(err) {
+                console.error("증명서 유형 조회 실패", err);
+            }
+        }
+        fetchCertType();
+    },[]);
 
     const handlePreviewClick = (purpose) => {
         setSelectedPurpose(purpose);
@@ -57,7 +71,7 @@ const CertificationList = () => {
                         onClick={() => setIsModalOpen(true)}
                         className="w-auto sm:w-full py-2 px-3 sm:px-0 sm:py-2.5 bg-white text-indigo-600 text-sm sm:text-base font-semibold rounded-lg shadow-sm border border-indigo-100 hover:bg-indigo-50 transition-colors whitespace-nowrap ml-4 sm:ml-0"
                     >
-                        미리보기 및 출력
+                        발급 신청
                     </button>
                 </div>
 

@@ -85,7 +85,7 @@ const generalMenuItems = [
     icon: faFolderOpen,
     subItems: [
       { name: '비품 신청', path: '/supply' },
-      { name: '증명서 발급', path: '/certificate' },
+      { name: '증명서 발급 신청', path: '/certificate' },
       { name: '자료실', path: '/documents' }
     ]
   },
