@@ -110,7 +110,7 @@ const PurposeSelectModal = ({ onClose, onConfirm }) => {
             onClick={handleConfirm}
             className="px-5 py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors shadow-sm"
           >
-            미리보기
+            신청
           </button>
         </div>
       </div>
