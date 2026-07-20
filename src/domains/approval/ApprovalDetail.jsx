@@ -239,7 +239,7 @@ const ApprovalDetail = () => {
         const isMobile = window.innerWidth < 768;
 
         if (doc_type === 'VACATION') {
-          if (!formData.start_date || formData.start_date < today) return false;
+          if (!formData.start_date) return false;
           if (formData.vac_type === '연차') {
             if (!formData.end_date || formData.end_date < formData.start_date) return false;
           }
