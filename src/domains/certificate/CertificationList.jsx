@@ -47,7 +47,7 @@ const CertificationList = () => {
             await alertSuccess('신청 완료', '증명서 발급 신청이 완료되었습니다.');
             setSelectedPurpose(purposeLabel);
             setIsModalOpen(false);
-            setPreviewMode(true);
+            // setPreviewMode(true);
         } catch (err) {
             console.error('증명서 발급 신청 실패', err);
             await alertError('신청 실패', '증명서 발급 신청 중 오류가 발생했습니다.');
