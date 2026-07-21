@@ -54,7 +54,7 @@ import AdminRank from './domains/admin/AdminRank';
 import AdminApprovalLine from './domains/admin/AdminApprovalLine';
 import AdminPageInfo from './domains/admin/AdminPageInfo';
 import usePageInfoStore from './store/usePageInfoStore';
-import AdminCertRequest from './domains/admin/adminCertRequest';
+import AdminCertRequest from './domains/admin/AdminCertRequest';
 
 function App() {
   const loading = useLoadingStore(state => state.loading);
