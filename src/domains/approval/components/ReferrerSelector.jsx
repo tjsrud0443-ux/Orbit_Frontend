@@ -90,7 +90,7 @@ const ReferrerSelector = ({ value = [], onChange, isEditMode, docType }) => {
     : [];
 
   const hrManager = useMemo(() => {
-    if (docType !== 'VACATION') return null;
+    if (docType !== 'VACATION' && docType !== 'CANCEL_VACATION') return null;
     if (!allEmployees || allEmployees.length === 0) return null;
     const hr_manager = allEmployees.find(emp => emp.is_hr_manager === 'Y');
     return hr_manager || null;
@@ -150,7 +150,7 @@ const ReferrerSelector = ({ value = [], onChange, isEditMode, docType }) => {
         ) : (
           /* 기본 상태 */
           <>
-            {docType === 'VACATION' && hrManager && (
+            {(docType === 'VACATION' || docType === 'CANCEL_VACATION') && hrManager && (
               <div className="bg-blue-50/40 border-b border-blue-100/50">
                 <div className="text-[10px] text-[#3530B8] font-bold px-3 pt-2 pb-1 flex items-center gap-1">
                   📢 근태 담당자

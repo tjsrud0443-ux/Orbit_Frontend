@@ -13,7 +13,8 @@ const docTypeMap = {
   '일반품의서': 'GENERAL',
   '지출결의서': 'PAYMENT',
   '휴가신청서': 'VACATION',
-  '구매신청서': 'PURCHASE'
+  '구매신청서': 'PURCHASE',
+  '휴기취소신청서': 'CANCEL_VACATION'
 };
 
 const ApprovalTemp = () => {
@@ -120,7 +121,8 @@ const ApprovalTemp = () => {
     'GENERAL': '일반품의서',
     'PAYMENT': '지출결의서',
     'VACATION': '휴가신청서',
-    'PURCHASE': '구매신청서'
+    'PURCHASE': '구매신청서',
+    'CANCEL_VACATION': '휴가취소신청서'
   };
 
   return (
@@ -148,7 +150,7 @@ const ApprovalTemp = () => {
               </div>
               {isTypeOpen && (
                 <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1">
-                  {['전체 문서', '일반품의서', '지출결의서', '휴가신청서', '구매신청서'].map((type) => (
+                  {['전체 문서', '일반품의서', '지출결의서', '휴가신청서', '구매신청서', '휴가취소신청서'].map((type) => (
                     <div
                       key={type}
                       onClick={() => {
@@ -310,7 +312,8 @@ const ApprovalTemp = () => {
           </div>
         </div>
       </div>
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
