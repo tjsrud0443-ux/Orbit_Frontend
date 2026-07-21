@@ -127,6 +127,8 @@ export const getAdminCertRequestList = () => maxios.get("/admin/hr/getAdminCertR
 export const approveCertRequest = (certRequestSeq) => maxios.put(`/admin/hr/approveCertRequest/${certRequestSeq}`);
 export const rejectCertRequest = (certRequestSeq, rejectReason) => maxios.put(`/admin/hr/rejectCertRequest/${certRequestSeq}`,{reject_reason: rejectReason});
 
+export const getAdminCertTypeList = () => maxios.get("/admin/hr/getAdminCertTypeList");
+
 
 
 
