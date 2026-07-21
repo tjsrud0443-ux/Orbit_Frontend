@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPenToSquare } from '@fortawesome/free-solid-svg-icons';
-import { getAdminCertTypeList, updateCertTypeHidden } from './adminApi';
+import { getAdminCertTypeList, updateCertTypeHidden, updateCertTYpe } from './adminApi';
 import usePageInfoStore from '../../store/usePageInfoStore';
+import { alertConfirm, alertError, alertSuccess } from '../../utils/alert';
 
 const AdminCertType = () => {
     const { pages } = usePageInfoStore();
     const currentPageInfo = pages.find(p => p.page_code === 'AdminCertType');
-
     const [certTypes, setCertTypes] = useState([]);
+   
     const fetchCertType = async () => {
         try {
             const resp = await getAdminCertTypeList();
@@ -37,6 +38,12 @@ const AdminCertType = () => {
             );
         } catch (err) {
             console.error("증명서 노출 상태 수정 실패", err);
+
+            await alertError(
+                '상태 변경 실패',
+                err.response?.data?.message ||
+                '증명서 노출 상태를 변경하지 못했습니다.'
+            );
         }
     };
     return (
