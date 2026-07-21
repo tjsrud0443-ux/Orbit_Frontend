@@ -153,7 +153,6 @@ const DocumentTable = ({ data, onDetailClick, showPagination = true, approverLab
                   {approverName(doc)}
                 </td>
                 <td className="px-2 py-0.5 text-[11px] text-center whitespace-nowrap">
-                  {console.log('doc_seq:', doc.doc_seq, 'cancel_yn:', doc.cancel_yn)}
                   <StatusBadge status={doc.status} cancelYn={doc.cancel_yn} />
                 </td>
                 <td className="px-3 py-4 text-center whitespace-nowrap">
