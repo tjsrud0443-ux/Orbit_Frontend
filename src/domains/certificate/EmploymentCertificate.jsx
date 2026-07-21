@@ -6,12 +6,22 @@ import { getCertType, increasePrintedCount } from './certificateApi';
 import { Printer, ArrowLeft } from 'lucide-react';
 import { alertError, alertConfirm } from '../../utils/alert';
 
+
 const EmploymentCertificate = ({ certRequestSeq, purpose, onBack, maxPrintCount, printedCount }) => {
   const { user } = useUserStore();
   const { token } = useAuthStore();
   const [company, setCompany] = useState(null);
   const [certInfo, setCertInfo] = useState(null);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [currentPrintedCount, setCurrentPrintedCount] = useState(Number(printedCount ?? 0));
+
+  const maxCount = Number(maxPrintCount ?? 0);
+  const remainingCount = Math.max(maxCount - currentPrintedCount, 0);
+  const isPrintLimitReached = maxCount <= 0 || remainingCount <= 0;
+
+  useEffect(() => {
+    setCurrentPrintedCount(Number(printedCount ?? 0));
+  }, [printedCount]);
 
   useEffect(() => {
     const fetchCompany = async () => {
@@ -27,7 +37,7 @@ const EmploymentCertificate = ({ certRequestSeq, purpose, onBack, maxPrintCount,
       try {
         const res = await getCertType();
         const certList = res.data;
-        const cert = certList.find(item => item.cert_type_name === "재직증명서");
+        const cert = certList.find(item => item.cert_type_code === "EMPLOYMENT_CERT");
         if (cert) {
           setCertInfo(cert);
         }
@@ -52,14 +62,7 @@ const EmploymentCertificate = ({ certRequestSeq, purpose, onBack, maxPrintCount,
       return;
     }
 
-    if (isPrinting) return;
-
-    const remainingCount =
-      Math.max(
-        Number(maxPrintCount ?? 0) -
-        Number(printedCount ?? 0),
-        0
-      );
+    if (isPrinting || isPrintLimitReached) return;
 
     const result = await alertConfirm(
       '증명서 인쇄',
@@ -70,7 +73,7 @@ const EmploymentCertificate = ({ certRequestSeq, purpose, onBack, maxPrintCount,
 
     try {
       setIsPrinting(true);
-
+      setCurrentPrintedCount(prev => prev + 1);
       await increasePrintedCount(certRequestSeq);
 
       await wait(300);
@@ -125,7 +128,7 @@ const EmploymentCertificate = ({ certRequestSeq, purpose, onBack, maxPrintCount,
   if (certInfo) {
     const yy = String(yyyy).slice(-2);
     const seq = String(certInfo.cert_type_seq).padStart(3, '0');
-    docNumber = `${certInfo.manage_dept_code}-${yy}${mm}${dd}-${seq}`;
+    docNumber = `${yy}${mm}${dd}-${seq}`;
   }
 
   const companyNameFormatted = company?.companyName
@@ -143,19 +146,32 @@ const EmploymentCertificate = ({ certRequestSeq, purpose, onBack, maxPrintCount,
           <ArrowLeft size={18} />
           뒤로가기
         </button>
-        <button
-          onClick={handlePrint}
-          disabled={isPrinting}
-          className={`flex items-center gap-2 px-4 sm:px-5 py-2 text-white rounded-lg shadow transition text-sm sm:text-base
-            ${isPrinting
-              ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-indigo-600 hover:bg-indigo-700'
-            }`}
-        >
-          <Printer size={18} />
+        {isPrintLimitReached ? (
+          <button
+            type="button"
+            disabled
+            className="flex items-center gap-2 px-4 sm:px-5 py-2 bg-gray-300 text-gray-500 rounded-lg shadow-sm text-sm sm:text-base cursor-not-allowed">
+            <Printer size={18} />
+            출력 횟수 소진
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={handlePrint}
+            disabled={isPrinting}
+            className={`flex items-center gap-2 px-4 sm:px-5 py-2 text-white rounded-lg shadow transition text-sm sm:text-base
+              ${isPrinting
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-indigo-600 hover:bg-indigo-700'
+              }`}>
+            <Printer size={18} />
 
-          {isPrinting ? '처리 중...' : '인쇄'}
-        </button>
+            {isPrinting
+              ? '처리 중...'
+              : '인쇄'
+            }
+          </button>
+        )}
       </div>
 
       {/* A4 Paper */}
