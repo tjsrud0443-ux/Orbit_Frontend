@@ -368,7 +368,17 @@ const CancelVacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTem
                         <div className="flex gap-2 w-full">
                             <div className="flex-grow space-y-1">
                                 <label className="text-[10px] font-bold text-gray-400">기존 신청 기간</label>
-                                <div className="text-xs font-bold">{data.start_date ? `${data.start_date.substring(0, 10)} ~ ${data.end_date ? data.end_date.substring(0, 10) : ''}` : '-'}</div>
+                                <div className="text-xs font-bold">
+                                    {data.start_date ? (
+                                        <>
+                                            {data.start_date.substring(0, 10)} ~
+                                            <br />
+                                            {data.end_date ? data.end_date.substring(0, 10) : ''}
+                                        </>
+                                    ) : (
+                                        '-'
+                                    )}
+                                </div>
                             </div>
                             <div className="w-24 space-y-1">
                                 <label className="text-[10px] font-bold text-gray-400">연차 반환 일수</label>
