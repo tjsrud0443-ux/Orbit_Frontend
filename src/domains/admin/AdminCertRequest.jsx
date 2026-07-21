@@ -34,7 +34,8 @@ const AdminCertRequest = () => {
     };
 
     useEffect(() => {
-        fetchCertRequests();
+        const timeoutId = setTimeout(fetchCertRequests, 0);
+        return () => clearTimeout(timeoutId);
     }, []);
 
     const handleApprove = async (request) => {
@@ -326,16 +327,7 @@ const AdminCertRequest = () => {
                 </p>
             </div>
 
-            <button
-                type="button"
-                onClick={handleExcelDownload}
-                className="flex items-center gap-2 shrink-0 px-3 md:px-4 py-2 rounded-lg bg-emerald-600 text-xs md:text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors cursor-pointer">
-                <Download size={17} />
-                <span className="hidden sm:inline">엑셀 다운로드</span>
-                <span className="sm:hidden">엑셀</span>
-            </button>
-
-            <div className="mb-6 flex-shrink-0 w-full text-left">
+            <div className="mb-6 flex-shrink-0 w-full flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                 <div className="inline-flex bg-white p-1 rounded-2xl shadow-sm border border-[#F0F4FF] max-w-full overflow-x-auto no-scrollbar align-top">
                     {tabs.map((tab) => (
                         <button
@@ -350,6 +342,13 @@ const AdminCertRequest = () => {
                         </button>
                     ))}
                 </div>
+                <button
+                    type="button"
+                    onClick={handleExcelDownload}
+                    className="inline-flex w-fit items-center gap-2 shrink-0 px-3 md:px-4 py-2 rounded-lg bg-emerald-600 text-xs md:text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors cursor-pointer whitespace-nowrap">
+                    <Download size={17} />
+                    <span>엑셀 다운로드</span>
+                </button>
             </div>
 
             <div className="flex-1 flex flex-col bg-white border border-slate-100 rounded-[32px] shadow-sm overflow-hidden min-h-0">
