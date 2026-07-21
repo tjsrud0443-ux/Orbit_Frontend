@@ -59,7 +59,8 @@ const AdminApprovalLine = () => {
         '휴가 신청서': 'VACATION',
         '지출 결의서': 'PAYMENT',
         '일반 품의서': 'GENERAL',
-        '구매 신청서': 'PURCHASE'
+        '구매 신청서': 'PURCHASE',
+        '휴가 취소 신청서': 'CANCEL_VACATION'
     };
     const tabs = Object.keys(DOC_TYPES);
 

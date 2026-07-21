@@ -7,10 +7,13 @@ import VacationForm from './forms/VacationForm';
 import PaymentForm from './forms/PaymentForm';
 import GeneralForm from './forms/GeneralForm';
 import PurchaseForm from './forms/PurchaseForm';
+import CancelVacationForm from './forms/CancelVacationForm';
 import {
   submitVacation, submitPayment, submitGeneral, submitPurchase, getApprovalDetail, approveDraft, rejectApproval,
   updateVacation, updateGeneral, updatePayment, updatePurchase, deleteDoc,
-  getDefaultApprovers
+  getDefaultApprovers,
+  submitCancelVacation,
+  updateCancelVacation
 } from './approvalApi';
 import useLoadingStore from '../../store/useLoadingStore';
 import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
@@ -134,6 +137,8 @@ const ApprovalDetail = () => {
         setFormData({ title: '', purpose: '', content: '', attachments: [] });
       } else if (upperType === 'PURCHASE') {
         setFormData({ title: '', purpose: '', vendor: '', purchase_date: '', items: [{ item_order: 1, item_name: '', ea: 1, unit_price: 0, note: '' }], attachments: [] });
+      } else if (upperType === 'CANCEL_VACATION') {
+        setFormData({ title: '', vac_seq: null, cancel_reason: '' });
       }
     } else {
       fetchDocumentData(type, docSeq);
@@ -297,6 +302,9 @@ const ApprovalDetail = () => {
           if (!formData.vendor?.trim() || formData.vendor.length > 50) return false;
           if (!formData.items || formData.items.length === 0) return false;
           if (!formData.attachments || formData.attachments.length === 0) return false;
+        } else if (doc_type === 'CANCEL_VACATION') {
+          if (!formData.vac_seq) return false;
+          if (!formData.cancel_reason?.trim() || formData.cancel_reason.length > 300) return false;
         }
         return true;
       };
@@ -366,6 +374,8 @@ const ApprovalDetail = () => {
       } else if (doc_type === 'PURCHASE') {
         const formDataObj = buildFormData(submitPayload, formData);
         response = await (isNew ? submitPurchase(formDataObj, originalDocSeq) : updatePurchase(docSeq, formDataObj));
+      } else if (doc_type === 'CANCEL_VACATION') {
+        response = await (isNew ? submitCancelVacation(submitPayload, originalDocSeq) : updateCancelVacation(docSeq, submitPayload));
       }
 
       if (response && (response.status === 200 || response.status === 201 || response.data)) {
@@ -521,6 +531,8 @@ const ApprovalDetail = () => {
         return <GeneralForm key={doc_type} {...props} />;
       case 'PURCHASE':
         return <PurchaseForm key={doc_type} {...props} />;
+      case 'CANCEL_VACATION':
+        return <CancelVacationForm key={doc_type} {...props} />;
       default:
         return <div>알 수 없는 문서 형식입니다.</div>;
     }
@@ -532,6 +544,7 @@ const ApprovalDetail = () => {
       case 'PAYMENT': return '지출 결의서';
       case 'GENERAL': return '일반 품의서';
       case 'PURCHASE': return '구매 신청서';
+      case 'CANCEL_VACATION': return '휴가 취소 신청서';
       default: return '전자결재';
     }
   };

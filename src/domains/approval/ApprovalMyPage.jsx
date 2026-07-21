@@ -80,7 +80,8 @@ const DocumentTable = ({ data, onDetailClick, showPagination = true, approverLab
     'VACATION': '휴가신청서',
     'PAYMENT': '지출결의서',
     'GENERAL': '일반품의서',
-    'PURCHASE': '구매신청서'
+    'PURCHASE': '구매신청서',
+    'CANCEL_VACATION': '휴가취소신청서'
   }
   const mobilePageNumbers = (() => {
     if (count <= 0) return [];
@@ -234,7 +235,8 @@ const ApprovalMyPage = () => {
     '일반품의서': 'GENERAL',
     '지출결의서': 'PAYMENT',
     '휴가신청서': 'VACATION',
-    '구매신청서': 'PURCHASE'
+    '구매신청서': 'PURCHASE',
+    '휴가취소신청서': 'CANCEL_VACATION'
   };
 
   useEffect(() => {

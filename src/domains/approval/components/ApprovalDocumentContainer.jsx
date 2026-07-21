@@ -35,7 +35,6 @@ const ApprovalDocumentContainer = ({
         {/* Header Section */}
         <div className="bg-[#3530B8] px-8 py-4 text-white flex justify-between items-center flex-shrink-0">
           <div className="flex flex-col">
-            <span className="text-[0.625rem] font-bold opacity-80 tracking-widest mb-0.5">(주)Lunex Soft</span>
             <h1 className="text-xl font-extrabold tracking-tight">{title}</h1>
           </div>
 
@@ -86,7 +85,6 @@ const ApprovalDocumentContainer = ({
         {/* Mobile Header Section */}
         <div className="bg-[#3530B8] px-4 py-4 text-white flex flex-col gap-4">
           <div className="flex flex-col">
-            <span className="text-[0.625rem] font-bold opacity-80 tracking-widest mb-0.5">(주)Lunex Soft</span>
             <h1 className="text-lg font-extrabold tracking-tight">{title}</h1>
           </div>
 
