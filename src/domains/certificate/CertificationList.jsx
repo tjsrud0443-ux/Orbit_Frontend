@@ -4,8 +4,8 @@ import Pagination from '../../components/common/Pagination';
 import PurposeSelectModal from './PurposeSelectModal';
 import EmploymentCertificate from './EmploymentCertificate';
 import usePageInfoStore from '../../store/usePageInfoStore';
-import { getCertType, insertCertRequest } from './certificateApi';
-import { alertError, alertSuccess } from '../../utils/alert';
+import { getCertType, insertCertRequest, cancelCertRequest } from './certificateApi';
+import { alertError, alertSuccess, alertConfirm } from '../../utils/alert';
 
 const CertificationList = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,7 +27,16 @@ const CertificationList = () => {
     }
 
     useEffect(() => {
-        fetchCertType();
+        const loadCertType = async () => {
+            try {
+                const resp = await getCertType();
+                setCertType(resp.data ?? []);
+            } catch (err) {
+                console.error("증명서 유형 조회 실패", err);
+            }
+        };
+
+        loadCertType();
     }, []);
 
     const handleRequestClick = (cert) => {
@@ -44,7 +53,7 @@ const CertificationList = () => {
     const isPrintExpired = (cert) => {
         if (!cert.print_expires_at) return false;
 
-        return new Date(cert.print_expires_at).getTime() < Date.now();
+        return new Date(cert.print_expires_at).getTime() < new Date().getTime();
     };
 
     const isPrintLimitReached = (cert) => {
@@ -52,6 +61,23 @@ const CertificationList = () => {
 
         return Number(cert.printed_count ?? 0)
             >= Number(cert.applied_max_print);
+    };
+
+    const formatDateTime = (value) => {
+        if (!value) return '-';
+
+        const date = new Date(value);
+
+        if (Number.isNaN(date.getTime())) return '-';
+
+        return date.toLocaleString('ko-KR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
     };
 
     const handlePreviewClick = async ({ purposeLabel }) => {
@@ -68,6 +94,7 @@ const CertificationList = () => {
 
             await fetchCertType();
             setIsModalOpen(false);
+            setSelectedCertType(null);
 
             await alertSuccess('신청 완료', '관리자 승인 후 증명서를 출력할 수 있습니다.');
             // setPreviewMode(true);
@@ -98,15 +125,143 @@ const CertificationList = () => {
     }
 
     const handleCancelRequest = async (cert) => {
-        console.log('취소 대상:', cert);
+        if (!cert?.cert_request_seq) {
+            await alertError(
+                '취소 실패',
+                '취소할 신청 정보가 없습니다.'
+            );
+            return;
+        }
+
+        const result = await alertConfirm(
+            '증명서 신청 취소',
+            `${cert.cert_type_name} 발급 신청을 취소하시겠습니까?`
+        );
+
+        if (!result.isConfirmed) return;
+
+        try {
+            await cancelCertRequest(
+                cert.cert_request_seq
+            );
+
+            await fetchCertType();
+
+            await alertSuccess(
+                '취소 완료',
+                '증명서 발급 신청이 취소되었습니다.'
+            );
+        } catch (err) {
+            console.error('증명서 신청 취소 실패:', err);
+
+            await alertError(
+                '취소 실패',
+                err.response?.data?.message ||
+                '증명서 신청 취소 중 오류가 발생했습니다.'
+            );
+        }
     };
+
+    const renderRequestInfo = (cert) => {
+        if (cert.status === 'PENDING') {
+            return (
+                <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-800">
+                    <div className="font-bold mb-1">승인 대기</div>
+                    <div className="flex flex-wrap gap-x-2 gap-y-1 break-words">
+                        <span className="font-semibold">신청일</span>
+                        <span>{formatDateTime(cert.requested_at)}</span>
+                    </div>
+                </div>
+            );
+        }
+
+        if (cert.status === 'APPROVED') {
+            const expired = isPrintExpired(cert);
+            const limitReached = isPrintLimitReached(cert);
+            const maxPrint = Number(cert.applied_max_print ?? 0);
+            const printedCount = Number(cert.printed_count ?? 0);
+
+            if (expired || limitReached) {
+                return (
+                    <div className="mb-4 rounded-lg border border-gray-200 bg-white/70 p-3 text-xs text-gray-600">
+                        <div className="font-bold text-gray-700">
+                            {expired
+                                ? '출력 기간 만료'
+                                : '출력 가능 횟수 소진'}
+                        </div>
+
+                        <div className="mt-1 text-gray-500">
+                            증명서가 다시 필요하면 재신청해주세요.
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="mb-4 rounded-lg border border-indigo-100 bg-white/70 p-3 text-xs text-slate-600">
+                    <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2">
+                        <span className="font-bold text-slate-500 whitespace-nowrap">
+                            출력기한
+                        </span>
+
+                        <span
+                            className={`break-words ${expired
+                                ? 'font-bold text-red-500'
+                                : 'text-slate-700'
+                                }`}
+                        >
+                            {expired
+                                ? '기간 만료'
+                                : formatDateTime(cert.print_expires_at)}
+                        </span>
+
+                        <span className="font-bold text-slate-500 whitespace-nowrap">
+                            출력 현황
+                        </span>
+
+                        <span
+                            className={`break-words ${limitReached
+                                ? 'font-bold text-red-500'
+                                : 'text-slate-700'
+                                }`}
+                        >
+                            {printedCount} / {maxPrint}회
+                        </span>
+                    </div>
+                </div>
+            );
+        }
+
+        if (cert.status === 'REJECTED') {
+            return (
+                <div className="mb-4 rounded-lg border border-red-200 bg-red-50/80 p-3 text-xs text-red-700">
+                    <div className="font-bold mb-2">
+                        반려
+                    </div>
+
+                    <div className="grid grid-cols-[auto_1fr] gap-x-3">
+                        <span className="font-semibold whitespace-nowrap">
+                            반려 사유
+                        </span>
+
+                        <span className="break-words">
+                            {cert.reject_reason || '-'}
+                        </span>
+                    </div>
+                </div>
+            );
+        }
+
+        return null;
+    };
+
     const renderCertAction = (cert) => {
         if (cert.status === 'PENDING') {
             return (
                 <button
                     type="button"
                     onClick={() => handleCancelRequest(cert)}
-                    className="w-auto sm:w-full py-2 px-3 sm:px-0 sm:py-2.5 bg-white text-red-500 text-sm sm:text-base font-semibold rounded-lg shadow-sm border border-red-200 hover:bg-red-50 transition-colors whitespace-nowrap ml-4 sm:ml-0"
+                    className="w-full py-2 px-3 sm:px-0 sm:py-2.5 bg-white text-red-500 text-sm sm:text-base font-semibold rounded-lg shadow-sm border border-red-200 hover:bg-red-50 transition-colors whitespace-nowrap"
                 >
                     신청 취소
                 </button>
@@ -114,26 +269,14 @@ const CertificationList = () => {
         }
 
         if (cert.status === 'APPROVED') {
-            if (isPrintExpired(cert)) {
+            if (isPrintExpired(cert) || isPrintLimitReached(cert)) {
                 return (
                     <button
                         type="button"
-                        disabled
-                        className="w-auto sm:w-full py-2 px-3 sm:px-0 sm:py-2.5 bg-gray-100 text-gray-400 text-sm sm:text-base font-semibold rounded-lg border border-gray-200 whitespace-nowrap ml-4 sm:ml-0 cursor-not-allowed"
+                        onClick={() => handleRequestClick(cert)}
+                        className="w-full sm:w-full py-2 px-3 sm:px-0 sm:py-2.5 bg-white text-indigo-600 text-sm sm:text-base font-semibold rounded-lg shadow-sm border border-indigo-100 hover:bg-indigo-50 transition-colors whitespace-nowrap"
                     >
-                        출력 기간 만료
-                    </button>
-                );
-            }
-
-            if (isPrintLimitReached(cert)) {
-                return (
-                    <button
-                        type="button"
-                        disabled
-                        className="w-auto sm:w-full py-2 px-3 sm:px-0 sm:py-2.5 bg-gray-100 text-gray-400 text-sm sm:text-base font-semibold rounded-lg border border-gray-200 whitespace-nowrap ml-4 sm:ml-0 cursor-not-allowed"
-                    >
-                        출력 횟수 소진
+                        발급 신청
                     </button>
                 );
             }
@@ -142,7 +285,7 @@ const CertificationList = () => {
                 <button
                     type="button"
                     onClick={() => handlePreview(cert)}
-                    className="w-auto sm:w-full py-2 px-3 sm:px-0 sm:py-2.5 bg-indigo-600 text-white text-sm sm:text-base font-semibold rounded-lg shadow-sm hover:bg-indigo-700 transition-colors whitespace-nowrap ml-4 sm:ml-0"
+                    className="w-full py-2 px-3 sm:px-0 sm:py-2.5 bg-indigo-600 text-white text-sm sm:text-base font-semibold rounded-lg shadow-sm hover:bg-indigo-700 transition-colors whitespace-nowrap"
                 >
                     미리보기 및 출력
                 </button>
@@ -153,7 +296,7 @@ const CertificationList = () => {
             <button
                 type="button"
                 onClick={() => handleRequestClick(cert)}
-                className="w-auto sm:w-full py-2 px-3 sm:px-0 sm:py-2.5 bg-white text-indigo-600 text-sm sm:text-base font-semibold rounded-lg shadow-sm border border-indigo-100 hover:bg-indigo-50 transition-colors whitespace-nowrap ml-4 sm:ml-0"
+                className="w-full sm:w-full py-2 px-3 sm:px-0 sm:py-2.5 bg-white text-indigo-600 text-sm sm:text-base font-semibold rounded-lg shadow-sm border border-indigo-100 hover:bg-indigo-50 transition-colors whitespace-nowrap"
             >
                 발급 신청
             </button>
@@ -172,20 +315,51 @@ const CertificationList = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-12">
                 {Array.from({ length: 8 }).map((_, idx) => {
                     const cert = certType[idx];
+                    const hasRequestStatus =
+                        cert?.status === 'PENDING' ||
+                        cert?.status === 'APPROVED' ||
+                        cert?.status === 'REJECTED';
 
                     return cert ? (
                         <div
                             key={cert.cert_type_seq ?? cert.cert_type_id ?? cert.cert_type_name ?? idx}
-                            className="relative overflow-hidden rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 shadow-md flex flex-row items-center justify-between sm:flex-col sm:items-stretch sm:justify-start p-4 sm:p-6 hover:shadow-lg transition-shadow"
+                            className="relative overflow-hidden rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 shadow-md flex flex-col p-4 sm:p-6 hover:shadow-lg transition-shadow min-h-[72px] sm:min-h-[220px]"
                         >
-                            <div className="flex-grow sm:flex-grow-0 sm:flex-grow">
-                                <div className="hidden sm:inline-block bg-white/60 p-3 rounded-lg mb-4 text-indigo-600">
-                                    <FileText size={28} />
+                            <div
+                                className={`
+        flex flex-1
+        ${hasRequestStatus
+                                        ? 'flex-col'
+                                        : 'flex-row items-center justify-between sm:flex-col sm:items-stretch'
+                                    }
+    `}
+                            >
+                                <div className={hasRequestStatus ? 'mb-3 sm:mb-0' : 'flex-1'}>
+                                    <div className="hidden sm:inline-block bg-white/60 p-3 rounded-lg mb-4 text-indigo-600">
+                                        <FileText size={28} />
+                                    </div>
+
+                                    <h2 className="text-md sm:text-xl font-bold text-gray-800 mb-0 sm:mb-2">
+                                        {cert.cert_type_name}
+                                    </h2>
+
+                                    <p className="hidden sm:block text-sm text-gray-600 break-words mb-3">
+                                        {cert.cert_description}
+                                    </p>
                                 </div>
-                                <h2 className="text-md sm:text-xl font-bold text-gray-800 mb-0 sm:mb-2">{cert.cert_type_name}</h2>
-                                <p className="hidden sm:block text-sm text-gray-600 mb-6">{cert.cert_description}</p>
+
+                                {hasRequestStatus && renderRequestInfo(cert)}
+
+                                <div
+                                    className={
+                                        hasRequestStatus
+                                            ? 'mt-auto'
+                                            : 'ml-4 shrink-0 sm:ml-0 sm:mt-auto'
+                                    }
+                                >
+                                    {renderCertAction(cert)}
+                                </div>
                             </div>
-                            {renderCertAction(cert)}
                         </div>
                     ) : (
                         <div key={`empty-${idx}`} className="rounded-xl bg-gray-50/60 border border-gray-200 border-dashed min-h-[80px] sm:min-h-[220px] flex items-center justify-center p-4 sm:p-6">
