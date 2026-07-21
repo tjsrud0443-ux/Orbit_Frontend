@@ -6,6 +6,7 @@ import { getAdminCertRequestList, approveCertRequest, rejectCertRequest } from '
 import { alertConfirm, alertError, alertSuccess } from '../../utils/alert';
 import * as XLSX from 'xlsx';
 import { Download } from 'lucide-react';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const PAGE_SIZE = 10;
 
@@ -17,6 +18,9 @@ const tabKeyMap = {
 };
 
 const AdminCertRequest = () => {
+    const { pages } = usePageInfoStore();
+    const currentPageInfo = pages.find(p => p.page_code === 'AdminCertRequest');
+
     const [activeStatusTab, setActiveStatusTab] = useState('전체');
     const [page, setPage] = useState(1);
     const [certRequests, setCertRequests] = useState([]);
@@ -320,10 +324,10 @@ const AdminCertRequest = () => {
         <div className="h-full flex flex-col bg-white font-sans p-6 md:p-8">
             <div className="mb-6 flex-shrink-0">
                 <h1 className="text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">
-                    증명서 발급 신청 관리
+                    {currentPageInfo?.page_name}
                 </h1>
                 <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">
-                    증명서 발급 신청 내역을 확인하고 승인 또는 반려할 수 있습니다.
+                    {currentPageInfo?.page_info}
                 </p>
             </div>
 
