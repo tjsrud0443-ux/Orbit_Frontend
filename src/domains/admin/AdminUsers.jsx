@@ -1,13 +1,19 @@
 import React, { useState,useEffect,useRef } from 'react';
 import Pagination from '../../components/common/Pagination';
 import MobilePagination from '../../components/common/MobilePagination';
-import { getAllUsers, updateUsersInfo, updateUsersState, getDeptList, getRankList} from './adminApi';
+import { getAllUsers, updateUsersInfo, updateUsersState, getDeptList, getRankList, getUserRoles, updateUserRoles} from './adminApi';
 import { alertError, alertConfirm, alertSuccess } from '../../utils/alert';
 import useUserStore from '../../store/userStore';
 import useDepartmentsStore from '../../store/useDepartmentsStore';
 import usePageInfoStore from '../../store/usePageInfoStore';
 
-const OPS_TEAM = '운영총괄'; 
+const AVAILABLE_ROLES = [
+  { value: 'ROLE_USER', label: '개인 권한 없음' },
+  { value: 'ROLE_HR_ADMIN', label: '인사 관리' },
+  { value: 'ROLE_GA_ADMIN', label: '총무 관리' },
+  { value: 'ROLE_FN_ADMIN', label: '재무 관리' },
+  { value: 'ROLE_SUPER_ADMIN', label: '총괄 관리자' },
+];
 
 const AdminUsers = () => {
   const { pages } = usePageInfoStore();
@@ -17,8 +23,13 @@ const AdminUsers = () => {
   const isDemoMode = mode === 'demo';
   
   const user = useUserStore(state => state.user);
-  const isOpsManager = user?.dept_name?.includes(OPS_TEAM);
+  const userAuthGroups = user?.user_auth_group ?? [];
+  const isOpsManager = 
+    user?.auth_group === 'ROLE_SUPER_ADMIN' ||
+    userAuthGroups.includes('ROLE_SUPER_ADMIN');
   const [employees, setEmployees] = useState([]);
+  const [personalRoles, setPersonalRoles] = useState([]);
+  const [editRoles, setEditRoles] = useState([]);
   // pagenation
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -28,6 +39,7 @@ const AdminUsers = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   // 상세 정보 수정 모드 관리
   const [isDetailEditing, setIsDetailEditing] = useState(false);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({});
   const [nameError, setNameError] = useState(false); // 이름 오류 상태 추가
   // 커스텀 드롭다운 상태 관리
@@ -96,6 +108,16 @@ const AdminUsers = () => {
     // 초기 로딩은 위 useEffect에서 처리됨
   }, []);
 
+  useEffect(() => {
+    if (selectedUser) {
+      getUserRoles(selectedUser.id).then(resp => {
+        setPersonalRoles(resp.data || []);
+      });
+    } else {
+      setPersonalRoles([]);
+    }
+  }, [selectedUser]);
+
   const fetchEmployees = (page = 1, keyword = "", tab = "전체") => {
     const statusMap = {
       '재직': 'ACTIVE',
@@ -141,39 +163,20 @@ const AdminUsers = () => {
 
   // 상세 정보 수정 시작
   const handleDetailEdit = () => {
-    const isCEOOffice = selectedUser.dept_name === '대표이사실';
-    const isHeadquarters = selectedUser.dept_name.includes('본부');
-    const ceoRank = rankList.find(r => r.rank_name === '대표');
-    const headRank = rankList.find(r => r.rank_name === '본부장');
-    const defaultTeamRank = 
-      rankList.find(r => r.rank_name === '부서장') 
-      || rankList.find(r => r.rank_name !== '대표' && r.rank_name !== '본부장') 
-      || rankList[0];
-
-    let forcedRank = null;
-    if (isCEOOffice && ceoRank) {
-      forcedRank = ceoRank;               // 대표이사실 → demo/production 공통 고정
-    } else if (isHeadquarters && headRank) {
-      forcedRank = headRank;              // 본부 → demo/production 공통 고정
-    } else if (selectedUser.rank_name === '대표') {
-      forcedRank = defaultTeamRank;       // 대표이사실이 아닌데 '대표'로 잘못 저장된 경우 리셋
-    } else if (!isDemoMode && selectedUser.rank_name === '본부장') {
-      forcedRank = defaultTeamRank;       // 본부가 아닌데 '본부장'으로 잘못 저장된 경우 리셋 (production만)
-    }
-
     setEditForm({
       name: selectedUser.name,
       dept_name: selectedUser.dept_name,
-      rank_name: forcedRank ? forcedRank.rank_name : selectedUser.rank_name,
+      rank_name: selectedUser.rank_name,
       dept_seq: selectedUser.dept_seq, 
-      rank_seq: forcedRank ? forcedRank.rank_seq : selectedUser.rank_seq,
+      rank_seq: selectedUser.rank_seq,
       role: selectedUser.role,  
-      is_hr_manager: selectedUser.is_hr_manager || 'N', // ✅ 추가
+      is_hr_manager: selectedUser.is_hr_manager || 'N', 
     });
     
     setNameError(false); // 수정 시작 시 에러 초기화
-    setIsDeptOpen(false);   // ← 추가
+    setIsDeptOpen(false);   
     setIsRankOpen(false);
+    setEditRoles(personalRoles); 
     setIsDetailEditing(true);
   };
 
@@ -187,30 +190,15 @@ const AdminUsers = () => {
 
     alertConfirm('직원 정보 수정', '직원 상세 정보를 수정하시겠습니까?').then((result) => {
       if (result.isConfirmed) {
-        updateUsersInfo(selectedUser.users_seq, editForm).then(() => {
+        Promise.all([
+          updateUsersInfo(selectedUser.users_seq, editForm),
+          updateUserRoles(selectedUser.id, editRoles), // ✅ 추가
+        ]).then(() => {
           setEmployees(prev => prev.map(emp => 
-            emp.users_seq === selectedUser.users_seq ? 
-            { 
-              ...emp, 
-              name: editForm.name, 
-              dept_name: editForm.dept_name, 
-              rank_name: editForm.rank_name, 
-              dept_seq: editForm.dept_seq,
-              rank_seq: editForm.rank_seq,
-              role: editForm.role,
-              is_hr_manager: editForm.is_hr_manager, // ✅ 추가
-            } : emp
+            emp.users_seq === selectedUser.users_seq ? { ...emp, ...editForm } : emp
           ));
-          setSelectedUser(prev => ({
-             ...prev, 
-             name: editForm.name, 
-             dept_name: editForm.dept_name,
-             rank_name: editForm.rank_name, 
-             dept_seq: editForm.dept_seq,
-             rank_seq: editForm.rank_seq,
-             role: editForm.role,
-             is_hr_manager: editForm.is_hr_manager, // ✅ 추가
-          }));
+          setSelectedUser(prev => ({ ...prev, ...editForm }));
+          setPersonalRoles(editRoles); // ✅ 추가
 
           invalidateGroupData();
 
@@ -255,16 +243,24 @@ const AdminUsers = () => {
   };
 
   return (
-    <div ref={containerRef} className={`h-full flex flex-col bg-white font-sans ${selectedUser ? 'p-0 md:p-8' : 'p-6 md:p-8'}`}>
+    <div ref={containerRef} className={`h-full flex flex-col bg-white font-sans ${selectedUser ? 'p-0 lg:p-8' : 'p-6 lg:p-8'}`}>
       
       {/* [1] 헤더 영역 */}
-      <div className={`mb-6 flex-shrink-0 ${selectedUser ? 'hidden md:block' : 'block'}`}>
-        <h1 className="text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">{currentPageInfo?.page_name}</h1>
-        <p className="text-[0.6875rem] md:text-sm text-gray-500 whitespace-nowrap">{currentPageInfo?.page_info}</p>
+      <div className={`mb-6 flex-shrink-0 flex items-end justify-between gap-4 ${selectedUser ? 'hidden lg:flex' : 'flex'}`}>
+        <div>
+          <h1 className="text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">{currentPageInfo?.page_name}</h1>
+          <p className="text-[0.6875rem] lg:text-sm text-gray-500 whitespace-nowrap">{currentPageInfo?.page_info}</p>
+        </div>
+        <button
+          onClick={() => setIsRegisterModalOpen(true)}
+          className="px-4 py-2.5 bg-[#3530B8] text-white rounded-xl text-xs font-bold hover:bg-[#2a2594] transition-all shadow-lg shadow-indigo-100 whitespace-nowrap flex-shrink-0"
+        >
+          + 직원 등록
+        </button>
       </div>
 
       {/* [2] 필터 탭 & 검색창 라인 */}
-      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 flex-shrink-0 ${selectedUser ? 'hidden md:flex' : 'flex'}`}>
+      <div className={`flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 flex-shrink-0 ${selectedUser ? 'hidden lg:flex' : 'flex'}`}>
         <div className="w-full flex bg-white p-1 rounded-2xl shadow-sm border border-[#F0F4FF] flex-shrink-0 overflow-x-auto no-scrollbar sm:w-auto">
           {['전체', '재직', '휴직', '퇴사'].map((tab) => (
             <button
@@ -273,7 +269,7 @@ const AdminUsers = () => {
                 setActiveTab(tab);
                 setCurrentPage(1);
               }}
-              className={`flex-1 justify-center px-2.5 md:px-4 py-2 text-[0.6875rem] md:text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${
+              className={`flex-1 justify-center px-2.5 lg:px-4 py-2 text-[0.6875rem] lg:text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${
                 activeTab === tab 
                   ? 'bg-[#3530B8] text-white shadow-md' 
                   : 'text-gray-500 hover:text-[#3530B8] hover:bg-[#F0F4FF]'
@@ -284,7 +280,7 @@ const AdminUsers = () => {
           ))}
         </div>
 
-        <div className="relative group w-full md:w-72 flex-shrink-0">
+        <div className="relative group w-full lg:w-72 flex-shrink-0">
           <input 
             type="text" 
             placeholder="사번, 이름, 부서로 검색"
@@ -311,7 +307,7 @@ const AdminUsers = () => {
       <div className="flex-1 flex gap-6 min-h-0 overflow-hidden">
         
         <div className={`flex flex-col bg-white border border-slate-100 rounded-[32px] 
-          shadow-sm overflow-hidden transition-all duration-500 min-h-0 ${selectedUser ? 'hidden md:flex md:flex-[0.7]' : 'flex-1'}`}>
+          shadow-sm overflow-hidden transition-all duration-500 min-h-0 ${selectedUser ? 'hidden lg:flex lg:flex-[0.65] xl:flex-[0.7]' : 'flex-1'}`}>
           <div className="flex-1 overflow-y-auto p-6 pt-0 overflow-x-hidden sm:overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse block sm:table mt-6 min-w-[800px] sm:min-w-0">
               <thead className="sticky top-0 bg-white z-10">
@@ -466,7 +462,7 @@ const AdminUsers = () => {
               page={currentPage} 
               onChange={handlePageChange} 
             />
-            <div className="hidden md:block">
+            <div className="hidden lg:block">
               <Pagination 
                 count={totalPages} 
                 page={currentPage} 
@@ -478,8 +474,8 @@ const AdminUsers = () => {
 
         {/* 우측 상세정보 카드 */}
         {selectedUser && (
-          <div className={`flex flex-col bg-white rounded-none md:rounded-[32px] 
-          border-0 md:border border-slate-100 shadow-sm overflow-hidden min-h-0 animate-in slide-in-from-right duration-500 ${selectedUser ? 'flex-1 md:flex-[0.3]' : 'hidden'}`}>
+          <div className={`flex flex-col bg-white rounded-none lg:rounded-[32px] 
+          border-0 lg:border border-slate-100 shadow-sm overflow-hidden min-h-0 animate-in slide-in-from-right duration-500 ${selectedUser ? 'flex-1 lg:flex-[0.35] xl:flex-[0.3]' : 'hidden'}`}>
             <div className="p-6 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
               <h2 className="text-lg font-bold text-slate-900">직원 상세 정보</h2>
               <button onClick={() => { setSelectedUser(null); setIsDetailEditing(false); }} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400">
@@ -542,7 +538,7 @@ const AdminUsers = () => {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">부서</span>
-                      {isDetailEditing && selectedUser.rank_name !== '대표' && selectedUser.dept_name !== '대표이사실' ? (
+                      {isDetailEditing ? (
                         <div className="relative custom-dropdown w-full">
                           <div 
                             onClick={() => { setIsDeptOpen(!isDeptOpen); setIsRankOpen(false); setIsPermissionOpen(false); setIsHrManagerOpen(false);}}
@@ -559,38 +555,11 @@ const AdminUsers = () => {
                                 <div 
                                   key={dept.dept_seq}
                                   onClick={() => { 
-                                    const isHeadquarters = dept.dept_name.includes('본부');
-                                    const isTeam = dept.dept_name.includes('팀');
-                                    const isCEOOffice = dept.dept_name === '대표이사실';
-                                    const ceoRank = rankList.find(r => r.rank_name === '대표');
-                                    const headRank = rankList.find(r => r.rank_name === '본부장');
-                                    // ✨ 안전하게 기본값을 지정하기 위해 부서장(또는 사원) 직급을 찾아둡니다.
-                                    const defaultTeamRank = 
-                                      rankList.find(r => r.rank_name === '부서장') 
-                                      || rankList.find(r => r.rank_name !== '대표' && r.rank_name !== '본부장') 
-                                      || rankList[0];
-                                    
                                   setEditForm(prev => {
-                                    let updatedRank = {};
-                                                                       
-                                   if (isCEOOffice) {
-                                      // 대표이사실이면 무조건 '대표'로 고정 (demo/production 공통)
-                                      updatedRank = { rank_name: '대표', rank_seq: ceoRank ? ceoRank.rank_seq : prev.rank_seq };
-                                    } else if (isHeadquarters && headRank) {
-                                      // 본부면 무조건 '본부장'으로 고정 (demo/production 공통)
-                                      updatedRank = { rank_name: headRank.rank_name, rank_seq: headRank.rank_seq };
-                                    } else if (prev.rank_name === '대표') {
-                                      // 대표이사실에서 다른 부서로 옮길 때 '대표' 직급 리셋
-                                      updatedRank = { rank_name: defaultTeamRank.rank_name, rank_seq: defaultTeamRank.rank_seq };
-                                    }else if (!isDemoMode && isTeam && prev.rank_name === '본부장') {
-                                      updatedRank = { rank_name: defaultTeamRank.rank_name, rank_seq: defaultTeamRank.rank_seq };
-                                    }
-
                                     return { 
                                       ...prev, 
                                       dept_name: dept.dept_name,  // 부서 이름 저장
                                       dept_seq: dept.dept_seq,    // 부서 번호 저장 
-                                      ...updatedRank              // 조건에 맞춰 변경된 직급 반영
                                     };
                                   });
                                     setIsDeptOpen(false); 
@@ -610,17 +579,16 @@ const AdminUsers = () => {
                     </div>
                     <div className="flex justify-between items-center">
                     <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">직급</span>
-                    {isDetailEditing && editForm.dept_name !== '대표이사실' ? (
+                    {isDetailEditing ? (
                       <div className="relative custom-dropdown w-full">
                         <div 
                           onClick={() => { 
-                            if (!isDemoMode && editForm.dept_name.includes('본부')) return;
                             setIsRankOpen(!isRankOpen); 
                             setIsDeptOpen(false); 
                             setIsPermissionOpen(false); 
                             setIsHrManagerOpen(false);
                           }}
-                          className={`w-full px-3 py-1.5 bg-white border ${isRankOpen ? 'border-[#3530B8] ring-2 ring-[#3530B8]/5' : 'border-gray-200'} rounded-lg text-[0.6875rem] font-bold transition-all ${!isDemoMode && editForm.dept_name.includes('본부') ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} flex justify-between items-center text-slate-700`}
+                          className={`w-full px-3 py-1.5 bg-white border ${isRankOpen ? 'border-[#3530B8] ring-2 ring-[#3530B8]/5' : 'border-gray-200'} rounded-lg text-[0.6875rem] font-bold transition-all cursor-pointer flex justify-between items-center text-slate-700`}
                         >
                           <span>{editForm.rank_name}</span>
                           <svg className={`w-3 h-3 text-gray-400 transition-transform ${isRankOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -630,13 +598,6 @@ const AdminUsers = () => {
                         {isRankOpen && (
                           <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
                             {rankList
-                              .filter(rank => {
-                                if (rank.rank_name === '대표') return false; // 대표이사실 외에는 '대표' 선택 불가
-                                if (editForm.dept_name.includes('팀')) {
-                                  return rank.rank_name !== '본부장';
-                                }
-                                return true;
-                              })
                               .map((rank, idx) => (
                               <div 
                                 key={rank.rank_seq}
@@ -710,6 +671,58 @@ const AdminUsers = () => {
                         )}
                       </div>
                     )}
+
+                    {/* ✅ 개인 권한 추가 */}
+                    <div className={isDetailEditing ? "space-y-1.5" : "flex justify-between items-start"}>
+                      <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap pt-0.5">개인 권한</span>
+                      {isDetailEditing ? (
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          {AVAILABLE_ROLES.map(r => {
+                            const isSelected = r.value === 'ROLE_USER'
+                              ? editRoles.length === 0
+                              : editRoles.includes(r.value);
+
+                            return (
+                              <div
+                                key={r.value}
+                                onClick={() => {
+                                  if (r.value === 'ROLE_USER') {
+                                    setEditRoles([]);
+                                  } else {
+                                    setEditRoles(prev =>
+                                      prev.includes(r.value)
+                                        ? prev.filter(v => v !== r.value)
+                                        : [...prev, r.value]
+                                    );
+                                  }
+                                }}
+                                className={`px-3 py-2 rounded-xl border text-[11px] font-bold cursor-pointer transition-all flex items-center justify-center text-center
+                                  ${isSelected
+                                    ? 'bg-[#3530B8] text-white border-[#3530B8]'
+                                    : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-[#3530B8]'}`}
+                              >
+                                {r.label}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="flex gap-1.5 flex-wrap justify-end">
+                          {personalRoles.length === 0 ? (
+                            <span className="w-20 text-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-400">
+                              일반 부서
+                            </span>
+                          ) : (
+                            personalRoles.map(r => (
+                              <span key={r} className="w-20 text-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#EEF2FF] text-[#3530B8]">
+                                {AVAILABLE_ROLES.find(a => a.value === r)?.label || r}
+                              </span>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">입사일</span>
                       <span className="text-xs font-bold text-slate-700 font-mono">{selectedUser.hire_date ? String(selectedUser.hire_date).split(' ')[0] : '-'}</span>

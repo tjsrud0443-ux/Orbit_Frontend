@@ -469,3 +469,7 @@ export const getAllLeaves = (cPage, keyword) => {
 export const updateUserLeave = (leaveSeq, delta) => {
     return maxios.put(`/admin/hr/updateUserLeave/${leaveSeq}`, { delta_days: delta });
 }; 
+//조회
+export const getUserRoles = (usersId) => maxios.get(`/usersRole/${usersId}/roles`);
+//수정
+export const updateUserRoles = (usersId, roles) => maxios.put(`/usersRole/${usersId}/roles`, roles);
