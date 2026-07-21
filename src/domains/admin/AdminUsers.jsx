@@ -6,6 +6,7 @@ import { alertError, alertConfirm, alertSuccess } from '../../utils/alert';
 import useUserStore from '../../store/userStore';
 import useDepartmentsStore from '../../store/useDepartmentsStore';
 import usePageInfoStore from '../../store/usePageInfoStore';
+import RegisterUserModal from './RegisterUserModal';
 
 const AVAILABLE_ROLES = [
   { value: 'ROLE_USER', label: '개인 권한 없음' },
@@ -312,16 +313,16 @@ const AdminUsers = () => {
             <table className="w-full text-left border-collapse block sm:table mt-6 min-w-[800px] sm:min-w-0">
               <thead className="sticky top-0 bg-white z-10">
                 <tr className="border-b border-slate-100 hidden sm:table-row">
-                  <th className="pb-4 pl-2 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-12">사번</th>
-                  <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-16">이름</th>
-                  <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-24">아이디</th>
-                  <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-32">부서</th>
-                  <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-14">직급</th>
-                  <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-16">상태</th>
-                  <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-28" title="재직: 입사일 / 휴직: 처리일 / 퇴사: 퇴사일">
+                  <th className="pb-4 pl-2 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-14">사번</th>
+                  <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-20">이름</th>
+                  <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-28">아이디</th>
+                  <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-36">부서</th>
+                  <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-20">직급</th>
+                  <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-20">상태</th>
+                  <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider w-32" title="재직: 입사일 / 휴직: 처리일 / 퇴사: 퇴사일">
                     {activeTab === '퇴사' ? '퇴사일자' : activeTab === '휴직' ? '휴직일자' : activeTab === '재직' ? '입사일' : '기준일자'}
                   </th>
-                  <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider pl-4 w-40">관리</th>
+                  <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-[150px]">관리</th>
                 </tr>
               </thead>
               
@@ -415,9 +416,9 @@ const AdminUsers = () => {
                         })()}
                       </td>
 
-                      <td className="py-2 px-4 block sm:table-cell text-left w-fit sm:w-[160px] sm:min-w-[160px] clear-both mt-2">
+                      <td className="py-2 px-2 block sm:table-cell text-left sm:text-center w-fit sm:w-[150px] sm:min-w-[150px] clear-both mt-2">
                         {editingId === emp.users_seq ? (
-                          <div className="status-edit-buttons flex gap-1 justify-start w-max whitespace-nowrap">
+                          <div className="status-edit-buttons flex gap-1 justify-start sm:justify-center w-full whitespace-nowrap">
                             <button 
                               type="button"
                               onClick={(e) => { e.stopPropagation(); handleStatusChange(e, emp.users_seq, 'ACTIVE'); }}
@@ -789,6 +790,15 @@ const AdminUsers = () => {
         )}
       </div>
       
+      {/* 직원 등록 모달 */}
+      <RegisterUserModal
+        isOpen={isRegisterModalOpen}
+        onClose={() => setIsRegisterModalOpen(false)}
+        onSuccess={() => fetchEmployees(currentPage, searchKeyword, activeTab)}
+        deptList={deptList}
+        rankList={rankList}
+      />
+
       <style dangerouslySetInnerHTML={{ __html: `
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
