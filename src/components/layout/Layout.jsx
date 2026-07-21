@@ -1,26 +1,26 @@
-﻿import { Outlet, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+﻿import { Outlet } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { getUsersInfo } from '../../api/userApi';
 import useUserStore from '../../store/userStore';
-import { alertWarning } from '../../utils/alert';
 
 export default function Layout() {
-  const navi = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const setUserInfo = useUserStore(state => state.setUser);
 
   useEffect(() => {
-    getUsersInfo().then(resp => {
-      setUserInfo(resp.data)
-    })
-      .catch(error => {
-        alertWarning('세션 만료', '로그인 세션이 만료되었습니다.<br> 다시 로그인해주세요.');
-        sessionStorage.removeItem("token");
-        navi("/");
-      })
-  }, []);
+    const fetchUserInfo = async () => {
+      try {
+        const resp = await getUsersInfo();
+        setUserInfo(resp.data);
+      } catch (error) {
+        console.error('사용자 정보 조회 실패:', error);
+      }
+    };
+
+    fetchUserInfo();
+  }, [setUserInfo]);
 
   return (
     <div id="layout-root" className="w-screen h-screen flex items-center justify-center bg-slate-100">
