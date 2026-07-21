@@ -26,7 +26,7 @@ const AdminCertType = () => {
     };
 
     useEffect(() => {
-        fetchCertType();
+       fetchCertType();
     }, []);
 
     const handleStartEdit = (certType) => {
@@ -64,8 +64,18 @@ const AdminCertType = () => {
             return;
         }
 
+        if (Number(editForm.print_days) > 365) {
+            await alertError('입력 오류', '출력 가능 일수는 최대 365일까지 입력할 수 있습니다.');
+            return;
+        }
+
         if (!isPositiveInteger(editForm.max_print_count)) {
             await alertError('입력 오류', '출력 가능 장수는 1 이상의 정수만 입력할 수 있습니다.');
+            return;
+        }
+
+        if (Number(editForm.max_print_count) > 100) {
+            await alertError('입력 오류', '최대 출력 가능 장수는 100장까지 입력할 수 있습니다.');
             return;
         }
 
