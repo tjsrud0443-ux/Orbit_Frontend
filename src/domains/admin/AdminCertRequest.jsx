@@ -4,6 +4,8 @@ import MobilePagination from '../../components/common/MobilePagination';
 import Swal from 'sweetalert2';
 import { getAdminCertRequestList, approveCertRequest, rejectCertRequest } from './adminApi';
 import { alertConfirm, alertError, alertSuccess } from '../../utils/alert';
+import * as XLSX from 'xlsx';
+import { Download } from 'lucide-react';
 
 const PAGE_SIZE = 10;
 
@@ -24,7 +26,6 @@ const AdminCertRequest = () => {
     const fetchCertRequests = async () => {
         try {
             const resp = await getAdminCertRequestList();
-            console.log('증명서 신청 목록:', resp.data);
             setCertRequests(resp.data ?? []);
         } catch (err) {
             console.error('증명서 신청 목록 조회 실패:', err);
@@ -244,6 +245,76 @@ const AdminCertRequest = () => {
         });
     };
 
+    const handleExcelDownload = async () => {
+        if (certRequests.length === 0) {
+            await alertError(
+                '다운로드 실패',
+                '다운로드할 발급 목록이 없습니다.'
+            );
+            return;
+        }
+
+        const excelData = certRequests.map((request, index) => ({
+            번호: index + 1,
+            신청번호: request.cert_request_seq,
+            신청자: request.name ?? '-',
+            사용자ID: request.users_id ?? '-',
+            부서: request.dept_name ?? '-',
+            직급: request.rank_name ?? '-',
+            증명서유형: request.cert_type_name ?? '-',
+            신청사유: request.request_reason ?? '-',
+            신청일시: formatDateTime(request.requested_at),
+            처리관리자: request.handler_name ?? '-',
+            상태:
+                request.status === 'PENDING' ? '대기' :
+                    request.status === 'APPROVED' ? '승인' :
+                        request.status === 'REJECTED' ? '반려' :
+                            request.status ?? '-',
+            처리일시: formatDateTime(request.processed_at),
+            반려사유: request.reject_reason ?? '-',
+            출력기한: formatDateTime(request.print_expires_at),
+            출력현황:
+                `${request.printed_count ?? 0} / ${request.applied_max_print ?? 0}회`
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+        const workbook = XLSX.utils.book_new();
+
+        worksheet['!cols'] = [
+            { wch: 7 },
+            { wch: 11 },
+            { wch: 12 },
+            { wch: 16 },
+            { wch: 18 },
+            { wch: 12 },
+            { wch: 18 },
+            { wch: 30 },
+            { wch: 22 },
+            { wch: 14 },
+            { wch: 10 },
+            { wch: 22 },
+            { wch: 30 },
+            { wch: 22 },
+            { wch: 14 }
+        ];
+
+        XLSX.utils.book_append_sheet(
+            workbook,
+            worksheet,
+            '증명서 발급 목록'
+        );
+
+        const today = new Date()
+            .toISOString()
+            .slice(0, 10)
+            .replaceAll('-', '');
+
+        XLSX.writeFile(
+            workbook,
+            `증명서_발급목록_${today}.xlsx`
+        );
+    };
+
     return (
         <div className="h-full flex flex-col bg-white font-sans p-6 md:p-8">
             <div className="mb-6 flex-shrink-0">
@@ -254,6 +325,15 @@ const AdminCertRequest = () => {
                     증명서 발급 신청 내역을 확인하고 승인 또는 반려할 수 있습니다.
                 </p>
             </div>
+
+            <button
+                type="button"
+                onClick={handleExcelDownload}
+                className="flex items-center gap-2 shrink-0 px-3 md:px-4 py-2 rounded-lg bg-emerald-600 text-xs md:text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors cursor-pointer">
+                <Download size={17} />
+                <span className="hidden sm:inline">엑셀 다운로드</span>
+                <span className="sm:hidden">엑셀</span>
+            </button>
 
             <div className="mb-6 flex-shrink-0 w-full text-left">
                 <div className="inline-flex bg-white p-1 rounded-2xl shadow-sm border border-[#F0F4FF] max-w-full overflow-x-auto no-scrollbar align-top">
