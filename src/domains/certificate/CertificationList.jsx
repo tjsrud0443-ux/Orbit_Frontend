@@ -14,26 +14,47 @@ const CertificationList = () => {
     const [selectedCertType, setSelectedCertType] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const { pages } = usePageInfoStore();
+    const currentPageInfo = pages.find(p => p.page_code === 'CertificationList');
     const [certType, setCertType] = useState([]);
 
-    useEffect(() => {
-        const fetchCertType = async () => {
-            try{
-                const resp = await getCertType();
-                setCertType(resp.data ?? []);
-            }catch(err) {
-                console.error("증명서 유형 조회 실패", err);
-            }
+    const fetchCertType = async () => {
+        try {
+            const resp = await getCertType();
+            setCertType(resp.data ?? []);
+        } catch (err) {
+            console.error("증명서 유형 조회 실패", err);
         }
+    }
+
+    useEffect(() => {
         fetchCertType();
-    },[]);
+    }, []);
 
     const handleRequestClick = (cert) => {
         setSelectedCertType(cert);
         setIsModalOpen(true);
     };
 
-    const handlePreviewClick = async ({ purposeValue, purposeLabel }) => {
+    const handlePreview = (cert) => {
+        setSelectedCertType(cert);
+        setSelectedPurpose(cert.request_reason ?? '');
+        setPreviewMode(true);
+    };
+
+    const isPrintExpired = (cert) => {
+        if (!cert.print_expires_at) return false;
+
+        return new Date(cert.print_expires_at).getTime() < Date.now();
+    };
+
+    const isPrintLimitReached = (cert) => {
+        if (cert.applied_max_print == null) return false;
+
+        return Number(cert.printed_count ?? 0)
+            >= Number(cert.applied_max_print);
+    };
+
+    const handlePreviewClick = async ({ purposeLabel }) => {
         if (!selectedCertType?.cert_type_seq) {
             await alertError('신청 실패', '증명서 유형 정보가 없습니다.');
             return;
@@ -44,9 +65,11 @@ const CertificationList = () => {
                 cert_type_seq: selectedCertType.cert_type_seq,
                 request_reason: purposeLabel
             });
-            await alertSuccess('신청 완료', '증명서 발급 신청이 완료되었습니다.');
-            setSelectedPurpose(purposeLabel);
+
+            await fetchCertType();
             setIsModalOpen(false);
+
+            await alertSuccess('신청 완료', '관리자 승인 후 증명서를 출력할 수 있습니다.');
             // setPreviewMode(true);
         } catch (err) {
             console.error('증명서 발급 신청 실패', err);
@@ -63,13 +86,79 @@ const CertificationList = () => {
     if (previewMode) {
         return (
             <EmploymentCertificate
+                certRequestSeq={selectedCertType?.cert_request_seq}
+                certTypeCode={selectedCertType?.cert_type_code}
                 purpose={selectedPurpose}
+                printExpiresAt={selectedCertType?.print_expires_at}
+                printedCount={selectedCertType?.printed_count}
+                maxPrintCount={selectedCertType?.applied_max_print}
                 onBack={handleBackToOptions}
             />
         );
     }
 
-    const currentPageInfo = pages.find(p => p.page_code === 'CertificationList');
+    const handleCancelRequest = async (cert) => {
+        console.log('취소 대상:', cert);
+    };
+    const renderCertAction = (cert) => {
+        if (cert.status === 'PENDING') {
+            return (
+                <button
+                    type="button"
+                    onClick={() => handleCancelRequest(cert)}
+                    className="w-auto sm:w-full py-2 px-3 sm:px-0 sm:py-2.5 bg-white text-red-500 text-sm sm:text-base font-semibold rounded-lg shadow-sm border border-red-200 hover:bg-red-50 transition-colors whitespace-nowrap ml-4 sm:ml-0"
+                >
+                    신청 취소
+                </button>
+            );
+        }
+
+        if (cert.status === 'APPROVED') {
+            if (isPrintExpired(cert)) {
+                return (
+                    <button
+                        type="button"
+                        disabled
+                        className="w-auto sm:w-full py-2 px-3 sm:px-0 sm:py-2.5 bg-gray-100 text-gray-400 text-sm sm:text-base font-semibold rounded-lg border border-gray-200 whitespace-nowrap ml-4 sm:ml-0 cursor-not-allowed"
+                    >
+                        출력 기간 만료
+                    </button>
+                );
+            }
+
+            if (isPrintLimitReached(cert)) {
+                return (
+                    <button
+                        type="button"
+                        disabled
+                        className="w-auto sm:w-full py-2 px-3 sm:px-0 sm:py-2.5 bg-gray-100 text-gray-400 text-sm sm:text-base font-semibold rounded-lg border border-gray-200 whitespace-nowrap ml-4 sm:ml-0 cursor-not-allowed"
+                    >
+                        출력 횟수 소진
+                    </button>
+                );
+            }
+
+            return (
+                <button
+                    type="button"
+                    onClick={() => handlePreview(cert)}
+                    className="w-auto sm:w-full py-2 px-3 sm:px-0 sm:py-2.5 bg-indigo-600 text-white text-sm sm:text-base font-semibold rounded-lg shadow-sm hover:bg-indigo-700 transition-colors whitespace-nowrap ml-4 sm:ml-0"
+                >
+                    미리보기 및 출력
+                </button>
+            );
+        }
+
+        return (
+            <button
+                type="button"
+                onClick={() => handleRequestClick(cert)}
+                className="w-auto sm:w-full py-2 px-3 sm:px-0 sm:py-2.5 bg-white text-indigo-600 text-sm sm:text-base font-semibold rounded-lg shadow-sm border border-indigo-100 hover:bg-indigo-50 transition-colors whitespace-nowrap ml-4 sm:ml-0"
+            >
+                발급 신청
+            </button>
+        );
+    };
 
     return (
         <div className="w-full h-full flex flex-col p-6 md:p-8 lg:px-10 box-border bg-white font-sans">
@@ -96,12 +185,7 @@ const CertificationList = () => {
                                 <h2 className="text-md sm:text-xl font-bold text-gray-800 mb-0 sm:mb-2">{cert.cert_type_name}</h2>
                                 <p className="hidden sm:block text-sm text-gray-600 mb-6">{cert.cert_description}</p>
                             </div>
-                            <button
-                                onClick={() => handleRequestClick(cert)}
-                                className="w-auto sm:w-full py-2 px-3 sm:px-0 sm:py-2.5 bg-white text-indigo-600 text-sm sm:text-base font-semibold rounded-lg shadow-sm border border-indigo-100 hover:bg-indigo-50 transition-colors whitespace-nowrap ml-4 sm:ml-0"
-                            >
-                                발급 신청
-                            </button>
+                            {renderCertAction(cert)}
                         </div>
                     ) : (
                         <div key={`empty-${idx}`} className="rounded-xl bg-gray-50/60 border border-gray-200 border-dashed min-h-[80px] sm:min-h-[220px] flex items-center justify-center p-4 sm:p-6">
