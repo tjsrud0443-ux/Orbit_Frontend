@@ -104,7 +104,9 @@ const CertificationList = () => {
         }
     };
 
-    const handleBackToOptions = () => {
+    const handleBackToOptions = async () => {
+        await fetchCertType();
+
         setPreviewMode(false);
         setSelectedPurpose('');
         setSelectedCertType(null);

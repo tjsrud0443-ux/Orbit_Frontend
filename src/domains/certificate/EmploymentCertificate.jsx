@@ -2,14 +2,16 @@ import React, { useEffect, useState } from 'react';
 import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
 import { getCompanyInfo } from '../admin/adminApi';
-import { getCertType } from './certificateApi';
+import { getCertType, increasePrintedCount } from './certificateApi';
 import { Printer, ArrowLeft } from 'lucide-react';
+import { alertError, alertConfirm } from '../../utils/alert';
 
-const EmploymentCertificate = ({ purpose, onBack }) => {
+const EmploymentCertificate = ({ certRequestSeq, purpose, onBack, maxPrintCount, printedCount }) => {
   const { user } = useUserStore();
   const { token } = useAuthStore();
   const [company, setCompany] = useState(null);
   const [certInfo, setCertInfo] = useState(null);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   useEffect(() => {
     const fetchCompany = async () => {
@@ -38,8 +40,52 @@ const EmploymentCertificate = ({ purpose, onBack }) => {
     fetchCertData();
   }, []);
 
-  const handlePrint = () => {
-    window.print();
+  const wait = (ms) =>
+    new Promise(resolve => setTimeout(resolve, ms));
+
+  const handlePrint = async () => {
+    if (!certRequestSeq) {
+      await alertError(
+        '출력 실패',
+        '증명서 신청 정보가 없습니다.'
+      );
+      return;
+    }
+
+    if (isPrinting) return;
+
+    const remainingCount =
+      Math.max(
+        Number(maxPrintCount ?? 0) -
+        Number(printedCount ?? 0),
+        0
+      );
+
+    const result = await alertConfirm(
+      '증명서 인쇄',
+      `현재 출력 가능 횟수는 ${remainingCount}회입니다.<br/>인쇄 창에서 취소하더라도 출력 가능 횟수가 1회 차감됩니다.<br/>계속하시겠습니까?`
+    );
+
+    if (!result.isConfirmed) return;
+
+    try {
+      setIsPrinting(true);
+
+      await increasePrintedCount(certRequestSeq);
+
+      await wait(300);
+      window.print();
+    } catch (err) {
+      console.error('증명서 출력 실패:', err);
+
+      await alertError(
+        '출력 실패',
+        err.response?.data?.message ||
+        '출력기한이 만료되었거나 출력 가능 횟수를 모두 사용했습니다.'
+      );
+    } finally {
+      setIsPrinting(false);
+    }
   };
 
   const formatSsn = (ssn) => {
@@ -99,10 +145,16 @@ const EmploymentCertificate = ({ purpose, onBack }) => {
         </button>
         <button
           onClick={handlePrint}
-          className="flex items-center gap-2 px-4 sm:px-5 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition text-sm sm:text-base"
+          disabled={isPrinting}
+          className={`flex items-center gap-2 px-4 sm:px-5 py-2 text-white rounded-lg shadow transition text-sm sm:text-base
+            ${isPrinting
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-indigo-600 hover:bg-indigo-700'
+            }`}
         >
           <Printer size={18} />
-          인쇄
+
+          {isPrinting ? '처리 중...' : '인쇄'}
         </button>
       </div>
 
