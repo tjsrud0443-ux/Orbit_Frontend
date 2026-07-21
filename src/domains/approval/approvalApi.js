@@ -1,25 +1,26 @@
-﻿import { maxios } from "../../api/axiosConfig";
+import { maxios } from "../../api/axiosConfig";
 
 export const getAllEmployees = () => maxios.get("/approval/all");
 export const getTopReferrers = () => maxios.get("/approval/topReferrers");
 export const getAllVacationTypes = () => maxios.get("/approval/vacationTypes");
 
-export const submitVacation = (formData) => maxios.post("/approval/submit/vacation", formData, {
+export const submitVacation = (formData, originalDocSeq = null) => maxios.post(`/approval/submit/vacation${originalDocSeq ? `?originalDocSeq=${originalDocSeq}` : ''}`, formData, {
     headers: {
         "Content-Type": "multipart/form-data"
     }
 });
-export const submitPurchase = (formData) => maxios.post("/approval/submit/purchase", formData, {
+export const submitPurchase = (formData, originalDocSeq = null) => maxios.post(`/approval/submit/purchase${originalDocSeq ? `?originalDocSeq=${originalDocSeq}` : ''}`, formData, {
     headers: {
         "Content-Type": "multipart/form-data"
     }
 });
-export const submitPayment = (payload) => maxios.post("/approval/submit/payment", payload);
-export const submitGeneral = (formData) => maxios.post("/approval/submit/general", formData, {
+export const submitPayment = (payload, originalDocSeq = null) => maxios.post(`/approval/submit/payment${originalDocSeq ? `?originalDocSeq=${originalDocSeq}` : ''}`, payload);
+export const submitGeneral = (formData, originalDocSeq = null) => maxios.post(`/approval/submit/general${originalDocSeq ? `?originalDocSeq=${originalDocSeq}` : ''}`, formData, {
     headers: {
         "Content-Type": "multipart/form-data"
     }
 });
+export const submitCancelVacation = (payload, originalDocSeq = null) => maxios.post(`/approval/submit/cancelVacation${originalDocSeq ? `?originalDocSeq=${originalDocSeq}` : ''}`, payload);
 
 export const getApprovalDetail = (type, docSeq) => maxios.get(`/approval/detail/${type}/${docSeq}`);
 
@@ -30,6 +31,7 @@ export const updateVacation = (docSeq, payload) => maxios.put(`/approval/update/
 export const updateGeneral = (docSeq, payload) => maxios.put(`/approval/update/general/${docSeq}`, payload);
 export const updatePayment = (docSeq, payload) => maxios.put(`/approval/update/payment/${docSeq}`, payload);
 export const updatePurchase = (docSeq, payload) => maxios.put(`/approval/update/purchase/${docSeq}`, payload);
+export const updateCancelVacation = (docSeq, payload) => maxios.put(`/approval/update/cancelVacation/${docSeq}`, payload);
 
 export const getApprovalHomeData = () => maxios.get("/approval/home");
 
@@ -45,3 +47,5 @@ export const getPageMyDoneDoc = (cpage, keyword, docType) => maxios.get("/approv
 export const bulkApproveDocuments = (docSeqList) => maxios.put("/approval/bulkApproveDocuments", docSeqList);
 
 export const getDefaultApprovers = (doc_type) => maxios.get("/approval/defaultApprovalLine", { params: { doc_type: doc_type } });
+
+export const getApprovedVacationList = () => maxios.get("/approval/getApprovedVacationList");

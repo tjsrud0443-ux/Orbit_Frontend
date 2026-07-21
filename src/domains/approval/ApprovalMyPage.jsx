@@ -49,24 +49,28 @@ const ApprovalLineStack = ({ line }) => {
 };
 
 // 결재 상태
-const StatusBadge = ({ status }) => {
+const StatusBadge = ({ status, cancelYn }) => {
   const styles = {
     'DRAFT': 'bg-[#FFF9F0] text-[#FF9800] border-[#FFF9F0]',
     'APPROVED': 'bg-[#F0FDF4] text-[#10B981] border-[#F0FDF4]',
     'REJECTED': 'bg-[#FFF0F0] text-[#FF4D4F] border-[#FFF0F0]',
     'IN_PROGRESS': 'bg-blue-50 text-blue-600 border-blue-50',
+    'CANCELLED': 'bg-gray-100 text-gray-500 border-gray-100',
   };
 
   const statusText = {
     'DRAFT': '결재 대기',
     'IN_PROGRESS': '진행 중',
     'APPROVED': '결재 완료',
-    'REJECTED': '반려'
+    'REJECTED': '반려',
+    'CANCELLED': '취소',
   };
 
+  const effectiveStatus = (status === 'APPROVED' && cancelYn === 'Y') ? 'CANCELLED' : status;
+
   return (
-    <span className={`text-[11px] px-2 py-0.5 md:px-2.5 md:py-1 rounded-full font-bold border whitespace-nowrap ${styles[status] || 'bg-gray-50 text-gray-600'}`}>
-      {statusText[status] || status}
+    <span className={`text-[11px] px-2 py-0.5 md:px-2.5 md:py-1 rounded-full font-bold border whitespace-nowrap ${styles[effectiveStatus] || 'bg-gray-50 text-gray-600'}`}>
+      {statusText[effectiveStatus] || effectiveStatus}
     </span>
   );
 };
@@ -80,7 +84,8 @@ const DocumentTable = ({ data, onDetailClick, showPagination = true, approverLab
     'VACATION': '휴가신청서',
     'PAYMENT': '지출결의서',
     'GENERAL': '일반품의서',
-    'PURCHASE': '구매신청서'
+    'PURCHASE': '구매신청서',
+    'CANCEL_VACATION': '휴가취소신청서'
   }
   const mobilePageNumbers = (() => {
     if (count <= 0) return [];
@@ -148,7 +153,8 @@ const DocumentTable = ({ data, onDetailClick, showPagination = true, approverLab
                   {approverName(doc)}
                 </td>
                 <td className="px-2 py-0.5 text-[11px] text-center whitespace-nowrap">
-                  <StatusBadge status={doc.status} />
+                  {console.log('doc_seq:', doc.doc_seq, 'cancel_yn:', doc.cancel_yn)}
+                  <StatusBadge status={doc.status} cancelYn={doc.cancel_yn} />
                 </td>
                 <td className="px-3 py-4 text-center whitespace-nowrap">
                   <button
@@ -234,7 +240,8 @@ const ApprovalMyPage = () => {
     '일반품의서': 'GENERAL',
     '지출결의서': 'PAYMENT',
     '휴가신청서': 'VACATION',
-    '구매신청서': 'PURCHASE'
+    '구매신청서': 'PURCHASE',
+    '휴가취소신청서': 'CANCEL_VACATION'
   };
 
   useEffect(() => {
@@ -442,7 +449,7 @@ const ApprovalMyPage = () => {
                   </div>
                   {isTypeOpen && (
                     <div className="absolute top-full left-0 mt-2 w-full bg-white border border-[#edf2f9] rounded-xl shadow-lg z-50 py-1 overflow-hidden">
-                      {['전체 문서', '일반품의서', '지출결의서', '휴가신청서', '구매신청서'].map((type) => (
+                      {['전체 문서', '일반품의서', '지출결의서', '휴가신청서', '구매신청서', '휴가취소신청서'].map((type) => (
                         <div
                           key={type}
                           onClick={() => {

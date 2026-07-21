@@ -74,7 +74,8 @@ const docTypeMap = {
   '일반품의서': 'GENERAL',
   '지출결의서': 'PAYMENT',
   '휴가신청서': 'VACATION',
-  '구매신청서': 'PURCHASE'
+  '구매신청서': 'PURCHASE',
+  '휴가취소신청서': 'CANCEL_VACATION'
 };
 
 // 현재 결재자
@@ -88,7 +89,8 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
     'VACATION': '휴가신청서',
     'PAYMENT': '지출결의서',
     'GENERAL': '일반품의서',
-    'PURCHASE': '구매신청서'
+    'PURCHASE': '구매신청서',
+    'CANCEL_VACATION': '휴가취소신청서'
   }
   const mobilePageNumbers = (() => {
     if (count <= 0) return [];
@@ -327,7 +329,7 @@ const ApprovalCc = () => {
               </div>
               {isTypeOpen && (
                 <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1">
-                  {['전체 문서', '일반품의서', '지출결의서', '휴가신청서', '구매신청서'].map((type) => (
+                  {['전체 문서', '일반품의서', '지출결의서', '휴가신청서', '구매신청서', '휴가취소신청서'].map((type) => (
                     <div
                       key={type}
                       onClick={() => {
