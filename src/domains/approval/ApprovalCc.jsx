@@ -329,7 +329,7 @@ const ApprovalCc = () => {
               </div>
               {isTypeOpen && (
                 <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1">
-                  {['전체 문서', '일반품의서', '지출결의서', '휴가신청서', '구매신청서'].map((type) => (
+                  {['전체 문서', '일반품의서', '지출결의서', '휴가신청서', '구매신청서', '휴가취소신청서'].map((type) => (
                     <div
                       key={type}
                       onClick={() => {
