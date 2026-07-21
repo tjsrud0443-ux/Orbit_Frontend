@@ -2,14 +2,26 @@ import React, { useEffect, useState } from 'react';
 import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
 import { getCompanyInfo } from '../admin/adminApi';
-import { getCertType } from './certificateApi';
+import { getCertType, increasePrintedCount } from './certificateApi';
 import { Printer, ArrowLeft } from 'lucide-react';
+import { alertError, alertConfirm } from '../../utils/alert';
 
-const EmploymentCertificate = ({ purpose, onBack }) => {
+
+const EmploymentCertificate = ({ certRequestSeq, purpose, onBack, maxPrintCount, printedCount, issueDateCode, issueNo }) => {
   const { user } = useUserStore();
   const { token } = useAuthStore();
   const [company, setCompany] = useState(null);
   const [certInfo, setCertInfo] = useState(null);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [currentPrintedCount, setCurrentPrintedCount] = useState(Number(printedCount ?? 0));
+
+  const maxCount = Number(maxPrintCount ?? 0);
+  const remainingCount = Math.max(maxCount - currentPrintedCount, 0);
+  const isPrintLimitReached = maxCount <= 0 || remainingCount <= 0;
+
+  useEffect(() => {
+    setCurrentPrintedCount(Number(printedCount ?? 0));
+  }, [printedCount]);
 
   useEffect(() => {
     const fetchCompany = async () => {
@@ -25,7 +37,7 @@ const EmploymentCertificate = ({ purpose, onBack }) => {
       try {
         const res = await getCertType();
         const certList = res.data;
-        const cert = certList.find(item => item.cert_type_name === "재직증명서");
+        const cert = certList.find(item => item.cert_type_code === "EMPLOYMENT_CERT");
         if (cert) {
           setCertInfo(cert);
         }
@@ -38,8 +50,45 @@ const EmploymentCertificate = ({ purpose, onBack }) => {
     fetchCertData();
   }, []);
 
-  const handlePrint = () => {
-    window.print();
+  const wait = (ms) =>
+    new Promise(resolve => setTimeout(resolve, ms));
+
+  const handlePrint = async () => {
+    if (!certRequestSeq) {
+      await alertError(
+        '출력 실패',
+        '증명서 신청 정보가 없습니다.'
+      );
+      return;
+    }
+
+    if (isPrinting || isPrintLimitReached) return;
+
+    const result = await alertConfirm(
+      '증명서 인쇄',
+      `현재 출력 가능 횟수는 ${remainingCount}회입니다.<br/>인쇄 창에서 취소하더라도 출력 가능 횟수가 1회 차감됩니다.<br/>계속하시겠습니까?`
+    );
+
+    if (!result.isConfirmed) return;
+
+    try {
+      setIsPrinting(true);
+      setCurrentPrintedCount(prev => prev + 1);
+      await increasePrintedCount(certRequestSeq);
+
+      await wait(300);
+      window.print();
+    } catch (err) {
+      console.error('증명서 출력 실패:', err);
+
+      await alertError(
+        '출력 실패',
+        err.response?.data?.message ||
+        '출력기한이 만료되었거나 출력 가능 횟수를 모두 사용했습니다.'
+      );
+    } finally {
+      setIsPrinting(false);
+    }
   };
 
   const formatSsn = (ssn) => {
@@ -75,12 +124,9 @@ const EmploymentCertificate = ({ purpose, onBack }) => {
   const dd = String(today.getDate()).padStart(2, '0');
   const todayStr = `${yyyy}년 ${mm}월 ${dd}일`;
 
-  let docNumber = '';
-  if (certInfo) {
-    const yy = String(yyyy).slice(-2);
-    const seq = String(certInfo.cert_type_seq).padStart(3, '0');
-    docNumber = `${certInfo.manage_dept_code}-${yy}${mm}${dd}-${seq}`;
-  }
+  const docNumber = issueDateCode && issueNo
+    ? `${issueDateCode}-${String(issueNo).padStart(3, '0')}`
+    : '';
 
   const companyNameFormatted = company?.companyName
     ? company?.companyName
@@ -97,13 +143,32 @@ const EmploymentCertificate = ({ purpose, onBack }) => {
           <ArrowLeft size={18} />
           뒤로가기
         </button>
-        <button
-          onClick={handlePrint}
-          className="flex items-center gap-2 px-4 sm:px-5 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition text-sm sm:text-base"
-        >
-          <Printer size={18} />
-          인쇄
-        </button>
+        {isPrintLimitReached ? (
+          <button
+            type="button"
+            disabled
+            className="flex items-center gap-2 px-4 sm:px-5 py-2 bg-gray-300 text-gray-500 rounded-lg shadow-sm text-sm sm:text-base cursor-not-allowed">
+            <Printer size={18} />
+            출력 횟수 소진
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={handlePrint}
+            disabled={isPrinting}
+            className={`flex items-center gap-2 px-4 sm:px-5 py-2 text-white rounded-lg shadow transition text-sm sm:text-base
+              ${isPrinting
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-indigo-600 hover:bg-indigo-700'
+              }`}>
+            <Printer size={18} />
+
+            {isPrinting
+              ? '처리 중...'
+              : '인쇄'
+            }
+          </button>
+        )}
       </div>
 
       {/* A4 Paper */}
@@ -132,7 +197,7 @@ const EmploymentCertificate = ({ purpose, onBack }) => {
             <div className="relative z-10 h-full flex flex-col font-serif">
 
               <div className="absolute -top-6 left-0 text-sm text-black">
-                {docNumber && `${docNumber}`}
+                {docNumber}
               </div>
 
               <h1 className="text-4xl font-bold text-center tracking-[1em] mt-10 mb-20 ml-5 text-black">재직증명서</h1>

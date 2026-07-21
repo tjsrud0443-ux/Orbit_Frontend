@@ -124,8 +124,8 @@ export const deleteApprovalLine = (doc_type, drafter_rank_seq) =>
     maxios.delete("/admin/defaultApprovalLine/delete", { params: { doc_type, drafter_rank_seq } });
 
 export const getAdminCertRequestList = () => maxios.get("/admin/hr/getAdminCertRequestList");
-
-
+export const approveCertRequest = (certRequestSeq) => maxios.put(`/admin/hr/approveCertRequest/${certRequestSeq}`);
+export const rejectCertRequest = (certRequestSeq, rejectReason) => maxios.put(`/admin/hr/rejectCertRequest/${certRequestSeq}`,{reject_reason: rejectReason});
 
 
 
