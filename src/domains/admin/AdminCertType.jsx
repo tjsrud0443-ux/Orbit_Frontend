@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPenToSquare } from '@fortawesome/free-solid-svg-icons';
-import { getAdminCertTypeList } from './adminApi';
+import { getAdminCertTypeList, updateCertTypeHidden } from './adminApi';
 import usePageInfoStore from '../../store/usePageInfoStore';
 
 const AdminCertType = () => {
@@ -14,7 +14,7 @@ const AdminCertType = () => {
             const resp = await getAdminCertTypeList();
             setCertTypes(resp.data ?? []);
         } catch (err) {
-            console.error('증명서 신청 목록 조회 실패:', err);
+            console.error('증명서 목록 조회 실패:', err);
             setCertTypes([]);
         }
     };
@@ -23,14 +23,21 @@ const AdminCertType = () => {
         fetchCertType();
     }, []);
 
-    const handleToggleActive = (certTypeSeq) => {
-        setCertTypes((prev) => (
-            prev.map((certType) => (
-                certType.cert_type_seq === certTypeSeq
-                    ? { ...certType, hidden_yn: certType.hidden_yn === 'Y' ? 'N' : 'Y' }
-                    : certType
-            ))
-        ));
+    const handleToggleActive = async (certType) => {
+        const nextHiddenYn = certType.hidden_yn === 'Y' ? 'N' : 'Y'
+
+        try {
+            await updateCertTypeHidden(certType.cert_type_seq, nextHiddenYn);
+
+            setCertTypes((prev) =>
+                prev.map((item) =>
+                    item.cert_type_seq === certType.cert_type_seq
+                        ? { ...item, hidden_yn: nextHiddenYn } : item
+                )
+            );
+        } catch (err) {
+            console.error("증명서 노출 상태 수정 실패", err);
+        }
     };
     return (
         <div className="h-full flex flex-col bg-white font-sans p-6 md:p-8">
@@ -101,10 +108,7 @@ const AdminCertType = () => {
                                             <button
                                                 type="button"
                                                 onClick={() =>
-                                                    handleToggleActive(
-                                                        certType.cert_type_seq
-                                                    )
-                                                }
+                                                    handleToggleActive(certType)}
                                                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${isActive
                                                     ? 'bg-[#3530B8]'
                                                     : 'bg-slate-200'
