@@ -55,6 +55,7 @@ import AdminApprovalLine from './domains/admin/AdminApprovalLine';
 import AdminPageInfo from './domains/admin/AdminPageInfo';
 import usePageInfoStore from './store/usePageInfoStore';
 import AdminCertRequest from './domains/admin/AdminCertRequest';
+import AdminCertType from './domains/admin/AdminCertType';
 
 function App() {
   const loading = useLoadingStore(state => state.loading);
@@ -158,7 +159,8 @@ function App() {
                 <Route path="/adminSignup" element={<AdminSignup />} />
                 <Route path="/adminAttendance" element={<AdminAttendance />} />
                 <Route path="/adminLeave" element={<AdminLeave />} />
-                <Route path="/adminCertRequest" element={<AdminCertRequest />}/>
+                <Route path="/adminCertType" element={<AdminCertType />} />
+                <Route path="/adminCertRequest" element={<AdminCertRequest />} />
               </Route>
 
               <Route element={<ProtectedRoute

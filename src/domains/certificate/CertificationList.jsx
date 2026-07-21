@@ -345,10 +345,6 @@ const CertificationList = () => {
                                     <h2 className="text-md sm:text-xl font-bold text-gray-800 mb-0 sm:mb-2">
                                         {cert.cert_type_name}
                                     </h2>
-
-                                    <p className="hidden sm:block text-sm text-gray-600 break-words mb-3">
-                                        {cert.cert_description}
-                                    </p>
                                 </div>
 
                                 {hasRequestStatus && renderRequestInfo(cert)}
