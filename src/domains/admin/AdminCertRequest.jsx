@@ -1,22 +1,77 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Pagination from '../../components/common/Pagination';
 import MobilePagination from '../../components/common/MobilePagination';
+import { getAdminCertRequestList } from './adminApi';
+
+const PAGE_SIZE = 10;
+
+const tabKeyMap = {
+  '전체': 'TOTAL',
+  '대기': 'PENDING',
+  '승인': 'APPROVED',
+  '반려': 'REJECTED'
+};
 
 const AdminCertRequest = () => {
   const [activeStatusTab, setActiveStatusTab] = useState('전체');
   const [page, setPage] = useState(1);
-  const [totalPages] = useState(1);
-  const [certRequests] = useState([]);
-
-  const tabKeyMap = {
-    '전체': 'TOTAL',
-    '대기': 'PENDING',
-    '승인': 'APPROVED',
-    '반려': 'REJECTED'
-  };
+  const [certRequests, setCertRequests] = useState([]);
 
   const tabs = ['전체', '대기', '승인', '반려'];
-  const tabCount = { TOTAL: 0, PENDING: 0, APPROVED: 0, REJECTED: 0 };
+
+  useEffect(() => {
+    const fetchCertRequests = async () => {
+      try {
+        const resp = await getAdminCertRequestList();
+        console.log('증명서 신청 목록:', resp.data);
+        setCertRequests(resp.data ?? []);
+      } catch (err) {
+        console.error('증명서 신청 목록 조회 실패:', err);
+        setCertRequests([]);
+      }
+    };
+
+    fetchCertRequests();
+  }, []);
+
+  const tabCount = useMemo(() => (
+    certRequests.reduce((acc, request) => {
+      acc.TOTAL += 1;
+
+      if (request.status === 'PENDING') acc.PENDING += 1;
+      if (request.status === 'APPROVED') acc.APPROVED += 1;
+      if (request.status === 'REJECTED') acc.REJECTED += 1;
+
+      return acc;
+    }, { TOTAL: 0, PENDING: 0, APPROVED: 0, REJECTED: 0 })
+  ), [certRequests]);
+
+  const filteredRequests = useMemo(() => {
+    const activeStatus = tabKeyMap[activeStatusTab];
+
+    if (activeStatus === 'TOTAL') {
+      return certRequests;
+    }
+
+    return certRequests.filter((request) => request.status === activeStatus);
+  }, [activeStatusTab, certRequests]);
+
+  const totalPages = Math.max(
+    Math.ceil(filteredRequests.length / PAGE_SIZE),
+    1
+  );
+
+  const currentRequests = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredRequests.slice(start, start + PAGE_SIZE);
+  }, [filteredRequests, page]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      const timeoutId = setTimeout(() => setPage(totalPages), 0);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [page, totalPages]);
 
   const handleStatusTabClick = (tab) => {
     setActiveStatusTab(tab);
@@ -32,7 +87,11 @@ const AdminCertRequest = () => {
       return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#F0FDF4] text-[#10B981]">승인</span>;
     }
 
-    return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#FFF0F0] text-[#FF4D4F]">반려</span>;
+    if (status === 'REJECTED') {
+      return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#FFF0F0] text-[#FF4D4F]">반려</span>;
+    }
+
+    return <span className="text-xs text-slate-400">{status || '-'}</span>;
   };
 
   const renderAction = (request) => {
@@ -57,11 +116,38 @@ const AdminCertRequest = () => {
       );
     }
 
+    if (request.status === 'REJECTED') {
+      return (
+        <button className="px-3 py-1 text-[10px] font-bold text-[#FF4D4F] bg-white border border-[#FF4D4F] rounded-lg">
+          반려됨
+        </button>
+      );
+    }
+
     return (
-      <button className="px-3 py-1 text-[10px] font-bold text-[#FF4D4F] bg-white border border-[#FF4D4F] rounded-lg">
-        반려됨
-      </button>
+      <span className="text-xs text-slate-400">-</span>
     );
+  };
+
+  const formatDateTime = (value) => {
+    if (!value) {
+      return '-';
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return '-';
+    }
+
+    return date.toLocaleString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
   };
 
   return (
@@ -110,24 +196,24 @@ const AdminCertRequest = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {certRequests.length === 0 ? (
+              {currentRequests.length === 0 ? (
                 <tr>
                   <td colSpan={10} className="text-center py-12 text-slate-400 text-sm">
                     신청 내역이 없습니다.
                   </td>
                 </tr>
               ) : (
-                certRequests.map((request) => (
+                currentRequests.map((request) => (
                   <tr key={request.cert_request_seq} className="hover:bg-slate-50/40 transition-colors">
                     <td className="py-4 pl-1 md:pl-2 text-sm font-bold text-slate-800 whitespace-nowrap">{request.name}</td>
-                    <td className="py-4 pl-3 md:pl-6 text-xs text-slate-500 font-medium whitespace-nowrap">{request.dept_name} / {request.rank_name}</td>
+                    <td className="py-4 pl-3 md:pl-6 text-xs text-slate-500 font-medium whitespace-nowrap">{request.dept_name || '-'} / {request.rank_name || '-'}</td>
                     <td className="py-4 pl-4 md:pl-6 text-xs text-[#3530B8] font-bold whitespace-nowrap">{request.cert_type_name}</td>
-                    <td className="py-4 pl-4 md:pl-6 text-xs text-slate-500 w-64 truncate whitespace-nowrap" title={request.reason}>{request.reason}</td>
-                    <td className="py-4 pl-4 md:pl-6 text-[0.6875rem] text-slate-400 font-mono whitespace-nowrap">{request.requested_at}</td>
-                    <td className="py-4 pl-4 md:pl-6 text-xs text-slate-600 font-medium whitespace-nowrap">{request.approver_name || '-'}</td>
+                    <td className="py-4 pl-4 md:pl-6 text-xs text-slate-500 w-64 truncate whitespace-nowrap" title={request.request_reason}>{request.request_reason}</td>
+                    <td className="py-4 pl-4 md:pl-6 text-[0.6875rem] text-slate-400 font-mono whitespace-nowrap">{formatDateTime(request.requested_at)}</td>
+                    <td className="py-4 pl-4 md:pl-6 text-xs text-slate-600 font-medium whitespace-nowrap">{request.handler_name || '-'}</td>
                     <td className="py-4 pl-4 md:pl-6 whitespace-nowrap">{renderStatusBadge(request.status)}</td>
-                    <td className="py-4 pl-4 md:pl-6 text-[0.6875rem] text-slate-400 font-mono whitespace-nowrap">{request.processed_at || '-'}</td>
-                    <td className="py-4 pl-4 md:pl-6 text-[0.6875rem] text-slate-400 font-mono whitespace-nowrap">{request.print_deadline || '-'}</td>
+                    <td className="py-4 pl-4 md:pl-6 text-[0.6875rem] text-slate-400 font-mono whitespace-nowrap">{formatDateTime(request.processed_at)}</td>
+                    <td className="py-4 pl-4 md:pl-6 text-[0.6875rem] text-slate-400 font-mono whitespace-nowrap">{formatDateTime(request.print_expires_at)}</td>
                     <td className="py-4 text-center">
                       <div className="flex justify-center gap-2">
                         {renderAction(request)}
