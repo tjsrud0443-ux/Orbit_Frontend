@@ -123,7 +123,7 @@ export const saveApprovalLines = (doc_type, drafter_rank_seq, lines) =>
 export const deleteApprovalLine = (doc_type, drafter_rank_seq) =>
     maxios.delete("/admin/defaultApprovalLine/delete", { params: { doc_type, drafter_rank_seq } });
 
-
+export const getAdminCertRequestList = () => maxios.get("/admin/hr/getAdminCertRequestList");
 
 
 

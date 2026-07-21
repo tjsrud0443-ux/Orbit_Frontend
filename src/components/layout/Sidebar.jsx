@@ -85,7 +85,7 @@ const generalMenuItems = [
     icon: faFolderOpen,
     subItems: [
       { name: '비품 신청', path: '/supply' },
-      { name: '증명서 발급', path: '/certificate' },
+      { name: '증명서 발급 신청', path: '/certificate' },
       { name: '자료실', path: '/documents' }
     ]
   },
@@ -120,7 +120,8 @@ const adminMenuItems = [
       { name: '직급 관리', path: '/adminRank' },
       { name: '회원가입 관리', path: '/adminSignup' },
       { name: '근태 관리', path: '/adminAttendance' },
-      { name: '연차 관리', path: '/adminLeave' }
+      { name: '연차 관리', path: '/adminLeave' },
+      { name: '증명서 발급 신청 관리', path: '/adminCertRequest' }
     ]
   },
   {

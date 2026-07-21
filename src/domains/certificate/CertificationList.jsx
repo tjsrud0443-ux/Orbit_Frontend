@@ -1,26 +1,63 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FileText } from 'lucide-react';
 import Pagination from '../../components/common/Pagination';
 import PurposeSelectModal from './PurposeSelectModal';
 import EmploymentCertificate from './EmploymentCertificate';
 import usePageInfoStore from '../../store/usePageInfoStore';
+import { getCertType, insertCertRequest } from './certificateApi';
+import { alertError, alertSuccess } from '../../utils/alert';
 
 const CertificationList = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [previewMode, setPreviewMode] = useState(false);
     const [selectedPurpose, setSelectedPurpose] = useState('');
+    const [selectedCertType, setSelectedCertType] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const { pages } = usePageInfoStore();
+    const [certType, setCertType] = useState([]);
 
-    const handlePreviewClick = (purpose) => {
-        setSelectedPurpose(purpose);
-        setIsModalOpen(false);
-        setPreviewMode(true);
+    useEffect(() => {
+        const fetchCertType = async () => {
+            try{
+                const resp = await getCertType();
+                setCertType(resp.data ?? []);
+            }catch(err) {
+                console.error("증명서 유형 조회 실패", err);
+            }
+        }
+        fetchCertType();
+    },[]);
+
+    const handleRequestClick = (cert) => {
+        setSelectedCertType(cert);
+        setIsModalOpen(true);
+    };
+
+    const handlePreviewClick = async ({ purposeValue, purposeLabel }) => {
+        if (!selectedCertType?.cert_type_seq) {
+            await alertError('신청 실패', '증명서 유형 정보가 없습니다.');
+            return;
+        }
+
+        try {
+            await insertCertRequest({
+                cert_type_seq: selectedCertType.cert_type_seq,
+                request_reason: purposeLabel
+            });
+            await alertSuccess('신청 완료', '증명서 발급 신청이 완료되었습니다.');
+            setSelectedPurpose(purposeLabel);
+            setIsModalOpen(false);
+            // setPreviewMode(true);
+        } catch (err) {
+            console.error('증명서 발급 신청 실패', err);
+            await alertError('신청 실패', '증명서 발급 신청 중 오류가 발생했습니다.');
+        }
     };
 
     const handleBackToOptions = () => {
         setPreviewMode(false);
         setSelectedPurpose('');
+        setSelectedCertType(null);
     };
 
     if (previewMode) {
@@ -44,29 +81,34 @@ const CertificationList = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-12">
-                {/* 재직증명서 카드 */}
-                <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 shadow-md flex flex-row items-center justify-between sm:flex-col sm:items-stretch sm:justify-start p-4 sm:p-6 hover:shadow-lg transition-shadow">
-                    <div className="flex-grow sm:flex-grow-0 sm:flex-grow">
-                        <div className="hidden sm:inline-block bg-white/60 p-3 rounded-lg mb-4 text-indigo-600">
-                            <FileText size={28} />
-                        </div>
-                        <h2 className="text-md sm:text-xl font-bold text-gray-800 mb-0 sm:mb-2">재직증명서</h2>
-                        <p className="hidden sm:block text-sm text-gray-600 mb-6">현재 재직 중임을 증명하는 공식 문서</p>
-                    </div>
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="w-auto sm:w-full py-2 px-3 sm:px-0 sm:py-2.5 bg-white text-indigo-600 text-sm sm:text-base font-semibold rounded-lg shadow-sm border border-indigo-100 hover:bg-indigo-50 transition-colors whitespace-nowrap ml-4 sm:ml-0"
-                    >
-                        미리보기 및 출력
-                    </button>
-                </div>
+                {Array.from({ length: 8 }).map((_, idx) => {
+                    const cert = certType[idx];
 
-                {/* 빈 카드들 */}
-                {Array.from({ length: 7 }).map((_, idx) => (
-                    <div key={idx} className="rounded-xl bg-gray-50/60 border border-gray-200 border-dashed min-h-[80px] sm:min-h-[220px] flex items-center justify-center p-4 sm:p-6">
-                        <span className="text-gray-400 font-medium opacity-70 text-sm sm:text-base">양식 준비중...</span>
-                    </div>
-                ))}
+                    return cert ? (
+                        <div
+                            key={cert.cert_type_seq ?? cert.cert_type_id ?? cert.cert_type_name ?? idx}
+                            className="relative overflow-hidden rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 shadow-md flex flex-row items-center justify-between sm:flex-col sm:items-stretch sm:justify-start p-4 sm:p-6 hover:shadow-lg transition-shadow"
+                        >
+                            <div className="flex-grow sm:flex-grow-0 sm:flex-grow">
+                                <div className="hidden sm:inline-block bg-white/60 p-3 rounded-lg mb-4 text-indigo-600">
+                                    <FileText size={28} />
+                                </div>
+                                <h2 className="text-md sm:text-xl font-bold text-gray-800 mb-0 sm:mb-2">{cert.cert_type_name}</h2>
+                                <p className="hidden sm:block text-sm text-gray-600 mb-6">{cert.cert_description}</p>
+                            </div>
+                            <button
+                                onClick={() => handleRequestClick(cert)}
+                                className="w-auto sm:w-full py-2 px-3 sm:px-0 sm:py-2.5 bg-white text-indigo-600 text-sm sm:text-base font-semibold rounded-lg shadow-sm border border-indigo-100 hover:bg-indigo-50 transition-colors whitespace-nowrap ml-4 sm:ml-0"
+                            >
+                                발급 신청
+                            </button>
+                        </div>
+                    ) : (
+                        <div key={`empty-${idx}`} className="rounded-xl bg-gray-50/60 border border-gray-200 border-dashed min-h-[80px] sm:min-h-[220px] flex items-center justify-center p-4 sm:p-6">
+                            <span className="text-gray-400 font-medium opacity-70 text-sm sm:text-base">양식 준비중...</span>
+                        </div>
+                    );
+                })}
             </div>
 
             <div className="flex justify-center mt-auto">
@@ -75,7 +117,10 @@ const CertificationList = () => {
 
             {isModalOpen && (
                 <PurposeSelectModal
-                    onClose={() => setIsModalOpen(false)}
+                    onClose={() => {
+                        setIsModalOpen(false);
+                        setSelectedCertType(null);
+                    }}
                     onConfirm={handlePreviewClick}
                 />
             )}

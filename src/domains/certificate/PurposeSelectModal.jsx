@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { X } from 'lucide-react';
 import { alertWarning } from '../../utils/alert';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -33,7 +33,10 @@ const PurposeSelectModal = ({ onClose, onConfirm }) => {
       }
     }
     const finalPurpose = selected === 'ETC' ? etcText.trim() : options.find(o => o.value === selected)?.label;
-    onConfirm(finalPurpose);
+    onConfirm({
+      purposeValue: selected,
+      purposeLabel: finalPurpose
+    });
   };
 
   return (
@@ -110,7 +113,7 @@ const PurposeSelectModal = ({ onClose, onConfirm }) => {
             onClick={handleConfirm}
             className="px-5 py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors shadow-sm"
           >
-            미리보기
+            신청
           </button>
         </div>
       </div>

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
 import { getCompanyInfo } from '../admin/adminApi';
-import { getCertInfo } from './certificateApi';
+import { getCertType } from './certificateApi';
 import { Printer, ArrowLeft } from 'lucide-react';
 
 const EmploymentCertificate = ({ purpose, onBack }) => {
@@ -23,7 +23,7 @@ const EmploymentCertificate = ({ purpose, onBack }) => {
 
     const fetchCertData = async () => {
       try {
-        const res = await getCertInfo();
+        const res = await getCertType();
         const certList = res.data;
         const cert = certList.find(item => item.cert_type_name === "재직증명서");
         if (cert) {
