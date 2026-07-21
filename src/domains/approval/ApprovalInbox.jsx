@@ -14,19 +14,21 @@ import { alertConfirm, alertWarning, alertError, alertSuccess } from '../../util
 
 // --- Sub Components ---
 
-const StatusBadge = ({ status, type = 'personal' }) => {
+const StatusBadge = ({ status, type = 'personal', cancelYn }) => {
   const styles = {
     'DRAFT': 'bg-[#FFF9F0] text-[#FF9800] border-[#FFF9F0]',
     'IN_PROGRESS': 'bg-[#FFF9F0] text-[#FF9800] border-[#FFF9F0]',
     'APPROVED': 'bg-[#F0FDF4] text-[#10B981] border-[#F0FDF4]',
-    'REJECTED': 'bg-[#FFF0F0] text-[#FF4D4F] border-[#FFF0F0]'
+    'REJECTED': 'bg-[#FFF0F0] text-[#FF4D4F] border-[#FFF0F0]',
+    'CANCELLED': 'bg-gray-100 text-gray-500 border-gray-100',
   };
 
   const documentStatusText = {
     'DRAFT': '결재 진행',
     'IN_PROGRESS': '결재 진행',
     'APPROVED': '최종 승인',
-    'REJECTED': '최종 반려'
+    'REJECTED': '최종 반려',
+    'CANCELLED': '취소'
   };
 
   const personalStatusText = {
@@ -35,11 +37,12 @@ const StatusBadge = ({ status, type = 'personal' }) => {
     'REJECTED': '반려'
   };
 
+  const effectiveStatus = (status === 'APPROVED' && cancelYn === 'Y') ? 'CANCELLED' : status;
   const statusText = type === 'document' ? documentStatusText : personalStatusText;
 
   return (
-    <span className={`px-2 py-0.5 md:px-2.5 md:py-1 rounded-full text-[10px] md:text-xs font-semibold border whitespace-nowrap ${styles[status] || 'bg-gray-50 text-gray-600'}`}>
-      {statusText[status] || status}
+    <span className={`px-2 py-0.5 md:px-2.5 md:py-1 rounded-full text-[10px] md:text-xs font-semibold border whitespace-nowrap ${styles[effectiveStatus] || 'bg-gray-50 text-gray-600'}`}>
+      {statusText[effectiveStatus] || effectiveStatus}
     </span>
   );
 };
@@ -121,7 +124,7 @@ const DocumentTable = ({ data, onDetailClick, showPagination = true, count = 0, 
                 </td>
                 <td className="px-3 py-4 text-xs font-medium text-gray-400 text-center truncate whitespace-nowrap">{doc.created_at?.substring(0, 10)}</td>
                 <td className="px-3 py-4 text-center whitespace-nowrap">
-                  <StatusBadge status={doc.status} type="document" />
+                  <StatusBadge status={doc.status} type="document" cancelYn={doc.cancel_yn} />
                 </td>
                 <td className="px-3 py-4 text-center whitespace-nowrap">
                   <StatusBadge status={doc.my_approval_status} type="personal" />
