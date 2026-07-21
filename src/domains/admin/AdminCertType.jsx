@@ -1,14 +1,19 @@
 import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPenToSquare } from '@fortawesome/free-solid-svg-icons';
-import { getAdminCertTypeList, updateCertTypeHidden, updateCertTYpe } from './adminApi';
+import { getAdminCertTypeList, updateCertTypeHidden, updateCertType } from './adminApi';
 import usePageInfoStore from '../../store/usePageInfoStore';
-import { alertConfirm, alertError, alertSuccess } from '../../utils/alert';
+import { alertError, alertSuccess } from '../../utils/alert';
 
 const AdminCertType = () => {
     const { pages } = usePageInfoStore();
     const currentPageInfo = pages.find(p => p.page_code === 'AdminCertType');
     const [certTypes, setCertTypes] = useState([]);
+    const [editingSeq, setEditingSeq] = useState(null);
+    const [editForm, setEditForm] = useState({
+        print_days: '',
+        max_print_count: ''
+    });
    
     const fetchCertType = async () => {
         try {
@@ -24,8 +29,83 @@ const AdminCertType = () => {
         fetchCertType();
     }, []);
 
+    const handleStartEdit = (certType) => {
+        setEditingSeq(certType.cert_type_seq);
+        setEditForm({
+            print_days: certType.print_days ?? '',
+            max_print_count: certType.max_print_count ?? ''
+        });
+    };
+
+    const handleCancelEdit = () => {
+        setEditingSeq(null);
+        setEditForm({
+            print_days: '',
+            max_print_count: ''
+        });
+    };
+
+    const handleEditFormChange = (field, value) => {
+        setEditForm((prev) => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
+    const isPositiveInteger = (value) => {
+        const numberValue = Number(value);
+
+        return Number.isInteger(numberValue) && numberValue >= 1;
+    };
+
+    const handleSaveEdit = async (certType) => {
+        if (!isPositiveInteger(editForm.print_days)) {
+            await alertError('입력 오류', '출력 가능 일수는 1 이상의 정수만 입력할 수 있습니다.');
+            return;
+        }
+
+        if (!isPositiveInteger(editForm.max_print_count)) {
+            await alertError('입력 오류', '출력 가능 장수는 1 이상의 정수만 입력할 수 있습니다.');
+            return;
+        }
+
+        const nextPrintDays = Number(editForm.print_days);
+        const nextMaxPrintCount = Number(editForm.max_print_count);
+
+        try {
+            await updateCertType({
+                cert_type_seq: certType.cert_type_seq,
+                print_days: nextPrintDays,
+                max_print_count: nextMaxPrintCount
+            });
+
+            setCertTypes((prev) =>
+                prev.map((item) =>
+                    item.cert_type_seq === certType.cert_type_seq
+                        ? {
+                            ...item,
+                            print_days: nextPrintDays,
+                            max_print_count: nextMaxPrintCount
+                        }
+                        : item
+                )
+            );
+
+            handleCancelEdit();
+            await alertSuccess('수정 완료', '증명서 유형 정보가 수정되었습니다.');
+        } catch (err) {
+            console.error('증명서 유형 수정 실패:', err);
+
+            await alertError(
+                '수정 실패',
+                err.response?.data?.message ||
+                '증명서 유형 정보 수정 중 오류가 발생했습니다.'
+            );
+        }
+    };
+
     const handleToggleActive = async (certType) => {
-        const nextHiddenYn = certType.hidden_yn === 'Y' ? 'N' : 'Y'
+        const nextHiddenYn = certType.hidden_yn === 'Y' ? 'N' : 'Y';
 
         try {
             await updateCertTypeHidden(certType.cert_type_seq, nextHiddenYn);
@@ -74,6 +154,8 @@ const AdminCertType = () => {
                             {certTypes.map((certType) => {
                                 const isActive =
                                     certType.hidden_yn !== 'Y';
+                                const isEditing =
+                                    editingSeq === certType.cert_type_seq;
 
                                 return (
                                     <tr
@@ -89,34 +171,83 @@ const AdminCertType = () => {
                                         </td>
 
                                         <td className="py-4 pl-4 md:pl-6 text-xs text-slate-500 font-medium whitespace-nowrap">
-                                            {certType.print_days}일
+                                            {isEditing ? (
+                                                <div className="flex items-center gap-1">
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        value={editForm.print_days}
+                                                        onChange={(e) => handleEditFormChange('print_days', e.target.value)}
+                                                        className="w-20 px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 outline-none focus:border-[#3530B8] focus:ring-2 focus:ring-[#3530B8]/10 transition-all"
+                                                    />
+                                                    <span>일</span>
+                                                </div>
+                                            ) : (
+                                                `${certType.print_days}일`
+                                            )}
                                         </td>
 
                                         <td className="py-4 pl-4 md:pl-6 text-xs text-slate-500 font-medium whitespace-nowrap">
-                                            {certType.max_print_count}장
+                                            {isEditing ? (
+                                                <div className="flex items-center gap-1">
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        value={editForm.max_print_count}
+                                                        onChange={(e) => handleEditFormChange('max_print_count', e.target.value)}
+                                                        className="w-20 px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 outline-none focus:border-[#3530B8] focus:ring-2 focus:ring-[#3530B8]/10 transition-all"
+                                                    />
+                                                    <span>장</span>
+                                                </div>
+                                            ) : (
+                                                `${certType.max_print_count}장`
+                                            )}
                                         </td>
 
                                         <td className="py-4 pl-4 md:pl-6 text-center">
-                                            <div className="flex justify-center">
-                                                <button
-                                                    type="button"
-                                                    className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-[#3530B8] transition-all flex items-center justify-center cursor-pointer"
-                                                    title="수정"
-                                                >
-                                                    <FontAwesomeIcon
-                                                        icon={faPenToSquare}
-                                                        className="text-xs"
-                                                    />
-                                                </button>
+                                            <div className="flex justify-center gap-2">
+                                                {isEditing ? (
+                                                    <>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleSaveEdit(certType)}
+                                                            className="px-3 py-1 text-[10px] font-bold text-white bg-[#3530B8] border border-[#3530B8] rounded-lg hover:bg-[#2a2594] transition-all cursor-pointer"
+                                                        >
+                                                            저장
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleCancelEdit}
+                                                            className="px-3 py-1 text-[10px] font-bold text-slate-500 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-all cursor-pointer"
+                                                        >
+                                                            취소
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleStartEdit(certType)}
+                                                        className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-[#3530B8] transition-all flex items-center justify-center cursor-pointer"
+                                                        title="수정"
+                                                    >
+                                                        <FontAwesomeIcon
+                                                            icon={faPenToSquare}
+                                                            className="text-xs"
+                                                        />
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
 
                                         <td className="py-4 pl-4 md:pl-6 text-center">
                                             <button
                                                 type="button"
-                                                onClick={() =>
-                                                    handleToggleActive(certType)}
-                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${isActive
+                                                disabled={isEditing}
+                                                onClick={() => handleToggleActive(certType)}
+                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isEditing
+                                                    ? 'opacity-50 cursor-not-allowed'
+                                                    : 'cursor-pointer'
+                                                    } ${isActive
                                                     ? 'bg-[#3530B8]'
                                                     : 'bg-slate-200'
                                                     }`}

@@ -129,7 +129,7 @@ export const rejectCertRequest = (certRequestSeq, rejectReason) => maxios.put(`/
 
 export const getAdminCertTypeList = () => maxios.get("/admin/hr/getAdminCertTypeList");
 export const updateCertTypeHidden = (certTypeSeq , hiddenYn) => maxios.put("/admin/hr/updateCertTypeHidden",{cert_type_seq: certTypeSeq, hidden_yn: hiddenYn});
-export const updateCertTYpe = (data) => maxios.put("/admin/hr/updateCertTYpe", data);
+export const updateCertType = (data) => maxios.put("/admin/hr/updateCertType", data);
 
 
 
