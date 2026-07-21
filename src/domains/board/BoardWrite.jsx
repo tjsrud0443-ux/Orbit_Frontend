@@ -24,7 +24,13 @@ const BoardWrite = () => {
   const fileInputRef = useRef(null);
   const categoryRef = useRef(null);
 
-  const isHR = user?.auth_group === 'ROLE_HR_ADMIN' || user?.auth_group === 'ROLE_SUPER_ADMIN';
+  const userAuthGroups = user?.user_auth_group ?? [];
+  const isHR =
+  user?.auth_group === 'ROLE_HR_ADMIN' ||
+  user?.auth_group === 'ROLE_SUPER_ADMIN' ||
+  userAuthGroups.includes('ROLE_HR_ADMIN') ||
+  userAuthGroups.includes('ROLE_SUPER_ADMIN');
+  
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
 
   useEffect(() => {
