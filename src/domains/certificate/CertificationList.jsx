@@ -97,7 +97,6 @@ const CertificationList = () => {
             setSelectedCertType(null);
 
             await alertSuccess('신청 완료', '관리자 승인 후 증명서를 출력할 수 있습니다.');
-            // setPreviewMode(true);
         } catch (err) {
             console.error('증명서 발급 신청 실패', err);
             await alertError('신청 실패', '증명서 발급 신청 중 오류가 발생했습니다.');
@@ -121,6 +120,8 @@ const CertificationList = () => {
                 printExpiresAt={selectedCertType?.print_expires_at}
                 printedCount={selectedCertType?.printed_count}
                 maxPrintCount={selectedCertType?.applied_max_print}
+                issueDateCode={selectedCertType?.issue_date_code}
+                issueNo={selectedCertType?.issue_no}
                 onBack={handleBackToOptions}
             />
         );

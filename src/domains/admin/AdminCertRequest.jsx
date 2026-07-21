@@ -30,6 +30,7 @@ const AdminCertRequest = () => {
     const fetchCertRequests = async () => {
         try {
             const resp = await getAdminCertRequestList();
+            console.log("증명서 목록 응답 : ", resp.data);
             setCertRequests(resp.data ?? []);
         } catch (err) {
             console.error('증명서 신청 목록 조회 실패:', err);
@@ -261,6 +262,10 @@ const AdminCertRequest = () => {
 
         const excelData = certRequests.map((request, index) => ({
             번호: index + 1,
+            발급번호:
+                request.issue_date_code && request.issue_no
+                    ? `${request.issue_date_code}-${String(request.issue_no).padStart(3, '0')}`
+                    : '-',
             신청번호: request.cert_request_seq,
             신청자: request.name ?? '-',
             사용자ID: request.users_id ?? '-',
@@ -360,6 +365,7 @@ const AdminCertRequest = () => {
                     <table className="w-full text-left border-collapse mt-6 min-w-[1360px]">
                         <thead className="sticky top-0 bg-white z-10">
                             <tr className="border-b border-slate-100">
+                                <th className="pb-4 pl-2 md:pl-3 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">발급번호</th>
                                 <th className="pb-4 pl-2 md:pl-3 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">신청자</th>
                                 <th className="pb-4 pl-4 md:pl-6 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">부서/직급</th>
                                 <th className="pb-4 pl-4 md:pl-6 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">증명서 유형</th>
@@ -375,13 +381,19 @@ const AdminCertRequest = () => {
                         <tbody className="divide-y divide-slate-100">
                             {currentRequests.length === 0 ? (
                                 <tr>
-                                    <td colSpan={10} className="text-center py-12 text-slate-400 text-sm">
+                                    <td colSpan={11} className="text-center py-12 text-slate-400 text-sm">
                                         신청 내역이 없습니다.
                                     </td>
                                 </tr>
                             ) : (
                                 currentRequests.map((request) => (
                                     <tr key={request.cert_request_seq} className="hover:bg-slate-50/40 transition-colors">
+                                        <td className="py-4 pl-4 md:pl-6 text-xs text-slate-500 font-mono whitespace-nowrap">
+                                            {request.issue_date_code && request.issue_no
+                                                ? `${request.issue_date_code}-${String(request.issue_no).padStart(3, '0')}`
+                                                : '-'
+                                            }
+                                        </td>
                                         <td className="py-4 pl-1 md:pl-2 text-sm font-bold text-slate-800 whitespace-nowrap">{request.name}</td>
                                         <td className="py-4 pl-3 md:pl-6 text-xs text-slate-500 font-medium whitespace-nowrap">{request.dept_name || '-'} / {request.rank_name || '-'}</td>
                                         <td className="py-4 pl-4 md:pl-6 text-xs text-[#3530B8] font-bold whitespace-nowrap">{request.cert_type_name}</td>

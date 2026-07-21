@@ -7,7 +7,7 @@ import { Printer, ArrowLeft } from 'lucide-react';
 import { alertError, alertConfirm } from '../../utils/alert';
 
 
-const EmploymentCertificate = ({ certRequestSeq, purpose, onBack, maxPrintCount, printedCount }) => {
+const EmploymentCertificate = ({ certRequestSeq, purpose, onBack, maxPrintCount, printedCount, issueDateCode, issueNo }) => {
   const { user } = useUserStore();
   const { token } = useAuthStore();
   const [company, setCompany] = useState(null);
@@ -124,12 +124,9 @@ const EmploymentCertificate = ({ certRequestSeq, purpose, onBack, maxPrintCount,
   const dd = String(today.getDate()).padStart(2, '0');
   const todayStr = `${yyyy}년 ${mm}월 ${dd}일`;
 
-  let docNumber = '';
-  if (certInfo) {
-    const yy = String(yyyy).slice(-2);
-    const seq = String(certInfo.cert_type_seq).padStart(3, '0');
-    docNumber = `${yy}${mm}${dd}-${seq}`;
-  }
+  const docNumber = issueDateCode && issueNo
+    ? `${issueDateCode}-${String(issueNo).padStart(3, '0')}`
+    : '';
 
   const companyNameFormatted = company?.companyName
     ? company?.companyName
@@ -200,7 +197,7 @@ const EmploymentCertificate = ({ certRequestSeq, purpose, onBack, maxPrintCount,
             <div className="relative z-10 h-full flex flex-col font-serif">
 
               <div className="absolute -top-6 left-0 text-sm text-black">
-                {docNumber && `${docNumber}`}
+                {docNumber}
               </div>
 
               <h1 className="text-4xl font-bold text-center tracking-[1em] mt-10 mb-20 ml-5 text-black">재직증명서</h1>
