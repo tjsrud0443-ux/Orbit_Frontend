@@ -30,7 +30,6 @@ const AdminCertRequest = () => {
     const fetchCertRequests = async () => {
         try {
             const resp = await getAdminCertRequestList();
-            console.log("증명서 목록 응답 : ", resp.data);
             setCertRequests(resp.data ?? []);
         } catch (err) {
             console.error('증명서 신청 목록 조회 실패:', err);
