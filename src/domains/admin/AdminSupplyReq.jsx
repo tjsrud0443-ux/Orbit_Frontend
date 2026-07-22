@@ -3,6 +3,7 @@ import { Pagination as MuiPagination, Stack } from '@mui/material';
 import { getSuppyReqList, updateSupplyReqStatus } from '../admin/adminApi';
 import { alertWarning, alertSuccess, alertConfirm } from '../../utils/alert';
 import MobilePagination from '../../components/common/MobilePagination';
+import usePageInfoStore from '../../store/usePageInfoStore'; 
 
 const STATUS_TABS = [
   { key: '전체', label: '전체' },
@@ -25,6 +26,9 @@ const StatusBadge = ({ status }) => {
 };
 
 const AdminSupplyReq = () => {
+  const { pages } = usePageInfoStore();
+  const currentPageInfo = pages.find(p => p.page_code === 'AdminSupplyReq');
+
   const [requests, setRequests] = useState([]);
   const [activeTab, setActiveTab] = useState('전체');
   const [tabCounts, setTabCounts] = useState({ 전체: 0, 대기: 0, 승인: 0, 반려: 0 });
@@ -180,8 +184,8 @@ const AdminSupplyReq = () => {
 
       {/* 헤더 */}
       <div className={`mb-7 shrink-0 ${selectedId ? 'hidden md:block' : 'block'}`}>
-        <h1 className="text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">비품 신청 관리</h1>
-        <p className="text-[0.6875rem] md:text-sm text-gray-500">직원들의 비품 신청 현황을 확인하고 승인 또는 반려할 수 있습니다.</p>
+        <h1 className="text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">{currentPageInfo?.page_name}</h1>
+        <p className="text-[0.6875rem] md:text-sm text-gray-500">{currentPageInfo?.page_info}</p>
       </div>
 
       {/* 필터 탭 & 검색창 라인 */}

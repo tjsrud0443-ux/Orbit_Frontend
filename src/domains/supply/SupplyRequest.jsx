@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import useUserStore from '../../store/userStore';
+import usePageInfoStore from '../../store/usePageInfoStore';
 import Calendar from '../../components/common/Calendar';
 import { getSupplies,supplyRequest } from './supplyApi';
 import { alertSuccess, alertError } from '../../utils/alert';
@@ -254,6 +255,9 @@ const AddItemModal = ({ onAdd, onClose }) => {
 
 // ── 메인 페이지 ────────────────────────────────────────────────
 const SupplyRequest = () => {
+  const { pages } = usePageInfoStore();
+  const currentPageInfo = pages.find(p => p.page_code === 'SupplyRequest');
+
   const { user } = useUserStore();
   const navigate = useNavigate();
 
@@ -379,8 +383,8 @@ const getNextWeekday = () => {
 
       {/* 페이지 헤더 */}
       <div className="mb-4 shrink-0">
-        <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-0.5">비품 신청</h1>
-        <p className="text-[0.75rem] md:text-[0.82rem] text-gray-500">업무에 필요한 비품을 신청합니다.</p>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-0.5">{currentPageInfo?.page_name}</h1>
+        <p className="text-[0.75rem] md:text-[0.82rem] text-gray-500">{currentPageInfo?.page_info}</p>
       </div>
 
       {/* 카드 */}

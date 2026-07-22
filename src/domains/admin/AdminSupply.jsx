@@ -6,6 +6,7 @@ import { faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { deleteAdminSupplies, getAdminSupplies, insertAdminSupplies, updateAdminSupplies} from '../admin/adminApi';
 import { alertWarning, alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 import useLoadingStore from '../../store/useLoadingStore';
+import usePageInfoStore from '../../store/usePageInfoStore';
 import MobilePagination from '../../components/common/MobilePagination';
 
 const CATEGORIES = ['전체', '사무용품', '전자기기', '가구', '네트워크 장비'];
@@ -260,6 +261,9 @@ const SupplyModal = ({ mode, supply, onClose, onSave }) => {
 
 // ── 메인 컴포넌트 ─────────────────────────────────────────────
 const AdminSupply = () => {
+  const { pages } = usePageInfoStore();
+  const currentPageInfo = pages.find(p => p.page_code === 'AdminSupply');
+  
   const showLoading = useLoadingStore(state => state.showLoading);
   const hideLoading = useLoadingStore(state => state.hideLoading);
   const [supplies, setSupplies] = useState([]);
@@ -458,8 +462,8 @@ const handleSave = async (form) => {
       {/* 헤더 */}
       <div className="mb-7 shrink-0 flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-[1.25rem] md:text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">비품 관리</h1>
-          <p className="text-[0.6875rem] md:text-sm text-gray-500">등록된 비품 현황을 확인하고 관리할 수 있습니다.</p>
+          <h1 className="text-[1.25rem] md:text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">{currentPageInfo?.page_name}</h1>
+          <p className="text-[0.6875rem] md:text-sm text-gray-500">{currentPageInfo?.page_info}</p>
         </div>
         <button
           onClick={() => setModal({ mode: 'add' })}
