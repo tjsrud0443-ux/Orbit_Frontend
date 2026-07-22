@@ -4,7 +4,7 @@ import Pagination from '../../components/common/Pagination';
 import PurposeSelectModal from './PurposeSelectModal';
 import EmploymentCertificate from './EmploymentCertificate';
 import usePageInfoStore from '../../store/usePageInfoStore';
-import { getCertType, insertCertRequest, cancelCertRequest } from './certificateApi';
+import { getCertType, insertCertRequest, cancelCertRequest, createCertIssue } from './certificateApi';
 import { alertError, alertSuccess, alertConfirm } from '../../utils/alert';
 
 const CertificationList = () => {
@@ -16,6 +16,8 @@ const CertificationList = () => {
     const { pages } = usePageInfoStore();
     const currentPageInfo = pages.find(p => p.page_code === 'CertificationList');
     const [certType, setCertType] = useState([]);
+    const [previewIssue, setPreviewIssue] = useState(null);
+    const [openingRequestSeq, setOpeningRequestSeq] = useState(null);
 
     const fetchCertType = async () => {
         try {
@@ -44,10 +46,53 @@ const CertificationList = () => {
         setIsModalOpen(true);
     };
 
-    const handlePreview = (cert) => {
-        setSelectedCertType(cert);
-        setSelectedPurpose(cert.request_reason ?? '');
-        setPreviewMode(true);
+    const handlePreview = async (cert) => {
+        if (!cert?.cert_request_seq) {
+            await alertError(
+                '미리보기 실패',
+                '증명서 신청 정보가 없습니다.'
+            );
+            return;
+        }
+
+        if (openingRequestSeq !== null) return;
+
+        try {
+            setOpeningRequestSeq(cert.cert_request_seq);
+            const resp = await createCertIssue(cert.cert_request_seq);
+            const issueSeq = resp.data?.issue_seq;
+            const issueNumber = resp.data?.issue_number;
+
+            if (!issueSeq || !issueNumber) {
+                throw new Error('발급번호 정보를 받지 못했습니다.');
+            }
+
+            setPreviewIssue({
+                issue_seq: issueSeq,
+                issue_number: issueNumber
+            });
+
+            setSelectedCertType({
+                ...cert, printed_count:
+                    Number(
+                        resp.data.printed_count ??
+                        cert.printed_count ??
+                        0
+                    )
+            });
+
+            setSelectedPurpose(cert.request_reason ?? '');
+            setPreviewMode(true);
+        } catch (err) {
+            console.error('증명서 발급번호 생성 실패', err);
+
+            await alertError(
+                '미리보기 실패',
+                err.response?.data?.message || err.message || '증명서 발급번호를 생성하지 못했습니다.'
+            );
+        } finally {
+            setOpeningRequestSeq(null);
+        }
     };
 
     const isPrintExpired = (cert) => {
@@ -109,19 +154,18 @@ const CertificationList = () => {
         setPreviewMode(false);
         setSelectedPurpose('');
         setSelectedCertType(null);
+        setPreviewIssue(null);
     };
 
     if (previewMode) {
         return (
             <EmploymentCertificate
                 certRequestSeq={selectedCertType?.cert_request_seq}
-                certTypeCode={selectedCertType?.cert_type_code}
                 purpose={selectedPurpose}
-                printExpiresAt={selectedCertType?.print_expires_at}
                 printedCount={selectedCertType?.printed_count}
                 maxPrintCount={selectedCertType?.applied_max_print}
-                issueDateCode={selectedCertType?.issue_date_code}
-                issueNo={selectedCertType?.issue_no}
+                issueSeq={previewIssue?.issue_seq}
+                issueNumber={previewIssue?.issue_number}
                 onBack={handleBackToOptions}
             />
         );
@@ -259,6 +303,8 @@ const CertificationList = () => {
     };
 
     const renderCertAction = (cert) => {
+        const isOpening = openingRequestSeq === cert.cert_request_seq;
+
         if (cert.status === 'PENDING') {
             return (
                 <button
@@ -288,9 +334,18 @@ const CertificationList = () => {
                 <button
                     type="button"
                     onClick={() => handlePreview(cert)}
-                    className="w-full py-2 px-3 sm:px-0 sm:py-2.5 bg-indigo-600 text-white text-sm sm:text-base font-semibold rounded-lg shadow-sm hover:bg-indigo-700 transition-colors whitespace-nowrap"
-                >
-                    미리보기 및 출력
+                    disabled={openingRequestSeq !== null}
+                    className={`w-full py-2 px-3 sm:px-0 sm:py-2.5 text-white text-sm sm:text-base font-semibold rounded-lg shadow-sm transition-colors whitespace-nowrap
+                        ${isOpening
+                            ? 'bg-gray-400 cursor-not-allowed'
+                            : openingRequestSeq !== null
+                                ? 'bg-indigo-400 cursor-not-allowed'
+                                : 'bg-indigo-600 hover:bg-indigo-700 cursor-pointer'
+                        }`}>
+                    {isOpening
+                        ? '발급번호 생성 중...'
+                        : '미리보기 및 출력'
+                    }
                 </button>
             );
         }
@@ -329,14 +384,11 @@ const CertificationList = () => {
                             className="relative overflow-hidden rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 shadow-md flex flex-col p-4 sm:p-6 hover:shadow-lg transition-shadow min-h-[72px] sm:min-h-[220px]"
                         >
                             <div
-                                className={`
-        flex flex-1
-        ${hasRequestStatus
+                                className={`flex flex-1
+                                        ${hasRequestStatus
                                         ? 'flex-col'
                                         : 'flex-row items-center justify-between sm:flex-col sm:items-stretch'
-                                    }
-    `}
-                            >
+                                    }`}>
                                 <div className={hasRequestStatus ? 'mb-3 sm:mb-0' : 'flex-1'}>
                                     <div className="hidden sm:inline-block bg-white/60 p-3 rounded-lg mb-4 text-indigo-600">
                                         <FileText size={28} />
