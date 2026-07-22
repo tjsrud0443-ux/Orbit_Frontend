@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Pagination from '../../components/common/Pagination';
 import MobilePagination from '../../components/common/MobilePagination';
 import Swal from 'sweetalert2';
-import { getAdminCertRequestList, approveCertRequest, rejectCertRequest } from './adminApi';
+import { getAdminCertRequestList, approveCertRequest, rejectCertRequest, getCertIssueHistoryList } from './adminApi';
 import { alertConfirm, alertError, alertSuccess } from '../../utils/alert';
 import * as XLSX from 'xlsx';
 import { Download } from 'lucide-react';
@@ -251,77 +251,85 @@ const AdminCertRequest = () => {
     };
 
     const handleExcelDownload = async () => {
-        if (certRequests.length === 0) {
+        try {
+            const resp = await getCertIssueHistoryList();
+            const issueHistory = resp.data ?? [];
+
+            if (issueHistory.length === 0) {
+                await alertError(
+                    '다운로드 실패',
+                    '다운로드할 증명서 발급 이력이 없습니다.'
+                );
+                return;
+            }
+
+            const excelData = issueHistory.map((history, index) => ({
+                번호: index + 1,
+                발급번호:
+                    history.issue_number ||
+                    (
+                        history.issue_date_code && history.issue_no
+                            ? `${history.issue_date_code}-${String(history.issue_no).padStart(3, '0')}`
+                            : '-'
+                    ),
+                신청번호: history.cert_request_seq ?? '-',
+                신청자: history.name ?? '-',
+                사용자ID: history.users_id ?? '-',
+                부서: history.dept_name ?? '-',
+                직급: history.rank_name ?? '-',
+                증명서유형: history.cert_type_name ?? '-',
+                신청사유: history.request_reason ?? '-',
+                승인일시: formatDateTime(history.approved_at),
+                발급일시: formatDateTime(history.printed_at)
+            }));
+
+            const worksheet =
+                XLSX.utils.json_to_sheet(excelData);
+
+            const workbook =
+                XLSX.utils.book_new();
+
+            worksheet['!cols'] = [
+                { wch: 7 },   // 번호
+                { wch: 14 },  // 발급번호
+                { wch: 12 },  // 신청번호
+                { wch: 12 },  // 신청자
+                { wch: 18 },  // 사용자ID
+                { wch: 16 },  // 부서
+                { wch: 12 },  // 직급
+                { wch: 18 },  // 증명서유형
+                { wch: 30 },  // 신청사유
+                { wch: 22 },  // 승인일시
+                { wch: 22 }   // 발급일시
+            ];
+
+            XLSX.utils.book_append_sheet(
+                workbook,
+                worksheet,
+                '증명서 발급 이력'
+            );
+
+            const today = new Date()
+                .toISOString()
+                .slice(0, 10)
+                .replaceAll('-', '');
+
+            XLSX.writeFile(
+                workbook,
+                `증명서_발급이력_${today}.xlsx`
+            );
+        } catch (err) {
+            console.error(
+                '증명서 발급 이력 다운로드 실패:',
+                err
+            );
+
             await alertError(
                 '다운로드 실패',
-                '다운로드할 발급 목록이 없습니다.'
+                err.response?.data?.message ||
+                '증명서 발급 이력을 불러오지 못했습니다.'
             );
-            return;
         }
-
-        const excelData = certRequests.map((request, index) => ({
-            번호: index + 1,
-            발급번호:
-                request.issue_date_code && request.issue_no
-                    ? `${request.issue_date_code}-${String(request.issue_no).padStart(3, '0')}`
-                    : '-',
-            신청번호: request.cert_request_seq,
-            신청자: request.name ?? '-',
-            사용자ID: request.users_id ?? '-',
-            부서: request.dept_name ?? '-',
-            직급: request.rank_name ?? '-',
-            증명서유형: request.cert_type_name ?? '-',
-            신청사유: request.request_reason ?? '-',
-            신청일시: formatDateTime(request.requested_at),
-            처리관리자: request.handler_name ?? '-',
-            상태:
-                request.status === 'PENDING' ? '대기' :
-                    request.status === 'APPROVED' ? '승인' :
-                        request.status === 'REJECTED' ? '반려' :
-                            request.status ?? '-',
-            처리일시: formatDateTime(request.processed_at),
-            반려사유: request.reject_reason ?? '-',
-            출력기한: formatDateTime(request.print_expires_at),
-            출력현황:
-                `${request.printed_count ?? 0} / ${request.applied_max_print ?? 0}회`
-        }));
-
-        const worksheet = XLSX.utils.json_to_sheet(excelData);
-        const workbook = XLSX.utils.book_new();
-
-        worksheet['!cols'] = [
-            { wch: 7 },
-            { wch: 11 },
-            { wch: 12 },
-            { wch: 16 },
-            { wch: 18 },
-            { wch: 12 },
-            { wch: 18 },
-            { wch: 30 },
-            { wch: 22 },
-            { wch: 14 },
-            { wch: 10 },
-            { wch: 22 },
-            { wch: 30 },
-            { wch: 22 },
-            { wch: 14 }
-        ];
-
-        XLSX.utils.book_append_sheet(
-            workbook,
-            worksheet,
-            '증명서 발급 목록'
-        );
-
-        const today = new Date()
-            .toISOString()
-            .slice(0, 10)
-            .replaceAll('-', '');
-
-        XLSX.writeFile(
-            workbook,
-            `증명서_발급목록_${today}.xlsx`
-        );
     };
 
     return (
@@ -355,7 +363,7 @@ const AdminCertRequest = () => {
                     onClick={handleExcelDownload}
                     className="inline-flex w-fit items-center gap-2 shrink-0 px-3 md:px-4 py-2 rounded-lg bg-emerald-600 text-xs md:text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors cursor-pointer whitespace-nowrap">
                     <Download size={17} />
-                    <span>엑셀 다운로드</span>
+                    <span>발급 이력 엑셀 다운로드</span>
                 </button>
             </div>
 
@@ -364,7 +372,7 @@ const AdminCertRequest = () => {
                     <table className="w-full text-left border-collapse mt-6 min-w-[1360px]">
                         <thead className="sticky top-0 bg-white z-10">
                             <tr className="border-b border-slate-100">
-                                <th className="pb-4 pl-2 md:pl-3 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">발급번호</th>
+                                <th className="pb-4 pl-2 md:pl-3 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">신청번호</th>
                                 <th className="pb-4 pl-2 md:pl-3 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">신청자</th>
                                 <th className="pb-4 pl-4 md:pl-6 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">부서/직급</th>
                                 <th className="pb-4 pl-4 md:pl-6 text-[0.6875rem] font-bold text-slate-400 tracking-wider whitespace-nowrap">증명서 유형</th>
@@ -388,10 +396,7 @@ const AdminCertRequest = () => {
                                 currentRequests.map((request) => (
                                     <tr key={request.cert_request_seq} className="hover:bg-slate-50/40 transition-colors">
                                         <td className="py-4 pl-4 md:pl-6 text-xs text-slate-500 font-mono whitespace-nowrap">
-                                            {request.issue_date_code && request.issue_no
-                                                ? `${request.issue_date_code}-${String(request.issue_no).padStart(3, '0')}`
-                                                : '-'
-                                            }
+                                            {request.cert_request_seq}
                                         </td>
                                         <td className="py-4 pl-1 md:pl-2 text-sm font-bold text-slate-800 whitespace-nowrap">{request.name}</td>
                                         <td className="py-4 pl-3 md:pl-6 text-xs text-slate-500 font-medium whitespace-nowrap">{request.dept_name || '-'} / {request.rank_name || '-'}</td>

@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import useUserStore from '../../store/userStore';
 import useAuthStore from '../../store/authStore';
 import { getCompanyInfo } from '../admin/adminApi';
-import { getCertType, increasePrintedCount } from './certificateApi';
+import { getCertType, printCertificate } from './certificateApi';
 import { Printer, ArrowLeft } from 'lucide-react';
 import { alertError, alertConfirm } from '../../utils/alert';
 
 
-const EmploymentCertificate = ({ certRequestSeq, purpose, onBack, maxPrintCount, printedCount, issueDateCode, issueNo }) => {
+const EmploymentCertificate = ({ certRequestSeq, purpose, onBack, maxPrintCount, printedCount, issueSeq, issueNumber }) => {
   const { user } = useUserStore();
   const { token } = useAuthStore();
   const [company, setCompany] = useState(null);
@@ -54,10 +54,11 @@ const EmploymentCertificate = ({ certRequestSeq, purpose, onBack, maxPrintCount,
     new Promise(resolve => setTimeout(resolve, ms));
 
   const handlePrint = async () => {
-    if (!certRequestSeq) {
+
+    if (!certRequestSeq || !issueSeq) {
       await alertError(
         '출력 실패',
-        '증명서 신청 정보가 없습니다.'
+        '증명서 발급 정보가 없습니다.'
       );
       return;
     }
@@ -66,15 +67,25 @@ const EmploymentCertificate = ({ certRequestSeq, purpose, onBack, maxPrintCount,
 
     const result = await alertConfirm(
       '증명서 인쇄',
-      `현재 출력 가능 횟수는 ${remainingCount}회입니다.<br/>인쇄 창에서 취소하더라도 출력 가능 횟수가 1회 차감됩니다.<br/>계속하시겠습니까?`
+      `현재 출력 가능 횟수는 ${remainingCount}회입니다.<br/>
+     인쇄 창에서 취소하더라도 출력 가능 횟수가 1회 차감됩니다.<br/>
+     계속하시겠습니까?`
     );
 
     if (!result.isConfirmed) return;
 
     try {
       setIsPrinting(true);
+      const resp =
+        await printCertificate(certRequestSeq, issueSeq);
+
+      if (!resp.data?.success) {
+        throw new Error(
+          resp.data?.message || '출력 처리에 실패했습니다.'
+        );
+      }
+
       setCurrentPrintedCount(prev => prev + 1);
-      await increasePrintedCount(certRequestSeq);
 
       await wait(300);
       window.print();
@@ -123,10 +134,6 @@ const EmploymentCertificate = ({ certRequestSeq, purpose, onBack, maxPrintCount,
   const mm = String(today.getMonth() + 1).padStart(2, '0');
   const dd = String(today.getDate()).padStart(2, '0');
   const todayStr = `${yyyy}년 ${mm}월 ${dd}일`;
-
-  const docNumber = issueDateCode && issueNo
-    ? `${issueDateCode}-${String(issueNo).padStart(3, '0')}`
-    : '';
 
   const companyNameFormatted = company?.companyName
     ? company?.companyName
@@ -197,7 +204,7 @@ const EmploymentCertificate = ({ certRequestSeq, purpose, onBack, maxPrintCount,
             <div className="relative z-10 h-full flex flex-col font-serif">
 
               <div className="absolute -top-6 left-0 text-sm text-black">
-                {docNumber}
+                {issueNumber}
               </div>
 
               <h1 className="text-4xl font-bold text-center tracking-[1em] mt-10 mb-20 ml-5 text-black">재직증명서</h1>
