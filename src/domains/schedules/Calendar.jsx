@@ -122,7 +122,12 @@ const Calendar = () => {
 
   const calendarStore = useCalendarStore();
   const user = useUserStore(state => state.user);
-  const isHrAdmin = user?.auth_group === 'ROLE_HR_ADMIN' || user?.auth_group === 'ROLE_SUPER_ADMIN';
+  const userAuthGroups = user?.user_auth_group ?? [];
+  const isHrAdmin =
+    user?.auth_group === 'ROLE_HR_ADMIN' ||
+    user?.auth_group === 'ROLE_SUPER_ADMIN' ||
+    userAuthGroups.includes('ROLE_HR_ADMIN') ||
+    userAuthGroups.includes('ROLE_SUPER_ADMIN');
 
   const calendarRef = useRef(null);
   const alertedYearsRef = useRef(new Set());

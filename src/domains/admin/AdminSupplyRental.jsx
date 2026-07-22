@@ -3,6 +3,7 @@ import Pagination from '../../components/common/Pagination';
 import MobilePagination from '../../components/common/MobilePagination';
 import { getSupplyRentalList, updateRentalStatus } from './adminApi';
 import { alertSuccess, alertConfirm } from '../../utils/alert';
+import usePageInfoStore from '../../store/usePageInfoStore';
 
 const PER_PAGE = 8;
 
@@ -25,6 +26,8 @@ const StatusBadge = ({ status }) => {
 };
 
 const AdminSupplyRental = () => {
+  const { pages } = usePageInfoStore();
+  const currentPageInfo = pages.find(p => p.page_code === 'AdminSupplyRental');
   const [activeTab, setActiveTab] = useState('전체');
   const [keyword, setKeyword] = useState('');
   const [page, setPage] = useState(1);
@@ -111,8 +114,8 @@ const handleReturn = async () => {
 
       {/* 헤더 */}
       <div className={`mb-3 md:mb-7 shrink-0 ${selectedId ? 'hidden md:block' : 'block'}`}>
-        <h1 className="text-[1.25rem] md:text-[1.5rem] font-bold text-slate-900 mb-0.5 md:mb-1 tracking-tight">비품 대여 현황</h1>
-        <p className="text-[0.6875rem] md:text-sm text-gray-500 hidden sm:block">현재 대여 중인 비품 목록과 반납 내역을 확인할 수 있습니다.</p>
+        <h1 className="text-[1.25rem] md:text-[1.5rem] font-bold text-slate-900 mb-0.5 md:mb-1 tracking-tight">{currentPageInfo?.page_name}</h1>
+        <p className="text-[0.6875rem] md:text-sm text-gray-500 hidden sm:block">{currentPageInfo?.page_info}</p>
       </div>
 
       {/* 필터 탭 & 검색창 라인 */}
