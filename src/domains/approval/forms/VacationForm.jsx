@@ -100,10 +100,6 @@ const VacationForm = ({ data, onChange, mode, user, isSubmitClicked, isTempSaveC
       if (field === 'reason' && value.length > 100) error = '글자 수 초과 (100자 이하)';
     }
 
-    if (field === 'start_date' && value && value < today) {
-      error = '시작 날짜는 오늘 이후여야 합니다.';
-    }
-
     if (field === 'end_date') {
       if (periodVacations.includes(currentData.vac_type) && !value) {
         error = '종료 날짜를 선택해주세요.';

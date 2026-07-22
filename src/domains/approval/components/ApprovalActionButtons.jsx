@@ -9,6 +9,9 @@ const ApprovalActionButtons = ({
   mode,
   documentStatus,
   onAction,
+  resubmit_doc_seq,
+  docSeq,
+  originalDocSeq,
   approvers,
   isRejecting,
   setIsRejecting,
@@ -226,12 +229,21 @@ const ApprovalActionButtons = ({
                 >
                   취소
                 </button>
-                <button
-                  className="px-8 py-2 bg-[#3530B8] text-white font-bold text-xs rounded-xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all active:scale-95"
-                  onClick={() => onAction('SUBMIT')}
-                >
-                  수정완료
-                </button>
+                {originalDocSeq
+                  ? <button
+                    className="px-8 py-2 bg-[#3530B8] text-white font-bold text-xs rounded-xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all active:scale-95"
+                    onClick={() => onAction('SUBMIT')}
+                  >
+                    재상신
+                  </button>
+                  :
+                  <button
+                    className="px-8 py-2 bg-[#3530B8] text-white font-bold text-xs rounded-xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all active:scale-95"
+                    onClick={() => onAction('SUBMIT')}
+                  >
+                    수정완료
+                  </button>
+                }
               </>
             ) : (
               <>
@@ -315,6 +327,14 @@ const ApprovalActionButtons = ({
                           승인
                         </button>
                       </>
+                    )}
+                    {userRole === 'DRAFTER' && documentStatus === 'REJECTED' && !resubmit_doc_seq && (
+                      <button
+                        className="px-8 py-2 bg-[#3530B8] text-white font-bold text-xs rounded-xl hover:bg-[#2a2594] shadow-lg shadow-[#3530B8]/20 transition-all active:scale-95"
+                        onClick={() => onAction('RESUBMIT')}
+                      >
+                        재상신
+                      </button>
                     )}
                   </div>
                 </div>
@@ -426,6 +446,14 @@ const ApprovalActionButtons = ({
                       승인
                     </button>
                   </>
+                )}
+                {userRole === 'DRAFTER' && documentStatus === 'REJECTED' && !resubmit_doc_seq && docSeq && (
+                  <button
+                    className="flex-1 py-2.5 bg-[#3530B8] text-white font-bold text-[11px] rounded-lg active:scale-95 whitespace-nowrap shadow-md"
+                    onClick={() => onAction('RESUBMIT')}
+                  >
+                    재상신
+                  </button>
                 )}
               </div>
             )}
