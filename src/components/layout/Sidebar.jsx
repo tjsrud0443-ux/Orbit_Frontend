@@ -8,7 +8,7 @@ import {
   faSitemap, faFileSignature, faDiagramProject,
   faRobot, faChevronDown, faChevronUp,
   faSliders, faUserShield, faAddressCard, faDesktop,
-  faFileShield, faUserCheck, faFilePen
+  faFileShield, faUserCheck, faFilePen, faClipboardCheck
 } from '@fortawesome/free-solid-svg-icons';
 import useAuthStore from '../../store/authStore';
 import { IMAGES } from '../../images/images';
@@ -52,7 +52,14 @@ const generalMenuItems = [
       { name: '직급 관리', path: '/adminRank' },
       { name: '회원가입 관리', path: '/adminSignup' },
       { name: '근태 관리', path: '/adminAttendance' },
-      { name: '연차 관리', path: '/adminLeave' },
+      { name: '연차 관리', path: '/adminLeave' }
+    ]
+  },
+   {
+    name: '증명서 관리',
+    icon : faClipboardCheck,
+    authGroups: ['ROLE_HR_ADMIN'],
+    subItems: [
       { name: '증명서 유형 관리', path: '/adminCertType' },
       { name: '증명서 발급 신청 관리', path: '/adminCertRequest' }
     ]
@@ -122,9 +129,7 @@ const adminMenuItems = [
       { name: '직급 관리', path: '/adminRank' },
       { name: '회원가입 관리', path: '/adminSignup' },
       { name: '근태 관리', path: '/adminAttendance' },
-      { name: '연차 관리', path: '/adminLeave' },
-      { name: '증명서 유형 관리', path: '/adminCertType' },
-      { name: '증명서 발급 신청 관리', path: '/adminCertRequest' }
+      { name: '연차 관리', path: '/adminLeave' }
     ]
   },
   {
@@ -135,6 +140,15 @@ const adminMenuItems = [
       { name: '비품 신청 관리', path: '/adminSupplyRequest' },
       { name: '비품 대여이력 관리', path: '/adminSupplyRental' },
       { name: '회의실 관리', path: '/adminMeetingRoom' }
+    ]
+  },
+  {
+    name: '증명서 관리',
+    icon : faClipboardCheck,
+    authGroups: ['ROLE_HR_ADMIN'],
+    subItems: [
+      { name: '증명서 유형 관리', path: '/adminCertType' },
+      { name: '증명서 발급 신청 관리', path: '/adminCertRequest' }
     ]
   },
   {
