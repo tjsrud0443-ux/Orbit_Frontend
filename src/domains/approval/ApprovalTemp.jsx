@@ -124,6 +124,7 @@ const ApprovalTemp = () => {
     'CANCEL_VACATION': '휴가취소신청서'
   };
 
+
   return (
     <div className="flex-1 bg-white flex flex-col h-full min-h-0 overflow-hidden">
       <div className="p-5 lg:p-6 pb-4 flex flex-col md:flex-row md:items-end justify-between gap-4 shrink-0">
