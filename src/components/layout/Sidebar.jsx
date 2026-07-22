@@ -324,8 +324,18 @@ const Sidebar = ({ isOpen, onClose }) => {
           <nav className="space-y-1 flex-1 overflow-y-auto pr-1 custom-scrollbar">
             {filteredMenuItems.map((item, idx) => {
               const itemNotificationCount = getNotificationCount(item.notiTypes);
+
               if (item.subItems) {
-                const isSubItemActive = item.subItems.some(sub => isPathActive(sub.path));
+                const isSubItemActive = item.subItems.some(sub =>
+                  isPathActive(sub.path)
+                );
+
+                const isParentActive =
+                  item.navigateOnClick &&
+                  item.path &&
+                  isPathActive(item.path);
+
+                const isMenuActive = isParentActive || isSubItemActive;
                 const isCurrentMenuOpen = openMenuName === item.name;
 
                 return (
@@ -334,18 +344,23 @@ const Sidebar = ({ isOpen, onClose }) => {
                       onClick={() => {
                         if (item.navigateOnClick && item.path) {
                           setOpenMenuName(item.name);
+
                           if (location.pathname !== item.path) {
                             navi(item.path);
                           }
+
                           onClose?.();
                           return;
                         }
+
                         handleToggleMenu(item.name);
                       }}
                       className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm transition-all w-full cursor-pointer
-                        ${isSubItemActive
+                        ${isMenuActive
                           ? 'bg-[#DDE8FF] text-[#3530B8] font-bold'
-                          : 'text-slate-600 hover:bg-[#DDE8FF] hover:text-[#3530B8] font-semibold'}`}>
+                          : 'text-slate-600 hover:bg-[#DDE8FF] hover:text-[#3530B8] font-semibold'
+                        }`}
+                    >
                       <div className="flex items-center gap-3">
                         <FontAwesomeIcon icon={item.icon} className="w-4 h-4" />
                         <span>{item.name}</span>
