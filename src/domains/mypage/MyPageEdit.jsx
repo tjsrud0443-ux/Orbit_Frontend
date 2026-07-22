@@ -95,11 +95,27 @@ const MyPageEdit = () => {
     zonecode: '',
     address1: '',
     address2: '',
+    ssn: '',
   });
   const [isEmailChecked, setIsEmailChecked] = useState(true);
   const [errors, setErrors] = useState({});
   const phoneRegex = /^010-\d{4}-\d{4}$/;
   const emailRegex = /^[A-Za-z0-9._%+-]{1,20}@[a-z]+\.[a-z]{3}$/;
+  const ssnRegex = /^\d{6}-\d{7}$/;
+
+  const isSsnRegistered = profileData?.ssn_masked && profileData.ssn_masked !== '-';
+  const isValidSSN = (ssn) => {
+    const cleanSSN = ssn.replace(/-/g, '');
+    if (!/^\d{13}$/.test(cleanSSN)) return false;
+
+    const weight = [2, 3, 4, 5, 6, 7, 8, 9, 2, 3, 4, 5];
+    let sum = 0;
+    for (let i = 0; i < 12; i++) {
+      sum += parseInt(cleanSSN[i]) * weight[i];
+    }
+    const result = (11 - (sum % 11)) % 10;
+    return result === parseInt(cleanSSN[12]);
+  };
 
   useEffect(() => {
     getProfileInfo()
@@ -200,6 +216,14 @@ const MyPageEdit = () => {
       newErrors.address2 = '상세주소를 입력해주세요.';
     }
 
+    if (!formData.ssn) {
+      newErrors.ssn = '주민등록번호를 입력해주세요.';
+    } else if (!ssnRegex.test(formData.ssn)) {
+      newErrors.ssn = '앞자리(6자)-뒷자리(7자) 형식으로 입력해주세요.';
+    } else if (!isValidSSN(formData.ssn)) {
+      newErrors.ssn = '올바른 주민등록번호가 아닙니다.';
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -223,10 +247,15 @@ const MyPageEdit = () => {
         newSysname = uploadResp.data.sysname;
       }
 
-      // 성공 처리 (then 안에 있던 것들 그대로)
-      const updatedProfile = { ...profileData, ...formData, sysname: newProfileSysname, stamp_sysname: newSysname };
-      setProfileData(updatedProfile);
-      setUser({ ...user, ...formData, sysname: newProfileSysname, stamp_sysname: newSysname });
+      // ✅ formData를 그대로 merge하지 않고, 서버에서 최신 정보(마스킹된 ssn_masked 포함)를 다시 조회
+      const freshProfile = await getProfileInfo();
+
+      setProfileData(freshProfile.data);
+      setUser({
+        ...user,
+        ...freshProfile.data,
+      });
+
       alertSuccess('수정 완료', '회원 정보가 수정되었습니다.');
       setIsEditing(false);
 
@@ -243,6 +272,7 @@ const MyPageEdit = () => {
       zonecode: profileData?.zonecode || '',
       address1: profileData?.address1 || '',
       address2: profileData?.address2 || '',
+      ssn: '',
     });
     setTempProfileImage(profileImage);
     setProfileImageFile(null);
@@ -397,7 +427,7 @@ const MyPageEdit = () => {
                       <input
                         type="email"
                         name="email"
-                        value={formData.email}
+                        value={formData.email || ""}
                         onChange={handleChange}
                         placeholder="example@email.com"
                         style={{ ...inputStyle, height: '2.2rem', flex: 1, border: (errors.email || errors.emailCheck) ? '1px solid #EF4444' : '1px solid #3530B8' }}
@@ -424,7 +454,7 @@ const MyPageEdit = () => {
                 <label style={labelStyle} className="info-label">휴대전화</label>
                 {isEditing ? (
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <input type="text" name="phone" value={formData.phone} onChange={handleChange} style={{ ...inputStyle, height: '2.2rem', border: errors.phone ? '1px solid #EF4444' : '1px solid #3530B8' }} />
+                    <input type="text" name="phone" value={formData.phone || ""} onChange={handleChange} style={{ ...inputStyle, height: '2.2rem', border: errors.phone ? '1px solid #EF4444' : '1px solid #3530B8' }} />
                     {errors.phone && <span style={{ fontSize: '0.7rem', color: '#EF4444', marginTop: '2px' }}>{errors.phone}</span>}
                   </div>
                 ) : (
@@ -437,7 +467,7 @@ const MyPageEdit = () => {
                 <label style={labelStyle} className="info-label">우편번호</label>
                 {isEditing ? (
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <input type="text" name="zonecode" value={formData.zonecode} readOnly style={{ ...inputStyle, height: '2.2rem', width: '100px', background: '#F8FAFC', border: '1px solid #E2E8F0' }} />
+                    <input type="text" name="zonecode" value={formData.zonecode || ""} readOnly style={{ ...inputStyle, height: '2.2rem', width: '100px', background: '#F8FAFC', border: '1px solid #E2E8F0' }} />
                     <button type="button" onClick={handleSearch} style={{ padding: '0 0.8rem', background: '#3530B8', color: 'white', border: 'none', borderRadius: '0.4rem', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer' }}>검색</button>
                   </div>
                 ) : (
@@ -449,7 +479,7 @@ const MyPageEdit = () => {
               <div style={{ ...infoRowStyle, height: '2.8rem' }} className="info-row">
                 <label style={labelStyle} className="info-label">기본주소</label>
                 {isEditing ? (
-                  <input type="text" name="address1" value={formData.address1} readOnly style={{ ...inputStyle, height: '2.2rem', background: '#F8FAFC', border: '1px solid #E2E8F0' }} />
+                  <input type="text" name="address1" value={formData.address1 || ""} readOnly style={{ ...inputStyle, height: '2.2rem', background: '#F8FAFC', border: '1px solid #E2E8F0' }} />
                 ) : (
                   <span style={valueStyle} className="info-value">{profileData?.address1 || '-'}</span>
                 )}
@@ -463,7 +493,7 @@ const MyPageEdit = () => {
                     <input
                       type="text"
                       name="address2"
-                      value={formData.address2}
+                      value={formData.address2 || ""}
                       onChange={handleChange}
                       style={{ ...inputStyle, height: '2.2rem', border: errors.address2 ? '1px solid #EF4444' : '1px solid #3530B8' }}
                       maxLength={20}
@@ -472,6 +502,27 @@ const MyPageEdit = () => {
                   </div>
                 ) : (
                   <span style={valueStyle} className="info-value">{profileData?.address2 || '-'}</span>
+                )}
+              </div>
+
+              {/* 주민등록번호 */}
+              <div style={{ ...infoRowStyle, minHeight: '2.8rem' }} className="info-row">
+                <label style={labelStyle} className="info-label">주민등록번호</label>
+                {isEditing ? (
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <input
+                      type="text"
+                      name="ssn"
+                      value={formData.ssn || ""}
+                      onChange={handleChange}
+                      placeholder="000000-0000000 형식으로 입력"
+                      maxLength={14}
+                      style={{ ...inputStyle, height: '2.2rem', border: errors.ssn ? '1px solid #EF4444' : '1px solid #3530B8' }}
+                    />
+                    {errors.ssn && <span style={{ fontSize: '0.7rem', color: '#EF4444', marginTop: '2px' }}>{errors.ssn}</span>}
+                  </div>
+                ) : (
+                  <span style={valueStyle} className="info-value">{profileData?.ssn_masked || '미등록'}</span>
                 )}
               </div>
             </div>

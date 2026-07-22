@@ -356,7 +356,7 @@ const quickActions = [
           {/* Box 3: 사내게시판 */}
           <div className="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex flex-col min-h-[15.625rem] lg:flex-1 overflow-hidden">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-s font-extrabold text-indigo-950">사내게시판</h3>
+              <h3 className="text-s font-extrabold text-indigo-950">게시판 공지글 확인</h3>
               <button onClick={() => navigate('/board')} className="text-[0.625rem] text-gray-400 font-bold hover:text-indigo-950">전체보기</button>
             </div>
             <div className="space-y-1 overflow-y-auto pr-1 flex-1 custom-scrollbar">
