@@ -280,7 +280,7 @@ const AdminCertRequest = () => {
                 증명서유형: history.cert_type_name ?? '-',
                 신청사유: history.request_reason ?? '-',
                 승인일시: formatDateTime(history.approved_at),
-                발급일시: formatDateTime(history.printed_at)
+                출력일시: formatDateTime(history.printed_at)
             }));
 
             const worksheet =
@@ -300,7 +300,7 @@ const AdminCertRequest = () => {
                 { wch: 18 },  // 증명서유형
                 { wch: 30 },  // 신청사유
                 { wch: 22 },  // 승인일시
-                { wch: 22 }   // 발급일시
+                { wch: 22 }   // 출력일시
             ];
 
             XLSX.utils.book_append_sheet(
