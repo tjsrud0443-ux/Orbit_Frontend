@@ -18,6 +18,7 @@ const EmploymentCertificate = ({ certRequestSeq, purpose, onBack, maxPrintCount,
   const maxCount = Number(maxPrintCount ?? 0);
   const remainingCount = Math.max(maxCount - currentPrintedCount, 0);
   const isPrintLimitReached = maxCount <= 0 || remainingCount <= 0;
+  const [hasPrinted, setHasPrinted] = useState(false);
 
   useEffect(() => {
     setCurrentPrintedCount(Number(printedCount ?? 0));
@@ -86,6 +87,7 @@ const EmploymentCertificate = ({ certRequestSeq, purpose, onBack, maxPrintCount,
       }
 
       setCurrentPrintedCount(prev => prev + 1);
+      setHasPrinted(true);
 
       await wait(300);
       window.print();
@@ -162,9 +164,9 @@ const EmploymentCertificate = ({ certRequestSeq, purpose, onBack, maxPrintCount,
           <button
             type="button"
             onClick={handlePrint}
-            disabled={isPrinting}
+            disabled={isPrinting || hasPrinted}
             className={`flex items-center gap-2 px-4 sm:px-5 py-2 text-white rounded-lg shadow transition text-sm sm:text-base
-              ${isPrinting
+              ${isPrinting || hasPrinted
                 ? 'bg-gray-400 cursor-not-allowed'
                 : 'bg-indigo-600 hover:bg-indigo-700'
               }`}>
@@ -172,7 +174,9 @@ const EmploymentCertificate = ({ certRequestSeq, purpose, onBack, maxPrintCount,
 
             {isPrinting
               ? '처리 중...'
-              : '인쇄'
+              : hasPrinted
+                ? '출력 완료'
+                : '인쇄'
             }
           </button>
         )}
