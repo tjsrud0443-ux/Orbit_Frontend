@@ -21,6 +21,13 @@ export const updateUsersInfo = (usersSeq, editForm) => maxios.put("/admin/hr/upd
     users_seq: usersSeq,
     ...editForm
 })
+//개인에게 권한 부여
+export const getUserRoles = (usersId) => maxios.get(`/usersRole/hr/${usersId}/roles`);
+//수정
+export const updateUserRoles = (usersId, roles) => maxios.put(`/usersRole/hr/${usersId}/roles`, roles);
+
+//직원 등록
+export const registerUser = (data) => maxios.post("/admin/hr/registerUser", data);
 
 /* 부서 관리 */
 export const addDept = (formData) => maxios.post("/admin/hr/addDept", formData);
@@ -141,10 +148,3 @@ export const updateUserLeave = (leaveSeq, delta) => {
     return maxios.put(`/admin/hr/updateUserLeave/${leaveSeq}`, { delta_days: delta });
 }; 
 
-/*개인에게 권한 부여 */
-export const getUserRoles = (usersId) => maxios.get(`/usersRole/hr/${usersId}/roles`);
-//수정
-export const updateUserRoles = (usersId, roles) => maxios.put(`/usersRole/hr/${usersId}/roles`, roles);
-
-/*직원 등록*/
-export const registerUser = (data) => maxios.post("/admin/hr/registerUser", data);
