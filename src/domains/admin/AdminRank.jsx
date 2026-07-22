@@ -367,7 +367,7 @@ const AdminRank = () => {
                                 <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
                                     <th className="py-3 md:py-4 pl-4 md:pl-6 pr-2 md:pr-4 w-[28%] md:w-[22%]">순서</th>
                                     <th className="py-3 md:py-4 px-2 md:px-4 w-[42%] md:w-[48%]">직급명</th>
-                                    <th className="py-3 md:py-4 pl-2 md:pl-4 pr-4 md:pr-20 w-[30%] text-right whitespace-nowrap">관리</th>
+                                    <th className="py-3 md:py-4 pl-2 md:pl-4 pr-10 md:pr-27 w-[30%] text-right whitespace-nowrap">관리</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
