@@ -14,7 +14,7 @@ const docTypeMap = {
   '지출결의서': 'PAYMENT',
   '휴가신청서': 'VACATION',
   '구매신청서': 'PURCHASE',
-  '휴기취소신청서': 'CANCEL_VACATION'
+  '휴가취소신청서': 'CANCEL_VACATION'
 };
 
 const ApprovalTemp = () => {
@@ -74,7 +74,6 @@ const ApprovalTemp = () => {
 
   const count = Math.ceil(filteredDocs.length / itemsPerPage);
   const displayDocs = filteredDocs.slice((page - 1) * itemsPerPage, page * itemsPerPage);
-  const emptyRowCount = Math.max(itemsPerPage - displayDocs.length, 0);
   const mobilePageNumbers = (() => {
     if (count <= 0) return [];
     const maxVisible = 5;
@@ -125,12 +124,12 @@ const ApprovalTemp = () => {
     'CANCEL_VACATION': '휴가취소신청서'
   };
 
+
   return (
-    <div className="flex-1 bg-white overflow-y-auto p-5 lg:p-6 custom-scrollbar">
-      <div className="max-w-[1440px] mx-auto space-y-10">
+    <div className="flex-1 bg-white flex flex-col h-full min-h-0 overflow-hidden">
+      <div className="p-5 lg:p-6 pb-4 flex flex-col md:flex-row md:items-end justify-between gap-4 shrink-0">
 
         {/* Title & Description */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-1">
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{currentPageInfo?.page_name}</h1>
             <p className="text-xs text-slate-500 font-medium break-keep">
@@ -181,13 +180,15 @@ const ApprovalTemp = () => {
               />
             </div>
           </div>
-        </div>
+      </div>
+
+      <div className="flex-1 min-h-0 px-5 lg:px-6 pb-5 lg:pb-6 overflow-hidden">
 
         {/* Sections: 목록 테이블 */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all">
-          <div className="overflow-x-auto custom-scrollbar">
+        <div className="h-full min-h-0 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+          <div className="relative flex-1 min-h-0 overflow-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
-              <thead>
+              <thead className="sticky top-0 z-10 bg-white">
                 <tr className="bg-slate-50/50 border-b border-slate-100 text-[0.8125rem] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
                   <th className="py-4 pl-8 pr-4 w-[20%]">제목</th>
                   <th className="py-4 px-4 w-[25%] text-center">문서 종류</th>
@@ -197,9 +198,8 @@ const ApprovalTemp = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {displayDocs.length > 0 ? ([
-                  displayDocs.map((doc) => (
-                    <tr key={doc.seq} className="transition-colors group">
+                {displayDocs.map((doc) => (
+                    <tr key={doc.doc_seq} className="transition-colors group">
                       <td className="py-3 pl-8 pr-4">
                         <span className="text-sm font-bold text-slate-700 transition-colors whitespace-nowrap">
                           {doc.title}
@@ -239,39 +239,18 @@ const ApprovalTemp = () => {
                         </div>
                       </td>
                     </tr>
-                  )),
-                  Array.from({ length: emptyRowCount }).map((_, index) => (
-                    <tr key={`empty-${index}`} className="pointer-events-none">
-                      <td className="py-3 pl-8 pr-4">&nbsp;</td>
-                      <td className="py-3 px-4">&nbsp;</td>
-                      <td className="py-3 px-4">&nbsp;</td>
-                      <td className="py-3 px-4">&nbsp;</td>
-                      <td className="py-3 pl-4 pr-8">&nbsp;</td>
-                    </tr>
-                  ))
-                ]
-                ) : ([
-                  <tr key="empty-message">
-                    <td colSpan="5" className="py-20 text-center text-slate-400 text-sm font-bold whitespace-nowrap">
-                      임시 저장된 문서가 없습니다.
-                    </td>
-                  </tr>,
-                  Array.from({ length: itemsPerPage - 4 }).map((_, index) => (
-                    <tr key={`empty-${index}`} className="pointer-events-none">
-                      <td className="py-3 pl-8 pr-4">&nbsp;</td>
-                      <td className="py-3 px-4">&nbsp;</td>
-                      <td className="py-3 px-4">&nbsp;</td>
-                      <td className="py-3 px-4">&nbsp;</td>
-                      <td className="py-3 pl-4 pr-8">&nbsp;</td>
-                    </tr>
-                  ))
-                ])}
+                  ))}
               </tbody>
             </table>
+            {displayDocs.length === 0 && (
+              <div className="absolute inset-x-0 top-14 bottom-0 flex items-center justify-center text-slate-400 text-sm font-bold whitespace-nowrap pointer-events-none">
+                임시 저장된 문서가 없습니다.
+              </div>
+            )}
           </div>
 
           {/* Pagination */}
-          <div className="hidden md:block py-3 border-t border-slate-50 min-h-[56px]">
+          <div className="hidden md:block shrink-0 py-3 border-t border-slate-50 min-h-[56px]">
             {count > 0 ? (
               <Pagination
                 count={count}
@@ -282,7 +261,7 @@ const ApprovalTemp = () => {
               <div className="h-8" />
             )}
           </div>
-          <div className="md:hidden py-5 border-t border-slate-50 flex items-center justify-center gap-1.5">
+          <div className="md:hidden shrink-0 py-5 border-t border-slate-50 flex items-center justify-center gap-1.5">
             <button
               type="button"
               disabled={!hasPaginationData || page <= 1}

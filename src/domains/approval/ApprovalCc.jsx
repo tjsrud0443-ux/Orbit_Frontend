@@ -82,8 +82,6 @@ const docTypeMap = {
 const DocumentTable = ({ title, data, onDetailClick, showPagination = true, approverLabel = '현재 결재자', count = 0, page = 1, setPage = () => { } }) => {
   const token = useAuthStore(state => state.token);
   const displayData = data;
-  const fixedRowCount = 9;
-  const emptyRowCount = Math.max(fixedRowCount - displayData.length, 0);
 
   const docTypeText = {
     'VACATION': '휴가신청서',
@@ -127,11 +125,11 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
     return "";
   }
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all">
-      <div className="overflow-x-auto custom-scrollbar">
+    <div className="h-full min-h-0 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+      <div className="relative flex-1 min-h-0 overflow-auto custom-scrollbar">
         <table className="w-full min-w-[1100px] md:min-w-full text-left border-collapse md:table-fixed">
-          <thead>
-            <tr className="bg-white text-gray-400 text-[0.8125rem] font-bold uppercase tracking-wider border-b border-slate-100">
+          <thead className="sticky top-0 z-10 bg-white">
+            <tr className="text-gray-400 text-[0.8125rem] font-bold uppercase tracking-wider border-b border-slate-100">
               <th className="pl-4 md:pl-6 pr-3 py-3 font-bold w-[22%] whitespace-nowrap">제목</th>
               <th className="px-3 py-3 font-bold w-[11%] whitespace-nowrap">문서 종류</th>
               <th className="px-3 py-3 font-bold w-[12%] whitespace-nowrap">기안자</th>
@@ -170,38 +168,16 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
                 </td>
               </tr>
             ))}
-            {displayData.length > 0 && Array.from({ length: emptyRowCount }).map((_, index) => (
-              <tr key={`empty-${index}`} className="pointer-events-none">
-                <td className="pl-4 md:pl-6 pr-3 py-3">&nbsp;</td>
-                <td className="px-3 py-3">&nbsp;</td>
-                <td className="px-3 py-3">&nbsp;</td>
-                <td className="px-3 py-3">&nbsp;</td>
-                <td className="px-3 py-3">&nbsp;</td>
-                <td className="px-2 py-0.5">&nbsp;</td>
-                <td className="px-3 py-3">&nbsp;</td>
-              </tr>
-            ))}
-            {displayData.length === 0 && ([
-              <tr key="empty-message">
-                <td colSpan="7" className="py-20 text-center text-gray-400 text-[0.8rem] font-bold">해당 문서가 없습니다.</td>
-              </tr>,
-              Array.from({ length: fixedRowCount - 4 }).map((_, index) => (
-                <tr key={`empty-${index}`} className="pointer-events-none">
-                  <td className="pl-4 md:pl-6 pr-3 py-3">&nbsp;</td>
-                  <td className="px-3 py-3">&nbsp;</td>
-                  <td className="px-3 py-3">&nbsp;</td>
-                  <td className="px-3 py-3">&nbsp;</td>
-                  <td className="px-3 py-3">&nbsp;</td>
-                  <td className="px-2 py-0.5">&nbsp;</td>
-                  <td className="px-3 py-3">&nbsp;</td>
-                </tr>
-              ))
-            ])}
           </tbody>
         </table>
+        {displayData.length === 0 && (
+          <div className="absolute inset-x-0 top-11 bottom-0 flex items-center justify-center text-gray-400 text-[0.8rem] font-bold pointer-events-none">
+            해당 문서가 없습니다.
+          </div>
+        )}
       </div>
       {showPagination && (
-        <div className="hidden md:block py-3 border-t border-slate-50 min-h-[56px] scale-95 origin-center">
+        <div className="hidden md:block shrink-0 py-3 border-t border-slate-50 min-h-[56px] scale-95 origin-center">
           {count > 0 ? (
             <Pagination count={count} page={page} onChange={(_, value) => setPage(value)} />
           ) : (
@@ -210,7 +186,7 @@ const DocumentTable = ({ title, data, onDetailClick, showPagination = true, appr
         </div>
       )}
       {showPagination && (
-        <div className="md:hidden py-5 flex items-center justify-center gap-1.5">
+        <div className="md:hidden shrink-0 py-5 flex items-center justify-center gap-1.5">
           <button
             type="button"
             disabled={!hasPaginationData || page <= 1}
@@ -275,7 +251,7 @@ const ApprovalCc = () => {
   useEffect(() => {
     getPageDocuments("APPROVED", approvedPage, searchTerm, docTypeMap[selectedType] || "").then(resp => {
       setApprovedDocs(resp.data.list);
-      setApprovedCount(Math.ceil(resp.data.count / 5));
+      setApprovedCount(Math.ceil(resp.data.count / 10));
     })
   }, [approvedPage, searchTerm, selectedType]);
 
@@ -307,11 +283,8 @@ const ApprovalCc = () => {
   };
 
   return (
-    <div className="flex-1 bg-white md:overflow-hidden flex flex-col p-5 lg:p-6 custom-scrollbar">
-      <div className="max-w-[1440px] mx-auto w-full flex flex-col h-full space-y-10">
-
-        {/* Title & Description */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 flex-shrink-0">
+    <div className="flex-1 bg-white flex flex-col h-full min-h-0 overflow-hidden">
+      <div className="p-5 lg:p-6 pb-4 flex flex-col md:flex-row md:items-end justify-between gap-4 shrink-0">
           <div className="space-y-1">
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{currentPageInfo?.page_name}</h1>
             <p className="text-xs text-slate-500 font-medium">{currentPageInfo?.page_info}</p>
@@ -358,10 +331,9 @@ const ApprovalCc = () => {
               />
             </div>
           </div>
-        </div>
+      </div>
 
-        {/* Sections */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
+      <div className="flex-1 min-h-0 px-5 lg:px-6 pb-5 lg:pb-6 overflow-hidden">
           <DocumentTable
             title="결재 완료"
             data={approvedDocs}
@@ -372,7 +344,6 @@ const ApprovalCc = () => {
             showPagination={true}
             approverLabel="최종 결재자"
           />
-        </div>
       </div>
       <style dangerouslySetInnerHTML={{
         __html: `
