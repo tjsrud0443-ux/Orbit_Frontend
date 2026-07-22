@@ -2,13 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { idDuplCheck, emailDuplCheck } from '../../domains/auth/authApi'; 
 import { registerUser } from './adminApi'; 
 import { alertConfirm, alertSuccess, alertError } from '../../utils/alert';
+import { IMAGES } from '../../images/images'; 
 
 const initialForm = {
   name: '',
   id: '',
   pw: '',
   pwConfirm: '',
-  phone: '',
   email: '',
   dept_seq: '',
   dept_name: '',
@@ -46,19 +46,6 @@ const RegisterUserModal = ({ isOpen, onClose, onSuccess, deptList = [], rankList
 
   const handleChange = (field, value) => {
     let finalValue = value;
-    
-    if (field === 'phone') {
-      const onlyNums = value.replace(/[^\d]/g, '').slice(0, 11);
-      if (onlyNums.length <= 3) {
-        finalValue = onlyNums;
-      } else if (onlyNums.length <= 7) {
-        finalValue = `${onlyNums.slice(0, 3)}-${onlyNums.slice(3)}`;
-      } else if (onlyNums.length <= 10) {
-        finalValue = `${onlyNums.slice(0, 3)}-${onlyNums.slice(3, 6)}-${onlyNums.slice(6)}`;
-      } else {
-        finalValue = `${onlyNums.slice(0, 3)}-${onlyNums.slice(3, 7)}-${onlyNums.slice(7)}`;
-      }
-    }
     
     if (field === 'hire_date') {
       const onlyNums = value.replace(/[^\d]/g, '').slice(0, 8);
@@ -137,13 +124,6 @@ const RegisterUserModal = ({ isOpen, onClose, onSuccess, deptList = [], rankList
     if (!form.email.trim()) newErrors.email = '이메일을 입력해주세요.';
     else if (!emailChecked) newErrors.email = '이메일 중복확인을 진행해주세요.';
 
-    const phoneRegex = /^010-\d{3,4}-\d{4}$/;
-    if (!form.phone.trim()) {
-      newErrors.phone = '전화번호를 입력해주세요.';
-    } else if (!phoneRegex.test(form.phone)) {
-      newErrors.phone = '올바른 전화번호 형식(010-XXXX-XXXX)으로 입력해주세요.';
-    }
-
     if (!form.dept_seq) newErrors.dept_seq = '부서를 선택해주세요.';
     if (!form.rank_seq) newErrors.rank_seq = '직급을 선택해주세요.';
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -157,33 +137,49 @@ const RegisterUserModal = ({ isOpen, onClose, onSuccess, deptList = [], rankList
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
-    if (!validate()) return;
+const handleSubmit = () => {
+  if (!validate()) return;
 
-    alertConfirm('직원 등록', '입력한 정보로 직원을 등록하시겠습니까?').then((result) => {
-      if (!result.isConfirmed) return;
+  alertConfirm('직원 등록', '입력한 정보로 직원을 등록하시겠습니까?').then(async (result) => {
+    if (!result.isConfirmed) return;
 
-      setSubmitting(true);
-      registerUser({
+    setSubmitting(true);
+    try {
+      // 기본 프로필(6번) 이미지를 실제 파일로 변환
+      const response = await fetch(IMAGES.DEFAULT6);
+      const blob = await response.blob();
+      const profileFile = new File([blob], 'Default6.png', { type: blob.type });
+
+      const inputData = {
         name: form.name,
         id: form.id,
         pw: form.pw,
         email: form.email,
-        phone: form.phone,
         dept_seq: form.dept_seq,
         rank_seq: form.rank_seq,
         hire_date: form.hire_date,
-      }).then(() => {
-        alertSuccess('등록 완료', '직원이 성공적으로 등록되었습니다.');
-        onSuccess?.();
-        handleClose();
-      }).catch(() => {
-        alertError('오류 발생', '직원 등록 중 오류가 발생했습니다.');
-      }).finally(() => {
-        setSubmitting(false);
-      });
-    });
-  };
+      };
+
+      const formData = new FormData();
+      formData.append(
+        'input',
+        new Blob([JSON.stringify(inputData)], { type: 'application/json' })
+      );
+      formData.append('file', profileFile);
+
+      await registerUser(formData);
+
+      alertSuccess('등록 완료', '직원이 성공적으로 등록되었습니다.');
+      onSuccess?.();
+      handleClose();
+    } catch (err) {
+      console.error(err);
+      alertError('오류 발생', '직원 등록 중 오류가 발생했습니다.');
+    } finally {
+      setSubmitting(false);
+    }
+  });
+};
 
   const handleClose = () => {
     setForm(initialForm);
@@ -294,19 +290,6 @@ const RegisterUserModal = ({ isOpen, onClose, onSuccess, deptList = [], rankList
             {!errors.email && emailCheckMsg && (
               <p className={`text-[0.6875rem] mt-1 ${emailChecked ? 'text-[#10B981]' : 'text-red-500'}`}>{emailCheckMsg}</p>
             )}
-          </div>
-
-          {/* 전화번호 */}
-          <div>
-            <label className="text-xs text-slate-500 font-semibold mb-1.5 block">전화번호</label>
-            <input
-              type="text"
-              value={form.phone}
-              onChange={(e) => handleChange('phone', e.target.value)}
-              placeholder="010-0000-0000 형식으로 입력해주세요"
-              className={`w-full px-3 py-2.5 bg-white border ${errors.phone ? 'border-red-400' : 'border-gray-200'} rounded-xl text-sm outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 transition-all placeholder:text-gray-300`}
-            />
-            {errors.phone && <p className="text-[0.6875rem] text-red-500 mt-1">{errors.phone}</p>}
           </div>
 
           {/* 부서 */}
