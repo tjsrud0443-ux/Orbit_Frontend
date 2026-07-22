@@ -68,11 +68,11 @@ const DocumentTable = ({ data, onDetailClick, showPagination = true, count = 0, 
   const hasPaginationData = displayData.length > 0 && count > 0;
 
   return (
-    <>
-      <div className="overflow-x-auto custom-scrollbar min-h-[376px]">
+    <div className="h-full min-h-0 flex flex-col overflow-hidden">
+      <div className="relative flex-1 min-h-0 overflow-auto custom-scrollbar">
         <table className="w-full min-w-[1040px] md:min-w-full text-left border-collapse md:table-fixed">
-          <thead>
-            <tr className="bg-white text-gray-400 text-[0.8125rem] font-bold uppercase tracking-wider border-b border-slate-100">
+          <thead className="sticky top-0 z-10 bg-white">
+            <tr className="text-gray-400 text-[0.8125rem] font-bold uppercase tracking-wider border-b border-slate-100">
               {showCheckbox && (
                 <th className="pl-4 md:pl-6 pr-2 py-3 w-[5%] text-center whitespace-nowrap">
                   <input
@@ -139,16 +139,16 @@ const DocumentTable = ({ data, onDetailClick, showPagination = true, count = 0, 
                 </td>
               </tr>
             ))}
-            {displayData.length === 0 && (
-              <tr>
-                <td colSpan={showCheckbox ? 8 : 7} className="py-10 text-center text-gray-400 text-[0.8rem] font-bold">해당 문서가 없습니다.</td>
-              </tr>
-            )}
           </tbody>
         </table>
+        {displayData.length === 0 && (
+          <div className="absolute inset-x-0 top-11 bottom-0 flex items-center justify-center text-gray-400 text-[0.8rem] font-bold pointer-events-none">
+            해당 문서가 없습니다.
+          </div>
+        )}
       </div>
       {showPagination && (
-        <div className="hidden md:block py-2 scale-95 origin-center min-h-[48px]">
+        <div className="hidden md:block shrink-0 py-2 border-t border-slate-50 scale-95 origin-center min-h-[48px]">
           {count > 0 ? (
             <Pagination count={count} page={page} onChange={(_, value) => setPage(value)} />
           ) : (
@@ -157,7 +157,7 @@ const DocumentTable = ({ data, onDetailClick, showPagination = true, count = 0, 
         </div>
       )}
       {showPagination && (
-        <div className="md:hidden py-5 flex items-center justify-center gap-1.5">
+        <div className="md:hidden shrink-0 py-5 border-t border-slate-50 flex items-center justify-center gap-1.5">
           <button
             type="button"
             disabled={!hasPaginationData || page <= 1}
@@ -186,7 +186,7 @@ const DocumentTable = ({ data, onDetailClick, showPagination = true, count = 0, 
           </button>
         </div>
       )}
-    </>
+    </div>
   );
 };
 
@@ -413,20 +413,17 @@ const ApprovalInbox = () => {
   const activeTabData = tabs.find(tab => tab.status === activeTab) || tabs[0];
 
   return (
-    <div className="flex-1 bg-white py-8 px-1 md:px-7 overflow-y-auto md:overflow-hidden custom-scrollbar">
-      <div className="max-w-[1450px] mx-auto w-full flex flex-col h-full">
-
-        {/* Title & Description */}
-        <div className="mb-6 px-4 md:px-2 flex-shrink-0">
+    <div className="flex-1 bg-white flex flex-col h-full min-h-0 overflow-hidden">
+        <div className="shrink-0 py-8 px-5 md:px-9 pb-6">
           <div className="space-y-1">
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{currentPageInfo?.page_name}</h1>
             <p className="text-xs text-slate-500 font-medium">{currentPageInfo?.page_info}</p>
           </div>
-
         </div>
 
-        <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-3 md:p-8 flex flex-col flex-1 md:overflow-hidden min-h-0">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+      <div className="flex-1 min-h-0 px-1 md:px-7 pb-8 overflow-hidden">
+        <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-3 md:p-8 flex flex-col h-full min-h-0 overflow-hidden">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4 shrink-0">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
               <div className="flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit items-center flex-shrink-0 overflow-x-auto custom-scrollbar">
                 {tabs.map(tab => (
@@ -500,7 +497,7 @@ const ApprovalInbox = () => {
           </div>
 
           {/* Sections */}
-          <div className="flex-1 md:overflow-y-auto md:min-h-0 custom-scrollbar">
+          <div className="flex-1 min-h-0 overflow-hidden">
             <DocumentTable
               title="결재 완료"
               data={activeTabData.data}
