@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileSignature, faDoorOpen, faFileCirclePlus, faDiagramProject, faClipboard, faBox, faBookmark } from '@fortawesome/free-solid-svg-icons';
+import { faHouse, faSitemap, faFolderOpen, faAddressCard, faDesktop, faClipboardCheck } from '@fortawesome/free-solid-svg-icons';
+
 
 import { IMAGES } from '../../images/images'; 
 
 import usePublicCalendar from '../schedules/publicCalendar';
-import { checkIn_api, checkOut_api, getAttendanceStatus, getNoticeList } from './mainApi';
+import { checkIn_api, checkOut_api, getAttendanceStatus, getNoticeList, getQuickActionSettings, updateQuickActionSettings } from './mainApi';
 import { getBoardList } from '../board/boardApi';
 import useUserStore from '../../store/userStore';
 import Calendar from '../../components/common/Calendar';
@@ -16,8 +18,43 @@ import DraftModal from './DraftModal';
 import ProjectModal from './ProjectModal';
 import CheckoutCorrectionModal from './CheckoutCorrectionModal';
 import OvertimeRequestModal from './OvertimeRequestModal';
+import QuickActionEditModal from './QuickActionEditModal';
 
 import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
+
+const ALL_QUICK_ACTIONS = {
+  draft:              { title: "기안 작성", icon: faFileSignature, iconBgColor: "#FFF4E5", color: "#f89e04", isModal: "draft" },
+  meetingRoom:        { title: "회의실 예약", icon: faDoorOpen, iconBgColor: "#EFF6FF", color: "#2c7af7", path: "/meetingRooms" },
+  bookmark:           { title: "내 북마크 문서", icon: faBookmark, iconBgColor: "#ECFDF5", color: "#09af78", path: "/documents?tab=즐겨찾기" },
+  project:            { title: "프로젝트 생성", icon: faDiagramProject, iconBgColor: "#FFF1F2", color: "#f62f32", isModal: "project" },
+  meetingMinutes:     { title: "회의록 작성", icon: faClipboard, iconBgColor: "#F5F3FF", color: "#702de3", path: "/meetingMinutes" },
+  supply:             { title: "비품 신청", icon: faBox, iconBgColor: "#FFF0F9", color: "#e2328a", path: "/supply" },
+
+  departments:        { title: "조직도", icon: faSitemap, iconBgColor: "#F0FDFA", color: "#0d9488", path: "/departments" },
+  approvalMypage:     { title: "내가 올린 기안", icon: faFileSignature, iconBgColor: "#FFF4E5", color: "#f89e04", path: "/approvalMypage" },
+  approvalInbox:      { title: "내가 결재할 기안", icon: faFileSignature, iconBgColor: "#FFF4E5", color: "#f89e04", path: "/approvalInbox" },
+  approvalCc:         { title: "참조 문서함", icon: faFileSignature, iconBgColor: "#FFF4E5", color: "#f89e04", path: "/approvalCc" },
+  approvalTemp:       { title: "임시 문서함", icon: faFileSignature, iconBgColor: "#FFF4E5", color: "#f89e04", path: "/approvalTemp" },
+  certificate:        { title: "증명서 발급 신청", icon: faFolderOpen, iconBgColor: "#FFF0F9", color: "#e2328a", path: "/certificate" },
+  documents:          { title: "자료실", icon: faFolderOpen, iconBgColor: "#FFF0F9", color: "#e2328a", path: "/documents" },
+  project_manage:     { title: "프로젝트 관리", icon: faDiagramProject, iconBgColor: "#FFF1F2", color: "#f62f32", path: "/projects" },
+
+  adminUsers:         { title: "직원 관리", icon: faAddressCard, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminUsers", authGroups: ["ROLE_HR_ADMIN"] },
+  adminDepartments:   { title: "부서 관리", icon: faAddressCard, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminDepartments", authGroups: ["ROLE_HR_ADMIN"] },
+  adminRank:          { title: "직급 관리", icon: faAddressCard, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminRank", authGroups: ["ROLE_HR_ADMIN"] },
+  adminSignup:        { title: "회원가입 관리", icon: faAddressCard, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminSignup", authGroups: ["ROLE_HR_ADMIN"] },
+  adminAttendance:    { title: "근태 관리", icon: faAddressCard, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminAttendance", authGroups: ["ROLE_HR_ADMIN"] },
+  adminLeave:         { title: "연차 관리", icon: faAddressCard, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminLeave", authGroups: ["ROLE_HR_ADMIN"] },
+  adminCertType:      { title: "증명서 유형 관리", icon: faClipboardCheck, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminCertType", authGroups: ["ROLE_HR_ADMIN"] },
+  adminCertRequest:   { title: "증명서 발급 신청 관리", icon: faClipboardCheck, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminCertRequest", authGroups: ["ROLE_HR_ADMIN"] },
+
+  adminSupply:        { title: "비품 관리", icon: faDesktop, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminSupply", authGroups: ["ROLE_GA_ADMIN"] },
+  adminSupplyRequest: { title: "비품 신청 관리", icon: faDesktop, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminSupplyRequest", authGroups: ["ROLE_GA_ADMIN"] },
+  adminSupplyRental:  { title: "비품 대여이력 관리", icon: faDesktop, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminSupplyRental", authGroups: ["ROLE_GA_ADMIN"] },
+  adminMeetingRoom:   { title: "회의실 관리", icon: faDesktop, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminMeetingRoom", authGroups: ["ROLE_GA_ADMIN"] },
+};
+
+const DEFAULT_QUICK_ACTION_ORDER = "draft,meetingRoom,bookmark,project,meetingMinutes,supply";
 
 const Main = () => {
   const navigate = useNavigate();
@@ -35,6 +72,8 @@ const Main = () => {
   const [attendanceSeq, setAttendanceSeq] = useState(null);
 
   const [boardPosts, setBoardPosts] = useState([]);
+  const [quickActionOrder, setQuickActionOrder] = useState(DEFAULT_QUICK_ACTION_ORDER);
+  const [isQuickActionEditOpen, setIsQuickActionEditOpen] = useState(false);
 
   // 자정 리셋 useEffect 추가
   useEffect(() => {
@@ -69,11 +108,17 @@ const Main = () => {
 
       // 게시판 목록 가져오기 (최신 5개)
       getNoticeList().then(resp => {
-          setBoardPosts(resp.data|| []);
-        })
-        .catch(err => {
-          console.error('게시판 목록 로드 실패:', err);
-        });
+        setBoardPosts(resp.data|| []);
+      })
+      .catch(err => {
+        console.error('게시판 목록 로드 실패:', err);
+      });
+
+      getQuickActionSettings().then(resp => {
+        setQuickActionOrder(resp.data?.quick_action_order || DEFAULT_QUICK_ACTION_ORDER);
+      }).catch(() => {
+        setQuickActionOrder(DEFAULT_QUICK_ACTION_ORDER);
+      });
     }
   }, [user]);
 
@@ -147,36 +192,43 @@ const formatStampTime = (date) =>
   const formatTime = (date) => date.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
   const formatDate = (date) => date.toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
 
-const quickActions = [
-  { title: "기안 작성", icon: faFileSignature,
-    bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#FFF4E5", color: "#f89e04",
-    onClick: () => setIsDraftModalOpen(true)
-  },
-  { title: "회의실 예약", icon: faDoorOpen,
-    bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#EFF6FF", color: "#2c7af7",
-    onClick: () => navigate('/meetingRooms')
-  },
-  { title: "내 북마크 문서", icon: faBookmark,
-    bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#ECFDF5", color: "#09af78",
-    onClick: () => navigate('/documents?tab=즐겨찾기')
-  },
-  { title: "프로젝트 생성", icon: faDiagramProject,
-    bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#FFF1F2", color: "#f62f32",
-    onClick: () => setIsProjectModalOpen(true)
-  },
-  { title: "회의록 작성", icon: faClipboard,
-    bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#F5F3FF", color: "#702de3",
-    onClick: () => navigate('/meetingMinutes')
-  },
-  { title: "비품 신청", icon: faBox,
-    bgColor: "white", borderColor: "#F0F0F0", iconBgColor: "#FFF0F9", color: "#e2328a",
-    onClick: () => navigate('/supply')
-  },
-];
+  const userAuthGroups = user?.user_auth_group ?? [];
+  const allUserGroups = [user?.auth_group, ...userAuthGroups].filter(Boolean);
+
+  const hasQuickActionAccess = (actionDef) => {
+    if (!actionDef.authGroups) return true;
+    return actionDef.authGroups.some(g => allUserGroups.includes(g));
+  };
+
+  const handleQuickActionClick = (key) => {
+    const action = ALL_QUICK_ACTIONS[key];
+    if (!action) return;
+    if (action.isModal === "draft") setIsDraftModalOpen(true);
+    else if (action.isModal === "project") setIsProjectModalOpen(true);
+    else navigate(action.path);
+  };
+
+  const quickActionKeys = (quickActionOrder || DEFAULT_QUICK_ACTION_ORDER)
+    .split(',')
+    .filter(key => ALL_QUICK_ACTIONS[key] && hasQuickActionAccess(ALL_QUICK_ACTIONS[key]));
+    
   return (
     <div className="w-full h-auto lg:h-full flex flex-col p-4 lg:px-7 box-border lg:overflow-hidden bg-white">
       {/* 빠른실행 모달로 바로가기 */}
       {isDraftModalOpen && <DraftModal onClose={() => setIsDraftModalOpen(false)} />}
+      {isQuickActionEditOpen && (
+        <QuickActionEditModal
+          allActions={ALL_QUICK_ACTIONS}
+          hasAccess={hasQuickActionAccess}
+          currentOrder={quickActionOrder || DEFAULT_QUICK_ACTION_ORDER}
+          onClose={() => setIsQuickActionEditOpen(false)}
+          onSave={(newOrder) => {
+            setQuickActionOrder(newOrder);
+            updateQuickActionSettings(newOrder);
+            setIsQuickActionEditOpen(false);
+          }}
+        />
+      )}
       {isProjectModalOpen && <ProjectModal onClose={() => setIsProjectModalOpen(false)} />}
       {isCorrectionModalOpen && (
         <CheckoutCorrectionModal 
@@ -263,21 +315,27 @@ const quickActions = [
 
             {/* Box 2: 빠른 실행 (3x2) */}
             <div className="md:col-span-5 bg-white p-4 rounded-3xl border border-gray-200 shadow-sm flex flex-col min-h-[16.25rem] lg:h-[16.25rem]">
-              <h3 className="text-s font-extrabold text-indigo-950 mb-2">빠른 실행</h3>
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-s font-extrabold text-indigo-950">빠른 실행</h3>
+                <button onClick={() => setIsQuickActionEditOpen(true)} className="text-[0.625rem] text-gray-400 font-bold hover:text-indigo-950">편집</button>
+              </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 xl:grid-cols-3 gap-2 flex-1">
-                {quickActions.map((action, idx) => (
-                  <button key={idx}
-                   onClick={action.onClick || undefined}
-                   onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F0F4FF'}
-  onMouseLeave={e => e.currentTarget.style.backgroundColor = action.bgColor}
-                    style={{ backgroundColor: action.bgColor, borderColor: action.borderColor }}
-                    className="flex flex-row items-center justify-start gap-2.5 px-3 py-2 border rounded-2xl transition-all overflow-hidden">
-                    <div style={{ backgroundColor: action.iconBgColor }} className="p-2 ml-0.5 rounded-xl shrink-0">
-                      <FontAwesomeIcon icon={action.icon} style={{ color: action.color }} className="text-xl sm:text-2xl" />
-                    </div>
-                    <span className="text-[0.75rem] sm:text-[0.85rem] font-semibold truncate" style={{ color: action.textColor}}>{action.title}</span>
-                  </button>
-                ))}
+                {quickActionKeys.map((key) => {
+                  const action = ALL_QUICK_ACTIONS[key];
+                  return (
+                    <button key={key}
+                    onClick={() => handleQuickActionClick(key)}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F0F4FF'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}
+                      style={{ backgroundColor: "white", borderColor: "#F0F0F0" }}
+                      className="flex flex-row items-center justify-start gap-2.5 px-3 py-2 border rounded-2xl transition-all overflow-hidden">
+                      <div style={{ backgroundColor: action.iconBgColor }} className="p-2 ml-0.5 rounded-xl shrink-0">
+                        <FontAwesomeIcon icon={action.icon} style={{ color: action.color }} className="text-xl sm:text-2xl" />
+                      </div>
+                      <span className="text-[0.75rem] sm:text-[0.85rem] font-semibold truncate">{action.title}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
